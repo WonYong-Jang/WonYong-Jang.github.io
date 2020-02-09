@@ -1,6 +1,6 @@
 title: Your awesome title
-name: Your Name
-email: your-email@example.com
+name: WonYong Jang
+email: zcx5674@gmail.com
 description: Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.
 
 baseurl: ""
@@ -146,7 +146,7 @@ colored: colored # Leave blank for black and white icons
 
 project_button: Github
 
-github: https://github.com/jameshamann/jekyll-material-theme
+github: https://github.com/zcx6263
 medium: https://medium.com
 
 baseurl: # if your site is located at /blog or /home, enter it here, otherwise leave it empty
