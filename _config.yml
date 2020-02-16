@@ -1,6 +1,6 @@
 title:              SW Developer
 email:              zcx6263@example.com
-description:        A Blog Theme by Start Bootstrap
+description:        I like to learn and enjoy new skills.
 author:             Wonyong Jang
 baseurl:            ""
 url:                "https://zcx6263.github.io"
@@ -8,8 +8,8 @@ url:                "https://zcx6263.github.io"
 # Social Profiles
 twitter_username:   
 github_username:    zcx6263
-facebook_username:  in/wonyong-jang-3250b4165
-linkedin_username:
+facebook_username:  
+linkedin_username:  in/wonyong-jang-3250b4165
 
 # Add your google-analytics ID here to activate google analytics
 google_analytics:   UA-XXXXXXXXX-X # out your google-analytics code
