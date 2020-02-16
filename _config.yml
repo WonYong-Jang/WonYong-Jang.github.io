@@ -19,8 +19,7 @@ markdown:           kramdown
 paginate:           5
 paginate_path:      "/posts/page:num/"
 sass:
-    sass_dir: _sass
-    style: compressed
+    sass_dir: ./_sass
 plugins:
   - jekyll-feed
   - jekyll-paginate
