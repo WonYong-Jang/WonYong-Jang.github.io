@@ -3,11 +3,11 @@ email:              zcx6263@gmail.com
 description:        I like to learn and enjoy new skills.
 author:             Wonyong Jang
 baseurl:            ""
-url:                "https://zcx6263.github.io"
+url:                "https://WonYong-Jang.github.io"
 
 # Social Profiles
 twitter_username:   
-github_username:    zcx6263
+github_username:    WonYong-Jang
 facebook_username:  
 linkedin_username:  in/wonyong-jang-3250b4165/
 
@@ -20,7 +20,7 @@ paginate:           5
 paginate_path:      "/posts/page:num/"
 comments: disqus
 disqus:
-    shortname: zcx6263
+    shortname: WonYong-Jang
 plugins:
   - jekyll-feed
   - jekyll-paginate
