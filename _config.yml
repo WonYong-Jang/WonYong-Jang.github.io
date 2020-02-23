@@ -16,11 +16,13 @@ google_analytics:   UA-XXXXXXXXX-X # out your google-analytics code
 
 # Build settings
 markdown:           kramdown
-paginate:           5
+highlighter: rouge
+paginate:           10
 paginate_path:      "/posts/page:num/"
-comments: disqus
+comments: 
+    provider: disqus
 disqus:
-    shortname: WonYong-Jang
+    shortname: zcx6263
 plugins:
   - jekyll-feed
   - jekyll-paginate
