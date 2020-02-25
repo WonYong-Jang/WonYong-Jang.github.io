@@ -1,0 +1,146 @@
+---
+layout: post
+title: "[WEB] HttpServletRequest, HttpServletResponse"
+subtitle: "Request, Response 개념과 메소드 정리 "
+comments: true
+date: 2020-02-15
+background: '/img/posts/06.jpg'
+---
+
+<h2 class="section-heading"> HttpServletRequest 개념 및 메소드 정리 </h2>
+
+<p>Java에서 HttpServletRequest에 대한 접근은 제한이 있습니다. servlet, filter, interceptor, 
+AOP, controller 정도에서만 접근이 가능합니다.</p>
+<p>클라이언트 IP 등의 정보를 가져오거나, 쿠키, 헤더, GET/POST로 전송한 값을 
+가져오는데 주로 사용하는 것이 Request입니다.</p>
+<p>웹브라우저에 url을 입력하고 엔터를 치면 도메인과 포트번호를 이용해 서버에 접속합니다. 그러면
+패스정보, 클라이언트의 다양한 정보를 포함한 요청정보를 서버에 전달합니다.
+</p>
+<p>클라이언트로부터 요청이 들어오면 WAS는 HttpServletRequest, HttpServletResponse객체를 생성하여 저장하고
+요청정보에 있는 패스로 매핑된 서블릿에게 전달합니다. 
+</p>
+
+<img width="700" alt="스크린샷 2020-02-25 오후 11 00 01" src="https://user-images.githubusercontent.com/26623547/75253860-b9596f80-5822-11ea-87d9-afd3b57dd410.png">
+
+<br/><br/>
+
+<h3>메소드 정리</h3>
+
+<pre>
+먼저 local의 기본 정보(IP, Name, Port)를 보여줍니다.(서버 정보)
+Local IP : <%=request.getLocalAddr()%>
+Local Name : <%=request.getLocalName()%>
+Local Port : <%=request.getLocalPort()%>
+
+다음으로 클라이언트의 정보입니다. IP, Host, Port를 가져올 수 있습니다.
+Remote IP : <%=request.getRemoteAddr()%>
+Remote Host : <%=request.getRemoteHost()%>
+Remote Port : <%=request.getRemotePort()%>
+
+이어서 서버 이름과 포트가 있는데요.. 일반적으로 local 기본정보와 동일합니다.
+Server Name : <%=request.getServerName()%>
+Server Port : <%=request.getServerPort()%>
+
+지역 정보입니다. 대부분 한국을 의미하는 ko가 나올 것 같습니다.
+Locale : <%=request.getLocale()%>
+
+사용하는 프로토콜입니다. "프로토콜/메이저버전.마이너버전" 의 형태입니다.
+Protocol : <%=request.getProtocol()%>
+
+http, https, ftp와 같은 것을 의미합니다.
+Scheme : <%=request.getScheme()%>
+
+https와 같은 보안 채널의 사용 여부입니다. true/false 값으로 되어 있네요.
+Secure Channel : <%=request.isSecure()%>
+
+요청에 대한 URI, URL, 컨텍스트 경로, 서블릿 경로, GET/POST등의 메소드를 나타냅니다.
+Request's URI : <%=request.getRequestURI()%>
+Request's URL : <%=request.getRequestURL()%>
+Context Path : <%=request.getContextPath()%>
+Servlet Path : <%=request.getServletPath()%>
+Method : <%=request.getMethod()%>
+
+세션 ID에 대한 정보들입니다.
+Session ID : <%=request.getRequestedSessionId()%>
+Session ID from Cookie : <%=request.isRequestedSessionIdFromCookie()%>
+Session ID from URL : <%=request.isRequestedSessionIdFromURL()%>
+Session ID is still valid : <%=request.isRequestedSessionIdValid()%>
+
+
+그리고 다음은 Header 정보를 보는 방법입니다.
+<%
+ Enumeration eHeader = request.getHeaderNames();
+ while (eHeader.hasMoreElements()) {
+  String hName = (String)eHeader.nextElement();
+  String hValue = request.getHeader(hName);
+
+  out.println(hName + " : " + hValue);
+ }
+%>
+
+Request 객체를 통해서 쿠키 정보를 보는 방식이구요~
+<%
+ Cookie cookies[] = request.getCookies();
+ for (int i=0; i < cookies.length; i++) {
+  String name = cookies[i].getName();
+  String value = cookies[i].getValue();
+
+  out.println(name + " : " + value);
+ }
+%>
+
+HTML 폼을 통해 넘어온 데이터를 받는 부분입니다.
+<%
+ Enumeration eParam = request.getParameterNames();
+ while (eParam.hasMoreElements()) {
+  String pName = (String)eParam.nextElement();
+  String pValue = request.getParameter(pName);
+
+  out.println(pName + " : " + pValue);
+ }
+%>
+
+미리 설정한 attribute를 가져오는 부분이구요..
+<%
+ Enumeration eAttr = request.getAttributeNames();
+ while (eAttr.hasMoreElements()) {
+  String aName = (String)eAttr.nextElement();
+  String aValue = request.getHeader(aName);
+
+  out.println(aName + " : " + aValue);
+ }
+%>
+
+</pre>
+
+
+<h2 class="section-heading"> Spring RequestContextHolder</h2>
+
+<p>Spring RequestContextHolder는 Spring 2.x부터 제공되던 기능으로 controller, service,
+HttpServletRequest에 접근할수 있도록 도와줍니다.</p>
+
+<h2 class="section-heading">getParameter() 와 getAttribute() 의 차이점</h2>
+
+<p> getParameter()</p>
+
+<p>값이 어떤것이든 String 타입을 리턴한다.
+또한, 웹브라우저에서 전송받은 request영역의 값을 읽어온다.
+Client 에서 Server 로 전달한다.</p>
+<blockquote class="blockquote">ex) http://example.com/servlet?parameter=1</blockquote>
+
+<p> getAttribute() </p>
+
+<p> Object 타입을 리턴하기 때문에 주로 빈 객체나 다른 클래스를 받아올때 사용된다.
+setAttribute()속성을 통한 설정이 없으면 무조건 null값을 리턴한다.
+서버사이드에서 사용하기때문에 똑같은 request 안에서 사용할수 있다.
+</p>
+
+<p>
+<a href="https://helols.tistory.com/15">관련 링크</a>
+</p>
+
+
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}
