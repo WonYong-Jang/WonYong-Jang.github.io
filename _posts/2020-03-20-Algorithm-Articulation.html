@@ -1,0 +1,74 @@
+---
+layout: post
+title: "[Algorithm] 단절점, 단절선"
+subtitle: "DFS 스패닝 트리를 이용한 단절점, 단절선 구하기  "
+date: 2020-03-01
+background: '/img/posts/06.jpg'
+---
+
+<h2 class="section-heading">단절점 </h2>
+
+<p><b>하나의 컴포넌트로 이루어진 무방향 그래프에서 한 정점을 제거 했을 때
+그래프가 두개 이상의 컴포넌트(그래프)로 나누어지는 정점을 단절점이라고 합니다.</b></p>
+
+<h3>단절점 특징</h3>
+<p>어떤 정점 A에 연결된 모든 정점들 중 두 정점들 간에 정점 A를 거치지 않고 
+갈 수 있는 우회경로가 존재하지 않는 경우가 존재한다면 정점 A는 단절점으로 판단 가능합니다.</p>
+<p><u>즉, 단절점에 바로 인접해 있는 장점들의 쌍은 단절점이 없으면 우회로로 인해 연결되어 있지 않다!!</u></p>
+
+<p>비효율적인 방법 : 모든 정점을 한번씩 선택하여 제거한 후 그래프가 나뉘어지는지 파악 ( V * E ) => 시간복잡도 O(V * ( V + E ))</p>
+
+<p><u>DFS 스패닝 트리를 이용한 시간 복잡도는 O(N + M) 입니다.</u></p>
+
+<h3>구현 방법</h3>
+<p>1. DFS 를 이용하여 정점들의 방문 순서를 기록합니다</p>
+<p>2. 특정 A번 정점에서 자식 노드들이 정점 A를 거치지 않고 정점 A보다 빠른 방문
+번호를 가진 정점으로 갈수 없다면 단절점입니다.</p>
+
+<img width="600" alt="스크린샷 2020-03-02 오후 8 48 01" src="https://user-images.githubusercontent.com/26623547/75673806-2065a100-5cc7-11ea-8524-cfbb96f02c16.png">
+<br/><br/><br/>
+
+<h3>예외 케이스</h3>
+<img width="650" alt="스크린샷 2020-03-02 오후 8 50 49" src="https://user-images.githubusercontent.com/26623547/75673984-894d1900-5cc7-11ea-9134-b176d0e9922d.png">
+<br/><br/><br/>
+
+{% highlight ruby linenos %}
+    public class source {
+    
+    static int N;
+    static int[] dp, data;
+    public static void main(String[] args) throws IOException {
+        // TODO Auto-generated method stub
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        N = Integer.parseInt(st.nextToken());
+        dp = new int[N+1];
+        data = new int[N+1];
+        
+        st = new StringTokenizer(br.readLine());
+        for(int i=1; i<= N; i++) {
+            data[i] = Integer.parseInt(st.nextToken());
+        }
+        
+        int answer = 0;
+        for(int i=1; i<= N; i++)
+        {
+            for(int j=0; j< i; j++)
+            {
+                if(data[j] < data[i]) { 
+                    dp[i] = Math.max(dp[i], dp[j]+1);
+                    answer = Math.max(answer, dp[i]);
+                }
+            }
+        }
+        bw.write(answer+"\n");
+        bw.flush();
+        }
+    }
+{% endhighlight %}
+
+
+<h2 class="section-heading">단절선 </h2>
+
+<h3>포스팅 준비 중 </h3>
