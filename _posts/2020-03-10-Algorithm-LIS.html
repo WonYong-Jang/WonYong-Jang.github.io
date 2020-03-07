@@ -49,7 +49,7 @@ background: '/img/posts/06.jpg'
 {% endhighlight %}
 
 
-<p>첫번째 방법은<b> DP를 이용한 방법 </b> 입니다.</p>
+<p><b> 첫번째 방법은 DP를 이용한 방법 </b></p>
 <p><u> dp[i] = 1 ~ i 번째까지 가장 긴 증가하는 부분 수열의 갯수</u> 라고 정의했을 때
 2중 for문을 돌면서 이전에 누적했었던 값들을 이용해서 구할 수 있을 것처럼 보입니다.
 </p>
@@ -108,5 +108,98 @@ ex3) 1 2 3 4 5 / target : 7 일 때 ==> 6번째 인덱스 출력 ( n + 1 )
 
 {% endhighlight %}
 
-<p>두번째 방법은 Lower Bound 를 이용한 방법 입니다.</p>
+<h3>Upper_bound</h3>
+
+
+
+<p>두번째 방법은 Lower Bound 를 이용한 방법</p>
+
+<h2 class="section-heading">세번째 방법 O(nlogn) </h2>
+
+<p><u>인덱스 트리를 이용한 방법!</u></p>
+<p></p>
+
+{% highlight ruby linenos %}
+
+public class Main {
+
+    static int N, start, end;
+    static Node[] data;
+    static int[] tree;
+    public static void main(String[] args) throws IOException {
+        // TODO Auto-generated method stub
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        N = Integer.parseInt(st.nextToken());
+        tree = new int[N*4]; // 인덱스 트리 전체 tree size
+        data = new Node[N+1];
+        start = 1;
+        while(N > start) start *= 2; // 리프 노드의 시작 인덱스 구하기
+        end = start + N - 1;         // 리프 노드의 마지막 인덱스
+
+        st = new StringTokenizer(br.readLine());
+        for(int i=1; i<= N; i++) {
+            int num = Integer.parseInt(st.nextToken());
+            data[i] = new Node(num, i);
+        }
+
+        // 값에 대해 오름차순, 값이 같다면 인덱스로 내림차순 !
+        Arrays.sort(data, 1, N+1, new mySort());
+        int ans = 0;
+        for(int i=1; i<= N; i++) {
+            int index = data[i].index;
+            int target = getMax(1, index-1);
+            ans = Math.max(ans, target+1);
+            update(index, target+1);
+        }
+        bw.write(ans+"\n");
+        bw.flush();
+    }
+    public static int getMax(int sdx, int edx) {
+        int num = 0;
+        int s = sdx + start - 1;
+        int e = edx + start - 1;
+
+        while( s <= e) {
+            if(s % 2 != 0) num = Math.max(num, tree[s]);
+            if(e % 2 == 0) num = Math.max(num, tree[e]);
+
+            s = (s + 1) / 2;
+            e = (e - 1) / 2;
+        }
+
+        return num;
+    }
+    public static void update(int idx, int num) {
+        int index = idx + start - 1; // 리프노드 인덱스 값
+
+        while(index > 0) { // 주의 : 기존에 있던 tree[index] 값보다 클 경우만 업데이트!
+            if(tree[index] < num) {
+                tree[index] = num;
+                index /= 2;
+            }
+            else break;
+        }
+    }
+    static class mySort implements Comparator<Node> {
+        @Override
+        public int compare(Node a, Node b) {
+            if(a.num != b.num) return a.num - b.num;
+            else return b.index - a.index;
+        }
+    }
+    static class Node {
+        int num, index;
+        Node(int a, int b) {
+            num = a; index = b;
+        }
+    }
+}
+
+{% endhighlight %}
+
+
+
+
 
