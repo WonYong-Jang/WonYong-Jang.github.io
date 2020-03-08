@@ -4,7 +4,7 @@ title: "[Spring] 파일 업로드 처리 1"
 subtitle: "이미지, 파일 등의 파일 업로드 처리"
 comments: true
 date: 2020-03-07
-background: '/img/posts/01.jpg'
+background: '/img/posts/spring.png'
 ---
 
 <h2 class="section-heading">파일 업로드 처리</h2>
@@ -25,7 +25,7 @@ background: '/img/posts/01.jpg'
 <h3>스프링의 첨부파일을 위한 설정</h3>
 <p>서블릿 3.0 이상을 설정하는 경우 XML 네임스페이스 버전 설정 변경</p>
 <p>web.xml servlet 태그 내에는 multipart-config 태그를 추가</p>
-<p> servlet-context.xml에 multipartResolver라는 이름으로 지정된 이름을 사용(스프링 빈으로 추가!)
+<p> servlet-context.xml에 multipartResolver라는 이름으로 지정된 이름을 사용(스프링 빈으로 추가!)</p>
 
 <h3>form 태그 방식의 파일 업로드</h3>
 <p><u>파일을 업로드 할때 form 태그에 ENCTYPE="multipart/form-data"라는 애트리뷰트를 반드시 써야 한다.(전송되는 데이터 형식을 설정하는 역할)</u></p>
@@ -40,7 +40,7 @@ background: '/img/posts/01.jpg'
 <p>3. text/plain</p>
 이 형식은 인코딩을 하지 않은 문자 상태로 전송한다.
 <br/><br/>
-<img width="650" alt="스크린샷 2020-03-05 오후 10 14 41" src="https://user-images.githubusercontent.com/26623547/75985024-dc74d500-5f2e-11ea-84d6-c67e09b8809b.png">
+<img width="600" alt="스크린샷 2020-03-05 오후 10 14 41" src="https://user-images.githubusercontent.com/26623547/75985024-dc74d500-5f2e-11ea-84d6-c67e09b8809b.png">
 <br/>
 <p><u>위처럼 multiple 을 추가해줌으로써 여러 파일을 한번에 전송 가능하다</u></p>
 
@@ -48,7 +48,7 @@ background: '/img/posts/01.jpg'
 <p>스프링 MVC에는 MultipartFile 타입을 제공해서 업로드되는 파일 데이터를 쉽게 처리 할수 있다.</p>
 <p>위에서 input type="file" name="uploadFile" 의 name 속성으로 변수를 지정해서 처리 한다.</p>
 
-<img width="650" alt="스크린샷 2020-03-07 오후 5 19 23" src="https://user-images.githubusercontent.com/26623547/76139870-efef7f80-6097-11ea-8757-c28b6f25a2d5.png">
+<img width="600" alt="스크린샷 2020-03-07 오후 5 19 23" src="https://user-images.githubusercontent.com/26623547/76139870-efef7f80-6097-11ea-8757-c28b6f25a2d5.png">
 <br/>
 
 <h3>Ajax를 이용하는 파일 업로드</h3>
@@ -56,9 +56,9 @@ background: '/img/posts/01.jpg'
 <p><u>Ajax를 이용해서 첨부파일을 저너송하는 경우 가장 중요한 객체는 FormData 타입의 객체에 각
 파일 데이터를 추가하는 것과 이를 Ajax로 전송할 때 약간의 옵션이 붙어야 한다는 점!</u></p>
 
-<div>
+<br/>
 <img width="521" alt="스크린샷 2020-03-07 오후 6 06 52" src="https://user-images.githubusercontent.com/26623547/76140532-e3baf080-609e-11ea-80f0-d42ef216af14.png">
-<div/>
+<br/>
 
 <p><b>1. dataType 은 내가 보내는 데이터의 타입이 아니고 서버가 응답(response)할 때 보내줄 데이터 타입! (json, html, text) </b></p>
 <p>ex) {"name":"John Doe"} 를 전송하고 기대되는 값은 {"success":true"} 이기 때문에 alert(data.success); 로 사용 가능!!!</p>
@@ -79,21 +79,21 @@ application/x-www-form-urlencoded; charset=UTF-8이다. 파일을 첨부할때�
 
     @PostMapping("/uploadAjaxAction")
     public void uploadAjaxPost(MultipartFile[] uploadFile, Model model) {
-        
+
         log.info("update ajax post................");
-        
+
         String uploadFolder = "/dev/workspace/ToyProject/upload";
-        
+
         for(MultipartFile multipartFile : uploadFile) {
-            
+
             log.info("----------------------------------------------------");
             log.info("Upload File Name: "+ multipartFile.getOriginalFilename());
             log.info("Upload File Size: "+ multipartFile.getSize());
-            
-            // IE 의 경우 getOriginFilename 은 경로 까지 출력되므로 substring 해줄 것 
-            
+
+            // IE 의 경우 getOriginFilename 은 경로 까지 출력되므로 substring 해줄 것
+
             File saveFile = new File(uploadFolder, multipartFile.getOriginalFilename());
-            
+
             try {
                 multipartFile.transferTo(saveFile);
             } catch (Exception e) {
@@ -101,9 +101,11 @@ application/x-www-form-urlencoded; charset=UTF-8이다. 파일을 첨부할때�
             }
         }
     }
+
 {% endhighlight %}
 
 
 {%- if site.disqus.shortname -%}
     {%- include disqus.html -%}
 {%- endif -%}
+

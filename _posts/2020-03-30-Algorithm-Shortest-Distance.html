@@ -1,0 +1,64 @@
+---
+layout: post
+title: "[Algorithm] 최단거리 알고리즘"
+subtitle: "다익스트라, 벨만포드, 플로이드워샬 알고리즘"
+comments: true
+date: 2020-03-01
+background: '/img/posts/06.jpg'
+---
+
+<h2 class="section-heading">다익스트라 </h2>
+
+<p><b>그래프의 어떤 정점 하나를 시작으로 선택하고, 나머지 정점들로의 최단거리를 모두 구한다.</b></p>
+<p>distaince 배열을 모두 무한대로 초기화 ( 시작점은 0으로 시작! )</p>
+<p>각 정점들 중 최단거리르 찾는 과정에서 우선순위 큐를 쓰지 않게 되면 모든 정점을 확인해야 하므로 시간복잡도는 O(N^2) </p>
+<p><u>정점 개수가 V, 간선 개수가 E일 때 기본적인 최적화를 거치면 O(ElogV)의 시간복잡도 </u></p>
+<p><u>우선순위 큐를 이용하여 cost 값이 제일 작은 정점을 찾아 방문</u></p>
+
+
+
+{% highlight ruby linenos %}
+
+static int V, E, S;  // 정점의 갯수, 간선의 갯수,시작 점 
+static ArrayList<ArrayList<Node>> adj = new ArrayList<ArrayList<Node>>(); // 인접 리스트
+static final int MAX = 20001, INF = 300005 * 10;
+static int[] dis = new int[MAX];
+
+// 인접 리스트 정점 갯수만큼 할당 해주고 인접리스트 연결 할 것 
+// dis 배열 모두 INF 로 초기화 해주고 시작점 0으로 놓고 시작 !
+public static void solve()
+{
+	PriorityQueue<Node> que = new PriorityQueue<>(new Mysort());
+	que.add(new Node(S,0)); // 시작점 
+	dis[S] = 0;
+	
+	while(!que.isEmpty())
+	{
+		Node n = que.poll();
+		
+		if(n.cost > dis[n.dx]) continue;
+		
+		for(Node next : adj.get(n.dx)) // 연결된 다음 노드들을 보면서 최단경로 탐색 
+		{
+			// 현재 노드에서 다음 노드로 가는 가중치를 더한 값이 dis[next.dx] 보다 작으면 그 경로가 최단 경로가 되니 업데이트 
+			if(dis[next.dx] > next.cost + dis[n.dx])  
+			{
+				dis[next.dx] = next.cost + dis[n.dx];
+				que.add(new Node(next.dx, dis[next.dx]));
+			}
+		}
+	}
+}
+
+{% endhighlight %}
+
+
+<h2 class="section-heading">벨만포드 </h2>
+<h2 class="section-heading">플로이드 워샬 </h2>
+
+<h3>포스팅 준비 중 </h3>
+
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}
