@@ -1,106 +1,33 @@
 ---
 layout: post
-title: "[Spring] 파일 업로드 처리 1"
-subtitle: "이미지, 파일 등의 파일 업로드 처리"
+title: "[Spring] 트랜잭션 관리"
+subtitle: "Transaction"
 comments: true
-date: 2020-03-07
+date: 2020-03-09
 background: '/img/posts/spring.png'
 ---
 
-<h2 class="section-heading">파일 업로드 처리</h2>
+<h2 class="section-heading">스프링 트랜잭션 관리</h2>
 
-<p>첨부파일을 서버에 전송하는 방식은 크게 from 태그를 이용해서 업로드하는 
-방식과 Ajax를 이용하는 방식으로 나눌수 있다.</p>
+<p>트랜잭션이란 비즈니스에서 쪼개질 수 없는 하나의 단위 작업</p>
+<p><u>한 번에 이루어지는 작업의 단위를 트랜잭션</u></p>
 
-<p><u>1. form 태그를 이용하는 방식: 브라우저 제한이 없어야 하는 경우에 사용</u></p>
-<p>일반적으로 페이지 이동과 동시에 첨부파일을 업로드하는 방식, iframe을 이용해서 화면 이동 없이 첨부파일 처리하는 방식</p>
-<p><u>2. Ajax를 이용하는 방식: 첨부파일을 별도로 처리하는 방식</u></p>
-<p>input type="file"을 이용하여 ajax로 처리하는 방식, HTML5 의 Drag And Drop 기능이나 jQuery 라이브러리를 이용해서 처리하는 방식</p>
-
-<h3>서버에서 첨부파일을 처리하는 방식</h3>
-<p>1) cos.jar: 2002년도 이후에 개발이 종료 되었으며, 더이상 사용하지 않는 것을 권장함</p>
-<p>2) commons-fileupload: 가장 일반적으로 많이 활용되고, 서블릿 스펙 3.0 이전에도 사용가능 </p>
-<p>3) 서블릿 3.0 이상 - 3.0 이상부터는 자체적인 파일 업로드 처리가 API 상에서 지원</p>
-
-<h3>스프링의 첨부파일을 위한 설정</h3>
-<p>서블릿 3.0 이상을 설정하는 경우 XML 네임스페이스 버전 설정 변경</p>
-<p>web.xml servlet 태그 내에는 multipart-config 태그를 추가</p>
-<p> servlet-context.xml에 multipartResolver라는 이름으로 지정된 이름을 사용(스프링 빈으로 추가!)</p>
-
-<h3>form 태그 방식의 파일 업로드</h3>
-<p><u>파일을 업로드 할때 form 태그에 ENCTYPE="multipart/form-data"라는 애트리뷰트를 반드시 써야 한다.(전송되는 데이터 형식을 설정하는 역할)</u></p>
-<p>그렇게 하지 않으면 웹 서버로 데이터를 넘길때 파일의 경로명만 전송되고 파일 내용이 전송되지 않는다!</p>
-<p>또한, Method 애트리뷰트는 POST 값으로 지정해야 한다.</p>
-<p><b>enctype 속성은 다음 세가지의 값으로 지정할 수 있다.</b></p>
-<p>1. application/www-form-urlencoded</p>
-디폴트값이다. enctype을 따로 설정하지 않으면 이 값이 설정된다. 폼 데이터는
-서버로 전송되기 전에 URL-Encode 된다.
-<p>2. multipart/form-data</p>
-파일이나 이미지를 서버로 전송할 경우 이방식을 사용한다.
-<p>3. text/plain</p>
-이 형식은 인코딩을 하지 않은 문자 상태로 전송한다.
-<br/><br/>
-<img width="600" alt="스크린샷 2020-03-05 오후 10 14 41" src="https://user-images.githubusercontent.com/26623547/75985024-dc74d500-5f2e-11ea-84d6-c67e09b8809b.png">
-<br/>
-<p><u>위처럼 multiple 을 추가해줌으로써 여러 파일을 한번에 전송 가능하다</u></p>
-
-<h3>MultipartFile 타입</h3>
-<p>스프링 MVC에는 MultipartFile 타입을 제공해서 업로드되는 파일 데이터를 쉽게 처리 할수 있다.</p>
-<p>위에서 input type="file" name="uploadFile" 의 name 속성으로 변수를 지정해서 처리 한다.</p>
-
-<img width="600" alt="스크린샷 2020-03-07 오후 5 19 23" src="https://user-images.githubusercontent.com/26623547/76139870-efef7f80-6097-11ea-8757-c28b6f25a2d5.png">
-<br/>
-
-<h3>Ajax를 이용하는 파일 업로드</h3>
-
-<p><u>Ajax를 이용해서 첨부파일을 저너송하는 경우 가장 중요한 객체는 FormData 타입의 객체에 각
-파일 데이터를 추가하는 것과 이를 Ajax로 전송할 때 약간의 옵션이 붙어야 한다는 점!</u></p>
-
-<br/>
-<img width="521" alt="스크린샷 2020-03-07 오후 6 06 52" src="https://user-images.githubusercontent.com/26623547/76140532-e3baf080-609e-11ea-80f0-d42ef216af14.png">
-<br/>
-
-<p><b>1. dataType 은 내가 보내는 데이터의 타입이 아니고 서버가 응답(response)할 때 보내줄 데이터 타입! (json, html, text) </b></p>
-<p>ex) {"name":"John Doe"} 를 전송하고 기대되는 값은 {"success":true"} 이기 때문에 alert(data.success); 로 사용 가능!!!</p>
-
-<p><b>2. processData 관련하여, 일반적으로 서버에 전달되는 데이터는 query string이라는 형태로 전달된다.</b></p>
-<p>ex) http://exapmle.com/there?title=Main_page&action=raw</p>
-<p>data 파라미터로 전달된 데이터를 jquery 내부적으로 query string으로 만드는데, 파일 전송의 경우 이를 하지 
-않아야 하기때문에 false 로 설정 한다.</p>
-
-<p><b>3. contentType 은 데이터를 보내는 타입이며, application/json; charset=utf-8 이 일반적이며, default는
-application/x-www-form-urlencoded; charset=UTF-8이다. 파일을 첨부할때는 multipart/form-data를 전송하므로 false로 설정한다!</b></p>
-
-<p>FormData는 form 과 같은 효과를 가져다 주는 key/value 가 저장 되는 객체이다. IE 에서는 
-10버전 부터 지원가능!!</p>
+<h3>ACID 원칙( 트랜잭션의 성격 )</h3>
+<p><u>원자성(Atomicity)</u></p>
+하나의 트랜잭션은 모두 하나의 단위로 처리되어야 한다. 어떤 트랜잭션이 
+A와 B로 구성된다면 항상 처리결과는 A B 동일해야 한다. 즉, A가 성공이면 B도 항상 성공이고
+실패면 둘다 실패!
+<p><u>일관성(Consistency)</u></p>
+트랜잭션이 성공했다면 데이터베이스의 모든 데이터는 일관성을 유지해야만 한다. 
+트랜잭션으로 처리된 데이터와 일반 데이터 사이에는 전혀 차이가 없어야만 한다.
+<p><u>격리(Isolation)</u></p>
+트랜잭션으로 처리되는 중간에 외부에서의 간섭은 없어야만 한다.
+<p><u>영속성(Durability)</u></p>
+트랜잭션이 성공적으로 처리되면, 그 결과는 영속적으로 보관되어아 한다.
 
 
 {% highlight ruby linenos %}
 
-    @PostMapping("/uploadAjaxAction")
-    public void uploadAjaxPost(MultipartFile[] uploadFile, Model model) {
-
-        log.info("update ajax post................");
-
-        String uploadFolder = "/dev/workspace/ToyProject/upload";
-
-        for(MultipartFile multipartFile : uploadFile) {
-
-            log.info("----------------------------------------------------");
-            log.info("Upload File Name: "+ multipartFile.getOriginalFilename());
-            log.info("Upload File Size: "+ multipartFile.getSize());
-
-            // IE 의 경우 getOriginFilename 은 경로 까지 출력되므로 substring 해줄 것
-
-            File saveFile = new File(uploadFolder, multipartFile.getOriginalFilename());
-
-            try {
-                multipartFile.transferTo(saveFile);
-            } catch (Exception e) {
-                log.error(e.getMessage());
-            }
-        }
-    }
 
 {% endhighlight %}
 
