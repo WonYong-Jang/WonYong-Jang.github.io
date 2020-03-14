@@ -1,0 +1,111 @@
+---
+layout: post
+title: "[Java] JVM 과 GC"
+subtitle: "Java vitual machine, Garbage Collection"
+comments: true
+date: 2020-03-14
+background: '/img/posts/spring.png'
+---
+
+<h2 class="section-heading">JVM</h2>
+
+<p>1) Java Virtual Machine 은 자바를 실행하기 위한 자바 가상 머신</p>
+<p>2) 자바와 운영체제사이에서 중계자 역할을 한다.</p>
+<p>3) 자바가 운영체제 종류에 영향을 받지 않고 실행 가능 하도록 한다.</p>
+=> CPU나 운영체제(플랫폼)에 의존적이지 않고 독립적으로 JAVA프로그램이 실행 할수 있도록! 
+<p>4) 메모리 관리를 자동으로 해준다(GC)</p>
+<p>5) 운영체제 위에서 동작하는 프로세스로 자바 코드를 컴파일 해서 얻은 바이트 코드를 해당
+운영체제가 이해할수 있는 기계어로 바꿔실행 시켜주는 역할을 한다!</p>
+<p>6) 현재 프로세스에서 메모리 누수가 발생하더라도 현재 실행중인 것만 죽고 다른것에는 영향을 주지 않는다.</p>
+<img width="700" alt="스크린샷 2020-03-14 오후 6 35 17" src="https://user-images.githubusercontent.com/26623547/76679282-9ef50380-6622-11ea-910b-9f55fa463017.png">
+<br/><br/>
+
+<p><b>Java Compiler</b></p>
+java source(.java) 파일은 Byte code(.class)로 변환된다. 
+<p><b>Class Loader</b></p>
+변환된 Byte code(.class)파일을 JVM이 운영체제로 부터 할당 받은 메모리 영역인
+Runtime Data Area로 적재하는 역할을 한다.
+<p><b>Execution Engine</b></p>
+<p>Class Loader 를 통해 JVM 내부로 넘어와 Runtime Data Area(JVM 메모리)에
+배치된 Byte code들을 기계어로 변경해 명령어 단위로 실행한다.</p>
+<p>1. 인터프리터 컴파일 방식 : 명령어를 하나하나 실행</p>
+<p>2. JIT(Just-In-Time) 컴파일 방식: </p>
+
+
+<h2 class="section-heading">GC</h2>
+
+<p><u>프로그래머는 힙을 사용할 수 있는 만큼 자유롭게 사용하고, 더 이상
+사용되지 않는 오브젝트들은 가비지 컬렉션을 담당하는 프로세스가 자동으로
+메모리에서 제거하도록 하는 것이 가비지 컬렉션의 기본 개념</u></p>
+
+<p>Heap 영역의 오브젝트 중 stack 에서 도달 불가능한(Unreachable) 오브젝트들은
+가비지 컬렉션의 대상이 된다.(더이상 참조하지 않는 오브젝트)</p>
+
+<img width="750" alt="스크린샷 2020-03-14 오후 6 53 28" src="https://user-images.githubusercontent.com/26623547/76679593-2c395780-6625-11ea-8496-33e6f8df0574.png">
+<br/><br/>
+
+<h3>Garbage Collection 과정</h3>
+
+<p><b>Mark and Sweep</b> 이라고도 한다 ( GC가 스택의 모든 변수를 스캔하면서 각각 어떤
+오브젝트를 레퍼런스 하고 있는지 찾는 과정이 Mark 다. Reachable 오브젝트가
+레퍼런스하고 있는 오브젝트 또한 marking 한다.</p>
+<p>여기서 주의할 점은 첫번째 단계인 marking 작업을 위해 모든 스레드는 중단
+되는데 이를<b> stop the world 라고 부른다.(System.gc() 를 생각 없이 호출하면 안되는 이유!!</b></p>
+<p><b>그리고 나서 mark 되어있지 않은 모든 오브젝트들을 힙에서 제거하는 과정이 Sweep 이다.</b></p>
+<p>즉, GC 는 garbase를 수집하는 것이 아니라 garbase 가 아닌 것을 따로 mark 하고 있고
+그 외의 것은 모두 지우는 것!</p>
+<p><u>System.gc() 를 코드단에서 호출하게 되면 모든 스레드가 중단되기 때문에 사용하지 말것 !</u></p>
+<p>GC가 역할을 하는 시간은 정확히 언제인지를 알수 없음( 참조가 없어지자마자 해제되는 것을 보장하지 않음)</p>
+<p>특히 Full GC가 일어나서 수 초간 모든 쓰레드가 정지한다면 장애로 이어지는 치명적인 문제가 생길 수 있다.</p>
+
+<h3>GC 의 구조 </h3>
+
+<h3>Reachability</h3>
+
+<p>Java의 GC는 가비지 객체를 판별하기 위해 reachability 라는 개념을 사용한다.</p>
+<p>어떤 객체에 유효한 참조가 있으면 reachable 없으면 unreachable 로 구분하고 가비지로 간주한다.</p>
+<p>바꿔 말하면 객체에 대한 reachability를 제어 할수 있다면 코드를 통해 GC에 일부 관여하는 것이 가능하다.</p>
+<p><u>java는 이를 위해서 SoftReference, WeakReference 등 제공!</u></p>
+<p>캐시 등을 만들 때 메모리 누수 조심해야 한다.</p>
+캐시의 키가 원래 데이터에서 삭제 된다면 캐시 내부의 키와 값은 더이상 의미 없는
+데이터 이지만 GC는 삭제된 캐시의 키를 가비지로 인식 못한다. 캐시에 Weak Reference를 넣어준다면
+이러한 문제 방지 가능하다 (WeakHashMap)
+
+<br/><br/>
+<img width="900" alt="스크린샷 2020-02-02 오후 10 37 38" src="https://user-images.githubusercontent.com/26623547/76682457-bdb5c300-663f-11ea-98f9-5a20bb657a26.png">
+<img width="700" alt="스크린샷 2020-03-14 오후 9 59 15" src="https://user-images.githubusercontent.com/26623547/76682398-408a4e00-663f-11ea-96ad-eba3f3110aaf.png">
+<br/>
+<p><b>JVM의 Heap 영역은 Young, Old, Perm 세 영역으로 나뉜다.</b></p>
+
+<p><u>1) Young Generation : Eden 영역과 Survivor 영역으로 구성</u></p>
+
+<p>- Eden 영역 </p>
+<b>Object가 최초로 Heap에 할당되는 장소이다.</b> 만일 Eden 영역이 가득 찼다면, Object의
+참조 여부를 파악하고 Reachable 오브젝트는 Survivor 영윽으로 넘긴다. 그리고 
+참조가 사라진 Garbage 오브젝트이면 남겨 놓는다. 모든 Reachable 오브젝트가
+Survivor 영역으로 넘어간다면 Eden 영역을 모두 청소한다.
+
+
+<p>- Survivor 영역</p>
+Survivor0 과 Survivor1 로 구성되며 Eden 영역에 살아 남은 Object들이 잠시 머무르는
+곳이며 Reachable 오브젝트들은 하나의 Survivor 영역만 사용하게 되며 이러한
+전반적인 과정을<b> Minor GC</b> 라고 한다.
+
+<p>- Old Generation 영역</p>
+새로 Heap에 할당된 Object가 들어오는 것이 아닌, Survivor 영역에서 살아남아
+오랫동안 참조 되었고 앞으로도 사용될 확률이 높은 Object들을 저장하는 영역이다.
+<b>이러한 과정 중 Old Generation의 메모리가 충분하지 않으면 해당 영역에서 GC가 발생하는데
+이을 Major GC라고 한다.</b>
+
+<p>- Perm 영역</p>
+보통 class Meta 정보나 Method의 Meta정보, static 변수와 상수 정보들이 저장되는 공간으로
+흔히 <b>메타데이터 저장 영역이라고 한다.</b> Java8 부터 Native Memory 영역으로 이동하였다.
+
+
+
+<a href="https://yaboong.github.io/java/2018/05/26/java-memory-management/">참고링크</a>
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}
+
