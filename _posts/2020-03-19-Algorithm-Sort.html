@@ -1,0 +1,58 @@
+---
+layout: post
+title: "[Algorithm] Sort"
+subtitle: "Selection, Insertion, Bubble, Quick, Merge, Heap Sort"
+comments: true
+date: 2020-03-19
+background: '/img/posts/mac.png'
+---
+
+<h2 class="section-heading">Selection Sort</h2>
+
+<p><u>이름에 맞게 해당 위치에 맞는 자료를 선택하여 위치를 교환하는 방식이다.</u></p>
+<p>연산 및 이동 연산횟숙 고정된 값 (N^2) 이므로 최악의 연산 횟수와 평균 연산 횟수가 동일하게 N^2 이다.</p>
+두개의 for문 종료 후 반드시 교환 연산이 이루어지므로 최선,최악 의미가 없다.
+<p>같은 값의 인덱스끼리도 교환 연산이 발생 할수 있다.</p>
+<img width="650" alt="스크린샷 2020-03-19 오후 10 24 17" src="https://user-images.githubusercontent.com/26623547/77075003-07821d00-6a35-11ea-827a-a26df077eef7.png">
+
+<h2 class="section-heading">Insertion Sort</h2>
+
+<p><u>자료 배열의 모든 요소를 앞에서부터 차례대로 이미 정렬된 배열 부분과 비교하여,
+자신의 위치를 찾아 삽입한다.</u></p>
+<p>target 이전 인덱스의 배열은 이미 정렬되어 있고 그 배열에 target 숫자의 위치를 삽입한다!</p>
+<p>이미 정렬되어 있는 경우라면 while을 거치지 않으므로 비교 횟수를 줄일수 있다 O(N)</p>
+<p>선택, 버블 정렬보다 성능은 좋지만 평균 O(N^2) 시간 복잡도</p>
+<img width="650" alt="스크린샷 2020-03-19 오후 10 39 13" src="https://user-images.githubusercontent.com/26623547/77075014-0bae3a80-6a35-11ea-8c90-7ef01343b6b1.png">
+
+
+<h2 class="section-heading">Bubble Sort</h2>
+<p><u>인접한 두수를비교해서 큰 수를 뒤로 보내는 정렬, 느리지만 코드가 단순하다.</u></p>
+<p>한번 순회를 마칠때마다 비교대상이 하나씩 줄어든다!(맨 뒤 부터 큰수가 정렬된다)</p>
+<p>이미 정렬되어 있을 때 자리 교환이 일어나지 않으므로 시간을 줄일 수 있지만 평균 
+O(N^2) 시간 복잡도를 가진다.</p>
+<img width="650" alt="스크린샷 2020-03-19 오후 10 57 16" src="https://user-images.githubusercontent.com/26623547/77075031-110b8500-6a35-11ea-8c77-4b1c192a2a08.png">
+
+<h2 class="section-heading">Merge Sort</h2>
+<p><u>분할 정복 알고리즘 중 하나이며 O(NlogN) 안정정렬에 속한다.</u></p>
+<p>1) Divide(분할) : 해결하고자 하는 문제를 작은 크기의 동일한 문제로 분할한다.</p>
+<p>2) Conquer(정복): 각각의 문제를 해결한다.</p>
+<p>3) Merge(합병) : 작은 문제의 해를 합하여 원래의 문제에 대한 해를 구한다.</p>
+<img width="650" alt="스크린샷 2020-03-19 오후 11 15 24" src="https://user-images.githubusercontent.com/26623547/77076807-af004f00-6a37-11ea-9a69-5d20ec175e66.png">
+
+<h2 class="section-heading">Quick Sort</h2>
+
+
+<h2 class="section-heading">안정 정렬과 불안정 정렬</h2>
+포스팅 준비중
+
+{% highlight ruby linenos %}
+
+
+{% endhighlight %}
+
+
+<p><a href="">관련 링크</a></p>
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}
