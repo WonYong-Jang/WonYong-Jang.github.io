@@ -1,0 +1,47 @@
+---
+layout: post
+title: "[WEB] HTTP vs HTTPS"
+subtitle: "http, https 차이"
+comments: true
+date: 2020-03-25
+background: '/img/posts/mac.jpg'
+---
+
+<h2 class="section-heading"> HTTP </h2>
+
+<p><b>HTTP (HyperText Transfer Protocol)는 웹브라우저(client)와 서버(server)간의 
+웹페이지같은 자원을 주고 받을 때 쓰는 통신 규약이다.<b/></p>
+
+<p>HTTP는 텍스트 통신이라고 할수 있는데 누군가 중간에서 가로챈다면 내용이 노출되어 보안상의 문제가 있다.</p>
+
+<h2 class="section-heading"> HTTPS </h2>
+
+<p><b>HTTPS(HyperText Transfer Protocol Secure)는 인터넷 상에서 정보를 암호화하는 SSL(Secure Socket Layer)프로토콜을
+이용하여 웹브라우저(client)와 서버가 데이터를 주고 받는 통신 규약이다.</b></p>
+
+<p>즉, HTTPS 는 http 메시지(text)를 암호화 하는 것이다.</p>
+<p>HTTPS의 암호화 원리를 간단히 알아보면 핵심은<u>공개키 암호화</u> 방식이다.</p>
+
+<p><u>암호화, 복호화 시킬수 있는 서로 다른 키 2개가 존재하는데 이 두개의 키는
+서로 1번 키로 암호화하면 반드시 2번키로만 복호화할수 있고 2번 키로 암호화하면
+반드시 1번키로만 복호화 할수 있는 룰이 있다.</u></p>
+
+<p>그 중에서 하나의 키는 모두에게 공개하는 공개키(1번 키)로 만들어서 공개 키 저장소에 등록해 놓는다.
+ 서버는 서버만 알 수 있는 개인키(2번 키)를 소유하고 있으면 된다. 그러면 1번키로 암호화된 http 요청, 즉 
+ https 프로토콜을 사용한 요청이 온다면 서버는 개인키(2번 키)를 이용하여 1번키로 암호화된 문장을 해독하게 된다.
+  서버는 요청이 무엇인지 알게되고 요청에 맞는 응답을 다시 개인키(2번 키)로 암호화해서 요청한 클라이언트에게 보내주게 된다. 
+  그리고 응답 받은 클라이언트는 공개키(1번 키)를 이용해서 개인키(2번 키) 암호화된 https 응답을 해독하고 사용하는 시나리오다</p>
+
+<p>https 를 지원하는 서버에 요청(request)을 하려면 공개키가 필요하다는 것을 알 수 있다.</p>
+
+<p>즉, 해당 공개키로 서버가 주는 데이터(response)임을 확신할 수 있다.</p>
+
+<p>
+<a href="https://helols.tistory.com/15">관련 링크</a>
+</p>
+
+
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}
