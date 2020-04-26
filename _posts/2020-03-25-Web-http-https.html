@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[WEB] HTTP vs HTTPS"
-subtitle: "http, https 차이"
+title: "[WEB] HTTP vs HTTPS, TCP/IP"
+subtitle: "http, https 차이와 웹 통신 방법"
 comments: true
 date: 2020-03-25
 background: '/img/posts/mac.jpg'
@@ -10,10 +10,16 @@ background: '/img/posts/mac.jpg'
 <h2 class="section-heading"> HTTP </h2>
 
 <p><b>HTTP (HyperText Transfer Protocol)는 웹브라우저(client)와 서버(server)간의 
-웹페이지같은 자원을 주고 받을 때 쓰는 통신 규약이다.<b/></p>
+웹페이지같은 자원을 주고 받을 때 쓰는 통신 규약이다.</b></p>
 
-<p>HTTP는 텍스트 통신이라고 할수 있는데 누군가 중간에서 가로챈다면 내용이 노출되어 보안상의 문제가 있다.</p>
+<pre>
+- 문제점 
 
+1) HTTP는 텍스트 통신이라고 할수 있는데 누군가 중간에서 
+   가로챈다면 내용이 노출되어 보안상의 문제가 있다.
+2) 통신 상대를 확인하지 않기 때문에 변조가 가능하다.
+
+</pre>
 <h2 class="section-heading"> HTTPS </h2>
 
 <p><b>HTTPS(HyperText Transfer Protocol Secure)는 인터넷 상에서 정보를 암호화하는 SSL(Secure Socket Layer)프로토콜을
@@ -36,9 +42,47 @@ background: '/img/posts/mac.jpg'
 
 <p>즉, 해당 공개키로 서버가 주는 데이터(response)임을 확신할 수 있다.</p>
 
+
+<h2 class="section-heading">TCP/IP </h2>
+
+<p>TCP/IP란 패킷 통신 방식의 인터넷 프로토콜인 IP(인터넷 프로토콜)와 전송조절 프로토콜인 TCP(전송 제어 프로토콜)로
+ 이루어져 있다. IP 패킷 전달 여부를 보증하지 않고, 패킷을 보낸 순서와 받는 순서가 다를 수 있다. 
+ TCP는 IP위에서 동작하는 프로토콜로, 데이터의 전달을 보증하고 보낸 순서대로 받게 해준다. HTTP, FTP, SMTP 등 TCP를 기반으로 한
+  많은 애플리케이션 프로토콜들이 IP 위에서 동작하기 때문에, 묶어서 TCP/IP 라고 부르기도 한다. </p>
+
+<p>TCP는 데이터 전달을 관리하는 규칙이다. 즉, 데이터를 작게 나누어서 한쪽에서 다른쪽ㅇ로 옮기고, 이를 다시 조립하여 
+원래의 데이터로 만드는 규칙이다. 여기서 잘게 나눈 데이터를 패킷이라고 하고 인터넷에서는 정보를 전달하는 단위를 뜻한다.
+ TCP는 패킷을 조립하고, 손실된 패킷을 확인하고, 재저송하도록 요청하는 기능을 한다.</p>
+
+<p>IP는 인터넷상의 주소 규칙이다.</p>
+
+<h3>TCP/IP 4계층</h3>
+
+<p>OSI(Open Systems Interconnections) 7계층은 시스템들의 연결을 위한 모델이며, TCP/IP 4계층은 
+이를 웹 서비스에 맞게 단순화시킨 모델이다.</p>
+
+<img width="720" alt="스크린샷 2020-04-26 오후 8 20 40" src="https://user-images.githubusercontent.com/26623547/80306055-cc28fa00-87fb-11ea-8e00-cad77c04af39.png">
+
+<br/><br/>
+<h3>TCP/IP 4 계층 진행 과정</h3>
+<br/>
+<pre>
+1. 클라이언트로부터 특정 주소로 요청이 들어오면 DNS 상에서 IP주소를 받아온다.
+2. HTTP 계층에서 HTTP 메시지를 작성한다.
+3  TCP계층에서 HTTP 메시지를 패킷으로 분해한다.
+4. IP계층에서 전송위치를 확인하고 네트워크를 통하여 전송한다.
+5. 그 후로 역순으로 진행하여 처리한다.
+</pre>
+<br/>
+<img width="515" alt="스크린샷 2020-04-26 오후 8 21 09" src="https://user-images.githubusercontent.com/26623547/80306053-c3382880-87fb-11ea-89e8-a73d842df480.png">
+
 <p>
-<a href="https://helols.tistory.com/15">관련 링크</a>
+Reference
 </p>
+<a href="https://helols.tistory.com/15">https://helols.tistory.com/15</a>
+<br/>
+<a href="https://medium.com/@chrisjune_13837/web-http-tcp-ip-%EB%A9%94%EC%8B%9C%EC%A7%80%EB%9E%80-4b2721fe296f">https://medium.com/@chrisjune_13837/web-http-tcp-ip-%EB%A9%94%EC%8B%9C%EC%A7%80%EB%9E%80-4b2721fe296f</a>
+<br/><br/>
 
 
 
