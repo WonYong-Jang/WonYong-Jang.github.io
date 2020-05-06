@@ -18,11 +18,28 @@
   .navbar-nav {
     > li.nav-item {
       > a {
-        font-size: 12px;
+        font-size: 20px;
         font-weight: 800;
         letter-spacing: 1px;
         text-transform: uppercase;
       }
+      > ul { /* 평상시에는 드랍메뉴가 안보이게 */
+        display:none;
+        position:absolute;
+      }
+    }
+    > li:hover ul { /* 마우스 커서 올리면 드랍메뉴 View */
+        display:block;
+    }
+    > li {
+       > ul { /* Posts 카테고리 */
+        list-style:none;   /* 점 없애기 */
+        padding-left:25px; /* ul 들여쓰기 */
+        line-height:180%;  /* 위 아래 줄 간격 */
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: 1px;
+       }
     }
   }
   @media only screen and (min-width: 992px) {

@@ -1,0 +1,58 @@
+---
+layout: post
+title: "[WEB] Forward vs Redirect"
+subtitle: "Forward 와 Redirect 차이"
+comments: true
+categories : Web
+date: 2020-04-23
+background: '/img/posts/mac.jpg'
+---
+
+<h2 class="section-heading"> Forward 와 Redirect 차이 </h2>
+
+<h3>Forward 방식</h3>
+<p><u>Forward는 Web Container 차원에서 페이지의 이동만 존재한다. 실제로 웹 브라우저는 다른 페이지로 이동했음을 
+알수 없다. 그렇기 때문에 웹 브라우저에는 최초에 호출한 URL이 표시되고, 이동한 페이지의 URL 정보는 확인할수 없다.
+또한 현재 실행중인 페이지와 forward에 의해 호출될 페이지는 Request 객체와 Response 객체를 공유한다.</u></p>
+
+<img width="660" alt="스크린샷 2020-04-23 오후 9 10 25" src="https://user-images.githubusercontent.com/26623547/80098988-b8398a00-85a8-11ea-956b-861e55244cb5.png">
+
+<p>위와 같이 Forward는 다음으로<b> 이동 할 URL로 요청정보를 그대로 전달</b>한다. 그렇기 때문에<b> 사용자가 최초로 요청한
+ 요청정보는 다음 URL에서도 유효</b>하다. 예를 들어 게시판을 작성하는 과정이라고 할때, 사용자가 보낸 요청 정보를 이용하여 글쓰기
+ 기능을 수행한다고 할 때, forward를 사용하여 응답 페이지를 부르면 다음과 같은 문제가 발생하게 된다. 만약 사용자가 실수 혹은 
+ 고의로 글쓰기 응답 페이지에서 새로고침을 누른다면, 요청 정보가 그대로 살아 있기 때문에 요청이 여러 번 전달되어
+ 동일한 게시물이 여러 번 등록될 수 있다. 그렇기 때문에 게시판을 제작하는 과정에서<u> 시스템에 변화가 생기지 않는 단순 조회 요청</u>(글 목록 보기,
+  검색)의 경우 forward로 응답하는 것이 바람직하다.</p>
+
+<h3>Redirect 방식</h3>
+<p>Redirect는 Web Container로 명령이 들어오면,<u> 웹 브라우저에게 다른 페이지로 이동하라고 명령을 내린다. 그러면 웹 브라우저는
+ URL을 지시된 주소로 바꾸고 해당 주소로 이동한다. 다른 웹 컨테이너에 있는 주소로 이동하며 새로운 페이지에서는 Request와 
+ Response 객체가 새롭게 생성된다.</u></p>
+
+ <img width="660" alt="스크린샷 2020-04-23 오후 9 18 34" src="https://user-images.githubusercontent.com/26623547/80098998-ba9be400-85a8-11ea-94ee-066808cca896.png">
+
+ <p><u>Redirect의 경우 최초 요청을 받은 URL1에서 클라이언트에게 redirect할 URL2를 반환하고, 
+ 클라이언트에서는 새로운 요청을 생성하여 URL2에 다시 요청을 보낸다. 그러므로 처음 보냈던 최초의 Request와 Response 객체는
+ 유효하지 않고 새롭게 생성되는 것이다.</u> 예를들어 게시판을 작성하는 과정이라고 할 때, 사용자가 보낸 요청 정보를 이용하여
+ 글쓰기 기능을 수행한다고 할 때, redirect를 사용하여 응답 페이지를 부르면 사용자가 실수로 혹은 고의로 글쓰기 응답 페이지에서
+  새로고침을 누른다고 하더라도, 처음의 요청 정보는 존재하지 않으므로 게시물이 여러번 등록되지 않는다. 그렇기 때문에
+  <u>시스템에 변화가 생기는 요청(회원가입, 글쓰기 등)의 경우에는 redirect를 사용하는 것이 바람직하다.</u></p>
+
+<h3>요약</h3>
+<p>URL 변화 여부와 객체의 재사용 여부 차이점!</p>
+<pre>
+
+- Redirect => URL 변화 O, 객체 재사용 X
+- Forward =>  URL 변화 X, 객체 재사용 O
+
+</pre>
+
+
+<p>Reference</p>
+ <a href ="https://mangkyu.tistory.com/51">https://mangkyu.tistory.com/51</a>
+<br/><br/>
+
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}

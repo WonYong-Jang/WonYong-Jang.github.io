@@ -15,7 +15,7 @@ linkedin_username:  wonyong-jang-3250b4165/
 google_analytics:   UA-XXXXXXXXX-X # out your google-analytics code
 
 # Build settings
-markdown:           kramdown
+markdown: kramdown
 highlighter: rouge
 paginate:           10
 paginate_path:      "/posts/page:num/"

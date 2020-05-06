@@ -1,0 +1,213 @@
+---
+layout: post
+title: "[Algorithm] LIS (최장증가부분수열)"
+subtitle: "LIS 구하는 3가지 방법 "
+comments: true
+categories : Algorithm
+date: 2020-03-01
+background: '/img/posts/mac.png'
+---
+
+<h2 class="section-heading">첫번째 방법 O(n^2) </h2>
+
+<p> A={10,20,10,30,20,50} </p>
+
+<br/><br/>
+
+{% highlight ruby linenos %}
+    public class source {
+    
+    static int N;
+    static int[] dp, data;
+    public static void main(String[] args) throws IOException {
+        // TODO Auto-generated method stub
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        N = Integer.parseInt(st.nextToken());
+        dp = new int[N+1];
+        data = new int[N+1];
+        
+        st = new StringTokenizer(br.readLine());
+        for(int i=1; i<= N; i++) {
+            data[i] = Integer.parseInt(st.nextToken());
+        }
+        
+        int answer = 0;
+        for(int i=1; i<= N; i++)
+        {
+            for(int j=0; j< i; j++)
+            {
+                if(data[j] < data[i]) { 
+                    dp[i] = Math.max(dp[i], dp[j]+1);
+                    answer = Math.max(answer, dp[i]);
+                }
+            }
+        }
+        bw.write(answer+"\n");
+        bw.flush();
+        }
+    }
+{% endhighlight %}
+
+
+<p><b> 첫번째 방법은 DP를 이용한 방법 </b></p>
+<p><u> dp[i] = 1 ~ i 번째까지 가장 긴 증가하는 부분 수열의 갯수</u> 라고 정의했을 때
+2중 for문을 돌면서 이전에 누적했었던 값들을 이용해서 구할 수 있을 것처럼 보입니다.
+</p>
+<p>예를 들면, dp[1] = 1 첫번째 값은 무조건 1이되고 dp[2] 를 구하려면 i=2 보다 
+이전의 인덱스를 j라고 했을때 data[j] 가 data[2] 보다 작다면 dp[j]+1 이 dp[2] 보다 큰지 확인하고
+dp[2] = dp[j]+1 로 값을 변경합니다.
+</p>
+<p> dp[2] = 자기 자신이 가장 큰 부분 수열 일수 있으니 1에서 부터 시작을 하고
+data[1] 보다 data[2] 가 크기때문에 dp[2] = dp[1] + 1 로 업데이트 합니다.
+</p>
+<p>dp[3] = 1 으로 동일하게 시작하며, data[1] ~ data[2] 까지 차례차례 data[3] 보다
+작은 값들을 확인합니다. 예제에서는 작은 값이 나오지 않았기 때문에 그대로 
+dp[3]=1로 저장 됩니다.
+</p>
+<p>dp[4] = 1 에서 시작하며, data[1]~data[3] 까지 차례차례 작은 값들을 확인합니다.
+data[1] 이 data[4]보다 작으므로 dp[4] = dp[1] + 1 으로 변경하여 dp[4]=2 가 되고
+for문을 계속 돌며 확인합니다. data[2] 가 data[4] 보다 작으므로 dp[4]=dp[2]+1 로
+업데이트가 됩니다.<b> 즉, dp[i] = max(dp[i], dp[j]+1) 이라는 점화식이 나오게 됩니다.</b>
+data[3] 이 data[4]보다 작지만 이전에 구했던 값이 dp[3]+1 보다 크므로 continue 하게 됩니다.
+</p>
+<p>최종적으로 dp[i] 가 가장 큰 값을 최장 증가 부부 수열로 출력하며 됩니다.
+</p>
+
+
+<h2 class="section-heading">두번째 방법 O(nlogn) </h2>
+<br/>
+<img width="700" alt="스크린샷 2020-03-30 오후 11 15 37" src="https://user-images.githubusercontent.com/26623547/77922882-9c5e0380-72dc-11ea-8dc1-01a18a95f4c8.png">
+
+<img width="621" alt="스크린샷 2020-03-30 오후 11 15 49" src="https://user-images.githubusercontent.com/26623547/77922899-a2ec7b00-72dc-11ea-9347-12d5e6deca29.png">
+<br/><br/>
+<h3>Lower_bound</h3>
+
+
+
+<p><i>원하는 값 k 이상의 값이 처음으로 나오는 인덱스 리턴!</i></p>
+
+<p><u>주의!: 만약 모든 원소가 k 보다 작으면 n+1 을 출력하게 되는데 그렇기 때문에
+처음 구간을 잡을때 [1,n+1] 로 잡을것!!!</u></p>
+
+<pre>
+ex1) 1 3 5 7 7 / target : 7 일 때 ==> 4번째 인덱스 리턴
+ex2) 1 2 3 5 7 9 11 15 / target : 6 일때 ==> 5번째 인덱스 리턴 
+ex3) 1 2 3 4 5 / target : 7 일 때 ==> 6번째 인덱스 출력 ( n + 1 )
+</pre>
+
+{% highlight ruby linenos %}
+
+    public static int lower_bound(int s, int e, int target)
+    {
+        int mid = 0;
+        while(s < e)
+        {
+            mid = (s + e) / 2;     // 정렬 되어 있기 때문에 이분 탐색
+            if(dp[mid] < target) { // 답이 될수 없는 경우
+                s = mid + 1;
+            }
+            else e = mid;          // target 보다 크거나 같은 경우, 가장 정확한
+        }
+        return e;
+    }
+
+{% endhighlight %}
+
+<h3>Upper_bound</h3>
+
+준비중 
+
+
+<h2 class="section-heading">세번째 방법 O(nlogn) </h2>
+
+<p><u>인덱스 트리를 이용한 방법!</u></p>
+<p></p>
+
+{% highlight ruby linenos %}
+
+public class Main {
+
+    static int N, start, end;
+    static Node[] data;
+    static int[] tree;
+    public static void main(String[] args) throws IOException {
+        // TODO Auto-generated method stub
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        N = Integer.parseInt(st.nextToken());
+        tree = new int[N*4]; // 인덱스 트리 전체 tree size
+        data = new Node[N+1];
+        start = 1;
+        while(N > start) start *= 2; // 리프 노드의 시작 인덱스 구하기
+        end = start + N - 1;         // 리프 노드의 마지막 인덱스
+
+        st = new StringTokenizer(br.readLine());
+        for(int i=1; i<= N; i++) {
+            int num = Integer.parseInt(st.nextToken());
+            data[i] = new Node(num, i);
+        }
+
+        // 값에 대해 오름차순, 값이 같다면 인덱스로 내림차순 !
+        Arrays.sort(data, 1, N+1, new mySort());
+        int ans = 0;
+        for(int i=1; i<= N; i++) {
+            int index = data[i].index;
+            int target = getMax(1, index-1);
+            ans = Math.max(ans, target+1);
+            update(index, target+1);
+        }
+        bw.write(ans+"\n");
+        bw.flush();
+    }
+    public static int getMax(int sdx, int edx) {
+        int num = 0;
+        int s = sdx + start - 1;
+        int e = edx + start - 1;
+
+        while( s <= e) {
+            if(s % 2 != 0) num = Math.max(num, tree[s]);
+            if(e % 2 == 0) num = Math.max(num, tree[e]);
+
+            s = (s + 1) / 2;
+            e = (e - 1) / 2;
+        }
+
+        return num;
+    }
+    public static void update(int idx, int num) {
+        int index = idx + start - 1; // 리프노드 인덱스 값
+
+        while(index > 0) { // 주의 : 기존에 있던 tree[index] 값보다 클 경우만 업데이트!
+            if(tree[index] < num) {
+                tree[index] = num;
+                index /= 2;
+            }
+            else break;
+        }
+    }
+    static class mySort implements Comparator<Node> {
+        @Override
+        public int compare(Node a, Node b) {
+            if(a.num != b.num) return a.num - b.num;
+            else return b.index - a.index;
+        }
+    }
+    static class Node {
+        int num, index;
+        Node(int a, int b) {
+            num = a; index = b;
+        }
+    }
+}
+
+{% endhighlight %}
+
+
+
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}

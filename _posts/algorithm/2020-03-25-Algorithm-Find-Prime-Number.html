@@ -1,0 +1,30 @@
+---
+layout: post
+title: "[Algorithm] 소수 구하기"
+subtitle: "효율적인 소수 구하기(에라토스테네스의 체)"
+comments: true
+categories : Algorithm
+date: 2020-03-25
+background: '/img/posts/mac.png'
+---
+
+<h2 class="section-heading">소수 구하는 알고리즘 </h2>
+<p>소수는 약수로 1과 자기자신만을 가지는 정수이다. 또한, 모든 자연수는 단 하나의 소수들의 곱으로 표현된다.</p>
+
+<p>기본적인 접근은 <u>소수는 1과 N만을 약수로 가진다. 그럼 2부터 N-1까지의 수로는
+나눠져서는 안된다.</u></p>
+
+<img width="649" alt="스크린샷 2020-03-25 오후 9 41 29" src="https://user-images.githubusercontent.com/26623547/77537871-245d9b00-6ee2-11ea-8d08-ea19747bf2e1.png">
+<br/><br/>
+<h3>에라토스테네스의 체</h3>
+<p><b>모든 자연수는 소수들의 곱으로 표현이 된다고 했는데, 제일 작은 소수 2부터
+시작한다. 2부터 N-1까지의 수 중에서 2의 배수를 모두 체로 거르고 남은 숫자들 중에서
+3의 배수를 거르고를 반복해서 제곱근 N까지 나눠서 걸러지지 않고 남은 수들이 모두 소수가 된다.</b></p>
+<img width="655" alt="스크린샷 2020-03-25 오후 9 41 54" src="https://user-images.githubusercontent.com/26623547/77537884-2a537c00-6ee2-11ea-8d92-1b10a1791c10.png">
+<img width="560" alt="스크린샷 2020-03-25 오후 9 48 43" src="https://user-images.githubusercontent.com/26623547/77538120-8c13e600-6ee2-11ea-88e9-bdc24d764bd9.png">
+<br/><br/>
+<p><a href="http://blog.naver.com/PostView.nhn?blogId=kks227&logNo=220793360258&redirect=Dlog&widgetTypeCall=true&directAccess=false">관련 링크</a></p>
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}

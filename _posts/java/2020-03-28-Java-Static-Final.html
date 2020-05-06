@@ -1,0 +1,128 @@
+---
+layout: post
+title: "[Java] final static"
+subtitle: "final 멤버 변수에 static 붙이는 이유"
+comments: true
+categories : Java
+date: 2020-03-28
+background: '/img/posts/mac.png'
+---
+
+<h2 class="section-heading">final 키워드</h2>
+<pre>
+1) final 변수 : 해당 변수가 생성자나 대입연산자를 통해 한번만 초기화 가능함을 의미한다. 상수를 만들때 사용
+ - 그 값의 변경 및 새로운 할당이 불가능하다.
+
+2) final 메소드 : 해당 메소드를 오버라이드하거나 숨길 수 없음을 의미한다.
+3) final 클래스 : 해당 클래스는 상속할 수 없음을 의미한다. 문자 그대로 상속
+계층 구조에서 마지막 클래스 이다.
+ - 상속 불가이기 때문에 상속이 필수적인 abstract 추상 클래스와 함께 사용 못한다!
+</pre>
+
+<h3>주의) final 멤버 변수가 반드시 상수는 아니다.</h3>
+<p><u>왜냐면 final 정의가 상수이다가 아니라 한번만 초기화 가능하다 이기 때문!</u></p>
+<img width="380" alt="스크린샷 2020-03-28 오후 6 26 17" src="https://user-images.githubusercontent.com/26623547/77819900-cfa86300-7121-11ea-87bc-eb2757408272.png">
+<p>위의 코드에서 final 멤버 변수 value 는 생성자를 통해 초기화 되었다. 즉, 
+이 클래스의 인스턴스들은 각기 다른 value 값을 갖게 된다!! 각 인스턴스 안에서는
+변하지 않겠지만, 클래스 레벨에서 통용되는 상수라고는 할수 없다.</p>
+
+<h2 class="section-heading">static 키워드</h2>
+<p>static 데이터는 런타임 중에 필요할 때마다 동적으로 할당 및 해제 되는
+동적 데이터와는 기능과 역할이 구분된다. 동적 데이터와는 달리 static 데이터는
+프로그램 실행 직후부터 끝날 때까지 메모리 수명이 유지 된다.</p>
+
+<p><u>static을 사용한다는 의미는 해당 객체를 공유 하겠다는 의미이다. 여기저기서
+해당 객체를 사용한다하면, 그 객체는 항상 동일한 객체라는 뜻이다. </u></p>
+
+<b>주의) 그래서 static이 선언된 변수 값을 바꿔버리면 다른 곳에서 해당 변수의
+값을 참조하는 부분의 값이 변한다!!</b>
+
+<p><b>1) static 멤버 변수</b></p>
+<pre>
+- 클래스 변수라고 부른다.
+- 모든 해당 클래스는 같은 메모리를 공유 한다.
+- 인스턴스를 만들지 않고 사용 가능하다.
+ex) 다른 클래스에서 접근하려는 경우 static 변수가 존재하는 클래스 명 뒤에 (.)
+ 을 찍고 static 변수의 명을 써주면 접근 가능하다.
+</pre>
+
+<p><b>2) static 메소드</b></p>
+<pre>
+- 클래스 메소드라고도 부른다.
+- 오버라이드 불가하다.
+- 상속받은 클래스에서 사용 불가능하다.
+</pre>
+
+<p><b>3) static 블록</b></p>
+<pre>
+- 클래스 내부에 만들수 있는 초기화 블록이다.
+static {
+    // 초기화 할 내용 선언
+    // 클래스가 초기화될때 실행되고, main() 보다 먼저 수행
+}
+</pre>
+
+<p><b>4) static import</b></p>
+<pre>
+- 다른 클래스에 존재하는 static 멤머들을 불러올 때 사용한다.
+- 멤버 메소드를 곧바로 사용할 수 있다.
+=> 클래스 명과 점을 통한 호출이 필요없이 바로 사용 가능하다.
+ex) import static packageName.ClassName.staticMemberName
+ex) import static packageName.ClassName.* // 모든 static 멤버 불러오기 가능
+</pre>
+
+<h2 class="section-heading">클래스 멤버 변수를 final 로 지정하는 이유</h2>
+<p><u>클래스에서 사용할 해당 멤버 변수의 데이터와 그 의미, 용도를 고정시키겠다는 뜻</u></p>
+<pre>
+=> 해당 클래스를 쓸때 변하지 않고 계속 일관된 값으로 쓸 것을 멤버 상수로 지정 
+ex) 기독교 클래스에서 멤버 변수 신의 이름을 만들어서 사용한다면 해당 클래스를
+    받아서 어떻게 쓰든 변함없이 하나님 으로 고정
+ex) 중학교 성적 클래스에서 과목 최대 점수 변수를 만든다면 100 으로 고정
+</pre>
+
+<p>이 값들은 모든 클래스 인스턴스에서 똑같이 써야할 값이기 때문에 인스턴스가
+만들어 질때마다 새로운 메모리를 잡고 초기화하지 않고 하나의 메모리 공간에서 
+더 효율적적으로 사용 가능하다!</p>
+
+<img width="421" alt="스크린샷 2020-03-29 오후 2 00 03" src="https://user-images.githubusercontent.com/26623547/77840740-afca7b00-71c5-11ea-88dc-5c55d17f4abd.png">
+<p><u>static final 은 객체 마다 값이 바뀌는 것이 아닌 상수 이므로 선언과
+동시에 초기화 해주어야 하는 클래스 상수이다.</u></p>
+<pre>
+=> 또한, private final 을 사용하면 해당 필드, 메서드 별로 호출할 때마다
+새롭게 값이 할당(인스턴스) 하지만 아래처럼 한번 선언한 변수를 사용하면
+재할당하지 않으며, 메모리에 한번 올라가면 같은 값을 크래스 내부의 전체
+필드, 메모리에 공유하기 때문에 효율적이다!
+// logger를 선언할 때
+private static final Logger logger = LoggerFactory.getLogger(Test.class);
+</pre>
+<h2 class="section-heading">final 멤버변수에 static을 사용하지 않는 경우</h2>
+<p><b>위에서 언급한 것처럼, 각 인스턴스마다 서로 다른 final 멤버 변수를 생성자에서
+초기화시키는 식으로 사용하는 경우에는 static을 사용하지 않을 것이다! 즉, 
+    인스턴스를 생성할 때 한번만 초기화 하고 쭉 변화 없이 사용할 내용이라면 
+    static을 사용하지 않고 사용한다!</b></p>
+
+<img width="770" alt="스크린샷 2020-03-29 오후 2 03 36" src="https://user-images.githubusercontent.com/26623547/77840787-1b144d00-71c6-11ea-9455-e8f12bc332d3.png">
+<p>위의 스프링 공식 문서에 포함된 예제인데, MovieRecommender 클래스가
+CustomerPreferenceDao를 private final 멤버 필드로 가지고 있으며, 생성자를 통해
+주입받아 한번 초기화되고 있다. 이제 MovieRecommender의 인스턴스는 작동 내내
+변하지 않고 사용하게 된다!</p>
+
+<p>코드를 풀이해 보면, 영화 추천 클래스는 소비자 선호도 자료에 접근하는
+외부 기능을 가져다 사용하고있다(소비자 선호도 데이터 접근 기능에 의존성이 있다)</p>
+
+<p><u>이는 영화추천 기능과 소비자 선호도 자료 접근 기능이 서로 독립적이며, 
+ 영화 추천 기능 사용중에 소비자 선호도 자료 접근 기능이 바뀌지 않을 것임을 의미한다.</u></p>
+
+<h2 class="section-heading">static 멤버 변수에 final을 사용하지 않는 경우</h2>
+<p>명확한 목적이 있는 경우를 제외하고 보통의 경우엔 좋은 코딩 관례로 보기 어렵다. static 
+필드는 클래스 스코프(범위)의 전역 변수라 볼수 있다. final 을 쓰지 않았다면 
+값이 얼마든지 바뀔수 있는 상태이므로, 모든 클래스 인스턴스에서 접근하여 
+그 값을 변경할수 있음을 의미한다. 즉, 값을 추론하거나 테스트하기 어렵게 만든다.</p>
+
+<p>Reference</p>
+ <a href ="https://djkeh.github.io/articles/Why-should-final-member-variables-be-conventionally-static-in-Java-kor/">https://djkeh.github.io/articles/Why-should-final-member-variables-be-conventionally-static-in-Java-kor/</a>
+<br/><br/>
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}
+
