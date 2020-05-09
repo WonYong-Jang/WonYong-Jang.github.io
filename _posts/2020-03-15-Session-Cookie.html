@@ -1,22 +1,14 @@
 ---
 layout: post
-title: "[Spring] Session, Cookie"
+title: "[WEB] Jsessionid "
+subtitle: "Jsessionid"
+comments: true
+categories : Web
 date: 2020-03-01
 background: '/img/posts/05.jpg'
 ---
 
-<h2 class="section-heading">세션과 쿠키</h2>
+<h2 class="section-heading">Jsessionid 란?</h2>
 
-<p>웹 서비스는 HTTP 프로토콜을 기반으로 사용자와 통신한다. HTTP 프로토콜은 클라이언트와
-서버와의 관계를 유지하지 않는 특징인 Stateless 기반인 프로토콜이다.
-</p>따라서 만약 쇼핑몰같은 웹서비스를 이용할 때 만약 HTTP 프로토콜만으로 통신한다면
-페이지를 이동할 때마다 계속해서 서버와 연결해야하는 불편함이 생긴다. 또한 사용자의
-요청마다 서버와 매번 새로운 연결이 생기기 때문에 로그인 상태유지, 장바구니 등의
-기능을 구현하는 것이 매우 까다로워진다.
-<p>이런 Stateless 상태를 해결하는 두가지 방식이 있는데 세션과 쿠키이다. 두 방식
-모두 사용자와 서버의 연결 상태를 유지해주는 방법으로, 세션은 서버에서 연결 정보를
-관리하는 반면 쿠키는 사용자에 측에서 연결 정보를 관리하는데 차이가 있다.
-</p>
-<p>스프링 MVC에서 세션은 HttpServletRequest 혹은 HttpSession을 사용해서 구현할 수 있다.
-</p>
-
+<p>세션에서 사용되는 쿠키 이름이다. 쿠키는 클라이언트에, 세션은 서버에 저장 되는 걸로 알고 있는게 
+일반적이고 그러므로 쿠키보단 세션이 보안에 좋다는건 기본적인 상식이다. </p>

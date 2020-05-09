@@ -13,7 +13,7 @@ background: '/img/posts/mac.png'
 <p>We found a potential security vulnerability in one of your dependencies.</p>
 
 <p>위의 내용으로 계속해서 메일이 오고 Github 화면에서 계속해서 나타나서 확인 해보니 
-package.json을 확인해보니 패키지 내용에도 없었기 때문에 내가 사용하고 있는 패키지 중에 
+package.json의 패키지 버전 문제가 있는 것 같다. 하지만 패키지에 해당 내용도 없었기 때문에 내가 사용하고 있는 패키지 중에 
 무언가 의존하고 있는 것 같다. 해결 방법은 아래와 같다.</p>
 
 ```
