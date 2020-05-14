@@ -22,7 +22,11 @@
         font-weight: 800;
         letter-spacing: 1px;
         text-transform: uppercase;
-      }
+        }
+      > .current {
+            background-color: black;
+            color:white;
+        }
       > ul { /* 평상시에는 드랍메뉴가 안보이게 */
         display:none;
         position:absolute;
