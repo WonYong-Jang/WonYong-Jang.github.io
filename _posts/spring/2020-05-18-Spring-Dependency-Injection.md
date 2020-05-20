@@ -82,6 +82,8 @@ InlineExamConsole로 변경하려면 ?
 `자바 소스코드는 변경이 필요 없고 DI 설정 파일인 setting.xml의 console 설정 부분만 변경하면 된다! `   
 `스프링 DI를 사용함으로써 소스코드 유지보수가 쉽고 Loose coupling을 통해 유연한 변경이 가능 `
 
+---
+
 [http://www.newlecture.com](http://www.newlecture.com)
 
 

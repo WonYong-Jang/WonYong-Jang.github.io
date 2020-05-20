@@ -25,8 +25,7 @@ background: '/img/posts/spring.png'
 위 처럼 미리 객체를 IoC 컨테이너에 만들어 놓고 그 객체를 주입받아서 사용 한다면, 
     객체끼리의 불필요한 의존성을 없애거나 줄일 수 있게 된다.
 
-## IoC(Inversion of Control) Container
-
+---
 
 [http://www.newlecture.com](http://www.newlecture.com)
 
