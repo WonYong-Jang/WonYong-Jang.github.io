@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spring] Inversion Of Control"
-subtitle: "컨테이너(IoC컨테이너) 와 Bean"
+subtitle: "스프링 컨테이너(IoC컨테이너) 와 Bean"
 comments: true
 categories : Spring
 date: 2020-05-19
@@ -24,9 +24,9 @@ Spring은 거대한 컨테이너임과 동시에 IoC/DI를 기반으로 하고 �
 ### 1. 빈팩토리 BeanFactory   
 
 DI의 기본사항을 제공하는 컨테이너이며 팩토리패턴(디자인패턴)을 구현 한것   
-[디자인패턴 개념](https://wonyong-jang.github.io/java/2020/05/17/Java-Loose-coupling.html)   
+[팩토리패턴 개념](https://wonyong-jang.github.io/java/2020/05/17/Java-Loose-coupling.html)   
 
-> 빈팩토리가 빈의 정의는 즉시 로딩하는 반면, 빈 자체가 필요하게 되기 전까지 
+>  빈의 정의는 즉시 로딩하는 반면, 빈 자체가 필요하게 되기 전까지 
 인스턴스화 하지 않는다 (lazy loading, 게으른 호출)      
 <img width="650" alt="스크린샷 2020-05-23 오후 3 58 53" src="https://user-images.githubusercontent.com/26623547/82724074-65213700-9d0e-11ea-8ebc-b1d9281cfc9b.png">   
 
@@ -36,7 +36,7 @@ getBean()이 호출되면, 팩토리는 의존성 주입을 이용해 빈을 인
 <br>
 ### 2. 어플리케이션 컨텍스트 ApplicationContext   
 
-DI를 위한 빈팩토리에 엔터프라이즈 애플리케이션을 개발하는데 필요한 여러 컨테이너 기능을 추가한 것.   
+빈팩토리와 유사한 기능을 제공하지만 좀 더 많은 기능을 제공하는 어플리케이션 컨텍스트    
 **getBean()이 호출된 시점에서야 해당 빈을 생성하는 빈팩토리와 달리, 컨텍스트 초기화시점에 
 모든 싱글톤 빈을 미리 로드해 놓는다.**   
 
@@ -110,7 +110,7 @@ Beans는 우리가 컨테이너에 공급하는 설정 메타 데이터(XML 파�
 
 **스프링 Bean Scope**
 
-`스프링은 기본적으로 모둔 bean을 singleton으로 생성하여 관리한다!`   
+`스프링 bean은 별도의 scope를 지정하지 않으면 Default는 singleton으로 생성하여 관리한다!`   
 구체적으로는 애플리케이션 구동시 JVM 안에서 스프링이 bean마다 하나의 객체를 생성하는 것을 의미한다.   
 그래서 우리는 스프링을 통해서 bean을 제공받으면 언제나 주입받은 bean은 동일한 객체라는 가정하에 개발한다.   
 
