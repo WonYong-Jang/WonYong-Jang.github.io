@@ -5,7 +5,7 @@ subtitle: "Jsessionid"
 comments: true
 categories : Web
 date: 2020-05-10
-background: '/img/posts/mac.jpg'
+background: '/img/posts/mac.png'
 ---
 
 # JSESSIONID란?   

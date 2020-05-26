@@ -5,7 +5,7 @@ subtitle: "보안 취약점 분석툴 Burp Suite, Fiddler와 보안 취약점"
 comments: true
 categories : Web
 date: 2020-03-31
-background: '/img/posts/mac.jpg'
+background: '/img/posts/mac.png'
 ---
 
 <h2 class="section-heading">The Open Web Application Security Project </h2>

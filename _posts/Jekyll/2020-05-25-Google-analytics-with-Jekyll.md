@@ -5,7 +5,7 @@ subtitle: "google analytics를 이용하여 방문자 및 웹 분석"
 comments: true
 categories : Jekyll
 date: 2020-05-25
-background: '/img/posts/03.jpg'
+background: '/img/posts/mac.png'
 ---
 
 ## Google analytics 연동하기 
