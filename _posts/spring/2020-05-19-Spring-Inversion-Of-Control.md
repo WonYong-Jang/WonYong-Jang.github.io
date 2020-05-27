@@ -50,10 +50,11 @@ getBean()이 호출되면, 팩토리는 의존성 주입을 이용해 빈을 인
 
 > 따라서 대부분의 애플리케이션에서는 빈팩토리보다 어플리케이션 컨텍스트를 사용하는 것이 좋다.   
 
-가장 많이 사용되는 어플리케이션 컨텍스트 구현체
+어플리케이션 컨텍스트 구현체 종류
 - ClassPathXmlApplicationContext : 클래스패스에 위치한 xml 파일에서 컨텍스트 정의 내용을 읽어들인다.   
 - FileSystemxmlApplicationContext : 파일 경로로 지정된 xml 파일에서 컨텍스트 정의 내용을 읽어들인다.   
-- XmlWebApplicationContext : 웹 어플리케이션에 포함된 xml파일에서 컨텍스트 정의 내용을 읽어들인다.   
+- XmlWebApplicationContext : 웹 어플리케이션에 포함된 xml파일에서 컨텍스트 정의 내용을 읽어들인다.
+- AnnotationConfigApplicationContext : 위의 3개는 XML설정인 반면에, 어노테이션을 가지고있는 자바파일을 config로 사용하여 읽어들인다.
 
 <img width="650" alt="스크린샷 2020-05-23 오후 4 09 27" src="https://user-images.githubusercontent.com/26623547/82724323-2ee4b700-9d10-11ea-86b9-653bdc6ad78d.png">
 
@@ -108,13 +109,29 @@ Beans는 우리가 컨테이너에 공급하는 설정 메타 데이터(XML 파�
 
 > 우리 new 연산자로 어떤 객체를 생성했을 때 객체는 bean이 아니며, ApplicationContext가 만들어서 그 안에 담고 있는 객체를 의미한다. ApplicationContext.getBean()으로 얻어질 수 있는 객체가 Bean이다!  
 
-**스프링 Bean Scope**
+#### 스프링 Bean Scope
+- - - 
+##### 1. Singleton
 
 `스프링 bean은 별도의 scope를 지정하지 않으면 Default는 singleton으로 생성하여 관리한다!`   
 구체적으로는 애플리케이션 구동시 JVM 안에서 스프링이 bean마다 하나의 객체를 생성하는 것을 의미한다.   
 그래서 우리는 스프링을 통해서 bean을 제공받으면 언제나 주입받은 bean은 동일한 객체라는 가정하에 개발한다.   
+컨테이너가 사라질 때 bean도 제거된다.   
+```
+<bean id= "" class = "" scope ="singleton"/> // xml   
+@Scope("singleton")                          // anotation
+```
 
+##### 2. Prototype
 
+`모든 요청에서 새로운 객체를 생성하는 것을 의미한다.`   
+즉, Prototype bean은 의존성 관계의 bean에 주입 될 때 새로운 객체가 생성되어 주입된다.   
+정상적인 방식으로 gc에 의해 bean이 제거된다.   
+
+```
+<bean id= "" class = "" scope ="prototype"/> // xml
+@Scope("prototype")                          // anotation
+```
 
 
 ---
