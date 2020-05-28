@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spring] Autowired를 이용한 DI"
+title: "[Spring] @Autowired를 이용한 DI"
 subtitle: "Autowired, Qualifier 어노테이션"
 comments: true
 categories : Spring
