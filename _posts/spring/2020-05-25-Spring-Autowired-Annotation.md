@@ -48,8 +48,13 @@ background: '/img/posts/spring.png'
 > 변수명과 id를 맵핑시켜서 해결할 수 있지만 변수명을 자꾸 변경하는 것보다 Qualifier 권장   
 <img width="292" alt="스크린샷 2020-05-26 오후 9 46 10" src="https://user-images.githubusercontent.com/26623547/82902378-55b61e00-9f9a-11ea-81af-292a8dc9a645.png">
 
-> Qualifier 어노테이션을 이용하여 동일한 타입에 대하여 맵핑하여 해결  
+> Qualifier 어노테이션을 이용하여 동일한 타입에 대해 bean의 id 와 맵핑하여 연결    
 <img width="282" alt="스크린샷 2020-05-26 오후 9 26 15" src="https://user-images.githubusercontent.com/26623547/82900829-0ff85600-9f98-11ea-9df1-2e0818dd06ef.png">
+
+> Bean 등록시 id를 따로 지정하지 않았으면 클래스 이름과 비교하여 DI   
+> 이런경우 첫글자는 반드시 소문자로 탐색해야 한다. ex) computer   
+<img width="605" alt="스크린샷 2020-05-29 오후 9 02 16" src="https://user-images.githubusercontent.com/26623547/83258405-2e0cc300-a1f1-11ea-91b8-a55195bdfb42.png">    
+
 
 #### Autowired 의존 객체 찾는 순서!!
 
@@ -109,6 +114,7 @@ required 값을 true나 false 로 줄 수 있다.(default 는 true)**
 Reference   
 
 [http://www.newlecture.com](http://www.newlecture.com)   
+[https://galid1.tistory.com/494](https://galid1.tistory.com/494)   
 
 
 {% highlight ruby linenos %}
