@@ -27,6 +27,21 @@ $ npm audit
 $ npm audit fix
 ```
 
+
+#### github > Insight > Dependency Graph 메뉴 확인  
+
+<img width="1000" alt="스크린샷 2020-05-29 오후 11 03 41" src="https://user-images.githubusercontent.com/26623547/83269870-a92aa500-a202-11ea-8a69-020c37087fea.png">   
+
+- 위처럼 노란색 부분이 보이면 업데이트 같이 진행   
+
+```
+$ npm update node-extend 
+$ npm -D install node-extend 
+```
+- - - 
+마지막 git push 
+
+- - - 
 <p>Reference</p>
 <a href="https://jiggag.github.io/github-dependency/">https://jiggag.github.io/github-dependency/</a>
 
