@@ -15,6 +15,9 @@ XML 설정파일 대신 자바 클래스를 새로 생성하여 클래스 상단
 <img width="800" alt="스크린샷 2020-05-30 오후 4 44 03" src="https://user-images.githubusercontent.com/26623547/83322700-d3c53e00-a294-11ea-969c-b00f85c074d2.png">   
 > @Bean으로 선언된 메소드 이름을 bean 이름으로 IoC 컨테이너에 담는다. (exam 으로 담는다)   
 
+
+<img width="598" alt="스크린샷 2020-05-30 오후 10 04 44" src="https://user-images.githubusercontent.com/26623547/83328953-acd13100-a2c1-11ea-8a24-9de63cf384d6.png">   
+
 <br>
 ## @Bean 과 @Component 차이 
 - - -

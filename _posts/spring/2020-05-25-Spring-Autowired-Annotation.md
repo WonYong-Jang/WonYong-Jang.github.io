@@ -17,7 +17,10 @@ background: '/img/posts/spring.png'
 ### XML설정파일-> Autowired 어노테이션 변경
 
 **XML설정파일에서 Property로 설정했던 Bean 제거**   
-[예제소스 링크](https://wonyong-jang.github.io/spring/2020/05/18/Spring-Dependency-Injection.html)   
+[예제소스 링크](https://wonyong-jang.github.io/spring/2020/05/18/Spring-Dependency-Injection.html)  
+
+<img width="400" alt="스크린샷 2020-05-30 오후 10 21 25" src="https://user-images.githubusercontent.com/26623547/83329348-f28ef900-a2c3-11ea-80d6-70636173a74f.png">   
+
 > setter를 이용하여 exam 객체를 주입했던 부분 주석처리 
 <img width="466" alt="스크린샷 2020-05-25 오후 11 42 03" src="https://user-images.githubusercontent.com/26623547/82823109-eda40100-9ee1-11ea-9900-62d886ee34ff.png">   
 
