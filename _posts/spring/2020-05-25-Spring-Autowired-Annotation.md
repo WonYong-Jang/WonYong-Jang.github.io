@@ -104,7 +104,8 @@ Setter 메소드를 통해서 Injection이 된다.
 
 **주의 : Autowired에 일치하는 타입이 없거나 Qualifier에 지정한 값이 IoC 컨테이너에 존재하지 않으면 컨테이너 생성 익셉션 에러 발생한다. 이를 위해 옵션이 존재하며, 
 required 값을 true나 false 로 줄 수 있다.(default 는 true)**
-```
+
+```html
 // DI에 필요한 객체가 무조건 bean에 등록되어있어야 한다.
 @Autowired(required = true)
 

@@ -25,11 +25,11 @@ A라는 클래스안에 B라는 클래스를 2가지 방법으로 객체화 해�
 
 #### 1. Setter Injection
 
-~~~ java
+```java
 B b = new B(); // 부품을 Dependency라고 한다면
 A a = new A();
 a.setB(b);     // 해당 부품 B를 A에 Injection
-~~~
+```
 
 #### 2. Construction Injection
 
