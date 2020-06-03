@@ -37,8 +37,6 @@ background: '/img/posts/spring.png'
 <img width="600" alt="스크린샷 2020-06-01 오후 9 38 02" src="https://user-images.githubusercontent.com/26623547/83409926-5cd4a480-a450-11ea-99b7-083df65941cb.png">    
 
 ```ruby
-<!-->
-abcd
 ```
 
 <h3>AOP 용어들</h3>
