@@ -105,6 +105,8 @@ public class Program {
 
 ## 스프링으로 AOP 구현하기 
 
+
+
 **Advice 종류**  
 
 - Before : 업무 로직 전에 실행 
@@ -115,6 +117,7 @@ public class Program {
 > 패키지 리스트    
 <img width="180" alt="스크린샷 2020-06-03 오후 11 43 37" src="https://user-images.githubusercontent.com/26623547/83651157-25066200-a5f4-11ea-92f5-1b0eb3df26f1.png">    
 
+### AroundAdvice  
 
 > Prgram.java    
 
@@ -181,7 +184,48 @@ public class LogAroundAdvice implements MethodInterceptor {
     </bean>
 
 ```
+- - - 
 
+### BeforeAdvice   
+
+> LogBeforeAdvice.java
+
+```java
+public class LogBeforeAdvice implements MethodBeforeAdvice{
+
+    @Override
+    public void before(Method method, Object[] args, Object target) throws Throwable {
+        System.out.println("앞에서 실행될 로직입니다. ");
+    }
+}
+```
+
+> setting.xml 에 추가 
+
+```xml
+
+    <bean id ="LogAroundAdvice" class ="spring.aop.advice.LogAroundAdvice" />
+    <bean id ="LogBeforeAdvice" class ="spring.aop.advice.LogBeforeAdvice" />
+    <bean id="target" class ="spring.aop.entity.NewLecExam" p:kor = "1" p:eng="1" p:math="1" p:com="1"/>
+    
+    <!-- Spring 에서 제공하는 Proxy 사용  -->
+    <bean id="proxy" class= "org.springframework.aop.framework.ProxyFactoryBean">
+        <!-- 실제 로드할 객체  -->
+        <property name = "target" ref = "target" />
+        
+        <!-- 부가적인 로직을 넣을 Handler   -->
+        <property name = "interceptorNames">
+            <list>
+                <value>LogAroundAdvice</value> 
+                <value>LogBeforeAdvice</value> <!-- 배열 형태로 추가 가능 -->
+            </list>
+        </property>
+        
+        <!-- 자바로 직접 구현했을 때 인터페이스를 넣어줘야 했는데 
+        스프링이 직접 알아서 맵핑  -->
+    </bean>
+
+```
 
 `스프링으로 AOP를 구현했을 때는 proxy와의 설정 관계를 자바코드와 분리했다는 것이 
 가장 큰 장점이고 proxy 설정이 간단해 졌다.`      
