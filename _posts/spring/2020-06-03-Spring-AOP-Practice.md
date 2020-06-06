@@ -290,7 +290,100 @@ public class LogAfterThrowingAdvice implements ThrowsAdvice{
 Exception in thread "main" 예외가 발생하였습니다. :유효하지 않는 국어점수
 java.lang.IllegalArgumentException: 유효하지 않는 국어점수
 ```
+- - - 
+## 어노테이션을 이용하여 AOP 구현   
 
+- AOP 설정과 관련해서 가장 중요한 라이브러리는 AspectJ와 AspectJ Weaver라는 라이브러리이다. 메이븐 또는 그래들에 추가하기   
+- Advice 클래스에 @Aspect 어노테이션을 추가함으로써 Aspect를 구현한 것을 나타낸다.   
+- 스프링 컨테이너에 추가하기 위해 Component 어노테이션을 추가한다.    
+- @Before, @After, @AfterReturnining, @AfterThrowing, @Around 
+
+```xml
+<!-- 아래와 같이 추가 또는 자바 config를 이용하여 추가 -->
+<context:component-scan base-package="org.zerock.service"></context:component-scan>	
+<context:component-scan base-package="org.zerock.aop"></context:component-scan>
+
+<!-- 스프링 2버전 이후에는 자동으로 proxy 객체를 만들어주는 설정 추가  -->
+<aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+```
+
+> LogAdvice.java   
+
+```java
+
+@Aspect  // 해당 객체가 Aspect를 구현한 것임으로 나타내기 위함!
+@Log4j
+@Component
+public class LogAdvice {
+
+    @Before( "execution(* org.zerock.service.SampleService*.*(..))")
+    public void logBeforeWithParam() {
+        log.info("advice");
+    }
+
+    @AfterThrowing(pointcut = "execution( * org.zerock.service.SampleService*.*(..))", throwing = "exception")
+    public void logException(Exception exception) {
+        log.info("Exception...!!!!");
+        log.info("exception: " + exception);
+    }
+
+    @Around("execution(* org.zerock.service.SampleService*.*(..))")
+    public Object logTime( ProceedingJoinPoint pjp) throws Throwable {
+
+        long start = System.currentTimeMillis();
+
+        log.info("Target: " + pjp.getTarget());
+        log.info("Param: " + Arrays.toString(pjp.getArgs()));
+
+        Object result = null;
+
+        try {
+            result = pjp.proceed();
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        long end = System.currentTimeMillis();
+
+        log.info("TIME: " + (end - start));
+
+        return result;
+    }
+}
+
+
+```
+
+> SampleServiceTests.java
+
+```java
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@Log4j
+@ContextConfiguration({"file:src/main/webapp/WEB-INF/spring/root-context.xml"})
+public class SampleServiceTests {
+
+    @Autowired
+    private SampleService service;
+
+    @Test
+    public void testClass() {
+        log.info(service);
+        log.info(service.getClass().getName());
+        // getClass()를 이용하여 JDK의 다이나믹 프록시 확인 가능
+        // INFO : org.zerock.service.SampleServiceTests - com.sun.proxy.$Proxy23
+    }
+
+    @Test
+    public void testAdd() throws Exception {
+        log.info(service.doAdd("123", "456"));
+    }
+}
+
+```
+
+
+- - - 
 
 `스프링으로 AOP를 구현했을 때는 proxy와의 설정 관계를 자바코드와 분리했다는 것이 
 가장 큰 장점이고 proxy 설정이 간단해 졌다.`      

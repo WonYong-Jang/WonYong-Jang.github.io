@@ -23,7 +23,9 @@ background: '/img/posts/spring.png'
 이전에는 개발자가 반복적으로 코드를 작성하여 중복이 생기고 핵심 로직을 파악하기 어렵게 만들기 
 때문에 AOP라는 개념이 탄생했다.**    
 
-`즉, AOP란 실제 핵심 로직(Core Concern)을 수행하면서 발생하는 횡단 관심사(Cross Cutting Concern)를 한데 모아 처리하는 것을 AOP라 한다.`   
+`즉, AOP란 실제 핵심 로직(Core Concern)을 수행하면서 발생하는 횡단 관심사(Cross Cutting Concern)를 한데 모아 처리하는 것을 AOP라 한다.`  
+
+개발자의 입장에서 AOP를 적용한다는 것은 기존의 코드를 수정하지 않고도 원하는 cross cutting concern을 엮을 수 있다는 점이 장점이다!    
 
 `AOP가 추구하는 것은 관심사의 분리이다!! AOP는 개발자가 염두에 두어야 하는
 일들을 별도의 관심사로 분리하고, 핵심 비즈니스 로직만을 작성할 것을 권장한다.`   
@@ -65,15 +67,16 @@ target은 순수한 비즈니스 로직을 가지고 있고, 어떠한 관심사
 
 `1) JoinPoint : Target 객체가 가진 여러 메서드`     
 `2) Pointcut : Target 에 가진 여러 메서드에 관심사를 결합할 것인지를 결정해야 하는데 이 결정을 Pointcut 이라 한다.`   
-`3) Weaving : Advice를 핵심코드와 연결, 적용`   
-Advice를 어떤 JoinPoint에 결합할 것인지를 결정하는 설정이다. AOP에서 Target은
-결과적으로 Pointcut에 의해서 자신에게 없는 기능들을 가지게 된다.
+
+Advice를 어떤 JoinPoint에 결합할 것인지를 결정하는 설정이다.    
 
 <p><b>- execution(@execution) : </b>메서드를 기준으로 Pointcut을 설정</p>
 <p><b>- within(@within) : </b>특정한 타입(클래스)을 기준으로 Pointcut 설정</p>
 <p><b>- this : </b>주어진 인터페이스를 구현한 객체를 대상으로 Pointcut을 설정</p>
 <p><b>- args(@args) : </b>특정한 파라미터를 가지는 대상들만을 Pointcut으로 설정</p>
 <p><b>- @annotation : </b>특정한 어노테이션이 적용된 대상들만을 Pointcut 으로 설정</p>
+
+`3) Weaving : Advice를 핵심코드와 연결, 적용`   
 
 #### Aspect 와 Advice   
 
