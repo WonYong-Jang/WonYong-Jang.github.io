@@ -117,6 +117,7 @@ public class Program {
 > 패키지 리스트    
 <img width="180" alt="스크린샷 2020-06-03 오후 11 43 37" src="https://user-images.githubusercontent.com/26623547/83651157-25066200-a5f4-11ea-92f5-1b0eb3df26f1.png">    
 
+- - -
 ### AroundAdvice  
 
 > Prgram.java    
@@ -203,9 +204,10 @@ public class LogBeforeAdvice implements MethodBeforeAdvice{
 > setting.xml 에 추가 
 
 ```xml
-
     <bean id ="LogAroundAdvice" class ="spring.aop.advice.LogAroundAdvice" />
     <bean id ="LogBeforeAdvice" class ="spring.aop.advice.LogBeforeAdvice" />
+    <bean id ="LogAfterReturningAdvice" class ="spring.aop.advice.LogAfterReturningAdvice" />
+    <bean id ="LogAfterThrowingAdvice" class ="spring.aop.advice.LogAfterThrowingAdvice" />
     <bean id="target" class ="spring.aop.entity.NewLecExam" p:kor = "1" p:eng="1" p:math="1" p:com="1"/>
     
     <!-- Spring 에서 제공하는 Proxy 사용  -->
@@ -218,6 +220,8 @@ public class LogBeforeAdvice implements MethodBeforeAdvice{
             <list>
                 <value>LogAroundAdvice</value> 
                 <value>LogBeforeAdvice</value> <!-- 배열 형태로 추가 가능 -->
+                <value>LogAfterReturningAdvice</value>
+                <value>LogAfterThrowingAdvice</value>
             </list>
         </property>
         
@@ -226,6 +230,67 @@ public class LogBeforeAdvice implements MethodBeforeAdvice{
     </bean>
 
 ```
+- - -
+### After Returning Advice
+
+> LogAfterReturningAdvice.java    
+
+```java
+
+public class LogAfterReturningAdvice implements AfterReturningAdvice{
+
+    @Override
+    public void afterReturning(Object returnValue, Method method, Object[] args, Object arg) throws Throwable {
+        System.out.println("returnValue:"+ returnValue+", "
+                + "method: "+ method.getName());
+    }
+    /*
+       returnValue:4, method: total
+       returnValue:1.0, method: avg
+    */
+}
+
+```
+- - -
+
+### After Throwing Advice   
+
+- 예외를 발생키기 위해서 국어 점수가 100점이 넘을 경우 IllegalArgumentException 발생시켜보기   
+
+`Core concern 실행 중 예외가 발생했을 경우는 After Advice로 가지 않고 After Throwing Advice로 
+바로 넘어가서 예외를 처리한다.`   
+
+> NewLecExam.java   
+
+```java
+
+if(kor > 100)
+            throw new IllegalArgumentException("유효하지 않는 국어점수 ");
+
+```
+
+
+```java
+
+// ThrowsAdvice 구현 해야할 구현체가 정해져 있지 않다!
+// 다른 Advice는 전달할 인자와 전달 받을 인자가 정해져 있지만
+// ThrowsAdvice는 어떤 예외가 발생하느냐에 따라서 함수 인지가 달라지기 때문에
+// 구현할 것을 직접 선택해서 구현해야 함
+public class LogAfterThrowingAdvice implements ThrowsAdvice{
+
+    public void afterThrowing(IllegalArgumentException e) throws Throwable {
+        System.out.println("예외가 발생하였습니다. :" + e.getMessage());
+    }
+}
+
+```
+
+```
+앞에서 실행될 로직입니다.
+Exception in thread "main" 예외가 발생하였습니다. :유효하지 않는 국어점수
+java.lang.IllegalArgumentException: 유효하지 않는 국어점수
+```
+
 
 `스프링으로 AOP를 구현했을 때는 proxy와의 설정 관계를 자바코드와 분리했다는 것이 
 가장 큰 장점이고 proxy 설정이 간단해 졌다.`      

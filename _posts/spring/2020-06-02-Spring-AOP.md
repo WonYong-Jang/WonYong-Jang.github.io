@@ -4,7 +4,7 @@ title: "[Spring] AOP (Aspect-Oriented-Programming)"
 subtitle: "관점 지향 프로그래밍"
 comments: true
 categories : Spring
-date: 2020-03-08
+date: 2020-06-02
 background: '/img/posts/spring.png'
 ---
 
@@ -36,24 +36,36 @@ background: '/img/posts/spring.png'
 > 프로그램 실행 방향은 위에서 아래로 진행하는데 실행 방향과 cross 방향으로 진행 하면서 떼어 내고 붙이고 할수 있다고 하여 Cross Cutting Concern 라 부른다.   
 <img width="600" alt="스크린샷 2020-06-01 오후 9 38 02" src="https://user-images.githubusercontent.com/26623547/83409926-5cd4a480-a450-11ea-99b7-083df65941cb.png">    
 
-```ruby
-```
+- - - 
+<br> 
 
 <h3>AOP 용어들</h3>
 
-<br/>
 <img width="500" alt="스크린샷 2020-03-08 오후 8 59 13" src="https://user-images.githubusercontent.com/26623547/76162294-beea7a00-617f-11ea-890e-f3991970d082.png">
 <img width="500" alt="스크린샷 2020-03-08 오후 9 27 14" src="https://user-images.githubusercontent.com/26623547/76162706-9fede700-6183-11ea-9810-d9f7aade50e6.png">
 <br/>
 
-<p><u>1) Target: 개발자가 작성한 비즈니스 로직을 가지는 객체</u></p>
-target은 순수한 비즈니스 로직을 의미하고, 어떠한 관심사들과도 관계를 맺지 않는다(순서한 core)
-<p><u>2) Proxy : target을 전체적으로 감싸고 있는 존재</u></p>
+#### Target   
+
+` 개발자가 작성한 비즈니스 로직(Core concern)을 가지는 객체`   
+
+target은 순수한 비즈니스 로직을 가지고 있고, 어떠한 관심사들과도 관계를 맺지 않는다.
+
+#### Proxy   
+
+`target을 전체적으로 감싸고 있는 존재`   
+
 내부적으로 Target을 을 호출하지만, 중간에 필요한 관심사들을 거쳐서 Target을 호출하도록
 자동 혹은 수동으로 작성된다. Proxy 존재는 직접 코드를 통해서 구현하는 경우도 있지만,
 대부분 스프링 AOP 기능을 이용해서 자동으로 생성되는 auto-proxy 방식을 이용
-<p><u>3) JoinPoint : Target 객체가 가진 여러 메서드</u></p>
-<p><u>4) Pointcut : Target 에 가진 여러 메서드에 관심사를 결합할 것인지를 결정해야 하는데 이 결정을 Pointcut 이라 한다.</u></p>
+
+#### Pointcuts 와 JoinPoint 그리고 weaving   
+
+<img width="700" alt="스크린샷 2020-06-06 오후 4 01 41" src="https://user-images.githubusercontent.com/26623547/83938654-66278d80-a811-11ea-9128-859669601436.png">
+
+`1) JoinPoint : Target 객체가 가진 여러 메서드`     
+`2) Pointcut : Target 에 가진 여러 메서드에 관심사를 결합할 것인지를 결정해야 하는데 이 결정을 Pointcut 이라 한다.`   
+`3) Weaving : Advice를 핵심코드와 연결, 적용`   
 Advice를 어떤 JoinPoint에 결합할 것인지를 결정하는 설정이다. AOP에서 Target은
 결과적으로 Pointcut에 의해서 자신에게 없는 기능들을 가지게 된다.
 
@@ -63,9 +75,13 @@ Advice를 어떤 JoinPoint에 결합할 것인지를 결정하는 설정이다. 
 <p><b>- args(@args) : </b>특정한 파라미터를 가지는 대상들만을 Pointcut으로 설정</p>
 <p><b>- @annotation : </b>특정한 어노테이션이 적용된 대상들만을 Pointcut 으로 설정</p>
 
-<p><u>5) Aspect :  Advice와 함께 관심사라는 용어로 사용</u></p>
+#### Aspect 와 Advice   
+
+`1) Aspect :  Advice와 함께 관심사라는 용어로 사용`   
+
 Aspect 는 관심사 자체를 의미하는 추상명사
-<p><u>6) Advice : Aspect를 구현한 코드( 동작 위치에 따라 다음과같이 구분 )</u></p>
+
+`2) Advice : Aspect를 구현한 코드( 동작 위치에 따라 다음과같이 구분 )`   
 
 <p><b>- Before Advice</b> : Target의 JoinPoint를 호출하기 전에 실행되는 코드(코드의 실행 자체에는 관여할수 없음)</p>
 <p><b>- After Returning Advice</b> : 모든 실행이 정상적으로 이루어진 후에 동작하는 코드</p>
@@ -79,7 +95,7 @@ Aspect 는 관심사 자체를 의미하는 추상명사
 <p>Target 에 어떤 Advice 적용할 것인지는 XML을 이용한 설정, 또는 어노테이션을 
 이용하는 방식이 가능하다.</p>
 
-
+[AOP 실습 링크](https://wonyong-jang.github.io/spring/2020/06/03/Spring-AOP-Practice.html)
 
 - - -
 Referrence 
