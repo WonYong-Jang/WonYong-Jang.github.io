@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spring] Junit을 이용한 테스트 코드 작성"
-subtitle: "단위 테스트를 위한 MockMvc, WebMvcTest"
+subtitle: "단위 테스트를 위한 MockMvc, WebMvcTest, assertj"
 comments: true
 categories : Spring
 date: 2020-06-09
@@ -13,8 +13,8 @@ background: '/img/posts/spring.png'
 시작 전에 TDD와 단위 테스트는 다른 이야기 이다. TDD는 테스트가 주도하는 개발을 이야기하며 
 테스트 코드를 먼저 작성하는 것부터 시작한다.
 
-반면 단위 테스트는 TDD의 첫 번째 단계인 `기능 단위의 테스트 코드를 작성` 하는 것을 이야기 한다.   
-TDD와 달리 테스트 코드를 꼭 먼저 작성해야 하는 것도 아니고, 리팩토링도 포함되지 않는다.
+반면 `단위 테스트는 TDD의 첫 번째 단계인 기능 단위의 테스트 코드를 작성` 하는 것을 이야기 한다.   
+단위 테스트는 TDD와 달리 테스트 코드를 꼭 먼저 작성해야 하는 것도 아니고, 리팩토링도 포함되지 않는다.
 
 ### 테스트 코드 작성 장점 
 
