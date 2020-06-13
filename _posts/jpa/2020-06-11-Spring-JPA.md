@@ -3,7 +3,7 @@ layout: post
 title: "[Spring] JPA(Java Persistence API)"
 subtitle: "자바 표준 ORM, Hibernate, Spring-data-jpa"
 comments: true
-categories : Spring
+categories : Jpa
 date: 2020-06-11
 background: '/img/posts/spring.png'
 ---
@@ -107,8 +107,13 @@ Mybatis 에서는 DAO라고 불리는 DB Layer접근자이다.
 
 @Repository를 추가할 필요 없고 주의할 점은 Entity 클래스와 Entity Repository는 
 함께 위치해야 한다는점이다. 나중에 규모가 커져 도메인별로 프로젝트를 분리해야 
-한다면 이때 Entity 클래스와 기본 Repositorysms 함께 움직여야 하므로 도메인 패키지에서 
+한다면 이때 Entity 클래스와 기본 Repository는 함께 움직여야 하므로 도메인 패키지에서 
 함께 관리해야 한다.   
+
+```java
+public interface PostsRepository extends JpaRepository<Posts, Long> {
+}
+```
 
 - - -
 Referrence
