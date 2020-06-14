@@ -32,7 +32,7 @@ background: '/img/posts/spring.png'
 `Spring에서 제공하는 모듈 중 하나로, 개발자가 JPA를 더 쉽고 편하게 사용할 수 있도록 
 도와준다.`      
 
-Hibernate를 쓰는 것과 Spring Data JPA를 쓰는 것 사이에는 큰 차이가 없지만 스프링에서  
+Hibernate를 쓰는 것과 Spring Data JPA를 쓰는 것 사이에는 큰 차이가 없지만 스프링에서 
 아래 이유로 Spring Data JPA를 사용하는 것을 권장 한다.   
 
 - 구현체 교체의 용이성  
@@ -42,13 +42,14 @@ Hibernate를 쓰는 것과 Spring Data JPA를 쓰는 것 사이에는 큰 차이
 
 - - -
 
-### Spring Data - JPA 기본 작업 흐름
+### Spring Data - JPA 기본 작업 분류 
 
-전체적인 데이터 핸들링 프로세스 개발은 다음 네단계로 이루어진다.
-- 도메인 개발
-- 리포지토리(Repository)개발
-- 서비스(Service) 개발
-- 서비스 클래스를 통해 사용 
+전체적인 데이터 핸들링을 하기 위해 아래와 같이 나눌수 있다.   
+- 도메인(Entity)   
+- Repository
+- 트랜잭션, 도메인 기능 간의 순서를 보장하는 Service
+- API 요청을 받을 Controller   
+- Request 데이터를 받을 DTO 
 
 #### 도메인(엔티티) 
 
@@ -57,7 +58,14 @@ Hibernate를 쓰는 것과 Spring Data JPA를 쓰는 것 사이에는 큰 차이
 사용하면 DB 데이터에 작업할 경우 실제 쿼리를 날리기보다는, 이 Entity 클래스의 
 수정을 통해 작업 가능하다.   
 
+> 기존의 Mybatis와 같은 쿼리 매퍼를 사용했다면 dao 패키지를 떠올리겠지만, 
+dao 패키지와는 조금 결이 다르다고 생각하면 된다. 그간 xml에 쿼리를 담고, 
+클래스틑 오로지 쿼리의 결과만 담던 일들이 모두 도메인 클래스라고 불리는 곳에서 해결된다. 
+
 `DB 저장하기 위해 유저가 정의한 클래스가 필요한데 이를 Entity 클래스라고 한다.`   
+`절대로 Entity 클래스를 Request/Response 클래스(DTO) 클래스로 사용하면 안된다!`    
+`Entity 클래스는 데이터베이스와 맞닿는 핵심 클래스이기 때문에 Entity 클래스를 
+기준으로 테이블이 생성되고, 스키마가 변경된다.`   
 
 ```java
 @Getter
@@ -83,7 +91,8 @@ public class Posts {
     private String content;
 
     private String author;
-
+    
+    // 빌더 패턴 
     @Builder
     public Posts(String title, String content, String author) {
         this.title = title;
@@ -113,6 +122,14 @@ Mybatis 에서는 DAO라고 불리는 DB Layer접근자이다.
 ```java
 public interface PostsRepository extends JpaRepository<Posts, Long> {
 }
+```
+
+### 등록/수정/조회 API 만들기   
+
+API를 만들기 위해 총 3개의 클래스가 필요하다.(DTO, Controller, Service)   
+
+
+
 ```
 
 - - -
