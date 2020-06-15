@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spring] JPA(Java Persistence API)"
+title: "[Jpa] JPA(Java Persistence API)"
 subtitle: "자바 표준 ORM, Hibernate, Spring-data-jpa"
 comments: true
 categories : Jpa
@@ -127,9 +127,75 @@ public interface PostsRepository extends JpaRepository<Posts, Long> {
 ### 등록/수정/조회 API 만들기   
 
 API를 만들기 위해 총 3개의 클래스가 필요하다.(DTO, Controller, Service)   
+[웹 계층 링크](https://wonyong-jang.github.io/spring/2020/06/14/Spring-Web-Layer.html)   
 
 
+> 아래처럼 View Layer에서 받은 데이터를 Dto로 받아서 Controller에서 사용 할 것!  
 
+```java
+@RequiredArgsConstructor
+@RestController
+public class PostsApiController {
+
+    private final PostsService postsService;
+
+    @PostMapping("/api/v1/posts")
+    public Long save(@RequestBody PostsSaveRequestDto requestDto) {
+        return postsService.save(requestDto);
+    }
+}
+```
+
+> 아래와같이 Service는 트랜잭션과 도메인 도메인간의 순서만 보장해준다.   
+
+```java
+@RequiredArgsConstructor
+@Service
+public class PostsService {
+
+    private final PostsRepository postsRepository;
+
+    @Transactional
+    public Long save(PostsSaveRequestDto requestDto) {
+        return postsRepository.save(requestDto.toEntity()).getId();
+    }
+}
+
+```
+
+> 아래 소스와 같이 Entity 클래스는 주로 수많은 서비스 클래스나 비즈니스 로직들이 
+Entity 클래스를 기준으로 동작한다. Entity 클래스가 변경되면 여러 클래스에 영향을 
+끼치지만, Request와 Response용 Dto는 View를 위한 클래스라 정말 자주 변경이 필요하다.   
+
+`View Layer 와 DB Layer의 역할 분리를 철저하게 하는게 좋다. 실제로 Controller에서 
+결과값으로 여러 테이블을 조인해서 줘야 할 경우가 빈번하므로 Entity 클래스만으로 
+표현하기가 어려운 경우가 많다.`    
+`꼭 Entity 클래스와 Controller에서 쓸 Dto는 분리해서 사용해야 한다!`      
+
+```java
+@Getter
+@NoArgsConstructor
+public class PostsSaveRequestDto {
+    private String title;
+    private String content;
+    private String author;
+
+    @Builder
+    public PostsSaveRequestDto(String title, String content, String author) {
+        this.title = title;
+        this.content = content;
+        this.author = author;
+    }
+    
+    // Posts 엔티티에 @Builder를 선언했기 때문에 사용가능   
+    public Posts toEntity() {
+        return Posts.builder()
+                .title(title)
+                .content(content)
+                .author(author)
+                .build();
+    }
+}
 ```
 
 - - -

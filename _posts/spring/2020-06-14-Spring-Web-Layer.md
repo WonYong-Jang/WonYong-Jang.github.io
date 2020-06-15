@@ -49,15 +49,13 @@ background: '/img/posts/spring.png'
 
 `여기서 많은 사람들이 잘못 알고 있는 것은 
 Service에서 비지니스 로직을 처리해야 한다는 것이다.`      
-
 `Service는 트랜잭션, 도메인 간 순서 보장의 역할만 한다는 것!!`   
-
 `Domain이 비즈니스 로직을 처리한다!`   
 
 - - -
 Referrence 
 
-[jojoldu.tistory.com/](jojoldu.tistory.com/)         
+[https://jojoldu.tistory.com/](https://jojoldu.tistory.com/)         
 
 
 {% highlight ruby linenos %}
