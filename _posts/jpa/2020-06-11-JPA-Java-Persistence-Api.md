@@ -23,9 +23,15 @@ background: '/img/posts/spring.png'
 > SQL <- mapping -> Object 필드   
 
 **2) ORM(Object-Relational-Mapping) : JPA, Hibernate와 같이 
-객체를 매핑하여 객체간 관계를 바탕으로 sql을 자동으로 생성한다.**   
+객체를 매핑하여 객체간 관계를 바탕으로 sql을 자동으로 생성한다.**  
 
 > DB 데이터 <- mapping -> Object   
+> 예를 들면, User 테이블의 데이터를 출력하기 위해서 MySql 에서는 select * from user; 라는 query를 
+실행해야 하지만, ORM을 사용하면 User 테이블과 매핑된 객체를 user라 할 때, user.findAll() 을 이용하여 
+데이터 조회가 가능   
+
+
+
 
 ### Spring Data JPA
 
@@ -106,7 +112,31 @@ public class Posts {
 절대 Setter 메소드를 만들지 않는다!`   
 `Setter가 없는 상황에서 DB값을 삽입하는 것은 생성자를 통해서 삽입한다`   
 `@Builder를 통해서 생성 시점에 값을 채워넣어 준다.`   
+@Entity 선언시 기본생성자는 꼭 존재해야 하며, final class, inner class, enum, interface에는 
+사용할수 없고 필드에 final을 사용하면 안된다.   
 
+1) @Transient : 필드 매핑이 이루어지지 않는다. 
+
+즉, 데이터베이스에 저장하지 않고 조회하지도 않는다. 객체에 임시로 어떤 값을 보관하고 싶을 때 
+사용할 수 있다. 예를들면, 상품이라는 엔티티에 대해서 가격과 할인된 가격 필드가 있을 때, 할인된 
+가격은 일시적인 저장용도일 뿐이고, 컬럼으로 사용하고 싶지 않을 수도 있다.   
+
+```java
+@Transient
+private Integer foo;
+```
+<br>
+2) @Enumerated : 자바의 enum 타입을 매핑할 때 사용한다.
+
+아래와 같은 경우는 kind 필드 값에는 A, B, C값만 추가할 수 있다. 정형화된 데이터를 
+받을 때 사용하면 좋다.   
+
+```java
+@Enumerated(EnumType.STRING)
+@Column( name="kind", nullable=false, columnDefinition = "enum('A','B','C')")
+private Enum kind;
+```
+<br>
 ### JpaRepository   
 
 Mybatis 에서는 DAO라고 불리는 DB Layer접근자이다.       
@@ -123,7 +153,7 @@ Mybatis 에서는 DAO라고 불리는 DB Layer접근자이다.
 public interface PostsRepository extends JpaRepository<Posts, Long> {
 }
 ```
-
+<br>
 ### 등록/수정/조회 API 만들기   
 
 API를 만들기 위해 총 3개의 클래스가 필요하다.(DTO, Controller, Service)   
