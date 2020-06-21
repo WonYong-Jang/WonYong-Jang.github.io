@@ -48,7 +48,7 @@ Hibernate를 쓰는 것과 Spring Data JPA를 쓰는 것 사이에는 큰 차이
 
 - - -
 
-### Spring Data - JPA 기본 작업 분류 
+### Spring Data JPA 기본 작업 분류 
 
 전체적인 데이터 핸들링을 하기 위해 아래와 같이 나눌수 있다.   
 - 도메인(Entity)   
@@ -66,7 +66,7 @@ Hibernate를 쓰는 것과 Spring Data JPA를 쓰는 것 사이에는 큰 차이
 
 > 기존의 Mybatis와 같은 쿼리 매퍼를 사용했다면 dao 패키지를 떠올리겠지만, 
 dao 패키지와는 조금 결이 다르다고 생각하면 된다. 그간 xml에 쿼리를 담고, 
-클래스틑 오로지 쿼리의 결과만 담던 일들이 모두 도메인 클래스라고 불리는 곳에서 해결된다. 
+클래스를 오로지 쿼리의 결과만 담던 일들이 모두 도메인 클래스라고 불리는 곳에서 해결된다. 
 
 `DB 저장하기 위해 유저가 정의한 클래스가 필요한데 이를 Entity 클래스라고 한다.`   
 `절대로 Entity 클래스를 Request/Response 클래스(DTO) 클래스로 사용하면 안된다!`    
@@ -153,6 +153,17 @@ Mybatis 에서는 DAO라고 불리는 DB Layer접근자이다.
 public interface PostsRepository extends JpaRepository<Posts, Long> {
 }
 ```
+> SpringDataJpa에서 제공하지 않는 메소드는 아래처럼 쿼리로 작성 가능하다!   
+
+```java
+public interface PostsRepository extends JpaRepository<Posts, Long> {
+
+    @Query("SELECT p FROM Posts p ORDER BY p.id DESC")
+    List<Posts> findAllDesc();
+}
+```
+
+
 <br>
 ### 등록/수정/조회 API 만들기   
 
