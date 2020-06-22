@@ -5,7 +5,7 @@ subtitle: "EnableJpaAuditing, BaseTimeEntity"
 comments: true
 categories : Jpa
 date: 2020-06-21
-background: '/img/posts/spring.png'
+background: '/img/posts/mac.png'
 ---
 
 # Auditing으로 생성시간/수정시간 자동화

@@ -5,7 +5,7 @@ subtitle: "ORM 에서의 더티 체킹"
 comments: true
 categories : Jpa
 date: 2020-06-20
-background: '/img/posts/spring.png'
+background: '/img/posts/mac.png'
 ---
 
 # 더티 체킹(Dirty Checking)이란? 

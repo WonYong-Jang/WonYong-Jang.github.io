@@ -4,14 +4,14 @@ title: "[Spring] 트랜잭션 관리"
 subtitle: "Transaction"
 comments: true
 categories : Spring
-date: 2020-03-09
+date: 2020-03-20
 background: '/img/posts/spring.png'
 ---
 
-<h2 class="section-heading">스프링 트랜잭션 관리</h2>
+## 스프링 트랜잭션 관리   
 
-<p>트랜잭션이란 비즈니스에서 쪼개질 수 없는 하나의 단위 작업</p>
-<p><u>한 번에 이루어지는 작업의 단위를 트랜잭션</u></p>
+`트랜잭션이란 비즈니스에서 쪼개질 수 없는 하나의 단위 작업`   
+`한 번에 이루어지는 작업의 단위를 트랜잭션`     
 
 <h3>ACID 원칙( 트랜잭션의 성격 )</h3>
 <p><u>원자성(Atomicity)</u></p>

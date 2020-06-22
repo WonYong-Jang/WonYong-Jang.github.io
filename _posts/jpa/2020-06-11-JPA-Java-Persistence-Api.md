@@ -5,7 +5,7 @@ subtitle: "자바 표준 ORM, Hibernate, Spring-data-jpa"
 comments: true
 categories : Jpa
 date: 2020-06-11
-background: '/img/posts/spring.png'
+background: '/img/posts/mac.png'
 ---
 
 ## JPA

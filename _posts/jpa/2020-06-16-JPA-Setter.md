@@ -5,7 +5,7 @@ subtitle: "Jpa 엔티티 일관성을 유지하는 방법"
 comments: true
 categories : Jpa
 date: 2020-06-16
-background: '/img/posts/spring.png'
+background: '/img/posts/mac.png'
 ---
 
 ## JPA 엔티티 작성 - Setter 금지 
