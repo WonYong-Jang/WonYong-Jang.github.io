@@ -8,7 +8,7 @@ date: 2020-06-23
 background: '/img/posts/spring.png'
 ---
 
-# 생성자 자동생성
+## 생성자 자동생성
 
 Lombok을 사용하면 생성자도 자동으로 생성이 가능하다. @NoArgsConstructor은 파라미터가 없는 
 기본생성자를 생성해주고, @AllArgsConstructor 는 모든 필드 값을 파라미터로 받는 생성자를 만들어준다.   
@@ -22,7 +22,7 @@ Lombok을 사용하면 생성자도 자동으로 생성이 가능하다. @NoArgs
 public class User {
   private Long id;
   
-  private final String username;
+  private final String username; // 또는 @NonNull private String username;
   private final String password;
 
   private int[] scores;
@@ -87,8 +87,8 @@ BService bService = new BService(AService);
 
 
 - - -
-
-# ToString 메소드 자동 생성
+<br>
+## ToString 메소드 자동 생성
 
 toString() 메소드를 직접 작성하기 보다는 @ToString 어노테이션을 이용하면 자동으로 생성해 준다.   
 아래와 같이 exclue 속성을 이용하면 특정 필드를 toString() 결과에서 제외시킬 수 있다.   
@@ -102,6 +102,24 @@ public class User {
   private int[] scores;
 }
 ```
+<br>
+- - -
+## Builder Pattern
+
+lombok은 빌더 패턴을 @Builder 어노테이션으로 사용할수 있도록 제공해 준다. 
+
+```java
+@Builder
+public User(Long id, String name, String email, String picutre, Role role) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.picture = picutre;
+        this.role = role;
+    }
+```
+
+
 
 - - -
 Referrence 
