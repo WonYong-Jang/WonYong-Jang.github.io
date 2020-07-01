@@ -4,7 +4,7 @@ title: "[Jekyll] robots.txt 소개와 작성법"
 subtitle: "크롤링하기전 주의사항"
 comments: true
 categories : Jekyll
-date: 2020-05-25
+date: 2020-05-26
 background: '/img/posts/mac.png'
 ---
 
