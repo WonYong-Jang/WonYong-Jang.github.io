@@ -66,6 +66,22 @@ public void before() {
 https://sites.google.com/a/chromium.org/chromedriver/downloads
 ```
 
+- - - 
+
+### Headless 크롬으로 크롤링 하기 
+
+Headless 라는 용어는 '창이 없는'과 같다고 이해하면 된다. 우리는 브라우저(크롬 등)을 이용해 
+인터넷을 브라우징 할 때 기본적으로 창이 뜨고 HTML파일을 불러오고, CSS파일을 불러와 어떤 내용을 
+화면에 그려야 할지 계산을 하는 작업을 브라우저가 자동으로 진행해 준다. 
+
+크롤링 하는 동안 브라우저 창이 열리면서 프로그램이 무거워지지 않도록 백그라운드에서 
+셀레니움을 돌릴수 있는 옵션을 지원한다. 
+
+```java
+ChromeOptions options = new ChromeOptions();
+options.addArguments("headless");
+```
+
 
 - - -
 
@@ -157,6 +173,15 @@ webElement.findElement(By.cssSelector("#food.dairy")); //# is used to indicate i
 (//a)[position() < 3] : 문서의 처음 두 링크 선택 
 //table/tr/* 모든 테이블에서 모든 자식 tr 태그 선택   
 
+//input[@type='text']   
+//label[@id='message']   
+//input[@value='RESET']   
+//*[@class='message']   
+//a[@href='http://~/']   
+//img[@src='~']    
+
+findElement(By.xpath(".//h3")).getAttribute("textContent")
+=> 현재 노드위치에서 h3 태그를 찾고 text 출력
 ```
 - - - 
 
@@ -168,7 +193,7 @@ webElement.findElement(By.cssSelector("#food.dairy")); //# is used to indicate i
 ##### 일부 게시글마다 다르게 보여지는 CSS 위치   
 
 똑같은 사이트의 게시판에 업로드된 이미지, url 을 가르키는 css 선택자가 
-다를 수 있기 때문에 이런 경우는 만약 A 케이스가 안될 경우 B 케이스로 해바롸 라는 
+다를 수 있기 때문에 이런 경우는 만약 A 케이스가 안될 경우 B 케이스로 해바라 라는 
 Exception 처리를 잘 해두는 것이 좋다.   
 
 
@@ -179,6 +204,8 @@ Exception 처리를 잘 해두는 것이 좋다.
 
 [https://wkdtjsgur100.github.io/selenium-xpath/](https://wkdtjsgur100.github.io/selenium-xpath/)    
 [https://www.popit.kr/web-scraping-by-selenium/](https://www.popit.kr/web-scraping-by-selenium/)
+[https://beomi.github.io/gb-crawling/posts/2017-09-28-HowToMakeWebCrawler-Headless-Chrome.html](https://beomi.github.io/gb-crawling/posts/2017-09-28-HowToMakeWebCrawler-Headless-Chrome.html)
+
 
 {% highlight ruby linenos %}
 
