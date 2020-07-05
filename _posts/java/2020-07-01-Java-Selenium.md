@@ -188,13 +188,30 @@ findElement(By.xpath(".//h3")).getAttribute("textContent")
 ### 크롤러 개발 시 유의사항   
 
 `개발함에 있어 크롤러에서는 다양한 Exception 처리 및 효율적인 알고리즘을 개발할 필요가 있다. 셀리니움을 이용하여 
-대부분 사이트를 크롤링 할 수 있지만 메모리 및 CPU 사용량이 높기 때문이다.`
+대부분 사이트를 크롤링 할 수 있지만 메모리 및 CPU 사용량이 높기 때문이다. 
+그렇기 때문에 스프링을 사용할 경우는 스프링 컨테이너에서 빈객체를 싱글톤 패턴으로 
+관리하는 장점을 적극 활용 할수 있다. 스케줄러를 통해 여러 Job이 실행 된다면 각각 Job 마다 
+WebDriver를 new ChromeDriver()를 통해 생성된다면, 부하가 엄청 커질 것 같다.`
+
+`그렇기 때문에 Chrome driver를 빈으로 설정해놓고 같은 객체를 재사용 한다. 이 때 
+driver.quit()을 수행하는 메소드는 빈으로 정의하면 안되는 점에 주의해야한다. 싱글톤 
+오브젝트를 만드는 스프링은 프로그램 구동시킬 때 모든 빈을 생성하는데, 이 때 quit()이 담긴
+메소드를 빈으로 정의해 놓는다면, driver가 set up 되지도 않았는데 quit()을 하는 이상한 상황이 
+벌어진다. `
 
 ##### 일부 게시글마다 다르게 보여지는 CSS 위치   
 
 똑같은 사이트의 게시판에 업로드된 이미지, url 을 가르키는 css 선택자가 
-다를 수 있기 때문에 이런 경우는 만약 A 케이스가 안될 경우 B 케이스로 해바라 라는 
+다를 수 있기 때문에 이런 경우는 만약 A 케이스가 안될 경우 B 케이스로 해봐라 라는 
 Exception 처리를 잘 해두는 것이 좋다.   
+
+##### WebDriverWait() 사용하기 
+
+`크롤링할 내용이 많아지면, 파싱을 다 하기 전에 코드가 넘어가버리는 경우가 있다. 즉, 로딩 시간 보다 먼저 html문서를 
+읽어와 예상과는 다른 데이터를 받아오는 경우가 있다. 
+찾고자 하는 element를 받아 온 뒤 
+진행할 수 있는 방법 중에 WebDriverWait가 있다.`
+
 
 
 
@@ -205,7 +222,7 @@ Exception 처리를 잘 해두는 것이 좋다.
 [https://wkdtjsgur100.github.io/selenium-xpath/](https://wkdtjsgur100.github.io/selenium-xpath/)    
 [https://www.popit.kr/web-scraping-by-selenium/](https://www.popit.kr/web-scraping-by-selenium/)
 [https://beomi.github.io/gb-crawling/posts/2017-09-28-HowToMakeWebCrawler-Headless-Chrome.html](https://beomi.github.io/gb-crawling/posts/2017-09-28-HowToMakeWebCrawler-Headless-Chrome.html)
-
+[https://joooootopia.tistory.com/26?category=821046](https://joooootopia.tistory.com/26?category=821046/)     
 
 {% highlight ruby linenos %}
 
