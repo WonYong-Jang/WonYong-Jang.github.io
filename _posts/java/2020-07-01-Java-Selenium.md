@@ -212,7 +212,14 @@ Exception 처리를 잘 해두는 것이 좋다.
 찾고자 하는 element를 받아 온 뒤 
 진행할 수 있는 방법 중에 WebDriverWait가 있다.`
 
+##### close와 quit 차이점 
 
+- close() : 현재 selenium webdriver가 활성화되어 있는 화면만을 종료한다. 2개 이상의 webdriver 탭이 열려 
+현재 활성화되어 있는 webdriver만 종료되고 나머지 webdriver는 종료되지 않는다. (실제로 웹 드라이버는 
+종료되지 않고 메모리에 그대로 상주하기 때문에 웹 드라이버를 계속 재활용 가능하다)   
+
+- quit() : 모든 webdriver를 종료하고 세션을 안전하게 종료한다. 프로그램을 종료할 때 quit()을 사용하지 않고 
+계속 driver를 생성한다면 webdriver 세션이 완벽하게 종료되지 않아 메모리 누수가 발생할 수 있다. 
 
 
 - - -
