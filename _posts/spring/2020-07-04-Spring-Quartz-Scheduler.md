@@ -18,14 +18,14 @@ background: '/img/posts/spring.png'
 아래는 spring boot 기준으로 기본 설정 방법이다.   
 
 
-##### 1. pom.xml에 Dependency 설정 
+#### 1. pom.xml에 Dependency 설정 
 
 ```
 compile group: 'org.quartz-scheduler', name: 'quartz'
 compile group: 'org.quartz-scheduler', name: 'quartz-jobs'
 ```
 
-##### 2. Job 코드 작성
+#### 2. Job 코드 작성
 
 `Quartz Scheduler는 기능을 수행하는 단위인 Job과 스케줄에 대한 정보를 가진 Trigger를 스케줄러에 걸어 
 실행하는 구조이다. 먼저 스케줄에 따라 동작할 Job 클래스를 작성한다.`   
@@ -43,7 +43,7 @@ public class ScraperJob implements Job {
 quartz.Job 인터페이스를 implements하여 구현하게 된다.
 해당 인터페이스의 execute 메소드를 작성하여 한다. 위에서는 테스트를 위해서 sout를 출력해본다.   
 
-##### 3. 스케줄러 코드 작성
+#### 3. 스케줄러 코드 작성
 
 아래는 스케줄에 따라 위에서 작성한 Job을 수행하는 코드를 Quartz 라이브러리를 사용해 개발할 차례다.   
 
@@ -98,7 +98,7 @@ public class ScraperScheduler {
 scheduler에 지정해 주면 여러 개의 job 스케줄이 동시에 작동하게 된다.   
 
 
-##### 4. 스케줄러 실행 
+#### 4. 스케줄러 실행 
 
 스케줄러를 호출해 실행하는 방법 역시 개발자가 구현하기 나름이겠지만, 배치 스케줄에 대한 시작, 종료 
 정보와 동작주기 등을 이미 스케줄러 클래스에 다 지정해 주기 때문에 보통 서버 시작과 동시에 
@@ -118,13 +118,55 @@ public class Application {
 }
 ```
 
+#### 5. Cron Trigger 
+
+Quartz에서 사용하는 트리거의 종류 Cron Trigger와Simple Trigger 가 있다. 
+여기서는 Cron Trigger에 대해서 정리한다.   
+
+**1) Cron 표현식(Expression)**
+
+`Cron 표현식은 7개의 표현식으로 구성된 문자열이다. 각 단위는 공백으로 구분된다.`    
+0 0 8 ? * SUN *  와 같이 표현되는데, 해당 표현식은 매주 일요일 8시를 의미한다. 요일은 SUN, MON, TUE, 
+WED, THU, FRI 그리고 SAT 등으로 표현가능하지만, 숫자로도 가능하다. SUN 1 이고 SAT 이 7 이다.   
+
+> 초 분 시 일 월 요일 연도 의 순서로 표현된다.    
+
+**2) Always**    
+
+`항상을 표현할 때는 와일드카드(*)로 표현한다.`   
+0 0 8 ? SUN * 에서 5번째 * 표현은 매월을 의미한다. 제일 * 는 매 해를 의미한다.
+
+**3) On**    
+
+`특정 숫자를 입력하면 그 숫자에 맞는 값이 설정된다.`   
+0 0 8 ? * SUN * 에서 제일 앞에 0은 0초를 의미한다. 만약, 0초와 30초에 Cron이 실행되도록 설정하려면 
+0,30 0 8 ? * SUN * 이렇게 콤마(,)를 통해서 표현가능하다!   
+
+**4) Between**   
+
+`값의 범위를 나타낼 때는 하이폰 (-) 으로 표현할 수 있다.`   
+월요일 부터 수요일은 MON-WED 로 표현하면 된다. 8시부터 11는 8-11 의 형태로 표현 한다.   
+
+**5) QuestionMark**   
+
+`물음표(?) 문자는 설정값 없음을 의미한다. 일, 요일 필드에서만 허용 된다.`   
+0 0 8 ? * SUN * 에서는 매주 일요일이라는 요일 필드 값을 설정하였다. 매주 일요일이라는 가정을 
+정하였기 때문에, 몇일이라는 표현은 필요 없다. 그러므로 ? 로 표현해야 한다. 매일 1일로 표현가능하며 
+방금위에서 SUN 이라고 표현되었던 필드는 물음표(?)로 표시해야 한다.   
+
+**6) /** 
+
+슬래쉬(/) 문자는 값의 증가 표현을 의미한다.
+분 필드에 0/5를 사용한다면 0분 부터 시작하여 매5분마다 를 의미한다. 이것을 콤마(,)로 표현하면 
+0,5,10,15,20,25,30,35,40,45,50,55 와 같다.   
+
 
 
 - - -
 Referrence 
 
 [https://www.leafcats.com/93](https://www.leafcats.com/93)         
-
+[https://brunch.co.kr/@springboot/53](https://brunch.co.kr/@springboot/53)
 
 {% highlight ruby linenos %}
 {% endhighlight %}
