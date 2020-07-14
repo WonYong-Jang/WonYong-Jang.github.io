@@ -22,8 +22,8 @@ Lombok을 사용하면 생성자도 자동으로 생성이 가능하다. @NoArgs
 public class User {
   private Long id;
   
-  private final String username; // 또는 @NonNull private String username;
-  private final String password;
+  @NonNull private String username; 
+  @NonNull private String password;
 
   private int[] scores;
 }
@@ -36,10 +36,20 @@ User user2 = new User("dale", "1234"); // RequiredArgsConstructor
 User user3 = new User(1L, "dale", "1234", null); // AllArgsConstructor 
 ```
 
+### @NoArgsConstructor 사용시 주의사항    
+
+`초기값이 필요한 final필드가 있는 경우( @RequiredArgsConstructor를 이용하여 DI 하기 위한 필드 ) 
+에러가 발생하게 된다. 해결방법은 아래와 같다.`   
+
+> final 대신 @NonNull 사용하거나 final 을 사용한 필드를 초기화 해준다!   
+
 ### @RequiredArgsConstructor 의존성 주입 
 
 `초기화되지 않은 final 필드나, @NonNull이 붙은 필드에대해 생성자를 생성해 준다. 
-주로 의존성 주입(Dependency Injection) 편의성을 위해서 사용되곤 한다.` 
+주로 의존성 주입(Dependency Injection) 편의성을 위해서 사용되곤 한다.`    
+
+@NonNull로 마크되어있는 필드는 Null 체크가 추가적으로 진행되며, null 값이 들어오는 경우 
+생성자에서 NullPointerException이 발생한다.   
 
 스프링 4.3부터는 클래스 안에 생성자가 오직 한개만 존재하고, 그 생성자의 파라미터 타입이 
 빈으로 등록되어 있다면 @Autowired 어노테이션 없이 자동으로 의존성 주입이 된다.   
