@@ -20,8 +20,7 @@ background: '/img/posts/spring.png'
 #### 1. pom.xml에 Dependency 설정 
 
 ```
-compile group: 'org.quartz-scheduler', name: 'quartz'
-compile group: 'org.quartz-scheduler', name: 'quartz-jobs'
+implementation 'org.springframework.boot:spring-boot-starter-quartz'   
 ```
 <br>
 #### 2. Job 코드 작성
@@ -60,7 +59,7 @@ public class ScraperScheduler {
         scheduler = schedulerFactory.getScheduler();
         scheduler.start();
 
-        //job 지정
+        //jobDetail 생성( Job 지정하고 실행하기 위한 상세 정보 )
         JobDetail job = JobBuilder.newJob(ScraperJob.class).withIdentity("testJob").build();
 
         //trigger 생성
@@ -170,6 +169,7 @@ Referrence
 [https://www.leafcats.com/93](https://www.leafcats.com/93)         
 [https://brunch.co.kr/@springboot/53](https://brunch.co.kr/@springboot/53)
 [https://kouzie.github.io/spring/Spring-Boot-%EC%8A%A4%ED%94%84%EB%A7%81-%EB%B6%80%ED%8A%B8-Quartz/#quartz](https://kouzie.github.io/spring/Spring-Boot-%EC%8A%A4%ED%94%84%EB%A7%81-%EB%B6%80%ED%8A%B8-Quartz/#quartz)
+
 
 {% highlight ruby linenos %}
 {% endhighlight %}
