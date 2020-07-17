@@ -15,7 +15,40 @@ background: '/img/posts/spring.png'
 운영체제의 기능을 이용해서 작업할 수도 있지만, 스프링과 Quartz 라이브러리를 이용하면 간단히 처리 
 할수 있다.`    
 
-아래는 spring boot 기준으로 기본 설정 방법이다.   
+먼저 Quartz의 구성 요소를 보자.   
+
+### Job 
+
+`Quartz API 에서 단 하나의 메서드 execute(JobExecutionContext context)를 가진 Job 인터페이스를 제공한다.`   
+Quartz를 사용하는 개발자는 수행해야 하는 실제 작업을 이 메서드에서 구현하면 된다. 
+매개변수인 JobExecutionContext는 Scheduler, Trigger, JobDetail 등을 포함하여 Job 인스턴스에 대한 정보를 제공하는 
+객체이다.   
+
+### JobDetail
+
+`Job을 실행시키기 위한 정보를 담고 있는 객체이다. Job의 이름, 그룹, JobDataMap 속성 등을 지정할 수 있다. Trigger가 Job을 수행할 때 
+이 정보를 기반으로 스케줄링 한다.`   
+
+### JobDataMap 
+
+`JobDataMap은 Job 인스턴스가 execute 실행할 때 사용할 수 있게 원하는 정보를 담을 수 있는 객체 이다. JobDetail을 생성할 때 
+JobDataMap도 같이 세팅해 주면 된다.`   
+
+### Trigger  
+
+`Trigger는 Job을 실행 시킬 스케줄링 조건(반복 횟수, 시작 시간) 등을 담고 있고 Scheduler는 이 정보를 기반으로 Job을 
+수행시킨다.`   
+
+`N Trigger = 1 Job`   
+
+반드시 하나의 Trigger는 반드시 하나의 Job을 지정할 수 있다. 
+
+SimpleTrigger 특정시간에 Job을 수행할 때 사용되며 반복횟수와 실행 간격등을 지정할 수 있다.    
+CronTrigger 는 cron 표현시기으로 Trigger를 정의하는 방식이다.   
+
+
+
+아래는 spring boot 기준으로 기본 설정 방법이다.  
 
 #### 1. pom.xml에 Dependency 설정 
 
