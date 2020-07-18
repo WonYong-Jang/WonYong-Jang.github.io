@@ -222,6 +222,7 @@ Exception 처리를 잘 해두는 것이 좋다.
 계속 driver를 생성한다면 webdriver 세션이 완벽하게 종료되지 않아 메모리 누수가 발생할 수 있다. 
 
 
+
 - - -
 
 **Reference**
