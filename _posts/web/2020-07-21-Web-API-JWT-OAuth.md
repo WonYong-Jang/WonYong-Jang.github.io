@@ -8,16 +8,16 @@ date: 2020-07-21
 background: '/img/posts/mac.png'
 ---
 
-이 글에서는 Session 과 Cookie로 인증방식과 Token 인증 방식을 비교해 보고 
+이 글에서는 Session, Cookie를 이용한 인증방식과 Token 인증 방식을 비교해 보고 
 Token 인증방식 중에서도 OAuth 와 JWT 인증을 비교해 볼 것이다.   
 
-## OAuth
+## OAuth2
 
 아래 그림은 보통 OAuth2.0 하면 생각하는 구조이다.   
 
 `서버는 API 호출 요청에 대해서 Token이 유효한지를 확인할 필요가 있다. 이는
 서버에서 클라이언트의 상태(토큰의 유효성)를 관리하게끔 하며, 또 API를 호출 할 때마다
-그 토큰에 해당하는 유저의 상태를 열람(DB 등에서)하는 비용을 초래한다.`   
+그 토큰(AccessToken)이 유효한지 매번 DB등에서 조회하고 새로 갱신시 업데이트 작업을 해주어야 한다.`   
 
 > OAuth Token 은 무의미한 문자열로 구성되어 있기 때문이다.   
 
@@ -27,6 +27,8 @@ Token 인증방식 중에서도 OAuth 와 JWT 인증을 비교해 볼 것이다.
 ## JWT (JSON Web Token)
 
 <img width="600" alt="스크린샷 2020-07-21 오후 10 48 24" src="https://user-images.githubusercontent.com/26623547/88063018-85e9f980-cba4-11ea-8d35-d411ba1857e5.png">   
+
+> 위 그림은 Oauth2 방식에 JWT 토큰을 사용한 예이다.
 
 `JWT는 정보를 JSON 객체 형태로 주고 받기 위해 표준규약에 따라 생성한 암호화된 문자열(Token)이다.`   
 
