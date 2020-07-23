@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Web] JWT, OAuth 인증"
+title: "[Web] JWT, OAuth2 인증"
 subtitle: "Session, Cookie 인증방식 / Token 기반 인증방식 "
 comments: true
 categories : Web
@@ -9,7 +9,7 @@ background: '/img/posts/mac.png'
 ---
 
 이 글에서는 Session, Cookie를 이용한 인증방식과 Token 인증 방식을 비교해 보고 
-Token 인증방식 중에서도 OAuth 와 JWT 인증을 비교해 볼 것이다.   
+Token 인증방식 중에서도 OAuth2 와 JWT을 추가한 인증방식을 비교해 볼 것이다.   
 
 ## OAuth2
 
