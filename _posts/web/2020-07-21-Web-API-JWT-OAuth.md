@@ -11,9 +11,14 @@ background: '/img/posts/mac.png'
 이 글에서는 Session, Cookie를 이용한 인증방식과 Token 인증 방식을 비교해 보고 
 Token 인증방식 중에서도 OAuth2 와 JWT을 추가한 인증방식을 비교해 볼 것이다.   
 
-## OAuth2
+## OAuth2 (Open Authorization, Open Authentication 2)
 
-아래 그림은 보통 OAuth2.0 하면 생각하는 구조이다.   
+OAuth 2.0은인증을 위한 표준 프로토콜이다. 구글, 페이스북, 네이버 등에서 제공하는 
+Authorization Server를 통해 회원정보를 인증하고 Access Token을 발급받는다. 그리고 
+발급받은 Access Token을 이용해 타사의 API 서비스를 이용할 수 있다. 
+
+
+아래 그림은 보통 OAuth2.0 하면 생각하는 구조이다.  
 
 `서버는 API 호출 요청에 대해서 Token이 유효한지를 확인할 필요가 있다. 이는
 서버에서 클라이언트의 상태(토큰의 유효성)를 관리하게끔 하며, 또 API를 호출 할 때마다
