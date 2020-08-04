@@ -95,6 +95,17 @@ heroku buildpacks:add heroku/google-chrome
 
 - - -
 
+#### 공동 작업자 권한 추가 
+
+```
+$ heroku access:add <email>
+Adding test@example.com to myapp collaborators...done   
+
+$ heroku access // 공동 작업자 보기 
+
+$ heroku access:remove <email>
+```
+
 #### etc
 
 ```

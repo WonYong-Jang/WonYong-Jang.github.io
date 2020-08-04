@@ -303,25 +303,31 @@ java.lang.IllegalArgumentException: 유효하지 않는 국어점수
 `@Pointcut은 Cross cutting concern(부가기능)이 적용될 JoinPoint 들을 정의한 것이다. 
 @Annotaion의 경우 조금 복잡한 표현식을 가지고 있다.`     
 
-> execution(접근제어자 반환형 /  패키지를 포함한 클래스 경로 / 메소드파라미터)  
+```
+execution(접근제어자 반환형 /  패키지를 포함한 클래스 경로 / 메소드파라미터)  
+```
 
 `public의 반환형이 없는 (public void) 형태의 메소드 중 get으로 시작하는 모든 메소드 중 
 파라미터가 존재하지 않는 (()) 메소드들에게 적용한다는 의미`   
 
-
-> @Pointcut(execution(* *(..))")
+```
+@Pointcut(execution(* *(..))")
+```
 
 `첫번째 *기호는 접근제어자 반환형 모두를 상관하지 않고 적용하겠다는 의미이다. 두번째 *기호는 
 어떠한 경로에 존재하는 클래스도 상관하지 않고 적용하겠다는 의미이다.    
 마지막으로 (..)은 메소드의 파라미터가 몇개가 존재하던지 상관없이 실행하는 경우`
 
-> @Pointcut("execution(* com.java.ex.Car.accelerate())")  
+```
+@Pointcut("execution(* com.java.ex.Car.accelerate())")  
+```
 
 `첫번째 *기호는 역시 접근제어자 반환형을 상관하지 않는다는 의미이며, com.java.ex.Car.accelerate()는 해당 
 class의 accelerate() (파라미터가 없는)메소드가 호출될 때 실행하는 경우를 의미한다.`   
 
-
-> @Point("execution(* com.java..*.*())")
+```
+@Point("execution(* com.java..*.*())")    
+```
 
 `위와 거의 비슷하지만 com.java.. 부분은 해당 패키지를 포함한 모든 하위패키지에 적용한다는 의미이다. 
 com.java 패키지를 포함한 모든 하위디렉토리의 모든 Class의 모든 파라미터가 존재하지 않는 메소드에 적용한다는 의미이다.`      
