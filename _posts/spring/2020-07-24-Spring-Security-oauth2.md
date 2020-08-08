@@ -18,7 +18,28 @@ background: '/img/posts/spring.png'
 
 - - -
 
-### Spring Boot 2.0의 OAuth 2.0 설정 방법 
+### Spring Boot의 OAuth 2.0 설정 방법 
+
+- - - 
+
+##### 구글 서비스 등록 
+
+[https://console.cloud.google.com](https://console.cloud.google.com) 접속하여 구글 서비스를 등록한다.    
+`여기서 승인된 리다이렉션 URL은 서비스에서 파라미터로 인증 정보를 주었을 때 
+인증이 성공하면 구글에서 리다이렉트할 URL을 말한다.`    
+`스프링 부트 2 버전의 시큐리티에서는 기본적으로 {도메인}/login/oauth2/code/{소셜서비스코드}로 
+리다이렉트 URL을 지원하고 있다. 따라서 사용자가 별도로 리다이렉트 URL을 
+지원하는 Controller를 만들 필요가 없다! 시큐리티에서 이미 구현해 놓은 
+상태이다.`   
+
+> ex) http://localhost:8080/login/oauth2/code/google   
+> 서버에 배포 하게되면 localhost 외에 추가로 주소를 추가해야한다.   
+
+> gradle 라이브러리 추가   
+
+```java
+implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+```
 
 
 ### SecurityConfig.java
