@@ -173,7 +173,7 @@ Referrence
 
 [https://daddyprogrammer.org/post/1239/spring-oauth-authorizationserver/](https://daddyprogrammer.org/post/1239/spring-oauth-authorizationserver/)        
 [https://jojoldu.tistory.com/](https://jojoldu.tistory.com/)    
-
+[https://www.callicoder.com/spring-boot-security-oauth2-social-login-part-1/](https://www.callicoder.com/spring-boot-security-oauth2-social-login-part-1/)   
 
 {% highlight ruby linenos %}
 {% endhighlight %}
