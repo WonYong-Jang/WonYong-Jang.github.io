@@ -45,7 +45,7 @@ public class User {
 
     private String username;
     private String password;
-    private String email;
+    private String email;  // user를 찾을 때 email을 이용하여 찾는다.  
     private String active; // 1: active, 0: inactive
     private String role;
 
@@ -79,22 +79,29 @@ public interface IUserDao extends MongoRepository<User, String> {
 > 3-1 UserPrincipal   
 
 `UserPrincipal 클래스를 생성하여 UserDetails를 implements 한다. User를 생성자로 
-전달받아 Spring Security에 User 정보를 전달한다.!`         
+전달받아 Spring Security에 User 정보를 전달한다!`         
 
 ```java
-@RequiredArgsConstructor
 public class UserPrincipal implements UserDetails {
 
-    private final User user;
+    private User user;
+
+    public UserPrincipal(User user) {
+        this.user = user;
+    }
+
+    public static UserPrincipal create(User user) {
+        return new UserPrincipal(user);
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> list = new ArrayList<>();
+        List<GrantedAuthority> authorities = new ArrayList<>();
 
         GrantedAuthority grantedAuthority = new SimpleGrantedAuthority(this.user.getRole());
-        list.add(grantedAuthority);
+        authorities.add(grantedAuthority);
 
-        return list;
+        return authorities;
     }
 
     @Override
@@ -109,17 +116,17 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return false;
+        return true;
     }
 
     @Override
@@ -128,6 +135,156 @@ public class UserPrincipal implements UserDetails {
     }
 }
 ```
+
+> 3-2 UserPrincipalDetailService   
+
+`UserPrincipalDetailService로 UserDetailService를 implements 한다. UserRepository(UserDao)를 생성자로 
+주입받아, User정보를 DB에서 가져온다.`   
+
+`DB에서 가져온 User 정보는 UserPrincipal 클래스로 변경해 Spring Security로 전달한다. UserPrincipal은 Spring Security의 
+UserDetails를 implements 하였으므로, 이제 Srping Security는 User 클래스를 사용해 
+Authentication을 사용 할수 있게 되었다.`   
+
+```java
+@RequiredArgsConstructor
+@Service
+public class UserPrincipalDetailsService implements UserDetailsService {
+
+    private final IUserDao iUserDao;
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+
+        User user = iUserDao.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email"));
+
+        return UserPrincipal.create(user);
+    }
+}
+```
+
+### 4. Configure Database Provider   
+
+`이제 SecurityConfig 클래스를 생성해 database Authentication을 사용할 수 있도록 변경하자.`   
+`database authentication을 사용하기위해 DaoAuthenticationProvider를 정의하고 configure 메서드에 authenticationProvider에 
+전달한다.`   
+
+> SecurityConfig   
+
+```java
+@Configuration
+@RequiredArgsConstructor
+@EnableWebSecurity // Spring Security 활성화
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    private final UserPrincipalDetailsService userPrincipalDetailsService;
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(authenticationProvider());
+    }
+
+    @Bean
+    DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+        daoAuthenticationProvider.setUserDetailsService(this.userPrincipalDetailsService);
+
+        return  daoAuthenticationProvider;
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+                .authorizeRequests()
+                .antMatchers("/").permitAll()
+                .antMatchers("/api/v1/login").hasRole("ADMIN") // 각 url에 접근 가능한지 
+                .antMatchers("/api/v1/login1").hasRole("MANAGER") // 확인하기 위해 설정 
+                .and()
+                .httpBasic(); // 기본 로그인 창 제공 
+    }
+
+    // Custom Security Config에서 사용할 password encoder를 BCryptPasswordEncoder로 정의
+    @Bean
+    PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
+}
+```
+
+### 5. DB Data 저장
+
+아래와 같이 JUnit를 이용하여 Test 계정을 생성하였고 ROLE 권한을 가진 계정과 
+MANAGER 권한을 가진 계정을 각각 저장한다. 
+
+```java
+@SpringBootTest
+@RunWith(SpringRunner.class)
+public class IUserDaoTest {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private IUserDao iUserDao;
+
+    @Test
+    public void saveTestUser() {
+
+        String testEmail = "test@naver.com";
+
+        // Role 작명규칙은 반드시 prefix로 ROLE_  을 명시해야 함!
+        iUserDao.save(User.builder()
+                .username("WonYong")
+                .email(testEmail)
+                .password(passwordEncoder.encode("test"))
+                .role("ROLE_ADMIN")
+                .active("1")
+                .build());
+
+        User user = iUserDao.findByEmail(testEmail).orElseThrow(() -> new UsernameNotFoundException("not find"));
+        // MANAGER 도 동일하게 생성하기 
+
+        assertThat(user.getEmail()).isEqualTo(testEmail);
+    }
+}
+```
+
+### 6. RestController 
+
+```java
+@RequiredArgsConstructor
+@RestController
+public class LoginApiController {
+
+    @GetMapping("/api/v1/login") // Admin만 접속 가능 
+    public String login() {
+
+        return "Success ADMIN";
+    }
+
+    @GetMapping("/api/v1/login2") // Manager만 접속 가능 
+    public String login2() {
+
+        return "Success MANAGER";
+    }
+}
+```
+- - -
+
+### 7. Test
+
+`/api/v1/login접속 했을 경우 httpBasic() 설정한 로그인 창이 보이며 
+email과 password를 입력했을 경우 로그인이 성공한다. (ADMIN 권한)`   
+
+<img width="800" alt="스크린샷 2020-08-16 오후 2 08 19" src="https://user-images.githubusercontent.com/26623547/90327166-c71ad100-dfcb-11ea-983b-18a43fc7f50d.png">   
+
+
+<img width="500" alt="스크린샷 2020-08-16 오후 2 17 52" src="https://user-images.githubusercontent.com/26623547/90327167-ca15c180-dfcb-11ea-944a-f62aef5985ec.png">
+
+`반면 login2 화면은 Manager 권한만 접근가능하므로 ADMIN권한으로 접근시도 할경우 403 에러가 발생한다.`      
+
+<img width="500" alt="스크린샷 2020-08-16 오후 2 18 00" src="https://user-images.githubusercontent.com/26623547/90327168-cda94880-dfcb-11ea-8849-6dc7d1547334.png">
 
 - - -
 Referrence 
