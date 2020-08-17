@@ -38,12 +38,39 @@ Authorization Server를 통해 회원정보를 인증하고 Access Token을 발�
 `JWT는 정보를 JSON 객체 형태로 주고 받기 위해 표준규약에 따라 생성한 암호화된 문자열(Token)이다.`   
 
 `여기서 JWT의 Token은 의미있는 토큰(유저의 상태를 포함한)으로 
-구성되어 있기 때문에 API 서버 쪽의 비용을 절감하면서 stateless한 아키텍처를 구성 할수 있다.`   
+구성되어 있기 때문에 Auth 서버 쪽의 비용을 절감하면서 stateless한 아키텍처를 구성 할수 있다.`   
+`중요한 점은 application server가 더이상 로그인한 사용자의 session을 관리 하지 않는다는 것이다. 단지 
+전달받은 JWT가 유효한 Token인지만 확인한다.`   
 
 > JWT(JSON Web Token)은 유저의 상태(고유번호, 권한, 토큰 만료일자 등을 포함)를 JSON 포맷으로 구성하고, 
     이 텍스트를 다시 특정 알고리즘(Base 64)에 따라 일련의 문자열로 인코딩한 토큰을 의미한다.   
 
+- 1) client는 Auth Server에 로그인을 한다. 이때 Auth Server는 application server 내에 위치할 수도 있으며, 
+    google, naver와 같은 제 3자가 될 수도 있다.   
+- 2) Auth Server에서 인증을 완료한 사용자는 JWT Token을 전달 받는다.   
+- 3) client는 application server에 resource를 요청할때 앞서 전달받은 JWT Token을 Authorization Header에 전달한다.   
+- 4) application server는 전달받은 JWT Token이 유효하면 200 ok와 함께 data를 response 한다.   
 
+#### JWT Structure
+
+JWT는 아래와 같이 Header / Payload / Signature 3가지로 구성된다.   
+
+<img width="650" alt="스크린샷 2020-08-16 오후 8 44 34" src="https://user-images.githubusercontent.com/26623547/90333526-8b9af980-e001-11ea-9ce9-b984af5aba60.png">   
+
+- Header : token의 type과 JWT를 digitally sign할때 사용한 algorithm을 정의
+    - type은 JWT이며, alg는 해싱 알고리즘을 지정하며, HMAC SHA256 혹은 RSA가 사용된다.   
+
+
+- Payload : JWT에 담아서 전달할 data를 정의한다.
+
+- Signature : 위의 Header와 Payload 값을 base64로 encode한 값을 JWT secret key값으로 
+encrypt한 값을 명시한다.
+
+<img width="650" alt="스크린샷 2020-08-16 오후 8 44 43" src="https://user-images.githubusercontent.com/26623547/90333531-8f2e8080-e001-11ea-80fb-009f5d386433.png">   
+
+
+
+- - -
 
 ## 인증 방식 비교하기 
 
@@ -55,7 +82,9 @@ Authorization Server를 통해 회원정보를 인증하고 Access Token을 발�
 Referrence 
 
 [https://okky.kr/article/409195](https://okky.kr/article/409195)         
-[https://medium.com/neillab/what-is-jwt-89889759ae37](https://medium.com/neillab/what-is-jwt-89889759ae37)
+[https://medium.com/neillab/what-is-jwt-89889759ae37](https://medium.com/neillab/what-is-jwt-89889759ae37)   
+[https://velog.io/@minholee_93/Spring-Security-JWT-Authentication](https://velog.io/@minholee_93/Spring-Security-JWT-Authentication)
+
 
 {% highlight ruby linenos %}
 {% endhighlight %}
