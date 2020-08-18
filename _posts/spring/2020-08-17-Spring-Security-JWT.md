@@ -176,6 +176,58 @@ Authentication 객체는 successfulAuthentication 메서드로 전달된다.
         요청할 때 수행된다.)   
 
 ```java
+public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
+
+    private IUserDao iUserDao;
+
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, IUserDao iUserDao) {
+        super(authenticationManager);
+        this.iUserDao = iUserDao;
+    }
+
+    // endpoint every request hit with authorization
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+        // Read the Authorization header, where the JWT Token should be
+        String header = request.getHeader(JwtProperties.HEADER_STRING);
+
+        // if header does not contain BEARER or is null delegate to Spring impl and exit
+        if(header == null || !header.startsWith(JwtProperties.TOKEN_PREFIX)){
+            chain.doFilter(request,response);
+            return;
+        }
+
+        // If header is present, try grab user principal from database and perform authorization
+        Authentication authentication = getUsernamePasswordAuthentication(request);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // Continue filter execution
+        chain.doFilter(request, response);
+    }
+
+    private Authentication getUsernamePasswordAuthentication(HttpServletRequest request) {
+        String token = request.getHeader(JwtProperties.HEADER_STRING);
+        
+        // parse the token and validate it(decode)
+        if(token != null) {
+            String email = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET.getBytes()))
+                    .build()
+                    .verify(token.replace(JwtProperties.TOKEN_PREFIX,""))
+                    .getSubject();
+
+            if(email != null) {
+
+                User user = iUserDao.findByEmail(email).orElseThrow(()-> new UsernameNotFoundException("not find"));
+                UserPrincipal principal = new UserPrincipal(user);
+                UsernamePasswordAuthenticationToken auth
+                        = new UsernamePasswordAuthenticationToken(email, null, principal.getAuthorities());
+                return auth;
+            }
+            return null;
+        }
+        return null;
+    }
+}
 ```
 
 **doFilterInternal**
@@ -194,6 +246,97 @@ header를 전달해 Authentication 객체를 return 받는다.
 - Authorization이 정상적으로 수행되면, Spring의 나머지 FilterChain들을 수행 할 수 있도록 
 doFilter(request, response)를 호출한다.   
 
+**getUsernamePasswordAuthentication**   
+
+getUsernamePasswordAuthentication 메서드는 전달받은 Authorization 헤더에서 
+사용자 정보를 획득해 UsernamePasswordAuthenticationToken 객체를 생성       
+
+<img width="700" alt="스크린샷 2020-08-18 오후 1 25 57" src="https://user-images.githubusercontent.com/26623547/90470745-340ea200-e157-11ea-8b11-0c5023dd4305.png">   
+
+- Authorization Header에서 JWT Token을 얻는다. 
+
+- JWT Token을 decode 하여 subject에서 username(email)을 획득한다.
+
+- email으로 DB를 조회해 User객체를 생성한다.   
+
+- User객체를 전달해 UserPrincipal 객체를 생성한다.
+
+- email과 User의 authorites로 구성된 UserPasswordAuthenticationToken을 생성해 
+Authentication 객체로 return 한다.   
+
+### 4. Config 
+
+> SecurityConfig.java
+
+```java
+@Configuration
+@RequiredArgsConstructor
+@EnableWebSecurity // Spring Security 활성화
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    private final UserPrincipalDetailsService userPrincipalDetailsService;
+    private final IUserDao iUserDao;
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(authenticationProvider());
+    }
+
+    @Bean
+    DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+        daoAuthenticationProvider.setUserDetailsService(this.userPrincipalDetailsService);
+
+        return  daoAuthenticationProvider;
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+                .csrf().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilter(new JwtAuthenticationFilter(authenticationManager()))
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), this.iUserDao))
+                .authorizeRequests()
+                .antMatchers(HttpMethod.POST, "login").permitAll()
+                .antMatchers("/api/v1/login").hasRole("ADMIN")    // admin 만 접근 가능 
+                .antMatchers("/api/v1/login2").hasRole("MANAGER") // manager 만 접근 가능 
+                .anyRequest().authenticated(); // 이외에 모든 request는 로그인한 사용자만 접근 가능 
+
+    }
+
+    // Custom Security Config에서 사용할 password encoder를 BCryptPasswordEncoder로 정의
+    @Bean
+    PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
+}
+```
+
+- `JwtAuthentication Filter와 JwtAuthorizationFilter를 위와 같은순서대로 선언한다 이때 반드시 
+Authentication이 앞에 와야한다. (순서대로 진행 되기 때문에)`   
+
+- csrf와 session은 JWT 기반 Security에서는 사용하지 않으므로 disable 처리한다.   
+
+### 5. Test   
+
+postman으로 API 테스트를 진행 하였다.   
+
+> 5-1. Login (Authentication)
+
+<img width="750" alt="스크린샷 2020-08-18 오후 1 53 25" src="https://user-images.githubusercontent.com/26623547/90471986-6d94dc80-e15a-11ea-8474-0db22c6fbd60.png">    
+
+`위와 같이 /login으로 email/password와 함께 Post request 요청하면 200 ok 와 함께 
+JWT Token이 return 되는 것을 확인 할수 있다.`
+
+> 5-2. Authorization request   
+
+<img width="750" alt="스크린샷 2020-08-18 오후 2 03 08" src="https://user-images.githubusercontent.com/26623547/90472533-b4cf9d00-e15b-11ea-8840-5d5b95c95ab7.png">   
+
+`이후 획득한 JWT Token을 Authorization header에 담아 authorization request를 요청하면 
+정상적으로 결과값을 return 하는 것을 확인 할수 있다!`   
 
 - - -
 Referrence 
