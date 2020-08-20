@@ -4,7 +4,7 @@ title: "[Spring] Spring Security + OAuth2 + JWT 를 이용한 소셜로그인 1"
 subtitle: "Spring Boot에서 Oauth2 + JWT 이용한 Google 로그인"
 comments: true
 categories : Spring
-date: 2020-08-19
+date: 2020-08-20
 background: '/img/posts/spring.png'
 ---
 
