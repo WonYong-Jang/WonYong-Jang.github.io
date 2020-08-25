@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spring] Spring Security + OAuth2 + JWT 를 이용한 소셜로그인 1"
-subtitle: "Spring Boot에서 Oauth2 + JWT 이용한 Google 로그인"
+subtitle: "Spring Boot에서 Oauth2 + JWT 이용한 Google 로그인 / CORS"
 comments: true
 categories : Spring
 date: 2020-08-20
@@ -89,7 +89,8 @@ spring.security.oauth2.client.registration.google.scope=email,profile
 
 ```
 app.auth.tokenSecurity={직접 작성}
-app.auth.tokenExpirationMsec=864000000
+app.auth.tokenExpirationMsec=86400
+# 60*60*24  => 1 day
 app.oauth2.authorizedRedirectUris[0]=http://localhost:3000/oauth2/redirect
 ```
 
@@ -168,13 +169,27 @@ public class SpringSocialApplication {
 `CORS(Cross-Origin Resource Sharing)는 동일한 출처가 아니여도 
 다른 출처에서의 자원을 요청하여 쓸 수 있게 허용하는 구조를 뜻한다.`   
 
-보통 보안상의 이슈때문에 동일한 출처를 기본적으로 웹에서는 준수하기 때문에 
-최초 자원을 요청한 출처 말고 다른 스크립트를 통해 자원을 요청하는 것은 금지된다.   
+- Origin은 Domain과 비슷하면서 차이는 프로토콜과 포트번호 포함 여부이다.
 
-> Origin : 도메인이나 포트버호가 다른 서버 
-> Origin 간에 프로토콜, 프토, 호스트가 같아야 동일 Origin   
+> 도메인(domain): naver.com   
+> 오리진(origin): https://www.naver.com/PORT   
 
-- **CORS 동작 과정**  
+#### Cors 필요성
+
+> Same-Origin Policy   
+
+`웹 시큐리티의 중요한 정책 중 하나로 Same-Origin Policy가 있다. 이는 Origin 사이의 리소스 
+공유에 제한을 거는 것으로 다음 과 같은 위험을 막는 것을 목적으로 하고 있다.`   
+
+1) XSS(Cross Site Scripting) : 유저가 웹 사이트에 접속하는 것으로 정상적이지 않은 
+                              요청이 클라이언트(웹 브라우저)에서 실행되는 것을 나타내며, Cookie 내에 
+                              Session 정보를 탈취 하는 것 등의 예시가 있다.   
+
+2) CSRF(Cross-Site Request Forgeries) : 로그인 된 사용자가 자신의 의지와는 무관하게 공격자가 의도한 행위(수정, 삭제, 
+        등록, 송금 등) 하게 만드는 공격이다. XSS 공격과 유사하며 CSRF 공격은 악성 스크립트를 서버에 요청한다.   
+
+#### CORS 동작 과정   
+
 1. pre-flight : 실제 요청하려는 경로와 같은 URL에 대해 OPTIONS로 요청을 날려보고 요청가능한지 확인  
 2. 실제 요청 
 
