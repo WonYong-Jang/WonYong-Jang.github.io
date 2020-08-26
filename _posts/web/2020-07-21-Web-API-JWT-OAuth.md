@@ -37,6 +37,17 @@ Authorization Server를 통해 회원정보를 인증하고 Access Token을 발�
 
 `JWT는 정보를 JSON 객체 형태로 주고 받기 위해 표준규약에 따라 생성한 암호화된 문자열(Token)이다.`   
 
+`JWT는 Claim 기반이라는 방식을 사용하는데, Claim이란 사용자에 대한 프로퍼티 속성을 이야기 한다.`
+
+```
+// Claim을 JSON으로 서술한 예이다. JSON 자체를 토큰으로 사용하는 것이 
+// Claim 기반의 토큰 방식이다.   
+{
+    "id":"test",
+    "role":"user"
+}
+```
+
 `여기서 JWT의 Token은 의미있는 토큰(유저의 상태를 포함한)으로 
 구성되어 있기 때문에 Auth 서버 쪽의 비용을 절감하면서 stateless한 아키텍처를 구성 할수 있다.`   
 `중요한 점은 application server가 더이상 로그인한 사용자의 session을 관리 하지 않는다는 것이다. 단지 

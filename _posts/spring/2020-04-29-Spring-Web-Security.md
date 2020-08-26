@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spring] Spring Web Security"
-subtitle: "스프링 시큐리티 개념과 로그인 처리"
+subtitle: "스프링 시큐리티 개념과 인증 및 인가 처리"
 comments: true
 categories : Spring
 date: 2020-04-29
@@ -15,12 +15,26 @@ background: '/img/posts/spring.png'
 
 `프로그램외에 리소스(이미지)에 대한 접근도 제어할 수 있고, CSFR 공격 방어, 세션 공격 방어, 다중 접속 방지 등도 
 간단하게 구현할 수 있다.`   
+- - -
+### 스프링 시큐리티 용어 정리 
 
-**Authentication(인증) : 현재 유저가 누구인지 스스로 증명, 애플리케이션의 작업을 수행할 수 있는 주체임을 증명하는 과정**   
-> ex) 사용자 id, pw 를 이용하여 증명
+<img width="350" alt="스크린샷 2020-08-26 오후 8 49 40" src="https://user-images.githubusercontent.com/26623547/91300303-07552d00-e7de-11ea-89af-460421b456ff.png">   
 
-**인증된 주체가 애플리케이션의 동작을 수행할 수 있도록 허락되었는지를 결정한다.**      
-> 인증이 되었더라도 권한이 없다면 사용할수 없는 게시판이 존재함   
+
+**접근 주체(Principal) : 보호된 리소스에 접근하는 사용자**   
+
+**Authentication(인증) : 현재 유저가 누구인지 스스로 증명, 애플리케이션의 작업을 수행할 수 있는 주체임을 증명하는 과정**    
+ex) 사용자 id, pw 를 이용하여 증명
+
+**Authorization(인가) : 현재 사용자가 보호된 리소스에 권한이 있는지를 검사**            
+ex) 인증이 되었더라도 권한이 없다면 사용할수 없는 게시판이 존재함   
+
+**GrantedAuthority : 인증된 사용자의 인증정보(Role 등)을 표현**   
+
+**SecurityContext : Authentication과 GrantedAuthority를 담고있는 Context**   
+
+
+
 
 
 <p>스프링 웹 시큐리티를 이용하면 다음과 같은 작업을 간편하게 처리가 가능하다. 
