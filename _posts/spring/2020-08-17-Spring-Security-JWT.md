@@ -55,6 +55,23 @@ implementation group: 'com.auth0', name: 'java-jwt', version: '3.1.0'
    
 ### 2. Authentication   
 
+- 현재 인증 주체의 정보를 담는 목적 / 실제 구조는 아래와 같다.   
+
+```java
+public interface Authentication extends Principal, Serializable {
+    //현재 사용자의 권한 정보를 가져옴.
+	Collection<? extends GrantedAuthority> getAuthorities();
+    //증명 값(비밀번호) 같은 것들을 가져옴
+	Object getCredentials();
+	Object getDetails();
+    //Principal 객체를 가져옴.
+	Object getPrincipal();
+    //인증 여부를 가져온다.
+	boolean isAuthenticated();
+	void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException;
+}
+```
+
 > JwtProperties.java 
 
 JWT Properties정보를 담고 있는 클래스를 생성한다. `JWT에서는 서명을 생성하기 위해 
@@ -168,7 +185,36 @@ Authentication 객체는 successfulAuthentication 메서드로 전달된다.
 
 - UserPrincipal의 필드값을 Subject(email)로 하는 JWT Token을 생성한다.  
 
-- 생성한 JWT Token은 response의 header에 전달한다.   
+- 생성한 JWT Token은 response의 header에 전달한다.  
+
+**UsernamePasswordAuthenticationToken**    
+
+```java
+public class UsernamePasswordAuthenticationToken extends AbstractAuthenticationToken {
+    private final Object principal;
+	private Object credentials;
+    public UsernamePasswordAuthenticationToken(Object principal, Object credentials) {
+		super(null);
+		this.principal = principal;
+		this.credentials = credentials;
+		setAuthenticated(false);
+	}
+	public UsernamePasswordAuthenticationToken(Object principal, Object credentials,
+			Collection<? extends GrantedAuthority> authorities) {
+		super(authorities);
+		this.principal = principal;
+		this.credentials = credentials;
+		super.setAuthenticated(true); // must use super, as we override
+	}
+}
+```
+
+- `UsernamePasswordAuthenticationToken 은 username, passwrod 조합으로 토큰 객체를 만든다.`   
+
+- username이 principal, password가 credentials역할을 할 것이고, 2개의 생성자를 가지고 있는데, 
+    첫번째 생성자는 username, password로 받아 만들어진 인증 전 객체이기 때문에 isAuthenticated는 false이다!!
+
+- 두번째 파라미터 3개 생성자는 username, password, authorites를 받아 생성된 토큰은 인증이 완료된 인증 후 객체이다.   
 
 ### 3. Authorization   
 

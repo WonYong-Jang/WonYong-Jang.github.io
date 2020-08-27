@@ -21,17 +21,40 @@ background: '/img/posts/spring.png'
 <img width="350" alt="스크린샷 2020-08-26 오후 8 49 40" src="https://user-images.githubusercontent.com/26623547/91300303-07552d00-e7de-11ea-89af-460421b456ff.png">   
 
 
-**접근 주체(Principal) : 보호된 리소스에 접근하는 사용자**   
+##### 접근 주체(Principal) : 보호된 리소스에 접근하는 사용자
 
-**Authentication(인증) : 현재 유저가 누구인지 스스로 증명, 애플리케이션의 작업을 수행할 수 있는 주체임을 증명하는 과정**    
+- 현재 사용자의 정보를 가지고 있는 Principal을 가지고 오려면 Authenticaion 객체에서 가져 올수 있고 
+Authenticaion 객체는 SecurityContext에서 가져 올수 있다.
+
+##### Authentication(인증) 
+
+- 현재 유저가 누구인지 스스로 증명, 애플리케이션의 작업을 수행할 수 있는 주체임을 증명하는 과정     
 ex) 사용자 id, pw 를 이용하여 증명
 
-**Authorization(인가) : 현재 사용자가 보호된 리소스에 권한이 있는지를 검사**            
+```java
+public interface Authentication extends Principal, Serializable {
+    //현재 사용자의 권한 정보를 가져옴.
+	Collection<? extends GrantedAuthority> getAuthorities();
+    //증명 값(비밀번호) 같은 것들을 가져옴
+	Object getCredentials();
+	Object getDetails();
+    //Principal 객체를 가져옴.
+	Object getPrincipal();
+    //인증 여부를 가져온다.
+	boolean isAuthenticated();
+	void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException;
+}
+```
+
+
+##### Authorization(인가) : 현재 사용자가 보호된 리소스에 권한이 있는지를 검사     
 ex) 인증이 되었더라도 권한이 없다면 사용할수 없는 게시판이 존재함   
 
-**GrantedAuthority : 인증된 사용자의 인증정보(Role 등)을 표현**   
+##### GrantedAuthority : 인증된 사용자의 인증정보(Role 등)을 표현    
 
-**SecurityContext : Authentication과 GrantedAuthority를 담고있는 Context**   
+##### SecurityContext
+
+- Authenticaion 을 보관하는 역할 Spring Security 에서는 SecurityContext로 부터 Authenticaion 객체를 가져온다.    
 
 
 
