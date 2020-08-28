@@ -227,8 +227,9 @@ public class User {
     private String username;
     private String email;
     private String imageUrl;
+    private Role role;
 
-    @JsonIgnore            
+    @JsonIgnore
     private String password;
 
     private AuthProvider provider;
@@ -236,7 +237,6 @@ public class User {
     private Boolean emailVerified = false;
 
     private String providerId;
-}
 ```
 
 - AuthProvider는 google/naver등의 oauth provider를 의미한다. 
@@ -251,6 +251,23 @@ public enum AuthProvider {
 - oauth provider 별로 로그인 후 전달해 주는 data가 다르기 때문에 로그인 시 provider를 
 확인해서 각각 process를 거치게 된다.   
 
+```java
+@Getter
+@RequiredArgsConstructor
+public enum  Role {
+
+    GUEST("ROLE_GUEST", "손님"),      // 가입 전
+    USER("ROLE_USER", "일반 사용자"), // 가입 후
+    ADMIN("SYSTEM_ADMIN", "관리자");
+
+    private final String key;
+    private final String title;
+}
+```
+
+- Role을 enum 클래스로 생성하여 관리 하였다.   
+
+- - -
 
 ## 10. User Dao(Repository)   
 
@@ -258,8 +275,6 @@ public enum AuthProvider {
 public interface IUserDao extends MongoRepository<User, String> {
 
     Optional<User> findByEmail(String email);
-    User findByUsername(String username);
-    Boolean existsByEmail(String email);
 }
 ```
 
