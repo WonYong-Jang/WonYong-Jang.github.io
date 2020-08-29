@@ -46,6 +46,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return new HttpCookieOAuth2AuthorizationRequestRepository();
     }
 
+    // Authorization에 사용할 userDetailService와 password Encoder를 정의한다.
     @Override
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
         authenticationManagerBuilder
@@ -71,12 +72,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .cors()
+                .cors() // cors 허용
                     .and()
-                .sessionManagement()
+                .sessionManagement() // session Creation Policy를 stateless 정의하여 session 사용 안함
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 토큰 사용하기 위해
                     .and()
-                .csrf()
+                .csrf()       // csrf 사용 안함
                     .disable()
                 .formLogin()
                     .disable()
@@ -84,9 +85,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .disable()
                 .authorizeRequests()
                 .antMatchers("/").permitAll()
+                .antMatchers("/api/v1/**").hasAnyRole(Role.GUEST.name() ,Role.USER.name(), Role.ADMIN.name())
                 .antMatchers("/auth/**", "/oauth2/**").permitAll()
-                .antMatchers("/api/v1/login").hasRole("ADMIN")
-                .antMatchers("/api/v1/login2").hasRole("MANAGER")
                 .anyRequest().authenticated()
                 .and()
                 .oauth2Login()
@@ -101,7 +101,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .failureHandler(oAuth2AuthenticationFailureHandler);
 
         // Add our custom Token based authentication filter
-        // UsernamePasswordAuthenticationFilter 앞에 custom 필터 추가! 
+        // UsernamePasswordAuthenticationFilter 앞에 custom 필터 추가!
         http.addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 }
@@ -123,6 +123,36 @@ MethodSecurity는 WebSecurity와는 별개로 동작하기 때문에 추가 설�
 
 > 3) jsr250Enabled : @RolesAllowed 사용하여 인가처리 옵션 
 
+##### 1-2 CustomUserDetailService
+
+인증시 사용할 custom User Service이다. 자세한 내용은 [이 글](https://wonyong-jang.github.io/spring/2020/08/15/Spring-Security-Database-Authentication.html)을 참고하면 된다.     
+
+##### 1-3 TokenAuthenticationFilter  
+
+`로그인시 JWT Token을 확인해 인가된 사용자 유무를 판별하고 내부 process를 수행한다.`    
+자세한 내용은 [이 글](https://wonyong-jang.github.io/spring/2020/08/17/Spring-Security-JWT.html)을 참고하면 된다.    
+`여기서는 인가된 사용자를 확인할 때 DB를 조회하지 않고 JWT 토큰에 저장된 값들로만 확인 할수 있도록 하였다.`   
+
+##### 1-4 HttpCookieOAuth2AuthorizationReqeustRepository 
+
+Spring OAuth2는 기본적으로 HttpSessionOAuth2AuthorizationRequestRepository를 사용해 
+Authorization Request를 저장한다.
+
+`우리는 JWT를 사용하므로, Session에 이를 저장할 필요가 없다. 따라서 custom으로 구현한 
+HttpCookieOAuth2AuthorizationRequestRepository를 사용해 Authorization Reqeust를 Based64 encoded cookie에 
+저장한다.`   
+
+- - - 
+
+## 2. OAuth2 Login Process
+
+- login process 는 먼저 client 에서 http://localhost:8080/oauth2/authorize/{provider}?redirect_uri={로그인 인증 후 JWT 보낼 uri}로 request 하면서 
+시작된다.   
+
+- 이 때 위의 provider는 google/naver와 같은 oauth provider가 된다. 
+
+
+<img width="700" alt="스크린샷 2020-08-29 오후 4 12 23" src="https://user-images.githubusercontent.com/26623547/91631155-82068e00-ea12-11ea-836d-b26450582b63.png">   
 
 - - -
 Referrence 
