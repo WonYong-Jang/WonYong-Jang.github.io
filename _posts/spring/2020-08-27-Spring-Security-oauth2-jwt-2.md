@@ -154,6 +154,8 @@ HttpCookieOAuth2AuthorizationRequestRepository를 사용해 Authorization Reqeus
 
 <img width="700" alt="스크린샷 2020-08-29 오후 4 12 23" src="https://user-images.githubusercontent.com/26623547/91631155-82068e00-ea12-11ea-836d-b26450582b63.png">   
 
+
+
 - - -
 Referrence 
 
