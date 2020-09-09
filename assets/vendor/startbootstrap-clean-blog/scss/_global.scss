@@ -75,3 +75,8 @@ img::-moz-selection {
   color: $white;
   background: transparent;
 }
+// image size auto resize
+img{
+  max-width:100%;
+  height:auto;
+}

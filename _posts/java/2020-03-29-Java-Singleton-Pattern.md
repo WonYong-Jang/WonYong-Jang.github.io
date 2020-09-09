@@ -25,10 +25,10 @@ background: '/img/posts/mac.png'
  생성자와 getInstance() 라는 메서드를 포함한 클래스이다. 여기서 중요한 점은
  생성자가 private로 지정되어 있다는 점이다.</p>
 
-<img width="987" alt="스크린샷 2020-03-29 오후 3 47 57" src="https://user-images.githubusercontent.com/26623547/77843119-d217c500-71d4-11ea-8cd0-1b873d58659a.png">
+<img width="750" alt="스크린샷 2020-03-29 오후 3 47 57" src="https://user-images.githubusercontent.com/26623547/77843119-d217c500-71d4-11ea-8cd0-1b873d58659a.png">
 <p>위는 new 연산자로 인스턴스 만드는 것과 싱글톤 패턴을 이용하여 인스턴스를 만드는 것의 차이를 확인하기 위함</p>
 
-<img width="985" alt="스크린샷 2020-03-29 오후 3 48 08" src="https://user-images.githubusercontent.com/26623547/77843120-d47a1f00-71d4-11ea-9572-467089327d3b.png">
+<img width="750" alt="스크린샷 2020-03-29 오후 3 48 08" src="https://user-images.githubusercontent.com/26623547/77843120-d47a1f00-71d4-11ea-9572-467089327d3b.png">
 <p>Singleton 클래스를 만들 때 눈여겨봐야 할 부분은 바로 생성자 부분이다.
 대부분 생성자를 만들 때 public으로 선언하는데, 지금 싱글톤 패턴에서는 private으로 선언했는데,
 private 으로 생성자를 만들어놓으면 new 연산자로 생성이 불가능하다!</p>
@@ -47,9 +47,9 @@ private 으로 생성자를 만들어놓으면 new 연산자로 생성이 불가
 반환을 요구할 때 항상 같은 객체를 반환시켜 줄수 있다!!</u></p>
 
 
-<img width="982" alt="스크린샷 2020-03-29 오후 3 48 23" src="https://user-images.githubusercontent.com/26623547/77843122-d6dc7900-71d4-11ea-9128-f3380a0bb6c4.png">
-<img width="981" alt="스크린샷 2020-03-29 오후 4 03 17" src="https://user-images.githubusercontent.com/26623547/77843322-e6f55800-71d6-11ea-8fd0-56e64fc9de11.png">
-<img width="987" alt="스크린샷 2020-03-29 오후 4 05 31" src="https://user-images.githubusercontent.com/26623547/77843342-291e9980-71d7-11ea-904a-176f9dd4a5d0.png">
+<img width="750" alt="스크린샷 2020-03-29 오후 3 48 23" src="https://user-images.githubusercontent.com/26623547/77843122-d6dc7900-71d4-11ea-9128-f3380a0bb6c4.png">
+<img width="750" alt="스크린샷 2020-03-29 오후 4 03 17" src="https://user-images.githubusercontent.com/26623547/77843322-e6f55800-71d6-11ea-8fd0-56e64fc9de11.png">
+<img width="750" alt="스크린샷 2020-03-29 오후 4 05 31" src="https://user-images.githubusercontent.com/26623547/77843342-291e9980-71d7-11ea-904a-176f9dd4a5d0.png">
 <br/><br/>
 <h3>싱글톤 사용 이유</h3>
 <p><b>고정된 메모리 영역을 사용하도록 하여 단 한번 new 연산자로 인스턴스를
@@ -68,11 +68,19 @@ private 으로 생성자를 만들어놓으면 new 연산자로 생성이 불가
 <h3>멀티쓰레드에서 안전한(Thread-safe) 싱글톤 클래스, 인스턴스 만드는 방법</h3>
 <p>포스팅 준비중</p>
 
+---
+
 <p>Reference</p>
  <a href ="https://commin.tistory.com/121">https://commin.tistory.com/121</a><br/>
  <a href ="https://jeong-pro.tistory.com/86">https://jeong-pro.tistory.com/86</a><br/>
  <a href ="https://javaplant.tistory.com/21">https://javaplant.tistory.com/21</a>
-<br/><br/>
+<br/>
+
+{% highlight ruby linenos %}
+
+
+{% endhighlight %}
+
 {%- if site.disqus.shortname -%}
     {%- include disqus.html -%}
 {%- endif -%}
