@@ -62,14 +62,14 @@ const query = "SELECT id FROM products ORDER BY id DESC LIMIT " + (take *(page-1
 #### 문제 1) 페이지 요청사이 데이터 변화가 있는 경우 중복 데이터 발생 
 
 `전통적인 페이지네이션은 오랜 기간 잘 작동해왔다. 문제는 페이스북이나 인스타그램과 같은 
-잦은 수정, 생성, 삭제가 반복되는데 SNS 서비스가 등작하면서 더 이상 효율적으로 작동하지 
+잦은 수정, 생성, 삭제가 반복되는 서비스에서는 더 이상 효율적으로 작동하지 
 못하게 되었다.`   
 
 예를 들어, 1페이지에서 20개의 row를 불러와서 유저에게 1페이지를 띄워주었다. 고객이 1페이지의 
 상품들을 보고 있는 사이, 상품 운영팀에서 5개의 상품을 새로 올렸다면?      
 
 **유저가 1페이지 상품을 다 둘러보고 2페이지를 눌렀을때 1페이지에서 보았던 상품 20개중 마지막 5개를 
-다시 2페이지에서 만나게 된다.**  
+다시 2페이지에서 만나게 된다. (등록일 기준 내림차순이므로)**  
 
 `반대로 5개 상품을 삭제했다면 2페이지로 넘어갔을때 고객은 5개의 상품을 보지 못하게된다!`   
 
@@ -92,7 +92,7 @@ Offset 기반 페이지네이션은 우리가 원하는 데이터가 '몇 번째
 
 `즉, n개의 row를 skip 한 다음 10개 주세요가 아니라, 이 row 다음꺼부터 10개 주세요를 요청한다!`   
 
-#### 케이스::id DESC 정렬시 
+#### 케이스:: id DESC 정렬시 
 
 위의 오프셋 기반 페이지네이션의 1번 예제에서 ID 역순 정렬되어 있는 post 테이블에서 첫번째 리스트를 가져오는 방법은 동일하다.
 
@@ -111,13 +111,80 @@ SELECT id, title
 `위처럼 중복되지 않는 고유의 id를 정렬하여 커서로 페이지네이션 한다면 문제 될것이 없지만 
 중복될 수 있는 생성 날짜등으로 정렬하여 커서로 사용시 문제가 생길수 있다.`
 
-#### 케이스 Create_date DESC, id ASC 정렬시    
 
+#### 케이스:: Create_date DESC, id ASC 정렬시    
 
+동일하게 유저에게 마지막으로 응답했던 데이터중에 마지막 데이터가 Cursor가 된다.    
+`마지막 data의 Create Date와 Id가 각각의 cursor가 된다.`   
+
+`여기서 주의깊에 봐야할 OR절은 만약 정확히 같은 시간에 여러개의 게시글이 생겼을 때 1개의 게시글을 
+제외하고 나머지는 무시될 수 있기 때문에 OR절을 활용하여 표현한다.`   
 
 <img width="655" alt="스크린샷 2020-09-08 오후 9 51 23" src="https://user-images.githubusercontent.com/26623547/92478677-750d4a00-f21d-11ea-90c8-e914139e38e8.png">   
 
+아래 쿼리 대로 생성시간 6보다 작거나(생성시간이 6이랑 같고 id가 5보다 큰) 값만 검색하게 된다.
 
+`만약 OR절이 없었다면 id가 11, 12인 값은 무시하고 넘어 갔을 것이다. 그렇기 때문에 이 경우는 OR절이 
+꼭 필요하다.`
+
+```
+/*MySQL*/
+
+SELECT ID, CONTENT, CREATION_DATE
+FROM POST
+WHERE CREATION_DATE < (CreationDate Cursor)
+    OR (CREATION_DATE = (CreationDate Cursor) AND id>(Id Cursor))
+ORDER BY CREATION_DATE DESC, ID ASC
+LIMIT 5
+
+/*MONGO*/
+
+db.posts
+.find(
+'CREATION_DATE' : {'$lt' : (CreationDate Cursor)}
+{ $or : [ { $and : [{'CREATION_DATE' : (CreationDate Cursor)},{'id' : {'$gt' : (Id Cursor)}}]}]}
+).limit(5)
+```
+
+- - - 
+<br>
+
+#### Cursor 페이지네이션 응용(커스텀 cursor)
+
+
+- 위 쿼리 처럼 사용하면 OR절도 항상 사용해야하며 ASC/DESC가 
+섞여있거나 많은 경우 일관성 있는 코드를 만들기 힘들게 된다.   
+
+```
+SELECT ID, CONTENT ,CREATION_DATE,
+		CONCAT(LPAD(CREATION_DATE, 3, '0'), LPAD(ID, 3, '0')) as `CURSOR`
+	FROM `POST`
+	ORDER BY CREATION_DATE DESC, ID DESC
+	LIMIT 5;
+```
+
+- CONCAT : 문자열을 합치는 쿼리문
+
+    - ex) CONCAT('WON','YONG') ==> WONYONG
+
+- LPAD : 지정된 길이로 해당 문자열을 채움(왼쪽)
+
+    - ex) LPAD('HI',5,'0') == > 000HI
+
+
+<img width="659" alt="스크린샷 2020-09-10 오후 9 48 34" src="https://user-images.githubusercontent.com/26623547/92731034-89814c00-f3af-11ea-90d2-f9e37b160036.png">   
+
+
+> 첫번째 페이지 이후 
+
+```
+SELECT ID, CONTENT ,CREATION_DATE,
+		CONCAT(LPAD(CREATION_DATE, 3, '0'), LPAD(ID, 3, '0')) as CURSOR
+	FROM POST
+    WHERE CURSOR < CONCAT(LPAD(CREATION_DATE_CURSOR, 3, '0'), LPAD(ID_CURSOR, 3, '0'))
+	ORDER BY CREATION_DATE DESC, ID DESC
+	LIMIT 5;
+```
 
 
 - - - 

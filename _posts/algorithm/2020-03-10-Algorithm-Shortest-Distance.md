@@ -8,7 +8,7 @@ date: 2020-03-10
 background: '/img/posts/mac.png'
 ---
 
-<h2 class="section-heading">다익스트라 </h2>
+## 다익스트라
 
 <p><b>그래프의 어떤 정점 하나를 시작으로 선택하고, 나머지 정점들로의 최단거리를 모두 구한다.</b></p>
 <p>distance 배열을 모두 무한대로 초기화 ( 시작점은 0으로 시작! )</p>
@@ -18,8 +18,7 @@ background: '/img/posts/mac.png'
 
 
 
-{% highlight ruby linenos %}
-
+```java
 static int V, E, S;  // 정점의 갯수, 간선의 갯수,시작 점 
 static ArrayList<ArrayList<Node>> adj = new ArrayList<ArrayList<Node>>(); // 인접 리스트
 static final int MAX = 20001, INF = 300005 * 10;
@@ -50,12 +49,20 @@ public static void solve()
 		}
 	}
 }
-
-{% endhighlight %}
+```
 
 <p><b>만약 음수사이클 있다면 사용하지 못함! </b></p>
 
-<h2 class="section-heading">벨만포드 </h2>
+- - -
+
+## 벨만포드
+
+`기본 아이디어는 그래프를 연결하고 있는 Edge를 기준으로 모든 정점으로 가는 최단거리를 찾는 것이다. 
+다익스트라가 정점 중심으로 최단 경로를 찾았다면 벨만 포드 알고리즘은 Edge들을 중심으로 찾는다!`   
+
+`정점의 갯수를 V라 할 때, 한 정점에서 모든 정점을 방문할 수 있으려면 적어도 V-1번 
+방문해야 모든 정점을 방문할 수 있다. 따라서 모든 Edge들을 V-1번 보면서 각 정점의 최단 거리를 찾는다.`   
+
 
 <p><u>V개의 정점과 E개의 간선을 가진 가중 그래프에서 특정 출발정점에서부터 
 모든 정점까지의 최단 경로를 구하는 알고리즘</u></p>
@@ -168,7 +175,9 @@ public class Main {
 }
 {% endhighlight %}
 
-<h2 class="section-heading">플로이드 워샬 </h2>
+- - -
+
+## 플로이드 워샬
 
 <br/>
 <h3>백준 플로이드 </h3>
