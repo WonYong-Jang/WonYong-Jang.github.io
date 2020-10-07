@@ -41,7 +41,7 @@ background: '/img/mac-apps.jpeg'
 {% if paginator.total_pages > 1 %}
 
 <div class="clearfix">
-
+    
   {% if paginator.previous_page %}
   <a class="btn btn-primary float-left" href="{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/' }}">&larr;
     Newer<span class="d-none d-md-inline"> Posts</span></a>
