@@ -56,12 +56,12 @@ Eldest는 가장 나이가 많은 이라는 의미가 있는데 말 그대로 Li
 
 ```java 
 
- final int MAX = 10;
+final int MAX = 10;
 
 Map<Integer, Integer> map = new LinkedHashMap<Integer, Integer>() {
     @Override
     protected boolean removeEldestEntry(Map.Entry eldest) {
-        return size() > capacity;
+        return size() > MAX;
     }
 };
 
