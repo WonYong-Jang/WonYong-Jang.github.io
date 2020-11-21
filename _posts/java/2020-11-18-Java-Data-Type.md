@@ -95,8 +95,6 @@ String str = "문자열 리터럴";
 ## 4. 변수 스코프와 라이프타임 
 
 `프로그램에서 사용되는 변수들은 사용 가능한 범위`를 가진다. 그 범위를 변수의 스코프라고 한다.   
-
-### 4-1) 변수 스코프 
    
 **변수가 선언된 블럭이 그 변수의 사용 범위이다.**   
 
@@ -117,9 +115,6 @@ public class ValableScopeExam{
 
 > main 메소드에서 사용하기  (주의! ) 
 
-`같은 클래스 안에 있는 globalScope 변수를 사용 할 수 없다. main은 static한 메소드 이다. static한 
-메서드에서는 static 하지 않은 필드를 사용 할 수 없다.`   
-
 ```java
 public class VariableScopeExam {
         int globalScope = 10; 
@@ -138,24 +133,106 @@ public class VariableScopeExam {
     }
 ```
 
-##### Static 이란 ? 
+`같은 클래스 안에 있는 globalScope 변수를 사용 할 수 없다. main은 static한 메소드 이다. static한
+메서드에서는 static 하지 않은 필드를 사용 할 수 없다.`   
 
-`Static 은 단어 뜻 처럼 프로그램이 실행시부터 종료시까지 그대로 고정되어 있다.`   
+
+#### Static 이란 ? 
+
+Static 은 단어 뜻 처럼 프로그램이 실행시부터 종료시까지 그대로 고정되어 있다.    
 
 Static이라는 키워드를 사용하여 Static변수와 Static메소드를 만들 수 있는데 다른말로 정적필드와 정적 
 메소드라고도 하며 이 둘을 합쳐 정적 멤버라고 한다.(클래스 멤버라고도 한다.)   
 
-Static 실행되는 시점은 클래스가 메모리상으로 올라갈 때이다. 
+`static 실행되는 시점은 클래스가 메모리상으로 올라갈 때이다. 즉, 우리가 프로그램을 실행하면 필요한 클래스가 
+JVM 메모리상에 로딩되는 과정을 거친다. 그리고 로딩된 클래스는 메모리상에서 객체를 인스턴스화 할 수 
+있도록 메모리에 상주한다. static은 이 시점에 메모리에 올라가면서 필요한 동작을 처리한다. 결론적으로 static은 
+객체의 인스턴스와 관계없이 클래스가 로딩되는 시점에 단 한번만 필요한 동작을 처리하기 위해 사용한다.`  
+
+`이때, JVM의 메소드영역(클래스 영역)에 클래스의 정보들이 올라가게 된다.`   
 
 > 순서 : 프로그램 실행 >> 클래스 로드(static 생성) >> 인스턴스 생성  
 
+<img width="550" alt="스크린샷 2020-11-21 오후 5 51 08" src="https://user-images.githubusercontent.com/26623547/99872031-2ec36680-2c22-11eb-8c92-7e865a5dcd94.png">   
 
+> 출처 : https://ict-nroo.tistory.com/19
+
+프로그램이 실행되면 JVM은 OS로부터 메모리를 할당 받고, 그 메모리를 용도에 따라 여러 영역으로 나누어 관리한다. 
+메소드 영역에 대해서만 보면, 프로그램을 수행하기 위해 OS에서 할당 받은 메모리 공간인 Runtime Data Area 안에 
+포함되어 있다.   
+
+`메소드 영역은 Class Area, Code Area, Static Area로 불려지며, 의미상 공유 메모리 영역이라고도 불린다. 코드에서 사용되는 
+클래스들을 클래스 로더로 읽어 클래스 별로 런타임 상수 풀(runtime constant pool), 필드 데이터, 메소드 데이터, 메소드 코드, 생성자 코드 등을 
+분류해서 저장한다. 메소드 영역은 JVM이 동작해서 클래스가 로딩될 때 생성되고, 모든 스레드가 공유하는 영역이다.`   
+
+static이 붙은 변수를 클래스 변수라고 하는 것은 위에 그림에서 확인할 수 있듯이 변수가 존재하는 영역이 클래스가 존재하는 영역과 같기 때문이다.   
+
+즉, 자바 변수 라이프 타임을 아래와 같이 정리 할 수 있다. 
+
+`- 로컬 변수 : 처리 블록({ ~ }) 내에서만 생존, 변수 선언부 ~ 블록 종료 시까지`   
+`- 인스턴스 변수: 객체 생성 ~ 객체가 GC에 의해 소멸 전까지`   
+`- 클래스 변수 : 클래스 로드 시 ~ 프로그램 종료될 때 까지`   
+
+- - - 
+
+## 5. 타입 변환, 캐스팅 그리고 타입 프로모션   
+
+`하나의 타입을 다른 타입으로 변환하는 과정을 타입 변환이라고 한다. Java는 bool type을 
+제외한 나머지 기본형 타입 변환을 자유롭게 수행할 수 있다.`   
+
+타입 변환의 종류는 2가지가 있다.
+
+1. 묵시적 타입 변환(자동 타입 변환) : Promotion  
+
+`묵시적 타입 변환이란 대입 연산이나 산술 연사에서 컴파일러가 자동으로 수행해주는 타입 변환을 뜻한다. 
+Java에서는 데이터 손실이 발생하지 않거나, 데이터의 손실이 최소화 되는 방향으로 묵시적 
+타입 변환을 진행한다.`
+
+```java
+double num = 10;          // int형인 10이 double로 타입 변환 
+double num = 5.0f + 3.14; // float형인 7.0이 double로 타입 변환
+```
+
+> int -> double   
+> float -> double   
+
+`두 경우 모두 자바 컴파일러가 자동으로 작은 데이터 타입에서 큰 데이터 타입으로 변환했다. 
+변환 과정은 언제나 데이터의 손실을 최소화 하려 한다.`   
+
+
+2. 명시적 타입 변환(강제 타입 변환) : Casting   
+
+`명시적 형변환은 큰 타입을 작은 타입으로 바꿔야 하는 경우에, 데이터 앞에 타입을 
+명시해줌으로써 타입 변환이 가능하게 하는 기법이다.`   
+
+- - - 
+
+## 6. 1차 2차 배열 선언 
+
+
+
+- - -
+
+## 7. 타입 추론, var  
+
+타입추론이란 타입이 정해지지 않은 변수에 대해서 컴파일러가 변수의 타입을 스스로 찾아낼 수 있도록 
+하는 기능이다.   
+
+Java10부터 var 구문이 생겼다. var 문법을 통해 변수를 선언하게 되면 컴파일러가 알아서 변수의 
+타입을 결정한다.  
+
+
+
+- - - 
 
 **Reference**
 
+[https://codingdog.tistory.com/entry/java-1%EC%B0%A8%EC%9B%90-2%EC%B0%A8%EC%9B%90-%EB%B0%B0%EC%97%B4-%EA%B0%84%EB%8B%A8%ED%95%9C-%EC%98%88%EC%A0%9C%EB%A5%BC-%EB%B3%B4%EA%B3%A0-%EB%B0%B0%EC%9B%8C%EB%B4%85%EC%8B%9C%EB%8B%A4](https://codingdog.tistory.com/entry/java-1%EC%B0%A8%EC%9B%90-2%EC%B0%A8%EC%9B%90-%EB%B0%B0%EC%97%B4-%EA%B0%84%EB%8B%A8%ED%95%9C-%EC%98%88%EC%A0%9C%EB%A5%BC-%EB%B3%B4%EA%B3%A0-%EB%B0%B0%EC%9B%8C%EB%B4%85%EC%8B%9C%EB%8B%A4)   
+[https://medium.com/webeveloper/%EC%9E%90%EB%B0%94-%ED%98%95%EB%B3%80%ED%99%98-casting-promotion-%EA%B3%BC-%EB%B0%94%EC%9D%B8%EB%94%A9-binding-ef3e453eb8a6](https://medium.com/webeveloper/%EC%9E%90%EB%B0%94-%ED%98%95%EB%B3%80%ED%99%98-casting-promotion-%EA%B3%BC-%EB%B0%94%EC%9D%B8%EB%94%A9-binding-ef3e453eb8a6)    
+[https://ict-nroo.tistory.com/19](https://ict-nroo.tistory.com/19)    
 [https://programmers.co.kr/learn/courses/5/lessons/231](https://programmers.co.kr/learn/courses/5/lessons/231)   
 [https://gbsb.tistory.com/6](https://gbsb.tistory.com/6)   
-[https://github.com/whiteship/live-study/issues/1](https://github.com/whiteship/live-study/issues/1)        
+[https://github.com/whiteship/live-study/issues/2](https://github.com/whiteship/live-study/issues/2)        
 
 {% highlight ruby linenos %}
 
