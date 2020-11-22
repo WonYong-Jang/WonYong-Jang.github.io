@@ -136,6 +136,8 @@ public class VariableScopeExam {
 `같은 클래스 안에 있는 globalScope 변수를 사용 할 수 없다. main은 static한 메소드 이다. static한
 메서드에서는 static 하지 않은 필드를 사용 할 수 없다.`   
 
+`이유는 Static 의 생성시점과 관련이 있고 Static 변수는 클래스 로딩 시점에 생성되고 인스턴스 변수는 그 이후에 
+생성되므로 사용할 수 없다. 자세한 내용은 아래와 같다.`   
 
 #### Static 이란 ? 
 
@@ -171,7 +173,7 @@ static이 붙은 변수를 클래스 변수라고 하는 것은 위에 그림에
 
 `- 로컬 변수 : 처리 블록({ ~ }) 내에서만 생존, 변수 선언부 ~ 블록 종료 시까지`   
 `- 인스턴스 변수: 객체 생성 ~ 객체가 GC에 의해 소멸 전까지`   
-`- 클래스 변수 : 클래스 로드 시 ~ 프로그램 종료될 때 까지`   
+`- 클래스 변수 : 클래스 로더에 의해 클래스 로드 시 ~ 프로그램 종료될 때 까지`   
 
 - - - 
 
@@ -182,11 +184,14 @@ static이 붙은 변수를 클래스 변수라고 하는 것은 위에 그림에
 
 타입 변환의 종류는 2가지가 있다.
 
-1. 묵시적 타입 변환(자동 타입 변환) : Promotion  
+#### 1) 묵시적 타입 변환(자동 타입 변환) : Promotion    
 
-`묵시적 타입 변환이란 대입 연산이나 산술 연사에서 컴파일러가 자동으로 수행해주는 타입 변환을 뜻한다. 
+`묵시적 형변환은 작은 타입이 큰 타입으로 변환되는 기법을 말한다.`   
+작은 타입이 큰 타입으로 변환될 때 데이터 앞에 따로 타입을 명시하지 않아도 된다.    
+
+대입 연산이나 산술 연산에서 컴파일러가 자동으로 수행해주는 타입 변환을 뜻한다. 
 Java에서는 데이터 손실이 발생하지 않거나, 데이터의 손실이 최소화 되는 방향으로 묵시적 
-타입 변환을 진행한다.`
+타입 변환을 진행한다.
 
 ```java
 double num = 10;          // int형인 10이 double로 타입 변환 
@@ -199,16 +204,82 @@ double num = 5.0f + 3.14; // float형인 7.0이 double로 타입 변환
 `두 경우 모두 자바 컴파일러가 자동으로 작은 데이터 타입에서 큰 데이터 타입으로 변환했다. 
 변환 과정은 언제나 데이터의 손실을 최소화 하려 한다.`   
 
+[요약]
 
-2. 명시적 타입 변환(강제 타입 변환) : Casting   
+- 대체적으로 어떤 값이 메모리 크기가 작은 데이터 타입에서 메모리 크기가 큰 데이터 타입으로 
+변환될 때, Promotion이 일어날 수 있다. (단, 메모리 크기에 상관없이 정수는 모든 
+        실수 데이터 타입에 자동 형변환이 가능하다.)   
+
+- 메모리 크기가 큰 데이터 타입이라도, 타입 범위를 포함하지 못한다면 Promotion이 불가능하다. 
+(float 데이터 타입 -> long 데이터 타입 자동 형변환 불가)   
+
+> byte -> short -> int -> long -> float -> double   
+> (왼쪽에서 오른쪽 기준으로 Promotion 가능)       
+
+
+#### 2) 명시적 타입 변환(강제 타입 변환) : Casting    
 
 `명시적 형변환은 큰 타입을 작은 타입으로 바꿔야 하는 경우에, 데이터 앞에 타입을 
 명시해줌으로써 타입 변환이 가능하게 하는 기법이다.`   
 
+프리미티브 타입의 경우에는 데이터앞에 타입만 명시하면 바꿀수 있다.
+
+```java
+int value = 1;
+byte result = (byte)value;
+```
+
+위의 예제의 경우 value에 저장된 1이라는 값은 byte 데이터 타입에도 저장 가능한 값이다. 
+그렇지만, 위의 코드에서 (byte)를 제외하면 컴파일 에러가 발생한다.    
+그 이유는 `저장될 값 1에 상관없이 int 데이터 타입이 byte 데이터 타입보다 메모리가 크기 때문이다.`    
+
+<img width="800" alt="스크린샷 2020-11-22 오후 7 14 58" src="https://user-images.githubusercontent.com/26623547/99901046-225d0d80-2cf7-11eb-991f-6fbeb29f9dbf.png">   
+
+만약 천단위, 만단위 억단위의 값이 들어있다면 어떻게 될까?   
+앞에 3byte의 공간을 삭제하는 시점에서 많은 이진법 데이터가 날아가 정상적인 값이 저장될 수 없을 것이다.   
+이와 같이 메모리 크기가 큰 int데이터 타입에서 메모리 크기가 작은 byte 데이터 타입으로 
+Promotion이 된다면, 정상적이지 않은 값이 나올 수 있기 때문에 Java 에서는 지원하지 않는다.
+
+하지만, 우리가 형변환 하려는 정수 값은 1이므로 byte 데이터 타입 범위 안에 충분히 들어가는 값이다. 그렇기 때문에 
+이럴때는 강제 형변환을 해주면 된다.   
+
+또한, 객체간의 Casting도 가능한데 아래를 확인하자.    
+
+```java
+public void casting(Parent parent){
+    if(parent instanceof Child) {
+        Child child = (Child) parent; // Casting 
+    }
+}
+```
+
+`객체간 Casting을 하기 위해서는 항상 instanceof를 사용하여 상속 관계에 있는지 
+확인해야 한다. 상속관계에 있지 않은 객체를 형변환 하려면 에러가 발생한다.`      
+
 - - - 
 
-## 6. 1차 2차 배열 선언 
+## 6. 1차 2차 배열 메모리 영역  
 
+자바에서는 배열이 객체이기 때문에, Heap 영역에 생성된다.   
+
+```java
+int[] arr = new int[2];   
+```
+
+<img width="250" alt="스크린샷 2020-11-22 오후 7 56 58" src="https://user-images.githubusercontent.com/26623547/99901847-0492a700-2cfd-11eb-8f90-f462bf0bed1a.png">   
+
+위의 그림은 arr이 int형을 2개 저장할 수 있는 공간을 가르키고 있다. arr은 메모리 영역 중 스택에, 실제로 
+int를 2개 저장할 수 있는 공간은 힙에 할당 된다.   
+
+```java
+int[][] arr = new int[2][3];
+// [2,3,7], [6,7,9]
+```
+
+<img width="250" alt="스크린샷 2020-11-22 오후 7 55 41" src="https://user-images.githubusercontent.com/26623547/99901852-078d9780-2cfd-11eb-9b1c-43cb1c220194.png">   
+
+위의 그림은 arr 변수는 스택에 저장되어 있으며 실제 2차원배열은 힙 메모리 영역에 저장되어 있다.   
+각각 arr[0], arr[1]영역은 실제 2,3,7 / 6,7,9 값을 가지고 있는 곳을 가르키고 있다.   
 
 
 - - -
@@ -227,6 +298,7 @@ Java10부터 var 구문이 생겼다. var 문법을 통해 변수를 선언하�
 
 **Reference**
 
+[https://stage-loving-developers.tistory.com/8](https://stage-loving-developers.tistory.com/8)    
 [https://codingdog.tistory.com/entry/java-1%EC%B0%A8%EC%9B%90-2%EC%B0%A8%EC%9B%90-%EB%B0%B0%EC%97%B4-%EA%B0%84%EB%8B%A8%ED%95%9C-%EC%98%88%EC%A0%9C%EB%A5%BC-%EB%B3%B4%EA%B3%A0-%EB%B0%B0%EC%9B%8C%EB%B4%85%EC%8B%9C%EB%8B%A4](https://codingdog.tistory.com/entry/java-1%EC%B0%A8%EC%9B%90-2%EC%B0%A8%EC%9B%90-%EB%B0%B0%EC%97%B4-%EA%B0%84%EB%8B%A8%ED%95%9C-%EC%98%88%EC%A0%9C%EB%A5%BC-%EB%B3%B4%EA%B3%A0-%EB%B0%B0%EC%9B%8C%EB%B4%85%EC%8B%9C%EB%8B%A4)   
 [https://medium.com/webeveloper/%EC%9E%90%EB%B0%94-%ED%98%95%EB%B3%80%ED%99%98-casting-promotion-%EA%B3%BC-%EB%B0%94%EC%9D%B8%EB%94%A9-binding-ef3e453eb8a6](https://medium.com/webeveloper/%EC%9E%90%EB%B0%94-%ED%98%95%EB%B3%80%ED%99%98-casting-promotion-%EA%B3%BC-%EB%B0%94%EC%9D%B8%EB%94%A9-binding-ef3e453eb8a6)    
 [https://ict-nroo.tistory.com/19](https://ict-nroo.tistory.com/19)    
