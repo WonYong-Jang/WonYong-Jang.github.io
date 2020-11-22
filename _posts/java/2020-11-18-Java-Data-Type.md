@@ -47,6 +47,12 @@ Stack 영역에 값이 저장된다.`
 
 > 출처 : https://gbsb.tistory.com/6   
 
+-  정수형 변수 저장할 때 메모리 덜 잡아먹는 short 사용안하고 보통 int 사용하는 인유?  
+
+    > int는 하드웨어가 가장 효율적으로 처리하는 정수형태의 크기로 설정되고 cpu 연산처리에 더 효율적이며 
+    정수형 연산을 진행 할 때 모든 피연산자를 Int형으로 변환하는 과정을 거치기 때문 
+
+
 - long의 기본값을 0L이라고 표현하는 이유는 자료형이 long임을 명시적으로 알려주는 것이다.  
 
     > long num = 12345678900;  // 자료형 범위 넘어갈 경우 오버플로우 발생  
@@ -57,7 +63,35 @@ Stack 영역에 값이 저장된다.`
 - 각각의 정수형은 2진수로 저장되는데, 해당 자료형이 N 비트라고 할 때 최상위 비트와 N-1개 비트로 
 구성된다. 이때 음수는 -2^N-1승 까지이며, 양수는 2^N-1승에서 0을 포함하기 때문에 -1를 해준다.   
 
-    > 최상위 비트(MSB: Most Significant Bit) : 양수면 0이고 음수면 1로 표현   
+    > 최상위 비트(MSB: Most Significant Bit) : 양수면 0이고 음수면 1로 표현  
+
+- `실수형`에서 값을 부호, 지수, 가수로 나누어 저장한다. 따라서 같은 크기임에도 훨씬 
+큰 범위를 표현 가능하지만 `실수형은 원래 저장하려던 값과 실제 저장된 값이 오차가 날수 있다.`   
+따라서, 오차없는 자리 수인 정밀도의 크기가 클 수록 정확도가 높다.
+
+<img width="604" alt="스크린샷 2020-11-22 오후 9 29 15" src="https://user-images.githubusercontent.com/26623547/99903775-eb442780-2d09-11eb-935e-cb1b09c99b0c.png">   
+
+위의 이미지는 실수형 float이며, 가수부분은 23비트인데 여기서 정규화를 통해 24까지 표현 가능하다. 
+2^24는 10^7보다는 크고 10^8보다 작기에 float의 정밀도는 7이된다.    
+double의 경우에는 가수부분이 52비트이고 위와 같은 계산을 통해 정밀도를 계산하면 
+정밀도는 15자리가 된다.    
+
+> 돈관련 계산 앱처럼 절때 오차가 발생하지 않아야 할때는 BigInteger 또는 BigDecimal을 사용하자 
+
+```java
+float number = 0f;
+for (int i = 0 ; i < 10; i++ ) {
+	number += 0.1f;
+} // 결과 = 1.00000001 <- 오차가 발생 !
+```
+
+```java
+BigDecimal number = BigDecimal.ZERO;
+for (int i = 0 ; i < 10; i++) {
+	number = number.add(BigDecimal.valueOf(0.1));
+}
+System.out.println(print); // 1.0 <- 정확한 결과값이 나옴 
+```
 
 - - -
 
@@ -292,6 +326,14 @@ int[][] arr = new int[2][3];
 Java10부터 var 구문이 생겼다. var 문법을 통해 변수를 선언하게 되면 컴파일러가 알아서 변수의 
 타입을 결정한다.  
 
+type infer 할곳에 var를 붙여준다.   
+`반드시 초기화를 해줘야하며, null은 타입추론을 하지 못한다.`    
+
+```java
+var a;         // error : cannot infer type for local variable a.
+var b = null;  // error : cannot infer type for local variable b.
+var c = "abc"; // ok!
+```
 
 
 - - - 
