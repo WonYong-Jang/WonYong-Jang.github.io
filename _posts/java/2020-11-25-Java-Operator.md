@@ -149,17 +149,48 @@ false 값인 boolean 자료형으로 반환이 된다.
 
 ## 7. 화살표(->) 연산자 
 
+자바가 람다가 도입되면서 등장한 연산자이다. 
+
+```java
+int min(int x, int y) {
+
+    return x < y ? x : y;
+
+}
+```
+
+위의 예제처럼 메소드를 람다 표현식으로 표현하면, 클래스를 작성하고 
+객체를 생성하지 않아도 메소드를 사용할 수 있다. 
+
+```java
+(x, y) -> x < y ? x : y;
+```
+
 - - - 
 
 ## 8. 3항 연산자    
+
+조건식에 따라 참이면 A, 거짓이면 B를 선택 
+
+```java
+(조건식) ? A : B   
+```
 
 - - -
 
 ## 9. 연산자 우선 순위   
 
+수학에서도 그렇지만 모든 연산에서는 우선순위가 있다. 괄호안에 있는 
+연산이 가장 먼저 수행되며, 연산자 우선순위가 같은 경우 연산 방향에 
+따라 진행된다.
+
+
+> ex) 100 * 2 / 3 % 5  => 연산자들 우선순위 같다. 연산방향 왼쪽에서 오른쪽 이므로   결과 : 1   
+
+> ex) a = b = c = 5;   => 연산자들 우선순위 같다. 연산방향 오른쪽에서 왼쪽으로 진행되고 a,b,c, 변수에 5 대입된다. 
+
 - - - 
 
-## 10. Java13. switch 연산자 
 
 
 
@@ -167,6 +198,8 @@ false 값인 boolean 자료형으로 반환이 된다.
 
 **Reference**
 
+[http://www.tcpschool.com/java/java_lambda_concept](http://www.tcpschool.com/java/java_lambda_concept)   
+[https://kephilab.tistory.com/28](https://kephilab.tistory.com/28)   
 [https://coding-factory.tistory.com/521](https://coding-factory.tistory.com/521)         
 [https://studymake.tistory.com/416](https://studymake.tistory.com/416)    
 [https://github.com/whiteship/live-study/issues/3](https://github.com/whiteship/live-study/issues/3)        
