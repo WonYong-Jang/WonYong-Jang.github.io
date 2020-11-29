@@ -31,6 +31,152 @@ background: '/img/posts/spring.png'
 했다면 오픈 전에 문제를 확인 가능하다.`   
 
 - - - 
+
+## JUnit 5   
+
+2.2 이상 버전의 스프링 부트 프로젝트를 만든다면 기본적으로 JUnit5 의존성 추가 된다.   
+
+#### 기본 어노테이션 
+
+    - @Test
+    - @BeforeAll / @AfterAll
+    - @BeforeEach / @AfterEach
+    - @Disabled : 해당 테스트코드 무시하고 전체 실행 할때 
+
+
+```java
+class StudyTest {
+
+    @Test
+    void create() {
+        Study study = new Study();
+        assertNotNull(study);
+        System.out.println("create");
+    }
+
+    @Test
+    void create1() {
+        System.out.println("create1");
+    }
+
+    // 모든 테스트 메소드 실행 전 한번만 작동 하는 어노테이션
+    // 반드시 static 을 붙여야 하며 리턴 타입은 void
+    @BeforeAll
+    static void beforeAll() {
+        System.out.println("before all");
+    }
+
+    // 모든 테스트 메소드 실행 전 한번만 작동 하는 어노테이션
+    @AfterAll
+    static void afterAll() {
+        System.out.println("after all");
+    }
+
+    // 각각 테스트 메소드를 실행하기 전에 작동하는 어노테이션
+    @BeforeEach
+    void beforeEach() {
+        System.out.println("before Each");
+    }
+
+    // 각각 테스트 메소드를 실행한 후에 작동하는 어노테이션
+    @AfterEach
+    void afterEach() {
+        System.out.println("after Each");
+    }
+}
+```
+
+결과값은 아래와 같다. 
+
+
+```
+before all
+
+before Each
+create
+after Each
+
+
+before Each
+create1
+after Each
+
+after all
+```
+
+- - -
+
+#### 테스트 이름 표기하기 
+
+- @DisplayNameGeneration
+
+    - Method와 Class 래퍼런스를 사용해서 테스트 이름을 표기하는 설정
+    - 기본 구현체로 ReplaceUnderscores 제공
+
+```java
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+class StudyTest {
+
+    @Test
+    void create_new_study() {
+    }
+
+// 실행 결과에 create new study 로 표기됨 ( 언더바 제거된 이름) 
+```
+
+- @DisplayName
+
+    - 어떤 테스트인지 테스트 이름을 보다 쉽게 표현할 수 있는 방법을 제공하는 어노테이션  
+    - 위의 방법보다 우선순위가 높고 한글, 영어, 이모티콘등도 사용 가능하다. 
+
+```java
+    @Test
+    @DisplayName("스터디 만들기")
+    void create_new_study() {
+    }
+```
+
+- - -
+
+### Assertion 
+
+org.junit.jupiter.api.Assertion
+
+- assertEquals(expected, actual) 
+    - 실제 값이 기대한 값과 같은지 확인 
+
+```java
+
+// study 오브젝트 처음 상태가 DFAFT인지 확인 하고 있고
+// 아래와 같이 같지 않다면 메세지를 출력해 줄 수도 있다. 
+
+Study study = new Study();
+assertEquals(StudyStatus.START, study.getStudyStatus(),
+                "스터디를 처음 만들면 상태가 DRAFT 여야 함" );
+```
+
+
+- assertNotNull(actual) 
+    - 값이 null이 아닌지 확인    
+
+- assertTrue(boolean)   
+    - 다음 조건이 참(true)인지 확인   
+
+- assertAll
+    - 모든 확인 구문 확인   
+
+- assertThrows(expectedType, executable)   
+    - 예외 발생 확인    
+
+- assertTimeout(duration, executable) 
+    - 특정 시간 안에 실행이 완료되는지 확인   
+
+
+
+
+- - -
+
+
 ### 실습 1
 
 ```java
@@ -120,6 +266,8 @@ Junit의 기본 assertThat이 아닌 assertj의 assertThat을 사용한다. asse
 
 - - -
 Referrence 
+
+[https://www.inflearn.com/course/the-java-application-test](https://www.inflearn.com/course/the-java-application-test)   
 
 {% highlight ruby linenos %}
 {% endhighlight %}
