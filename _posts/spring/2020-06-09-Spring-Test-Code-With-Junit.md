@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spring] Junit을 이용한 테스트 코드 작성"
+title: "[Spring] Junit5을 이용한 테스트 코드 작성"
 subtitle: "단위 테스트를 위한 MockMvc, WebMvcTest, assertj"
 comments: true
 categories : Spring
