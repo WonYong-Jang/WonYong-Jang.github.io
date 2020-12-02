@@ -151,30 +151,68 @@ org.junit.jupiter.api.Assertion
 // 아래와 같이 같지 않다면 메세지를 출력해 줄 수도 있다. 
 
 Study study = new Study();
-assertEquals(StudyStatus.START, study.getStudyStatus(),
-                "스터디를 처음 만들면 상태가 DRAFT 여야 함" );
+assertEquals(StudyStatus.DRAFT, study.getStudyStatus(),
+                () -> "스터디를 처음 만들면 상태가 DRAFT 여야 함" );   
 ```
 
 
 - assertNotNull(actual) 
     - 값이 null이 아닌지 확인    
 
+
 - assertTrue(boolean)   
     - 다음 조건이 참(true)인지 확인   
 
+
 - assertAll
-    - 모든 확인 구문 확인   
+    - 모든 확인 구문 확인  
+    - 다수의 assertion이 false일 경우 맨 위의 assertion만 실패 했다고 console에 표기됨   
+    - assertAll로 묶어 주게 되면 실패한 assertion 모두 확인 가능   
+
+```java
+assertAll(
+        () -> assertEquals(StudyStatus.START, study.getStudyStatus(),
+                    () -> "스터디를 처음 만들면 상태가 DRAFT 여야 함" ),
+
+        () -> assertEquals(StudyStatus.END, study.getStudyStatus(),
+                    () ->"스터디를 처음 만들면 상태가 DRAFT 여야 함")
+        );
+```
+
 
 - assertThrows(expectedType, executable)   
-    - 예외 발생 확인    
+    - 원하는 예외가 정상적으로 발생하는지 확인    
+
+```java
+IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class , () -> new Study(-10));
+        System.out.println(exception.getMessage());
+```
+
 
 - assertTimeout(duration, executable) 
     - 특정 시간 안에 실행이 완료되는지 확인   
 
 
+```java
+// 100 mills 안에 들어오는지 확인
+assertTimeout(Duration.ofMillis(100), () -> {
+            Thread.sleep(300); // 100 mills 보다 크기때문에 false
+        });
+```
 
 
 - - -
+
+### 조건에 따라 테스트 실행 
+
+특정한 자바 버전, 환경변수에 따라 실행 하거나 실행하지 않아야 하는 경우가 
+있다면 아래와 같이 해결 가능하다. 
+
+
+
+
+- - - 
 
 
 ### 실습 1
