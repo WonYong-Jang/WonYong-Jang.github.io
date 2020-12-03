@@ -8,19 +8,20 @@ date: 2020-03-15
 background: '/img/posts/mac.png'
 ---
 
-<h2 class="section-heading">LCA </h2>
-<br/>
-<img width="600" alt="스크린샷 2020-03-15 오후 2 50 09" src="https://user-images.githubusercontent.com/26623547/76697031-58141600-66d5-11ea-9bfc-59f50578bc7f.png">
-<br/><br/>
+## LCA 
 
-<h3>백준 LCA2</h3>
+<img width="600" alt="스크린샷 2020-03-15 오후 2 50 09" src="https://user-images.githubusercontent.com/26623547/76697031-58141600-66d5-11ea-9bfc-59f50578bc7f.png">
+
+
+
+### 백준 LCA2
 
 <img width="600" alt="스크린샷 2020-03-15 오후 3 56 50" src="https://user-images.githubusercontent.com/26623547/76697061-9a3d5780-66d5-11ea-8b53-98101b0b4ba9.png">
-<br/><br/>
-
-{% highlight ruby linenos %}
 
 
+
+
+```java
 public class Main {
 
     static final int max_level = 17; // 2^17 이 100,000 을 조금 넘으므로
@@ -112,10 +113,28 @@ public class Main {
     }
 }
 
+```
+
+### LCA2를 이용한 정점들간의 거리 
+
+백준 1761 정점들간의 거리 
+
+두 정점간의 최단거리를 매 쿼리마다 출력하는 문제이다. 우리가 기본적으로 
+알고있는 그래프의 최단거리 알고리즘은 시간복잡도 때문에 사용할 수가 없다. 
+하지만 우리는 이 그래프가 트리라는 것을 이용하여 매 쿼리를 O(logN)시간 마다 처리해 줄 수 있다.  
+
+
+
+
+- - - 
+
+Reference
+
+[https://www.crocus.co.kr/660](https://www.crocus.co.kr/660)       
+
+{% highlight ruby linenos %}
+
 {% endhighlight %}
-
-
-<p><a href="https://www.crocus.co.kr/660">관련 링크</a></p>
 
 {%- if site.disqus.shortname -%}
     {%- include disqus.html -%}
