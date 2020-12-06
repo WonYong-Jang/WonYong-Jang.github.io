@@ -10,13 +10,53 @@ background: '/img/posts/mac.png'
 
 ## LCA 
 
+`가장 가까운 위치의 공통 조상을 찾는데 쓰이거나 두 노드의 가장 가까운 
+거리를 찾는데 사용한다.`   
+
+시간 복잡도 O(N), 쿼리가 존재할 경우 O(MlogN)
+
+#### DP를 사용하지 않는 LCA   
+
+시나리오는 아래와 같다.   
+
+1. 두 노드가 주어지게 되면 두 노드의 depth를 구한다.   
+2. 두 노드들 중 더 깊은 곳에 있는 노드를 다른 노드와 같아 질때 까지 
+노드 위치를 끌어 올려준다. ( 부모노드로 계속 한칸 씩 끌어올리면서 
+        두 노드의 깊이가 같아질 때 까지 끌어올린다)   
+3. 두 노드 깊이가 같으나 두 노드의 값이 같지 않다면 두 노드 모두 부모노드로 
+끌어올리면서 같은지 확인( 두 노드가 같아질때까지 최소 공통 조상 )   
+
+
+- - - 
+
+#### DP + LCA   
+
+LCA를 구하는데 시간 복잡도 O(logN), 쿼리가 함께 존재할 경우 O(MlogN)    
+
 <img width="600" alt="스크린샷 2020-03-15 오후 2 50 09" src="https://user-images.githubusercontent.com/26623547/76697031-58141600-66d5-11ea-9bfc-59f50578bc7f.png">
 
-
-
-### 백준 LCA2
+깊이가 더 깊은 노드를 깊이가 더 낮은 노드까지 노드를 올려준다.   
 
 <img width="600" alt="스크린샷 2020-03-15 오후 3 56 50" src="https://user-images.githubusercontent.com/26623547/76697061-9a3d5780-66d5-11ea-8b53-98101b0b4ba9.png">
+
+<img width="600" alt="스크린샷 2020-12-06 오후 4 15 00" src="https://user-images.githubusercontent.com/26623547/101274171-374d9c80-37df-11eb-91b3-7d57938829c9.png">   
+
+<img width="600" alt="스크린샷 2020-12-06 오후 4 20 05" src="https://user-images.githubusercontent.com/26623547/101274174-3ae12380-37df-11eb-8223-8c4411a0e23f.png">   
+
+<img width="600" alt="스크린샷 2020-12-06 오후 4 20 19" src="https://user-images.githubusercontent.com/26623547/101274177-3caae700-37df-11eb-9eeb-9e6d300cd0e6.png">   
+
+<img width="600" alt="스크린샷 2020-12-06 오후 4 20 31" src="https://user-images.githubusercontent.com/26623547/101274178-3ddc1400-37df-11eb-8f9f-4c386b26adf2.png">   
+
+<img width="600" alt="스크린샷 2020-12-06 오후 4 20 40" src="https://user-images.githubusercontent.com/26623547/101274180-3e74aa80-37df-11eb-9df3-1269b1df64e4.png">   
+
+<img width="600" alt="스크린샷 2020-12-06 오후 4 20 55" src="https://user-images.githubusercontent.com/26623547/101274181-3f0d4100-37df-11eb-8550-ccd0488b967d.png">   
+
+
+
+
+
+
+
 
 
 
