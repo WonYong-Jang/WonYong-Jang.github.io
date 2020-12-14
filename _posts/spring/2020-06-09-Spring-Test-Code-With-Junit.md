@@ -36,6 +36,21 @@ background: '/img/posts/spring.png'
 
 2.2 이상 버전의 스프링 부트 프로젝트를 만든다면 기본적으로 JUnit5 의존성 추가 된다.   
 
+### 생명 주기
+
+`개별 테스트의 독립성을 보장하고, 테스트 사이의 상호관계에서 발생하는 부작용을 방지하기 위해, 
+ JUnit는 테스트 메스드의 실행 전 각각 새로운 인스턴스를 생성한다.`   
+이를 통해 개별 테스트 메서드는 완전히 독립적인 객체 환경에서 동작하며, 이를 메서드 단위 생명주기라 한다.   
+ 
+`만약 모든 테스트 메서드를 동일한 인스턴스 환경에서 동작시키고 싶다면, @TestInstance를 
+사용하면 된다.`   
+
+- @TestInstance(Lifecycle.PER_CLASS) 를 선언한 클래스를 클래스 단위 생명주기를 가진다.   
+
+
+
+- - -
+
 #### 기본 어노테이션 
 
     - @Test
@@ -201,8 +216,61 @@ assertTimeout(Duration.ofMillis(100), () -> {
         });
 ```
 
-
 - - -
+
+### @Order 메소드 별로 순서 지정 
+
+`Junit5에는 테스트 코드 실행 순서는 명확하게 정해져 있지 않다.(정확히는 순서는 있지만 
+        그것이 명시적으로 정해져 있지 않다.)`   
+
+아래와 같이 테스트 별로 순서가 정해져야 하는 경우는 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)를 사용하고 @Order를 이용하여 
+순서를 명시적으로 지정할 수 있다.   
+
+```java
+// 메소드 마다 개별적으로 테스트 하여 테스트 별로 의존성을 줄이는게 좋은 테스트 방법 이지만
+// 메소드 마다 각각 인스턴스를 생성해야 하므로 하나의 인스턴스를 이용하여 테스트해야 하는 경우에는 
+// 테스트 생명주기를 클래스 단위로 설정 할 수 있다.
+@TestInstance(TestInstance.Lifecycle.PER_CLASS) // 테스트 생명 주기를 클래스 단위로 설정
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class) // 메소드 마다 순서를 정할 수 있음
+@DisplayName("Github API 테스트")
+class GithubApiTest {
+
+    private GithubApi api;
+
+
+    @Test
+    @Order(1) // 숫자가 적을 수록 우선순위가 높다
+    @DisplayName("Github API 객체 생성 테스트")
+    void createInstance() throws IOException {
+
+        api = new GithubApi();
+        assertNotNull(api);
+
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("ISSUE객체를 받아온다.")
+    void setIssue() {
+
+        List<GHIssue> issues = api.getIssues();
+
+        assertThat(issues.size()).isGreaterThan(0);
+    }
+}
+```
+
+### @Nested를 이용한 중첩 구성 
+
+@Nested를 사용하면 중첩된 구조로 테스트를 구성할 수 있다. 기존에는 JUnit과 다른 도구를 
+함께 사용해야 중첩 구조를 가진 테스트를 구성할 수 있었는데 이제 Jupiter API 만으로 
+중첩 구조 테스트를 작성할 수 있다.   
+
+
+
+
+- - - 
 
 ### 조건에 따라 테스트 실행 
 
@@ -213,7 +281,7 @@ assertTimeout(Duration.ofMillis(100), () -> {
 - - - 
 
 
-##### assertThat
+#### assertThat
 
 `assertj라는 테스트 검증 라이브러리의 검증 메소드이다. 검증하고 싶은 대상을 메소드 인자로 받는다.`   
 isEqualTo와 같이 메소드를 이어서 사용 가능   
@@ -224,13 +292,11 @@ Junit의 기본 assertThat이 아닌 assertj의 assertThat을 사용한다. asse
 > Junit의 assertThat을 쓰게 되면 is()와 같이 CoreMatchers 라이브러리가 추가로 필요하다.   
 > 자동완성이 좀 더 확실하게 지원된다.   
 
-##### isEqualTo
-
-비교 메소드이며, assertThat에 있는값과 비교해서 같을 때만 성공이다.   
 
 - - -
 Referrence 
 
+[https://awayday.github.io/2017-11-12/junit5-05/](https://awayday.github.io/2017-11-12/junit5-05/)   
 [https://www.inflearn.com/course/the-java-application-test](https://www.inflearn.com/course/the-java-application-test)   
 
 {% highlight ruby linenos %}
