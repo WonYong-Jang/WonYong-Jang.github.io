@@ -76,6 +76,53 @@ background: '/img/posts/mac.png'
 <p><b>포스팅 준비중 </b></p>
 
 
+- - - 
+
+#### 이진트리 소스 코드 
+
+```java
+public class Node {
+    int value;
+    Node left, right;
+
+    public Node(int value) {
+        this.value = value;
+    }
+}
+```
+
+```java
+public class BinaryTree {
+
+    // 레벨 순회 
+    public void level_order(Node node) {
+
+        Queue<Node> que = new LinkedList<>();
+
+        que.offer(node);
+        while(!que.isEmpty()) {
+
+            Node cur = que.poll();
+            System.out.println(cur.value);
+
+            if(cur.left != null) que.offer(cur.left);
+            if(cur.right != null) que.offer(cur.right);
+        }
+
+
+    }
+
+    public void inorder(Node node) {
+
+        if(node == null) return;
+
+        inorder(node.left);
+        System.out.println(node.value);
+        inorder(node.right);
+    }
+}
+```
+
 {% highlight ruby linenos %}
 
 
