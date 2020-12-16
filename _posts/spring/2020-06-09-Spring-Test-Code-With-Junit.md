@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spring] Junit5을 이용한 테스트 코드 작성"
-subtitle: "단위 테스트를 위한 MockMvc, WebMvcTest, assertj"
+subtitle: "단위 테스트를 위한 Mockito ,Mock, assertj"
 comments: true
 categories : Spring
 date: 2020-06-09
@@ -36,7 +36,7 @@ background: '/img/posts/spring.png'
 
 2.2 이상 버전의 스프링 부트 프로젝트를 만든다면 기본적으로 JUnit5 의존성 추가 된다.   
 
-### 생명 주기
+#### 1. 생명 주기
 
 `개별 테스트의 독립성을 보장하고, 테스트 사이의 상호관계에서 발생하는 부작용을 방지하기 위해, 
  JUnit는 테스트 메스드의 실행 전 각각 새로운 인스턴스를 생성한다.`   
@@ -51,7 +51,7 @@ background: '/img/posts/spring.png'
 
 - - -
 
-#### 기본 어노테이션 
+#### 2. 기본 어노테이션 
 
     - @Test
     - @BeforeAll / @AfterAll
@@ -121,7 +121,7 @@ after all
 
 - - -
 
-#### 테스트 이름 표기하기 
+#### 3. 테스트 이름 표기하기 
 
 - @DisplayNameGeneration
 
@@ -153,7 +153,7 @@ class StudyTest {
 
 - - -
 
-### Assertion 
+#### 4. Assertion 
 
 org.junit.jupiter.api.Assertion
 
@@ -218,7 +218,7 @@ assertTimeout(Duration.ofMillis(100), () -> {
 
 - - -
 
-### @Order 메소드 별로 순서 지정 
+#### 5. @Order 메소드 별로 순서 지정 
 
 `Junit5에는 테스트 코드 실행 순서는 명확하게 정해져 있지 않다.(정확히는 순서는 있지만 
         그것이 명시적으로 정해져 있지 않다.)`   
@@ -261,7 +261,7 @@ class GithubApiTest {
 }
 ```
 
-### @Nested를 이용한 중첩 구성 
+#### 6. @Nested를 이용한 중첩 구성 
 
 @Nested를 사용하면 중첩된 구조로 테스트를 구성할 수 있다. 기존에는 JUnit과 다른 도구를 
 함께 사용해야 중첩 구조를 가진 테스트를 구성할 수 있었는데 이제 Jupiter API 만으로 
@@ -272,7 +272,7 @@ class GithubApiTest {
 
 - - - 
 
-### 조건에 따라 테스트 실행 
+#### 7. 조건에 따라 테스트 실행 
 
 특정한 자바 버전, 환경변수에 따라 실행 하거나 실행하지 않아야 하는 경우가 
 있다면 아래와 같이 해결 가능하다. 
@@ -281,7 +281,7 @@ class GithubApiTest {
 - - - 
 
 
-#### assertThat
+#### 8. assertThat
 
 `assertj라는 테스트 검증 라이브러리의 검증 메소드이다. 검증하고 싶은 대상을 메소드 인자로 받는다.`   
 isEqualTo와 같이 메소드를 이어서 사용 가능   
@@ -292,12 +292,67 @@ Junit의 기본 assertThat이 아닌 assertj의 assertThat을 사용한다. asse
 > Junit의 assertThat을 쓰게 되면 is()와 같이 CoreMatchers 라이브러리가 추가로 필요하다.   
 > 자동완성이 좀 더 확실하게 지원된다.   
 
+- - - 
+- - - 
+
+## Mockito
+
+`mockito는 실제 객체와 비슷하게 동작하도록 하여 검증할 수 있는 방법을 제공해주는 라이브러리이다.`   
+
+spring-boot-starter-test 모듈에 기본적으로 포함되어 있으며, 이 모듈을 사용하지 
+않을 경우 mockito-core, mockito-junit-jupiter 모듈을 추가하면 된다.   
+
+### 1. Mock 객체 만들기    
+
+Mock 객체를 만드는 방법은 아래 2가지 방법으로 테스트 진행할 수 있다. 
+
+##### 1-1) Mockito.mock() 메소드
+
+```java
+@Test
+  void createStudyService() {
+
+     MemberService memberService = Mockito.mock(MemberService.class);
+     assertNotNull(memberService);
+}
+```
+
+##### 1-2) Mock 어노테이션    
+
+`@Mock 어노테이션을 달기만 하면 되는데 @ExtendWith(MockitoExtension.class) 확장팩을 
+추가한다.`    
+
+```java
+@ExtendWith(MockitoExtension.class)
+class StudyServiceTest {
+    @Mock
+    MemberService memberService;
+    @Test
+    void createStudyService() {
+        assertNotNull(memberService);
+    }
+}
+```
+
+또는 파라미터로 정의하는 것은 아래 방법으로 가능하다.    
+
+```java
+@ExtendWith(MockitoExtension.class)
+class StudyServiceTest {
+
+    @Test
+    void createStudyService(@Mock MemberService memberService) {
+        assertNotNull(memberService);
+    }
+}
+```
 
 - - -
 Referrence 
 
-[https://awayday.github.io/2017-11-12/junit5-05/](https://awayday.github.io/2017-11-12/junit5-05/)   
-[https://www.inflearn.com/course/the-java-application-test](https://www.inflearn.com/course/the-java-application-test)   
+[https://www.inflearn.com/course/the-java-application-test/](https://www.inflearn.com/course/the-java-application-test/)      
+[https://awayday.github.io/2017-11-12/junit5-05/](https://awayday.github.io/2017-11-12/junit5-05/)     
+[https://www.inflearn.com/course/the-java-application-test](https://www.inflearn.com/course/the-java-application-test)     
 
 {% highlight ruby linenos %}
 {% endhighlight %}
