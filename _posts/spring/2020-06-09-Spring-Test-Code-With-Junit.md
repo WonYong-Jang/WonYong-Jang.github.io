@@ -302,6 +302,13 @@ Junit의 기본 assertThat이 아닌 assertj의 assertThat을 사용한다. asse
 spring-boot-starter-test 모듈에 기본적으로 포함되어 있으며, 이 모듈을 사용하지 
 않을 경우 mockito-core, mockito-junit-jupiter 모듈을 추가하면 된다.   
 
+Mock 객체를 만드는 이유는 크게 `1) 협업하는 클래스의 완성 여부에 상관없이 
+내가 만든 클래스를 테스트 할 수 있고 2) 내가 만든 클래스가 연관된 클래스와 
+올바르게 협업하는 지 확인할 수 있기 때문에 사용한다. 또한, 연관된 
+클래스가 인터페이스만 정의되어 있고 구현체가 아직 없는 경우 테스트를 할 때 
+가짜로 구현한 Mock 객체를 전달하여 테스트가 가능하다.`      
+
+
 ### 1. Mock 객체 만들기    
 
 Mock 객체를 만드는 방법은 아래 2가지 방법으로 테스트 진행할 수 있다. 
@@ -345,6 +352,77 @@ class StudyServiceTest {
         assertNotNull(memberService);
     }
 }
+```
+
+- - - 
+
+### 2. Mock 객체 Stubbing   
+
+위에서 생성한 Mock의 메소드를 호출하면 아무런 행동도 하지 않는다. 
+stub은 메소드의 행동을 원하는대로 미리 정해두는 것을 말한다.   
+`Mock 객체를 when(), thenReturn(), thenThrow(), doThrow() 등으로 조작해서 특정 매개변수를 받는 경우 특정한 값을 리턴하거나 예외를 
+던지도록 만들 수 있다.`   
+
+```java
+@ExtendWith(MockitoExtension.class)
+class StudyServiceTest {
+
+    @Mock MemberService memberService;
+
+    @Test
+    void createStudyService() {
+
+        Member member = new Member();
+        member.setId(1L);
+        member.setEmail("wonyong@naver.com");
+
+        // Stubbing
+        // 매개변수 1로 받았을때 member 객체를 리턴 시켜 주는 걸로 정의한다.
+        when(memberService.findById(1L)).thenReturn(Optional.of(member));
+
+        // 매개변수 2로 받았을 때는 예외를 발생 시킨다.   
+        when(memberService.findById(2L)).thenThrow(new RuntimeException());
+
+        // 위에서 Stubbing 했기 때문에 매개변수 1을 검색해보면 member 객체를 리턴받는 것을 확인 할 수 있다.  
+        Optional<Member> member1 = memberService.findById(1L);
+
+        assertEquals("wonyong@naver.com", member1.get().getEmail());
+    }
+}
+```
+
+위에서 처럼 when(memberService.findById(1L)).thenReturn(Optional.of(member)); 로 
+Stubbing을 해놓았기 때문에 구현체가 없더라도 매개변수로 1L이 들어왔을 때 
+member객체를 찾아서 리턴하는 것처럼 테스트가 가능하다.   
+
+매개변수로 1L이 아닌 다른 값으로 테스트 하는경우 에러를 발생시키고 
+ArgumentMatchers.any를 이용하여 어떤 값이 들어오던지 간에 member 객체를 
+리턴 시킬 수도 있다.    
+
+```java
+// Argument matchers 검색해 볼 것 
+when(memberService.findById(any())).thenReturn(Optional.of(member));
+```
+
+아래는 void 메소드를 doThrow()로 테스트 하는 방법이다. 
+
+```java
+// memberService의 void 메소드인 validate에 2값이 들어왔을때는 예외를 발생시킨다.   
+doThrow(new IllegalArgumentException()).when(memberService).validate(2L);
+
+assertThrows(IllegalArgumentException.class,() -> {
+           memberService.validate(2L);
+        });
+```
+
+또한, 메소드가 동일한 매개변수로 여러번 호출될 때 각기 다르게 행동하도록 
+조작할 수도 있다. 
+
+```java
+when(memberService.findById(1L))
+                .thenReturn(Optional.of(member))   // 첫번째 실행 결과 
+                .thenThrow(IllegalArgumentException.class) //두번째 실행 결과 
+                .thenReturn(Optional.empty()); // 세번째 실행 결과   
 ```
 
 - - -
