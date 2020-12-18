@@ -426,6 +426,30 @@ when(memberService.findById(1L))
 ```
 
 - - -
+
+### 3. Mock 객체 확인( verify )
+
+만든 Mock 객체가 어떤일이 일어나는지 
+어떻게 사용이 됐는지 확인할 수 있다.     
+
+
+
+##### 3-1) Verifying exact number of invocations   
+
+특정 메소드가 특정 매개변수로 몇번 호출되었는지, 최소 한번은 호출 됐는지 
+전혀 호출되지 않았는지 확인이 가능하다.   
+
+
+##### 3-2) Verification in order    
+
+특정 시간 이내에 호출됐는지 확인 가능하다.   
+
+
+##### 3-3) Finding redundant invocations   
+
+특정 시험 이후에 아무 일도 벌어지지 않았는지 확인이 가능하다.   
+
+- - -
 Referrence 
 
 [https://www.inflearn.com/course/the-java-application-test/](https://www.inflearn.com/course/the-java-application-test/)      
