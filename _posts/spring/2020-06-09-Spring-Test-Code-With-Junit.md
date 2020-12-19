@@ -430,8 +430,7 @@ when(memberService.findById(1L))
 ### 3. Mock 객체 확인( verify )
 
 만든 Mock 객체가 어떤일이 일어나는지 
-어떻게 사용이 됐는지 확인할 수 있다.     
-
+어떻게 사용이 됐는지 확인할 수 있다.    
 
 
 ##### 3-1) Verifying exact number of invocations   
@@ -439,15 +438,51 @@ when(memberService.findById(1L))
 특정 메소드가 특정 매개변수로 몇번 호출되었는지, 최소 한번은 호출 됐는지 
 전혀 호출되지 않았는지 확인이 가능하다.   
 
+```java
+// memberSerivce 라는 Mock 객체에서 notify 라는 함수가 1번이 호출되는지 확인
+verify(memberService,times(1)).notify(result);
 
-##### 3-2) Verification in order    
+// validate라는 메소드는 어떤 값이 오더라도 한번도 안쓰고 있어야 참
+verify(memberService, never()).validate(any());
+```
+
+
+##### 3-2) Verification in order      
+
+어떤 순서대로 호출했는지 확인 가능하다.   
+
+```java
+// 순서를 확인할 Mock 객체
+InOrder inOrder = inOrder(memberService);
+
+inOrder.verify(memberService).notify(result); // 첫번째로 발생 해야함   
+inOrder.verify(memberService).notify(member); // 두번째로 발생 해야함  
+```
+
+
+##### 3-3) Verification with timeout   
 
 특정 시간 이내에 호출됐는지 확인 가능하다.   
 
+```java
+// 100 ms
+verify(mock, timeout(100)).someMethod();
 
-##### 3-3) Finding redundant invocations   
+// 100ms 안에 1번 메소드 호출되야 한다.   
+verify(memberService,timeout(100).times(1)).notify(member);
+```
+
+
+##### 3-4) Finding redundant invocations   
 
 특정 시험 이후에 아무 일도 벌어지지 않았는지 확인이 가능하다.   
+
+```java
+// memberSerivce 라는 Mock 객체에서 notify 라는 함수가 1번이 호출되는지 확인   
+verify(memberService,times(1)).notify(result);   
+verifyNoInteractions(memberService); // 위에 메소드 이후에 호출 되면 안된다.    
+```
+
 
 - - -
 Referrence 
