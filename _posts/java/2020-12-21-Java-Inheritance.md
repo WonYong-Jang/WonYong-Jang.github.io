@@ -49,7 +49,10 @@ default인 경우도 상속이 불가하다.`
 
 this() 키워드는 자기 자신의 생성자를 호출하는 키워드라면 super() 는 자신의 부모 클래스의 생성자를 
 호출하는 키워드이다.    
-바로 윗 단계의 부모 클래스 뿐 아니라 부모의 부모 또 부모의 부모 클래스의 생성자를 모두 호출한다.   
+바로 윗 단계의 부모 클래스 뿐 아니라 부모의 부모 또 부모의 부모 클래스의 생성자를 모두 호출한다.  
+super()를 사용하지 않은 경우엗 자동으로 상위클래스의 기본생성자를 호출한다.   
+
+#### 예제 1
 
 아래와 같이 예제를 보자.   
 School -> Teacher -> Student 순으로 상속을 주고 받는다. Teacher 클래스는 School에게 상속받고 Student 클래스는 
@@ -96,15 +99,46 @@ teacher
 student
 ```
 
+#### 예제 2   
+
+클래스를 인스턴스하게 되면 기본 생성자가 자동으로 생성된다. 그런데 아래처럼 파라미터가 있는 생성자만 
+만들어주면 기본 생성자는 만들어지지 않는다.    
+`그런데 문제는 자식들이 부모의 기본생성자를 호출하도록 되어 있기 때문에 부모에서 없는 기본 생성자를 못찾아 
+오류가 발생한다.`    
+`자식 클래스의 기본생성자에는 super() 키워드가 생략되어 있기 때문이다!`   
+
+```java
+public class Student extends Teacher {
+    public Student() {
+        super(); // 생략되어 있음 
+    }
+```
+
+위의 오류 해결법은 부모의 기본생성자를 만들어주는 방법이 있고 부모의 파라미터가 있는 생성자를 super()에 
+매개변수를 추가하여 호출함으로써 해결 가능하다.   
+
+```java
+public class Teacher extends School {
+    public Teacher(String name, String code) {
+        super(name, code);
+    }
+```
+
+
+
 
 ## 2-2. super 키워드 
 
-this 가 자기자신의 멤버필드를 사용할 때 객체를 생성하지 않고 접근할 수 있는 키워드 였다면 
-super는 자신의 부모의 멤버필드에 접근하는 키워드이다. 
+this 가 자기자신의 멤버필드 또는 메소드를 사용할 때 객체를 생성하지 않고 접근할 수 있는 키워드 였다면 
+super는 부모의 멤버필드 또는 메소드에 접근하는 키워드이다.    
+상위클래스의 멤버변수를 사용하기 위해서 super.변수명으로 접근한다.   
+`주의할 점은 super 키워드를 사용하면 자신을 제외한 조상 클래스에서 멤버필드 또는 메서드를 찾고 그 중 
+가장 가까이에 있는 멤버필드 또는 메서드를 가르킨다.`
 
 
-## 3. 메소드 오버라이딩   
+## 3. 메소드 오버라이딩
 
+`자바에서 다형성을 지원하는 방법으로 메소드 오버로딩과 오버라이딩이 있다.`          
 상속을 받으면 부모클래스의 멤버 변수 뿐 아니라 메소드도 가져오는데 이때 메소드를 재정의 하는 것이다.   
 메소드 오버라이딩 조건은 아래와 같다.   
 
@@ -113,6 +147,12 @@ super는 자신의 부모의 멤버필드에 접근하는 키워드이다.
 - 매개변수와 타입이 같아야 한다.   
 - 반환 타입도 같아야 한다.   
 - 접근제어자는 부모클래스에 정의된 것 보다 넓거나 같아야 한다.   
+- 메소드 오버라이딩과 메소드 오버로딩 성립조건은 아래와 같다.   
+
+<img width="533" alt="스크린샷 2020-12-22 오후 9 04 49" src="https://user-images.githubusercontent.com/26623547/102887129-b3abd500-4499-11eb-84fd-45b04179c888.png">   
+
+- - - 
+
 
 
 
@@ -120,6 +160,7 @@ super는 자신의 부모의 멤버필드에 접근하는 키워드이다.
 
 **Reference**
 
+[https://hyeonstorage.tistory.com/185](https://hyeonstorage.tistory.com/185)   
 [https://commin.tistory.com/101](https://commin.tistory.com/101)   
 [https://blog.naver.com/heartflow89/220960019390](https://blog.naver.com/heartflow89/220960019390)     
 [https://github.com/whiteship/live-study/issues/6](https://github.com/whiteship/live-study/issues/3)        
