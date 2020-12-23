@@ -153,7 +153,17 @@ super는 부모의 멤버필드 또는 메소드에 접근하는 키워드이다
 
 - - - 
 
+## 4. 추상 클래스    
 
+
+
+
+- - -  
+## 5. final 키워드   
+
+
+- - - 
+## 6. Object 클래스   
 
 
 - - - 
@@ -163,7 +173,7 @@ super는 부모의 멤버필드 또는 메소드에 접근하는 키워드이다
 [https://hyeonstorage.tistory.com/185](https://hyeonstorage.tistory.com/185)   
 [https://commin.tistory.com/101](https://commin.tistory.com/101)   
 [https://blog.naver.com/heartflow89/220960019390](https://blog.naver.com/heartflow89/220960019390)     
-[https://github.com/whiteship/live-study/issues/6](https://github.com/whiteship/live-study/issues/3)        
+[https://github.com/whiteship/live-study/issues/6](https://github.com/whiteship/live-study/issues/6)             
 
 {% highlight ruby linenos %}
 
