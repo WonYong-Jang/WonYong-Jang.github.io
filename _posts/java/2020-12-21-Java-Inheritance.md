@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Java] 상속 "
-subtitle: "super, 다이나믹 메소드 디스패치, 추상클래스, final 키워드, Object 클래스"
+subtitle: "super, 다이나믹 메소드 디스패치, 추상클래스, Object 클래스"
 comments: true
 categories : Java
 date: 2020-12-21
@@ -19,7 +19,6 @@ background: '/img/posts/mac.png'
 - 메소드 오버라이딩
 - 다이나믹 메소드 디스패치(Dynamic Method Dispatch)   
 - 추상 클래스    
-- final 키워드    
 - Object 클래스   
 
 - - -
@@ -153,14 +152,39 @@ super는 부모의 멤버필드 또는 메소드에 접근하는 키워드이다
 
 - - - 
 
+## 4. 추상 클래스   
 
+클래스들의 공통되는 필드와 메서드를 정의한 클래스를 말한다.   
 
+`객체를 직접 생성할 수 있는 클래스를 실체클래스라고 하는데, 실체 클래스들의 
+공통적인 특성을 추출해서 선언한 클래스를 추상클래스라고 한다. 여기서 
+추상클래스와 실체클래스는 상속적인 관계를 가지고 있다.`   
+
+추상클래스는 아래와 같은 이유로 사용을 한다.   
+
+- 공통된 필드와 메서드를 통일할 목적으로 사용 
+- 실체클래스 구현시, 시간절약이 가능하고 규격에 맞는 실체 클래스 구현이 가능하다.   
+
+`추상 메소드의 접근 지정자로 private는 사용할 수 없는데 이는 자식 클래스에서 
+받아서 구현되어야 하므로 당연하다. 다른 접근 지정자(public, protected)는 
+사용할 수 있고 생략되면 default 접근지정자로 사용한다.`   
+
+- - - 
+
+## 5. Object 클래스   
+
+모든 클래스는 Object 클래스의 자식 클래스이다. 내가 임의로 만든 클래스도 
+Object 클래스를 상속받고 있다. extends Object를 써넣지 않았는데도 어떻게 되는걸까?  
+이것은 컴파일러가 컴파일 타임에 끼워 넣어 준다.   
+
+<img width="700" alt="스크린샷 2020-12-27 오후 9 33 56" src="https://user-images.githubusercontent.com/26623547/103170906-504fe780-488b-11eb-8457-222ca5f901ae.png">      
 
 
 - - - 
 
 **Reference**
 
+[https://limkydev.tistory.com/188](https://limkydev.tistory.com/188)     
 [https://hyeonstorage.tistory.com/185](https://hyeonstorage.tistory.com/185)   
 [https://commin.tistory.com/101](https://commin.tistory.com/101)   
 [https://blog.naver.com/heartflow89/220960019390](https://blog.naver.com/heartflow89/220960019390)     
