@@ -171,7 +171,81 @@ super는 부모의 멤버필드 또는 메소드에 접근하는 키워드이다
 
 - - - 
 
-## 5. Object 클래스   
+## 5. 메소드 디스패치(Method Dispatch)  
+
+메소드 디스패치란 어떤 메소드를 호출할지 결정하여 실제로 실행시키는 과정이다.    
+
+#### 5-1) 메소드 디스패치 종류  
+
+- 정적 메소드 디스패치(Static Method Dispatch): `컴파일 시점에서`, 특정 메소드를 호출할 것이라는 걸 명확하게 알고 있는 경우    
+
+- 동적 메소드 디스패치(Dynamic Method Dispatch): `런타임 시점에서`, 호출되는 메소드가 동적으로 정해지는 경우   
+
+- 더블 메소드 디스패치(Double Method Dispatch): `런타임 시점에서`, 정적 또는 동적 메소드 디스패치를 두번 진행하는 경우    
+
+#### 5-1-1) 정적 메소드 디스패치(Static Method Dispatch)   
+
+자바에서 객체 생성은 런타임시에 호출된다.    
+즉, 컴파일 시점에서 알 수 있는 것은 타입에 대한 정보이다. 타입 자체가 
+Dispatch라는 구현 클래스이기 때문에 해당 메서드를 호출하면 어떤 메서드가 
+호출될지 정적으로 정해진다.
+
+```java
+public class Test {
+    public static void main(String[] args) {
+        Dispatch dispatch = new Dispatch();
+        System.out.println(dispatch.method());
+    }
+}
+
+public class Dispatch {
+    public String method() {
+        return "static method dispatch call!";
+    }
+}
+```
+
+> javap -c Test // 바이트 코드에도 실행 메소드가 확인됨  
+
+```java
+public class Test {
+  public Test();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: new           #7                  // class Dispatch
+       3: dup
+       4: invokespecial #9                  // Method Dispatch."<init>":()V
+       7: astore_1
+       8: getstatic     #10                 // Field java/lang/System.out:Ljava/io/PrintStream;
+      11: aload_1
+      12: invokevirtual #16                 // Method Dispatch.method:()Ljava/lang/String;
+      15: invokevirtual #20                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      18: return
+}
+```
+
+#### 5-1-2) 동적 메소드 디스패치    
+
+컴파일 시점이 아닌 실행시점에서 메소드 호출을 결정하는 경우이다.   
+`인터페이스, 추상클래스의 추상메소드 또는 상속을 통한 오버라이딩한 메소드를 호출하는 경우`     
+컴파일러는 타입에 대한 정보를 알고 있으므로 Runtime시에 호출 객체를 확인해 해당 객체의 메서드를 
+호출한다.   
+Runtime시에 호출 객체를 알 수 있으므로 바이트 코드에도 어떤 객체의 메서드를 
+호출해야하는지 드러나지 않는다.   
+
+
+
+#### 5-1-3) 더블 메소드 디스패치 
+
+
+- - - 
+
+## 6. Object 클래스   
 
 모든 클래스는 Object 클래스의 자식 클래스이다. 내가 임의로 만든 클래스도 
 Object 클래스를 상속받고 있다. extends Object를 써넣지 않았는데도 어떻게 되는걸까?  
