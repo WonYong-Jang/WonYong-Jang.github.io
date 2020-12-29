@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Java] 상속 "
-subtitle: "super, 다이나믹 메소드 디스패치, 추상클래스, Object 클래스"
+subtitle: "super, 다이나믹 메소드 디스패치, 더블 디스패치(방문자패턴) , 추상클래스, Object 클래스"
 comments: true
 categories : Java
 date: 2020-12-21
@@ -135,7 +135,7 @@ super는 부모의 멤버필드 또는 메소드에 접근하는 키워드이다
 가장 가까이에 있는 멤버필드 또는 메서드를 가르킨다.`
 
 
-## 3. 메소드 오버라이딩
+## 3. 메소드 오버라이딩, 오버로딩 
 
 `자바에서 다형성을 지원하는 방법으로 메소드 오버로딩과 오버라이딩이 있다.`          
 상속을 받으면 부모클래스의 멤버 변수 뿐 아니라 메소드도 가져오는데 이때 메소드를 재정의 하는 것이다.   
@@ -148,7 +148,32 @@ super는 부모의 멤버필드 또는 메소드에 접근하는 키워드이다
 - 접근제어자는 부모클래스에 정의된 것 보다 넓거나 같아야 한다.   
 - 메소드 오버라이딩과 메소드 오버로딩 성립조건은 아래와 같다.   
 
-<img width="533" alt="스크린샷 2020-12-22 오후 9 04 49" src="https://user-images.githubusercontent.com/26623547/102887129-b3abd500-4499-11eb-84fd-45b04179c888.png">   
+<img width="533" alt="스크린샷 2020-12-22 오후 9 04 49" src="https://user-images.githubusercontent.com/26623547/102887129-b3abd500-4499-11eb-84fd-45b04179c888.png">  
+
+#### 3-1) Method Signature   
+
+Method Signature는 그것만으로 메서드를 구분지을 수 있는 근거가 되어야 한다. 
+`자바에서 메서드 시그니처는 메서드 명과 파라미터 순서, 타입, 개수를 의미한다.`    
+리턴 타입과 exceptions은 메서드 시그니처가 아니다.   
+
+`자바 컴파일러는 오버로딩된 함수를 메서드 시그니처를 통해서 구별하기 때문에 
+이를 이해하는게 중요하다`   
+
+> 아래 두 메서드는 다른 시그니처를 가진다.
+
+```java
+doSomething(String[] y);
+doSomething(String y);
+```
+
+> 아래 메서드들은 모두 같은 시그니처를 가진다.   
+
+```java
+int doSomething(int y) 
+String doSomething(int x)
+int doSomething(int z) throws java.lang.Exception
+```
+
 
 - - - 
 
@@ -207,7 +232,7 @@ public class Dispatch {
 
 > javap -c Test // 바이트 코드에도 실행 메소드가 확인됨  
 
-```java
+```
 public class Test {
   public Test();
     Code:
@@ -238,9 +263,64 @@ public class Test {
 Runtime시에 호출 객체를 알 수 있으므로 바이트 코드에도 어떤 객체의 메서드를 
 호출해야하는지 드러나지 않는다.   
 
+```java
+public class Test {
+    public static void main(String[] args) {
+        Dispatchable dispatch = new Dispatch();
+        System.out.println(dispatch.method());
+    }
+}
+
+public interface Dispatchable {
+    String method();
+}
+
+public class Dispatch implements Dispatchable{
+    public String method() {
+        return "dynamic method dispatch call!";
+    }
+}
+```
+
+> javap -c Test // Static Dispatch 결과와 다르게 메소드가 명시되어 있지 않고 인터페이스로 
+명시되어 있음 (12라인)   
+
+```
+public class Test {
+  public Test();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: new           #7                  // class Dispatch
+       3: dup
+       4: invokespecial #9                  // Method Dispatch."<init>":()V
+       7: astore_1
+       8: getstatic     #10                 // Field java/lang/System.out:Ljava/io/PrintStream;
+      11: aload_1
+      12: invokeinterface #16,  1           // InterfaceMethod Dispatchable.method:()Ljava/lang/String;
+      17: invokevirtual #22                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      20: return
+}
+```
 
 
 #### 5-1-3) 더블 메소드 디스패치 
+
+`더블 메소드 디스패치는 Dynamic Dispatch를 두 번 하는 것을 의미한다.`       
+디자인 패턴 중 방문자 패턴(Visitor Pattern)과 밀접한 관계가 있다.   
+
+##### 방문자 패턴 ( 디자인 패턴 )    
+
+`방문자 패턴을 이용하면 객체에서 처리를 분리해서 사용할 수 있다.`   
+여기서 객체란 클래스를 의미하고 처리는 메소드를 의미한다. 객체에서 미리 
+정의되지 못한 처리부분(메소드)을 객체 밖에서 분리하여 처리할수 있도록 한다.   
+
+
+
 
 
 - - - 
@@ -256,8 +336,9 @@ Object 클래스를 상속받고 있다. extends Object를 써넣지 않았는�
 
 - - - 
 
-**Reference**
+**Reference**    
 
+[https://www.youtube.com/watch?v=YzFzLpwxSM4](https://www.youtube.com/watch?v=YzFzLpwxSM4)     
 [https://limkydev.tistory.com/188](https://limkydev.tistory.com/188)     
 [https://hyeonstorage.tistory.com/185](https://hyeonstorage.tistory.com/185)   
 [https://commin.tistory.com/101](https://commin.tistory.com/101)   
