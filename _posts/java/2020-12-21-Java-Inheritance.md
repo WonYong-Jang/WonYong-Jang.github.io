@@ -200,7 +200,7 @@ int doSomething(int z) throws java.lang.Exception
 
 메소드 디스패치란 어떤 메소드를 호출할지 결정하여 실제로 실행시키는 과정이다.    
 
-#### 5-1) 메소드 디스패치 종류  
+### 5-1) 메소드 디스패치 종류  
 
 - 정적 메소드 디스패치(Static Method Dispatch): `컴파일 시점에서`, 특정 메소드를 호출할 것이라는 걸 명확하게 알고 있는 경우    
 
@@ -208,7 +208,7 @@ int doSomething(int z) throws java.lang.Exception
 
 - 더블 메소드 디스패치(Double Method Dispatch): `런타임 시점에서`, 정적 또는 동적 메소드 디스패치를 두번 진행하는 경우    
 
-#### 5-1-1) 정적 메소드 디스패치(Static Method Dispatch)   
+### 5-1-1) 정적 메소드 디스패치(Static Method Dispatch)   
 
 자바에서 객체 생성은 런타임시에 호출된다.    
 즉, 컴파일 시점에서 알 수 있는 것은 타입에 대한 정보이다. 타입 자체가 
@@ -254,7 +254,7 @@ public class Test {
 }
 ```
 
-#### 5-1-2) 동적 메소드 디스패치    
+### 5-1-2) 동적 메소드 디스패치    
 
 컴파일 시점이 아닌 실행시점에서 메소드 호출을 결정하는 경우이다.   
 `인터페이스, 추상클래스의 추상메소드 또는 상속을 통한 오버라이딩한 메소드를 호출하는 경우`     
@@ -308,25 +308,122 @@ public class Test {
 ```
 
 
-#### 5-1-3) 더블 메소드 디스패치 
+### 5-1-3) 더블 메소드 디스패치 
 
 `더블 메소드 디스패치는 Dynamic Dispatch를 두 번 하는 것을 의미한다.`       
 디자인 패턴 중 방문자 패턴(Visitor Pattern)과 밀접한 관계가 있다.   
 
-##### 방문자 패턴 ( 디자인 패턴 )    
+#### 방문자 패턴 ( 디자인 패턴 )    
 
 `방문자 패턴을 이용하면 객체에서 처리를 분리해서 사용할 수 있다.`   
 여기서 객체란 클래스를 의미하고 처리는 메소드를 의미한다. 객체에서 미리 
 정의되지 못한 처리부분(메소드)을 객체 밖에서 분리하여 처리할수 있도록 한다.   
 
 > 분리를 하게 되면, 구조를 수정하지 않고 새로운 동작을 기존 객체에 추가할 수 있다!   
-
-
+> 새로운 연산을 더 만들고 싶다면, 새로운 방문자를 추가하면 된다.   
 
 `즉, 방문자 패턴이란 기존 클래스 필드 정보를 유지하면서 새로운 연산을 추가하는 방식이다.`   
 
+##### 예시 
+
+<img width="250" alt="스크린샷 2020-12-30 오후 9 58 08" src="https://user-images.githubusercontent.com/26623547/103353942-8a202880-4aed-11eb-9499-98841e764b53.png">
+
+<img width="250" alt="스크린샷 2020-12-30 오후 9 58 02" src="https://user-images.githubusercontent.com/26623547/103353946-8e4c4600-4aed-11eb-9948-4cbe0a8bbc40.png">
+
+Car 인터페이스가 있고 이를 구현한 Bus, Truck 클래스가 각각 있다. 버스와 
+트럭의 메소드는 편의상 같게 정의하였다.   
+
+```java
+public interface Car {
+
+    int drive(); // 이동 할때 마다 기름 -1
+
+    int getFuel(); // 남은 기름 확인
+
+    String visit(ViewVisitor viewVisitor); // 방문자 패턴 
+}
+```
+
+`위처럼 방문자 패턴을 적용하기 위해서는 인터페이스에 visit 메서드 한줄을 추가해야 한다!`     
+
+```java
+public class Bus implements Car {
+
+    private int fuel;
+
+    public Bus(int fuel) {
+        this.fuel = fuel;
+    }
+
+    @Override
+    public int drive() {
+        return --fuel;
+    }
+
+    @Override
+    public int getFuel() {
+        return fuel;
+    }
+
+    @Override
+    public String visit(ViewVisitor viewVisitor) { // 방문자 패턴
+        return viewVisitor.visit(this);
+    }
+}
+
+```
+
+`위는 viewVisitor에게 자기 자신을 인자로 넘겨서 책임을 위임하는 모습이다!`   
+
+아래는 방문자 인터페이스이다.    
+
+```java
+public interface ViewVisitor {
+
+    String visit(Bus bus);
+
+    String visit(Truck truck);
+}
+```
+
+`아래와 같이 책임을 위임받아 기존 객체 변경 없이 
+새로운 메소드를 만들어 낼 수 있다!`   
 
 
+```java
+public class CarViewVisitor implements ViewVisitor{
+
+    private static final String BUS_STATUS = "현재 버스의 기름 상태 : ";
+    private static final String TRUCK_STATUS = "현재 트럭의 기름 상태 : ";
+
+    @Override
+    public String visit(Bus bus) {
+        return BUS_STATUS + bus.getFuel();
+    }
+
+    @Override
+    public String visit(Truck truck) {
+        return TRUCK_STATUS + truck.getFuel();
+    }
+}
+```
+
+아래와 같이 Junit을 이용하여 테스트 코드를 작성해보자   
+
+```java
+class BusTest {
+    @Test
+    void 버스가_운전하고_상태를_제대로_출력하는지_테스트() {
+        /* Given */
+        Bus bus = new Bus(10); // 기름 10으로 초기화 
+        /* When */
+        bus.drive();           // 기름 -1 
+        /* Then */
+        assertThat(bus.getFuel()).isEqualTo(9);
+        assertThat(bus.visit(new CarViewVisitor())).isEqualTo("현재 버스의 기름 상태 : 9");
+    }
+}
+```
 
 - - - 
 
@@ -343,6 +440,7 @@ Object 클래스를 상속받고 있다. extends Object를 써넣지 않았는�
 
 **Reference**    
 
+[https://huisam.tistory.com/entry/Visitor](https://huisam.tistory.com/entry/Visitor)      
 [https://www.youtube.com/watch?v=YzFzLpwxSM4](https://www.youtube.com/watch?v=YzFzLpwxSM4)     
 [https://limkydev.tistory.com/188](https://limkydev.tistory.com/188)     
 [https://hyeonstorage.tistory.com/185](https://hyeonstorage.tistory.com/185)   
