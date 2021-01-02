@@ -95,21 +95,31 @@ $ echo $CLASSPATH
 ```
 
 ```
-$ ~ java Test
+$~ java Test
 dynamic method dispatch call!
 ```
+
+하지만, 환경변수를 사용하게 되면 운영체제를 변경하면 클래스 패스가 사라지기 때문에 
+이식성면에서 불리할 수 있다.   
+
+> 최근에는 운영체제 상의 환경변수로 클래스패스를 설정하는 것은 지양하고 
+IDE나 빌드도구를 통해서 클래스패스를 설정한다.   
+
+
 
 
 #### 3-2. java runtime 에 -classpath 옵션 사용   
 
-java 명령 실행 시 옵션으로 클래스패스를 지정할 수 있다. 
+java 명령 또는 javac 명령 실행 시 옵션으로 클래스패스를 지정할 수 있다. 
 또한, CLASSPATH 환경 변수 설정 후 실행 하였는데 -classpath 옵션이 우선순위가 높은 것을
 볼 수 있다.   
 
 > 단축 옵션인 -cp 옵션도 동일한 기능을 한다.   
 
+> classpath 옵션은 java, javac 모두 사용 가능하다!   
+
 ```
-$  ~ java -cp /Users/jang-won-yong/dev/workspace/Dispatch/src Test
+$~ java -cp /Users/jang-won-yong/dev/workspace/Dispatch/src Test
 dynamic method dispatch call!
 ```
 
