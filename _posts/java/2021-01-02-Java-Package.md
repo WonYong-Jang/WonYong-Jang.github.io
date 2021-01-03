@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Java] 패키지 "
-subtitle: ""
+subtitle: "package, 필트 인 패키지 , import, FQCN, 계층 구조인 클래스로더"
 comments: true
 categories : Java
 date: 2021-01-02
@@ -37,6 +37,25 @@ String a = "Class Name";
 java.lang.String b = "Full Package Class Name";   
 ```
 
+#### 빌트 인 패키지(Built-in Package)   
+
+자바는 개발자들이 사용할 수 있도록 많은 패키지 및 클래스를 제공한다.     
+
+<img width="300" alt="스크린샷 2021-01-03 오후 10 42 56" src="https://user-images.githubusercontent.com/26623547/103480031-2a8b8b00-4e15-11eb-9895-af87acc3460a.png">   
+
+패키지 중 java.lang은 자주 사용하는 패키지이지만 
+한번도 import하여 사용한적이 없다.    
+`즉, 자바에서 java.lang 패키지는 아주 기본적인 것들이기 때문에 import로 불러오지 
+않아도 자바가 알아서 java.lang의 클래스를 불러온다.`   
+
+그외에도 아래와 같은 패키지를 제공한다.   
+
+- java.io  
+- java.util  
+- java.applet  
+- java.awt  
+- java.net  
+
 - - - 
 
 ## 2. import 키워드    
@@ -61,6 +80,66 @@ JVM이 프로그램을 실행할 때, 클래스 파일을 찾는데 기준이 �
 
 `java 명령을 통해 클래스 파일을 실행할 때 클래스 파일을 찾는 기준이 되는 경로를 
 클래스패스라고 하며 기본적으로는 java 명령을 실행하는 위치를 의미한다.`    
+
+JVM은 프로그램을 실행할 때 Class Loader가 .class 파일들을 메모리에 적재시켜 주는 
+역할을 한다. `클래스패스를 통해 클래스 로더에게 어떤 클래스파일들을 
+메모리에 적재시킬지 알려주는 것이다.`        
+
+#### 3가지 클래스 로더와 3가지 원칙   
+
+<img width="401" alt="스크린샷 2021-01-03 오후 9 26 09" src="https://user-images.githubusercontent.com/26623547/103478499-869ce200-4e0a-11eb-8ec4-3bcb896c1292.png">   
+
+자바의 클래스 로더는 계층 구조이며, 3가지의 서로 다른 클래스로더로 구성되어 있다.   
+
+##### Bootstrap Class loader   
+
+기본 클래스로더 중 최상위 클래스 로더로써, 
+rt.jar에 있는 JVM을 실행시키기 위한 핵심 클래스들을 로딩한다.    
+String 클래스나, Object 클래스를 사용할 수 있었던 이유가 바로, 
+BootStrap Class loader 가 자동으로 메모리에 적재해 주기 때문이다.   
+
+> java 9 부터는 rt.jar, tools.jar 등 기본적으로 제공되던 jar 파일이 없어지고 
+그 안에 있던 내용들은 모듈 시스템에 맞게 lib 폴더 안에 저장된다.
+
+##### Extension Class loader   
+
+Bootstrap Class loader의 자식클래스로써, 
+jre/lib/ext 폴더나 java.ext.dirs 환경 변수로 지정된 폴더에 있는 클래스 파일을 로딩한다.   
+
+> 자바 9 부터는 Platform Class loader로 이름 변경   
+
+##### System Class loader   
+
+$CLASSPATH에 설정된 경로를 탐색하여 그곳에 있는 클래스들을 로딩하는 역할을 한다. 
+개발자가 작성한 .class 파일을 로딩한다.  
+
+
+#### 클래스로더 동작
+
+자바 클래스 로더는 3가지 원칙에 의해 동작한다.   
+
+1) 위임 원칙(Delegation) :  클래스로딩 작업을 상위 클래스 로더에 위임한다.      
+
+- 3가지 기본 클래스로더의 윗 방향으로 클래스 로딩을 위임하는 것을 말한다.      
+
+- 어떠한 클래스를 로딩할때 System Class loader에서 부터 시작해서 자신이 
+직접 로딩하지 않고 Bootstrap Class loader까지 위임한 후 차례로 내려 오면서 찾으면 반환하고 
+없으면 자식 클래스 로더로 이동하여 찾는다.    
+
+- 모두 찾지 못하면 ClassNotFoundException이 발생한다.   
+
+2) 가시 범위 원칙(Visibility) : 하위 클래스로더는 상위 클래스로더가 로딩한 클래스를 볼 수 있지만, 
+    상위 클래스 로더는 하위 클래스로더가 로딩한 클래스를 볼 수 없다.    
+
+만약 개발자가 만든 클래스를 로딩하는 System Class loader가 Bootstrap Class loader에 의해 로딩된 
+String.class를 볼 수 없다면 애플리케이션은 String.class를 사용할 수 없을 것이다. 
+따라서 하위에서는 상위를 볼 수 있어야 애플리케이션이 제대로 동작할 수 있다.   
+
+3) 유일성 원칙(Uniqueness) : 하위 클래스로더는 상위 클래스로더가 로딩한 클래스를 다시 로딩하지 않게 해서 
+로딩된 클래스의 유일성을 보장한다.   
+
+
+- - - 
 
 Classpath를 지정하기 위한 두 가지 방법이 있다.   
 
@@ -127,6 +206,7 @@ dynamic method dispatch call!
 
 **Reference**    
 
+[https://homoefficio.github.io/2018/10/13/Java-%ED%81%B4%EB%9E%98%EC%8A%A4%EB%A1%9C%EB%8D%94-%ED%9B%91%EC%96%B4%EB%B3%B4%EA%B8%B0/](https://homoefficio.github.io/2018/10/13/Java-%ED%81%B4%EB%9E%98%EC%8A%A4%EB%A1%9C%EB%8D%94-%ED%9B%91%EC%96%B4%EB%B3%B4%EA%B8%B0/)   
 [https://github.com/whiteship/live-study/issues/7](https://github.com/whiteship/live-study/issues/7)             
 
 {% highlight ruby linenos %}
