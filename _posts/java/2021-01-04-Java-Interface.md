@@ -189,7 +189,6 @@ public class Main {
 
 - - -
 
-## 8. 인터페이스 private 메소드, 자바 9   
 
 
 
