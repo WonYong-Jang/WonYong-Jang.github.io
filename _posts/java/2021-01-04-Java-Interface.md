@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Java] 인터페이스 "
-subtitle: ""
+subtitle: "인터페이스의 default method, static method, private method"
 comments: true
 categories : Java
 date: 2021-01-04
