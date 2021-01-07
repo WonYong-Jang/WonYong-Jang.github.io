@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Java] 상속 "
-subtitle: "super, 다이나믹 메소드 디스패치, 더블 디스패치(방문자패턴) , 추상클래스, Object 클래스"
+subtitle: "super, 다이나믹 메소드 디스패치, 더블 디스패치(방문자패턴) , 추상클래스, Object 클래스, method signature, 오버라이딩 오버로딩"
 comments: true
 categories : Java
 date: 2020-12-21
