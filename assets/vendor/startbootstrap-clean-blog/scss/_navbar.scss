@@ -4,11 +4,11 @@
   border-bottom: 1px solid $gray-200;
   background-color: white;
   @include sans-serif-font;
-  .navbar-brand {
+  .navbar-brand {  /* 왼쪽 navbar */
     font-weight: 800;
     color: $gray-800;
   }
-  .navbar-toggler {
+  .navbar-toggler { /* 화면 조정 했을 때 */
     font-size: 12px;
     font-weight: 800;
     padding: 13px;
@@ -17,22 +17,26 @@
   }
   .navbar-nav {
     > li.nav-item {
-      > a {
+      > a {   /* HOME ABOUT POSTS CONTACT */
         font-size: 20px;
         font-weight: 800;
         letter-spacing: 1px;
         text-transform: uppercase;
         }
       > .current {
-            background-color: black;
-            color:white;
+         //   background-color: black;
+         //   color:white;
         }
       > ul { /* 평상시에는 드랍메뉴가 안보이게 */
         display:none;
         position:absolute;
+        > li a{
+            color: white;
+        }
       }
     }
     > li:hover ul { /* 마우스 커서 올리면 드랍메뉴 View */
+        //background-color: black;  /* 드랍다운 배경색  */
         display:block;
     }
     > li {
