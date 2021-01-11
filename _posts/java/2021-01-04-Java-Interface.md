@@ -39,7 +39,8 @@ background: '/img/posts/mac.png'
 상위 클래스의 기능을 하위 클래스가 물려 받는 것이라고 한다면, 인터페이스는 
 하위 클래스에 특정 메서드를 구현하도록 강제한다`          
 
-`또한, 자바의 다형성을 극대화 하여 코드의 수정을 줄이고 유지보수성을 높인다.`   
+`또한, 자바의 다형성을 극대화 하여 코드의 수정을 줄이고 유지보수성을 높인다.`  
+
 
 #### 인터페이스 특징 
 
@@ -84,6 +85,8 @@ public interface InterfaceTest {
 ( 위 바이트코드 참조)   
 
 3) 인터페이스 내에 존재하는 변수는 무조건 public static final로 선언되며, 이를 생략 가능   
+
+
 
 
 
@@ -166,25 +169,81 @@ public class Smartphone implements Phone, Internet, Mp3 {
 Method Signature에 의해서 같은 메서드로 취급하지만 실제로는 리턴 타입이 다르기 때문에 
 컴파일 에러를 발생시키는 것 같다.( 잘못된 설명이라면 댓글 부탁드려요)  
 
-[관련 링크](http://localhost:4000/java/2020/12/21/Java-Inheritance.html)
+[Method Signature 설명](http://localhost:4000/java/2020/12/21/Java-Inheritance.html)
 
 - - - 
 
 ## 6. 인터페이스의 Default Method, 자바 8 
 
-`인터페이스는 추상메서드와 상수만을 가질수 있는데 자바 8부터는 Default Method가 추가 되었다.`   
+과거 인터페이스의 default 메소드가 없었을 때 인터페이스 여러가지 메서드들 중 
+한가지 메서드만 사용하는 구현체가 있을 경우 아래와 같이 개발하였다.    
 
-인터페이스는 구현보다는 선언에 집중이 되어있는데, 무엇때문에 추가되었을까?   
+```java
+public interface InterfaceTest {
 
-인터페이스에 새로운 메서드를 추가한다는 것은 굉장히 복잡한 일이 될 수 있다.   
+    void a();
+    void b();
+    void c();
+}
+```
+
+```java
+public abstract class AbstractTest implements InterfaceTest{
+
+    @Override
+    public void a() { }
+
+    @Override
+    public void b() { }
+
+    @Override
+    public void c() { }
+}
+```
+
+```java
+// 자바 8 이전에는 추상클래스를 상속받아서 사용   
+public class ClassTest extends AbstractTest{
+
+    @Override
+    public void a() { // 원하는 메서드만 구현해서 사용 
+        System.out.println("a 메서드만 구현 ");
+    }
+}
+```
+
+자바 8 이전 인터페이스는 추상메서드와 상수만 있었기 때문에
+구현보다는 선언에 집중이 되어있는데, 무엇때문에 default 메서드가 추가되었을까?
+
+자바 8 이상에서는 인터페이스의 default 메소드가 제공됨에 따라 
+중간에 추상 클래스가 필요없이도 모든 메서드를 구현하지 않고 원하는 
+메서드만 오버라이딩하여 개발이 가능하게 되었다.   
+
+default 키워드를 앞에 붙여 사용하며, 일반 메서드처럼 구현부가 있어야 한다.
+
+default가 붙지만 접근제어자는 public이며, 생략 가능하다.
+
+```java
+public interface InterfaceTest {
+
+    default void a() {}
+    default void b() {}
+    default void c() {}
+}
+```
+
+> 위를 implements 하여 원하는 메서드만 오버라이딩이 가능하다! 이를 통해, 구현체들은 
+상속에 대해 자유로워지게 되었다.   
+
+`추상클래스를 한번 상속받아 사용하게 되면 자바는 다중 상속이 안되므로, 그 구현체는 
+더 이상 상속을 하지 못하는 단점에서 벗어날 수 있게 되었다.`    
+
+또한, 인터페이스에 새로운 메서드를 추가한다는 것은 굉장히 복잡한 일이 될 수 있다.   
 추상메서드를 추가하게 되면 인터페이스를 구현한 모든 클래스에 
 새로운 메서드를 구현해줘야 한다.   
 
 이를 보완하기 위해 Default Method가 추가된 것이다.   
 
-default 키워드를 앞에 붙여 사용하며, 일반 메서드처럼 구현부가 있어야 한다.   
-
-default가 붙지만 접근제어자는 public이며, 생략 가능하다.   
 
 ```java
 public interface Keyboard {
@@ -206,6 +265,24 @@ Keyboard 클래스에 typing 메서드가 새롭게 추가되었다고 생각해
 ##### default 메서드가 충돌이 난다면 
 
 만약 메서드 이름이 중복되어 충돌되는 상황이라면 직접 오버라이딩 해줘야 한다.   
+
+아래와 같이 2개의 인터페이스에 동일한 메소드 a(), b()가 있고 구현체에서 
+두 인터페이스를 구현하려고 할때 에러가 발생한다. 그럴 경우 
+아래와 같이 메소드를 오버라이딩 해주면 된다.   
+
+```java
+public class ClassTest implements InterfaceTest, InterfaceTest2{
+
+    @Override
+    public void a() { }
+
+    @Override
+    public void b() {}
+}
+```
+
+
+
 
 - - - 
 
@@ -236,6 +313,8 @@ public class Main {
    }
 }
 ```
+
+
 
 - - -
 
