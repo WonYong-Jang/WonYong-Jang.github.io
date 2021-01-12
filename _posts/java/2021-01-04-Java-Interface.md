@@ -86,7 +86,23 @@ public interface InterfaceTest {
 
 3) 인터페이스 내에 존재하는 변수는 무조건 public static final로 선언되며, 이를 생략 가능   
 
+`4) 추상클래스는 일반 변수 선언이 가능하지만 인터페이스는 상수만 선언 가능!`    
 
+인터페이스가 자바 8부터 default method, static method 또한, private 까지 제공하면서 
+더 이상 추상클래스가 필요 없어진 걸까 ? 
+
+인터페이스가 추상클래스가 제공하는 기능들을 사용할 수 있게 되면서 인터페이스를 
+많이 사용하게 된 건 맞지만 `인터페이스는 일반 변수 선언이 불가능하다.`   
+
+```java
+public abstract class AbstractTest {
+    private int num = 10;  // 인터페이스에서는 public static final 상수만 사용가능   
+
+    public int method() {
+        return num*num;
+    }
+}
+```
 
 
 
@@ -242,7 +258,8 @@ public interface InterfaceTest {
 추상메서드를 추가하게 되면 인터페이스를 구현한 모든 클래스에 
 새로운 메서드를 구현해줘야 한다.   
 
-이를 보완하기 위해 Default Method가 추가된 것이다.   
+Default Method를 사용하게 되면 `하위 호완성`을 유지할 수 있기 때문에 
+기존에 구현된 클래스들이 영향을 받지 않으면서 새로운 메서드를 추가 할 수 있다.     
 
 
 ```java
@@ -274,10 +291,10 @@ Keyboard 클래스에 typing 메서드가 새롭게 추가되었다고 생각해
 public class ClassTest implements InterfaceTest, InterfaceTest2{
 
     @Override
-    public void a() { }
+    public void a() {   } // 재정의 하여 해결 
 
     @Override
-    public void b() {}
+    public void b() {   }
 }
 ```
 
