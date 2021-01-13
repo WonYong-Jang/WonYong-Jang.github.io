@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Java] 인터페이스 "
-subtitle: "인터페이스의 default method, static method, private method"
+subtitle: "인터페이스의 default method, static method, private method, 함수형 인터페이스 "
 comments: true
 categories : Java
 date: 2021-01-04
@@ -21,7 +21,8 @@ background: '/img/posts/mac.png'
 - 인터페이스의 기본 메소드(Default Method), 자바 8
 - 인터페이스의 static 메소드, 자바 8   
 - 인터페이스의 private 메소드, 자바 9   
-
+- 함수형 인터페이스   
+- Constant Interface   
 - - -
 
 ## 1. 인터페이스란 ?    
@@ -38,6 +39,8 @@ background: '/img/posts/mac.png'
 설계시 선언해두면, 개발할 때 기능을 구현하는 데에만 집중할 수 있다. `상속이 
 상위 클래스의 기능을 하위 클래스가 물려 받는 것이라고 한다면, 인터페이스는 
 하위 클래스에 특정 메서드를 구현하도록 강제한다`          
+
+인터페이스는 객체로 생성할 수 없기 때문에 생성자를 가질 수 없다.   
 
 `또한, 자바의 다형성을 극대화 하여 코드의 수정을 줄이고 유지보수성을 높인다.`  
 
@@ -104,6 +107,34 @@ public abstract class AbstractTest {
 }
 ```
 
+#### 익명 구현 객체 
+
+인터페이스를 구현하기 위해 해당 인터페이스를 구현할 클래스를 생성해야 하는데 
+일회성이고 재사용할 필요가 없다면 굳이 클래스 파일을 만들 필요가 없다. 이럴 경우 
+익명 클래스를 사용하면 된다.   
+
+```java
+// 구현할 인터페이스 
+public interface Car {
+    void drive();
+}
+
+public class Test {
+    public static void main(String[] args) {
+
+        // 익명 객체 
+        // 필드와 메서드를 선언할 수 있지만, 
+        // 익명 객체 안에서만 사용가능
+        Car car = new Car() {
+            @Override
+            public void drive() { // 인터페이스에 선언된 추상 메서드 구현 
+                System.out.println("Drive!");
+            }
+        };
+        // 하나의 실행문이므로 끝에 세미콜론 반드시 붙여야 함
+    }
+}
+```
 
 
 - - - 
@@ -339,6 +370,10 @@ public class Main {
 
 자바 9에서는 추가적으로 private method와 private static mehotd가 추가되었다.   
 
+- 메서드의 몸통 {}이 있고 abstract이 아니다. 
+- 구현체에서 구현할 수 없고 자식 인터페이스에서 상속이 불가능하다.   
+- static 메서드도 private이 가능하다.   
+
 추가된 이유는 아래와 같다.   
 
 - java 8 의 default method와 static method는 특정 기능을 처리하는 내부 method 임에도 불구하고, 
@@ -347,7 +382,89 @@ public class Main {
 - interface를 구현하는 다른 interface 혹은 class가 해당 method에 엑세스 하거나 
 상속할 수 있는 것을 원치 않은 경우도 있지만 그렇게 할 수 없었다.   
 
+- - - 
 
+## 9. 함수형 인터페이스    
+
+자바 8에서는 함수를 `1급 시민`처럼 다룰 수 있도록, 함수형 인터페이스를 제공한다.   
+
+1급시민 되면 아래처럼 다룰 수 있게 된다.   
+
+1) 변수에 값을 할당할 수 있다.   
+2) 함수를 파라미터로 넘겨줄 수 있다.   
+3) 함수의 반환값이 될 수 있다.     
+
+함수형 인터페이스는 아래와 같이 사용한다.    
+
+```java
+@FunctionalInterface
+interface Addition {
+    int addition(final int num1, final int num2);
+}
+```
+
+- `한개의 추상 메서드만 가져야 한다.`     
+- `@FunctionalInterface 어노테이션을 붙여야 한다.`        
+
+이렇게 되면 Addition타입을 가지는 addition이라는 메서드는 이제부터 1급시민 처럼 
+사용할 수 있다.   
+
+##### 1. 변수에 값을 할당    
+
+```java
+Addition add = (num1, num2) -> num1+num2; // 함수 형태로 변수에 값을 넣음 
+System.out.println(add.addition(2,2));    // 결과값 : 4
+```
+
+##### 2. 함수를 파라미터로 넘겨줌    
+
+```java
+public class Test {
+    public static void main(String[] args) {
+
+        method((num1, num2) -> (num1+num2)); // 함수가 파라미터로 들어감   
+
+    }
+    public static void method(Addition add) {
+        System.out.println(add.addition(1,2));
+    }
+}
+```
+
+##### 3. 함수의 반환값이 될 수 있어야 한다.    
+
+
+```java
+public static void main(String[] args) {
+    Addition add = test();
+    System.out.println(add.addition(1,2));
+}
+
+static Addition test() {
+    return (i1, i2) -> i1 + i2; // 함수가 리턴값에 들어감
+}
+```
+
+- - - 
+## 10. Constant Interface   
+
+`Constant Interface는 사용을 추천하지 않는 Anti 패턴이다.`     
+
+Constant Interface는 오직 상수만 정의한 인터페이스이다. 인터페이스에서 
+변수를 등록할 때 자동으로 public static final 이 붙어서 상수가 되기 때문에 
+어디에서나 접근할 수 있다. 또한, 하나의 클래스에 여러 개의 인터페이스를 
+implements 할 수 있는데, Constant Interface를 implements 할 경우, 인터페이스의 
+클래스명을 네임스페이스로 붙이지 않고 바로 사용할 수 있다.   
+
+하지만 아래와 같은 이유로 사용을 추천하지 않는다.   
+
+- 사용하지 않을 수도 있는 상수를 포함하여 모두 가져오기 때문에 계속 가지고 있어야 한다.   
+
+- 상수 인터페이스를 implements한 클래스에 같은 상수를 가질 경우, 클래스에 정의한 상수가 
+사용되므로 사용자가 의도한 흐름으로 프로그램이 돌아가지 않을 수 있다.   
+
+`자바 문서에서는 Constant interface를 Anti 패턴으로 명시하였고 이에 대한 
+방안으로 상수만 모아놓은 클래스를 생성하여 import static 하여 사용을 권장한다.`   
 
 
 
