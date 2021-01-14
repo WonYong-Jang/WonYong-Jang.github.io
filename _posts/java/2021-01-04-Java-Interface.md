@@ -42,7 +42,11 @@ background: '/img/posts/mac.png'
 
 인터페이스는 객체로 생성할 수 없기 때문에 생성자를 가질 수 없다.   
 
-`또한, 자바의 다형성을 극대화 하여 코드의 수정을 줄이고 유지보수성을 높인다.`  
+`또한, 자바의 다형성을 극대화 하여 코드의 수정을 줄이고 유지보수성을 높인다.`    
+
+다형성을 극대화하여 loose coupling에 도움을 준다. 아래는 관련 링크이다.    
+
+[관련 링크](https://wonyong-jang.github.io/java/2020/05/17/Java-Loose-coupling.html)   
 
 
 #### 인터페이스 특징 
@@ -197,7 +201,8 @@ public class Smartphone implements Phone, Internet, Mp3 {
 
 ## 5. 인터페이스 상속 
 
-인터페이스의 상속 구조에서는 `서브 인터페이스는 수퍼 인터페이스의 메서드까지 모두 구현해야 한다.`    
+인터페이스의 상속 구조에서는 `서브 인터페이스는 수퍼 인터페이스의 메서드까지 모두 가지고 있으므로 이를 구현한 
+클래스에서는 모든 메서드를 구현해 주어야 한다.`       
 
 인터페이스는 클래스와 달리 다중 상속이 가능하다.   
 인터페이스의 메서드는 추상 메서드로 구현하기 전의 메서드이기 때문에 어떤 인터페이스의 메서드를 상속받아도 
@@ -384,7 +389,11 @@ public class Main {
 
 - - - 
 
-## 9. 함수형 인터페이스    
+## 9. 함수형 인터페이스(Functional Interface)       
+
+`Functional Interface는 1개의 추상 메서드를 갖고 있는 인터페이스를 말한다.` Single Abstract 
+Method(SAM)이라 불리기도 한다.     
+
 
 자바 8에서는 함수를 `1급 시민`처럼 다룰 수 있도록, 함수형 인터페이스를 제공한다.   
 
@@ -397,6 +406,8 @@ public class Main {
 함수형 인터페이스는 아래와 같이 사용한다.    
 
 ```java
+// 어노테이션으로 Functional Interface임을 명시 
+// 이처럼 명시했을 경우 2개 이상 추상메서드를 가질 경우 컴파일 에러! 
 @FunctionalInterface
 interface Addition {
     int addition(final int num1, final int num2);
