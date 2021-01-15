@@ -47,6 +47,10 @@
         font-size: 18px;
         font-weight: 800;
         letter-spacing: 1px;
+
+         > li:hover a { /* drop down item 마우스 오버했을 경우 */
+            color:black;
+         }
        }
     }
   }
