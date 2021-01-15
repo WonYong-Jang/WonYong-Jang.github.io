@@ -8,7 +8,7 @@
     font-weight: 800;
     color: $gray-800;
   }
-  .navbar-toggler { /* 화면 조정 했을 때 */
+  .navbar-toggler { /* 화면 조정 했을 때 MENU Button  */
     font-size: 12px;
     font-weight: 800;
     padding: 13px;
@@ -36,7 +36,8 @@
       }
     }
     > li:hover ul { /* 마우스 커서 올리면 드랍메뉴 View */
-        //background-color: black;  /* 드랍다운 배경색  */
+        background-color: #A9A9A9;  /* 드랍다운 배경색  */
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
         display:block;
     }
     > li {
