@@ -483,11 +483,12 @@ implements 할 수 있는데, Constant Interface를 implements 할 경우, 인�
 
 **Reference**    
 
+
 [https://leegicheol.github.io/whiteship-live-study/whiteship-live-study-08-interface/](https://leegicheol.github.io/whiteship-live-study/whiteship-live-study-08-interface/)   
 [https://github.com/whiteship/live-study/issues/8](https://github.com/whiteship/live-study/issues/8)             
 
-{% highlight ruby linenos %}
 
+{% highlight ruby linenos %}
 {% endhighlight %}
 
 
