@@ -10,7 +10,7 @@ background: '/img/posts/mac.png'
 
 ## 목표
 
-자바의 예외 처리에 대해 학습하세요.   
+자바의 예외 처리에 대해 학습하세요.  
 
 ## 학습할 것 
 
@@ -19,6 +19,7 @@ background: '/img/posts/mac.png'
 - 자바에서 예외처리 방법(try, catch, throw, throws, finally)   
 - RuntimeException과 RE가 아닌 것의 차이는?   
 - 커스텀한 예외 만드는 방법     
+- 예외의 전파 
 
 - - -
 
@@ -88,8 +89,15 @@ RuntimeException과 그 하위 클래스, 그리고 Error와 그 하위 클래�
 
 ##### 3) 왜 Checked, Unckecked Exception으로 나눴을까?   
 
+[오라클 공식문서](https://docs.oracle.com/javase/tutorial/essential/exceptions/runtime.html)가 이를 설명하고 있다.     
 
-<https://docs.oracle.com/javase/tutorial/essential/exceptions/runtime.html>
+요약해보면, 메서드를 호출하는 쪽은 그 메서드가 어떤 예외를 발생시킬 수 있는가에 대해 반드시 알아야 한다. 따라서 
+Java는 checked exception을 통해 해당 메서드가 발생시킬 있는 예외를 강제로 처리하도록 하고 있다.   
+
+그럼 Runtime Exception은 왜 예외를 강제로 처리하지 않도록 했을까?    
+Runtime Exception은 프로그램 코드의 문제로 발생하는 예외이다. 어디서나 매우 빈번하게 발생할 수 있기 때문에 
+모든 Runtime Exception을 메서드에 명시하도록 강제하는 것은 프로그램의 명확성을 떨어뜨릴 수 있다. 
+
 
 
 - - - 
@@ -134,8 +142,12 @@ java.lang.ArithmeticException
 위처럼 참조 변수를 통해서 발생한 예외 클래스의 인스턴스를 참조할 수 있다. 해당 인스턴스에는 
 발생한 예외에 대한 정보가 담겨있다. 이를 통해 Message, StackTrace 등 여러 정보를 얻어올 수 있다.   
 
-> printStackTrace() : 예외 발생 당시의 호출스택에 있었던 메서드의 정보와 예외 메시지를 화면에 출력한다.   
-> getMessage() : 발생한 예외클래스의 인스턴스에 저장된 메시지를 얻을 수 있다.    
+`printStackTrace()` : 예외 발생 당시의 호출스택에 있었던 메서드의 정보와 예외 메시지를 화면에 출력한다.   
+
+ 메소드가 실행되면 메모리영역의 Stack에 쌓이게 되고 예외가 발생하게 되면 Stack영역에 쌓여있는 메서드 정보를 
+ pop하여 출력해준다.   
+
+`getMessage()` : 발생한 예외클래스의 인스턴스에 저장된 메시지를 얻을 수 있다.    
 
 또한, 발생한 예외 클래스는 catch 문을 순차적으로 instanceof를 통해 확인한다. 
 아래 소스에서 더 포괄적인 RuntimeException이 catch문을 통해 먼저 온다면 
@@ -275,12 +287,86 @@ finally block
 
 위처럼 try 문에서 return을 하여도 finally문은 반드시 실행 된다.    
 
-**(주의) finally 안에서 return 을 하는 경우에는 신중해야 한다.**   
+**(ANTI Pattern) finally 안에서 return 을 하는 경우에는 신중해야 한다.**   
 
 - try 안에 return: finally 블록을 거쳐 정상 실행   
 - catch 안에 return: finally 블록을 거쳐 정상 실행   
-- `finally 안에 return: try 블록 안에서 발생한 예외 무시되고 finally 거쳐서 정상 종료`   
+- `finally 안에 return: try 블록 안에서 발생한 예외 무시되고 finally 거쳐서 정상 종료(예외를 확인 불가능해짐)`       
 
+try블록 안에 return이 있는 경우 (예외 발생하지 않는 경우)   
+
+```java
+public class Test {
+    public static void main(String[] args) throws CustomSpaceException {
+        System.out.println("실행결과 : " + method("study"));
+    }
+    static String method(String str) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(str);
+        try {
+            System.out.println("try pass");
+            sb.append(" / try");
+            return sb.toString();
+        } catch (Exception e) {
+            System.out.println("catch pass");
+            sb.append(" / catch");
+            return sb.toString();
+        } finally {
+            System.out.println("finally pass");
+            
+        }
+    }
+}
+```
+
+Output
+
+```
+try pass
+finally pass
+실행결과 : study/ try
+```
+
+**예외가 없을 경우 실행 순서**는 try -> finally -> try구문의 return으로 마무리 된다.     
+**예외가 있을 경우 실행 순서**는 try -> catch -> finally -> catch 구문의 return 으로 마무리 된다.   
+
+`finally에 return이 존재하는 경우는 try또는 catch구문에 있는 return 값을 덮어 써버린다.`     
+
+```java
+public class Test {
+    public static void main(String[] args) throws CustomSpaceException {
+        System.out.println("실행결과 : " + method("study"));
+    }
+    static String method(String str) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(str);
+        try {
+            System.out.println("try pass");
+            sb.append(" / try");
+            throw new Exception(); // 예외 발생
+        } catch (Exception e) {
+            System.out.println("catch pass");
+            sb.append(" / catch");
+            return sb.toString();
+        } finally {
+            System.out.println("finally pass");
+            sb.append(" / finally");
+            return "finally";
+        }
+    }
+}
+```
+
+Output
+
+```
+try pass
+catch pass
+finally pass
+실행결과 : finally
+```
 
 
 ##### 7) try-with-resources (자바 7이상이면 반드시 사용할 것!)     
@@ -390,11 +476,14 @@ public interface Closeable extends AutoCloseable {
 AutoCloseable을 implements하면 된다.`       
 
 
+
 - - -
 
 ## 4. RuntimeException과 RE가 아닌 것의 차이는?   
 
-
+RuntimeException은 CheckedExcetpion과 UnCheckedException을 구분하는 기준이다. 
+Exception의 자식 클래스 중 RuntimeException을 제외한 모든 클래스는 CheckedException이며, 
+RuntimeException과 그의 자식 클래스들은 UnCheckedException이라 부른다.
 
 - - - 
 
@@ -444,14 +533,112 @@ public void wrapException(String input) throws MyBusinessException {
 }
 ```
 
+**커스텀 예외 만들기 예제**    
+
+기존에 정의된 예외 클래스 외에 필요에 따라 새로운 예외를 정의할 수 있다. 
+Exception 클래스 상속받거나, 필요에 따라 알맞은 예외 클래스를 장속받아 만든다.   
+
+```java
+public class Test {
+    public static void main(String[] args) throws CustomSpaceException {
+
+        method(0);
+    }
+    static void method(int num) throws CustomSpaceException {
+
+        if(num < 1) throw new CustomSpaceException("공간 부족");
+    }
+}
+
+public class CustomSpaceException extends Exception{
+
+    public CustomSpaceException(String message) {
+        super(message); // 조상 클래스 Exception의 생성자 호출
+    }
+}
+```
+
+- - - 
+
+## 6. 예외의 전파    
+
+아래와 같은 코드에서 doSomething()메서드 수행 시 Exception이 발생하면 어떻게 될까?   
+try 의 별도 catch 문이 존재하지 않아서 Exception은 상위로 throw가 될까? 아니면 skip 될까?    
+
+```java
+try{
+	doSomething();
+}finally{
+	System.out.println("finally");
+}
+```
+
+`발생한 Exception에 대해서 메서드 호출 순서 역방향으로 계속해서 찾아 가게 된다. 찾지 못하는 경우 
+JVM까지 전달되며, 최종적으로 JVM이 Exception을 처리하게 된다.`     
+
+아래 예를 보자.
+
+```java
+public class Test {
+    public static void main(String[] args) throws IOException {
+        
+        try {
+            System.out.println("1. execute something");
+            method1();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            System.out.println("6. execute something");
+        }
+
+    }
+    public static void method1() {
+        System.out.println("2. execute something");
+        try{
+            method2();
+        }finally{
+            System.out.println("5. finally block");
+        }
+    }
+    public static void method2() {
+        System.out.println("3. execute something");
+        try{
+            throw new IllegalArgumentException("문제 발생");
+        }finally{
+            System.out.println("4. finally block");
+        }
+    }
+}
+```
+
+Output
+
+```java
+1. execute something
+2. execute something
+3. execute something
+4. finally block
+5. finally block
+6. execute something
+java.lang.IllegalArgumentException: 문제 발생
+	at Test.method2(Test.java:30)
+	at Test.method1(Test.java:22)
+	at Test.main(Test.java:12)
+```
+
+발생한 Exception을 적절한 catch 구문(Exception Handler)를 만날 때 까지 상위로 전달되며,
+
+최종적으로 JVM까지 전달되어 처리될 수 있다.
+
+따라서, 예상가능한 Exception에 대해서는 꼭 catch문을 통해 적절한 처리를 해야 한다.
+
 - - - 
 
 **Reference**    
 
-<https://docs.oracle.com/javase/tutorial/essential/exceptions/runtime.html>     
-[https://www.notion.so/9-17a778bba6ed4436ac3d7b9415b6babb](https://www.notion.so/9-17a778bba6ed4436ac3d7b9415b6babb)      
-[https://codechacha.com/ko/java-try-with-resources/](https://codechacha.com/ko/java-try-with-resources/)   
-[https://github.com/whiteship/live-study/issues/9](https://github.com/whiteship/live-study/issues/9)             
+<https://docs.oracle.com/javase/tutorial/essential/exceptions/runtime.html>      
+<https://www.notion.so/9-17a778bba6ed4436ac3d7b9415b6babb>    
+<https://codechacha.com/ko/java-try-with-resources/>    
+<https://github.com/whiteship/live-study/issues/9>     
 
 {% highlight ruby linenos %}
 
