@@ -1,0 +1,265 @@
+---
+layout: post
+title: "[Java] 멀티쓰레드 프로그래밍 "
+subtitle: "Thread 클래스, Runnable인터페이스, Main 쓰레드, 동기화, 데드락"
+comments: true
+categories : Java
+date: 2021-01-20
+background: '/img/posts/mac.png'
+---
+
+## 목표
+
+자바의 멀티쓰레드 프로그래밍에 대해 학습하세요.    
+
+## 학습할 것 
+
+- Thread 클래스와 Runnable 인터페이스   
+- 쓰레드의 상태   
+- 쓰레드의 우선순위    
+- Main 쓰레드    
+- 동기화     
+- 데드락     
+
+- - -
+
+## 1. Thread 클래스와 Runnable 인터페이스   
+
+먼저 프로세스와 쓰레드에 대해 알아보자   
+
+### 1-1) Process    
+
+우리가 사용하는 프로그램은 하나의 process이다.    
+사용자가 작성한 프로그램이 운영체제에 의해 메모리 공간을 할당 받아 실행 중인 것을 
+말한다.    
+현재 우리가 사용하는 OS들(윈도우, 리눅스, 맥OS..)은 모두 멀티태스킹을 지원한다. 이는 여러 개의 프로세스를 
+동시에 실행할 수 있다는 것이다. 내가 음악을 들으면서 인텔리제이를 실행할 수 있는 것은 모두 OS가 
+멀티태스킹을 지원하기 때문이다.   
+`프로세스는 프로그램에 사용되는 데이터와 메모리 등의 자원(resources) 그리고 쓰레드로 구성이 된다.`      
+
+### 1-2) Thread   
+
+경량 프로세스라고 불리며 가장 작은 실행 단위이다.      
+`프로세스 내에서 resources를 이용하여 실제로 작업을 수행하는 주체를 의미한다.`        
+모든 프로세스에는 1개 이상의 쓰레드가 존재하여 작업을 수행한다.   
+`두개 이상의 쓰레드를 가지는 프로세스를 멀티 쓰레드 프로세스라고 한다.`    
+우리가 카카오톡으로 상대가 전송한 파일을 다운로드 하면서 동시에 채팅을 할 수 있는 것은 
+해당 프로그램이 멀티쓰레드로 작성되어 있기 때문이다.   
+
+멀티쓰레딩을 사용하면, CPU의 사용률이 향샹디고, 자원을 보다 효율적으로 사용할 수 있으며, 
+사용자에 대한 응답성이 향상되고, 작업이 분리되어 코드가 간결해진다. 단 멀티쓰레딩으로 일어날 수 
+있는 문제들(동기화, 교착상태 등)을 잘 고려하여 신중히 프로그래밍 했을 때, 이런 장점들을 
+누릴 수 있다.   
+
+
+쓰레드를 생성하는 방법은 크게 두 가지 방법이 있다.   
+
+1. Runnable 인터페이스를 구현하는 방법   
+2. Thread 클래스를 상속 받는 방법      
+
+Runnable과 Thread 모두 java.lang 패키지에 포함되어 있으며, Thread를 
+상속받으면, 다른 클래스를 상속받을 수 없기 때문에 인터페이스를 구현하는 
+방법이 일반적이다.   
+
+Runnable은 오로지 run() 메서드만 구현되어 있는 함수형 인터페이스이다.   
+
+```java
+@FunctionalInterface
+public interface Runnable {
+    public abstract void run();
+}
+```
+
+아래는 Thread 클래스 이며, 이 클래스를 상속받아 run() 메서드를 
+오버라이딩해 수행할 작업을 작성할 수 있다.   
+
+```java
+public class Thread implements Runnable {
+    // (생략)   
+@Override
+    public void run() {
+        if (target != null) {
+            target.run();
+        }
+    }
+    // (생략)   
+```
+
+`쓰레드를 구현한다는 것은 위 둘 중 어떤 방법이든 하나 선택해서, run 메서드의 
+몸통을 채우는 것, 즉 실행할 코드를 적는다는 것이다.`   
+
+아래 예제는 두 가지 방법을 이용해서 쓰레드를 구현하고 동작시키는 예제이다.   
+
+```java
+public class Test {
+
+    public static void main(String[] args) {
+
+        // 상속받은 Thread
+        ThreadByInheritance threadByInheritance = new ThreadByInheritance();
+
+        // 인터페이스 구현한 Thread
+        Runnable r = new ThreadByInterface();
+        Thread threadByInterface = new Thread(r); // 생성자 : Thread(Runnable target)
+        // 아래로 축약 가능
+        //Thread threadByInterface = new Thread(new ThreadByInterface());
+
+        threadByInheritance.start();
+        threadByInterface.start();
+    }
+}
+
+public class ThreadByInheritance extends Thread{
+    @Override
+    public void run() {
+        for(int i=0; i< 500; i++) {
+            System.out.print("0");
+        }
+    }
+}
+
+public class ThreadByInterface implements Runnable{
+    @Override
+    public void run() {
+        for(int i=0; i< 500; i++) {
+            System.out.print("1");
+        }
+    }
+}
+```
+
+Output   
+
+```
+11111111111111111111100001000001111111111111000010000000000000000000000111100000111
+00101111111111111000000000000000000000001111111100000000000000000000000000000011111
+1111111111111110000111111111111111...
+```   
+
+Runnable을 구현한 경우에는 Thread 객체의 생성자로 해당 인스턴스를 넘겨주면 된다.   
+
+Thread클래스를 상속받아 구현한 경우에는 해당 객체를 생성하고 start()를 실행하면 된다.
+
+`두 쓰레드 결과를 보면 0과 1이 뒤섞여 있는 것을 학인할 수 있다. 각 쓰레드가 
+번갈아가면서 수행된 것이다.`   
+
+쓰레드는 OS의 스케줄링에 따라 작업 시간을 할당 받고 다른 쓰레드와 번갈아가면서 
+작업을 수행한다. 아주 빠른속도로 작업을 번갈아가면서 수행하기 때문에 마치 
+동시에 실행되는 것 같은 효과를 볼 수 있다.   
+
+
+- - - 
+
+## 2. 쓰레드의 상태    
+
+멀티쓰레드 프로그래밍을 잘하기 위해서는 정교한 스케줄링을 통해 자원과 시간을 
+여러 쓰레드가 낭비 없이 잘 사용하도록 해야 한다. 이를 위해서는 쓰레드의 상태와 관련 메서드를 
+잘 알아야 한다.    
+
+
+#### I/O Blocking   
+
+`사용자가 입력을 받을 때는 사용자 입력이 들어오기 전까지 해당 쓰레드가 일시정지 상태가 된다. 
+이를 I/O Blocking이라고 한다.`   
+
+한 쓰레드 내에서 사용자 입력을 받는 작업과 이와 관련 없는 작업 두 가지 코드를 
+작성하면, 사용자 입력을 기다리는 동안 다른 작업 또한 중지되기 때문에 CPU의 
+사용 효율이 떨어진다.   
+
+이 경우 사용자 입력을 받는 쓰레드와, 이와 관련 없는 다른 작업을 하는 쓰레드를 
+분리해주면 더욱 효율적으로 CPU를 사용할 수 있다.   
+
+**Single Thread의 경우**
+
+<img width="798" alt="스크린샷 2021-01-23 오후 7 28 59" src="https://user-images.githubusercontent.com/26623547/105575825-d5a6b900-5db1-11eb-8dcd-e38288a74ada.png">   
+
+Output
+
+```
+input : abc
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+```
+
+위 처럼 input을 모두 받은 후에 카운트 다운이 시작된다.      
+
+
+**Multi Thread의 경우**    
+
+```java
+public class Test {
+
+    public static void main(String[] args) {
+
+        Thread thread = new Thread(new ThreadByInterface());
+        thread.start();
+
+        String input = JOptionPane.showInputDialog("input : ");
+        System.out.println("input : "+ input);
+
+    }
+}
+
+
+public class ThreadByInterface implements Runnable{
+    @Override
+    public void run() {
+
+        for(int i = 10; i > 0; i--) {
+            System.out.println(i);
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+Output   
+
+```
+10
+9
+8
+7
+6
+5
+4
+input : abc
+3
+2
+1
+```
+
+카운트 다운을 실행하는 쓰레드를 먼저 실행했기 때문에 메인 쓰레드에서 사용자 입력을 받더라도, 
+    카운트 다운 작업이 계속 가능하다.   
+
+
+- - - 
+
+**Reference**    
+
+<https://sujl95.tistory.com/63>   
+<https://wisdom-and-record.tistory.com/48>   
+<https://github.com/whiteship/live-study/issues/10>     
+
+{% highlight ruby linenos %}
+
+{% endhighlight %}
+
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}
+

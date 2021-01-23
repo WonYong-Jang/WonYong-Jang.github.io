@@ -258,7 +258,9 @@ try-catch문으로 처리를 해주어야 한다.
 
 ##### 6) finally   
 
-finally는 try-catch와 함께 예외의 발생 여부와 상관없이 항상 실행되어야 할 코드를 포함시킬 목적으로 사용된다. 
+finally는 try-catch와 함께 예외의 발생 여부와 상관없이 항상 실행되어야 할 코드를 포함시킬 목적으로 사용된다.    
+보통 블록내 처리 후 반드시 실행되어 하는 io나 connect 등 사용 후 종료하는 
+자원이 있을 경우 사용한다.   
 try-catch문의 끝에 선택적으로 덧붙여 사용할 수 있으며, try-catch-finally의 순서로 구성된다.    
 
 예외가 발생한 경우에는 try -> catch -> finally 순으로 실행되고, 예외가 발생하지 
@@ -373,6 +375,10 @@ finally pass
 
 `try-with-resources는 try(...)에서 선언된 객체들에 대해서 try가 종료될 때 
 자동으로 자원을 해제해주는 기능이다.`    
+
+finally 블록에서 예외 발생시, catch블록의 예외 추적이 불가능하다. 이런 문제는 
+자바7부터 try-with-resources로 해결 가능하다.   
+
 try에서 선언된 객체가 AutoCloseable을 구현하였다면 Java는 try구문이 종료될 때 
 객체의 close() 메소드를 호출해 준다.   
 
