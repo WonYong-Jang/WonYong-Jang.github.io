@@ -196,6 +196,8 @@ public class Test {
 여러 쓰레드가 낭비 없이 잘 사용하도록 해야 한다. 이를 위해서는 쓰레드의 상태와 관련 메서드를 
 잘 알아야 한다.    
 
+getState()메서드를 통해 쓰레드의 상태를 확인할 수 있다.   
+
 #### 쓰레드의 상태    
 
 - NEW : 쓰레드가 생성되고 아직 start()가 호출되지 않은 상태   
@@ -224,17 +226,33 @@ public class Test {
 
 6. 실행을 모두 마치거나 stop()이 호출되면 쓰레드는 소멸된다.   
 
-아래는 Thread 에서 제공하는 메소드를 종류 중 일부이다.    
+아래는 Thread 에서 제공하는 메소드를 종류 중 일부이다.   
+
+##### sleep()   
+
+지정된 시간동안 쓰레드를 일시정지시킨다. 지정한 시간이 지나고 나면, 
+    자동적으로 다시 실행대기 상태가 된다.   
 
 ##### join()     
 
+일정 시간 동안 특정 쓰레드가 작업하는 것을 기다리게 만드는 메서드이다. sleep과 
+마찬가지로 try-catch 블록으로 예외처리를 해야 한다.    
 
 ##### interrupt()    
 
+sleep()이나 join()에 의해 일시정지 상태인 쓰레드를 깨워서 실행 대기상태로 만든다.   
+해당 쓰레드에서는 InterruptedException이 발생함으로써 일시정지 상태를 
+벗어나게 된다.   
 
 ##### stop()     
 
+쓰레드를 즉시 종료시킨다.   
 안전상의 이유로 deprecated되었다. 이 메소드를 사용하면 안된다.   
+
+##### yield()   
+
+실행 중에 자신에게 주어진 실행시간을 다른 쓰레드에게 양보하고 자신은 실행대기 상태가 된다.   
+
 
 
 #### I/O Blocking   
@@ -333,7 +351,21 @@ input : abc
 
 자바에서 각 쓰레드는 우선순위(priority)에 관한 자신만의 필드를 가지고 있다. 
 이러한 우선순위에 따라 특정 쓰레드가 더 많은 시간 동안 작업을 할 수 있도록 
-설정한다.   
+설정한다.  
+
+먼저 동시성과 병렬성을 이해해 보자.   
+
+#### 동시성(Concurrency) or 병렬성(Parallelism)
+
+쓰레드에서 말하는 동시성에 대해서 명확하게 이해할 필요가 있는데, 동시성이란 코어 1개가
+여러개의 쓰레드의 작업 테이블을 왔다 갔다 하면서 작업을 하는 것이다.
+보통 쓰레드의 개수가 코어의 갯수 보다 많을 경우, 동시성으로 멀티 쓰레드를 지원하게 된다.
+그렇지 않고, 만약 컴퓨터가 좋아(코어 개수가 많거나), 작업을 해야할 쓰레드가 코어보다 적을
+경우 병렬성으로 각 코어마다 task Thread를 할당 받아서 작업하게 된다.
+
+<img width="700" alt="스크린샷 2021-01-28 오후 7 13 50" src="https://user-images.githubusercontent.com/26623547/106123511-593f1c00-619d-11eb-8ed2-6ea50a649a16.png">   
+
+그럼 core1개가 쓰레드를 처리할 때 우선순위를 어떻게 지정할까?   
 
 getPriority() 와 setPriority() 메소드를 통해 쓰레드의 우선순위를 반환하거나 변경 할 수 있다.   
 쓰레드의 우선순위가 가질수 있는 범위는 1부터 10까지이며, 숫자가 높을 수록 우선순위 또한 
@@ -341,7 +373,6 @@ getPriority() 와 setPriority() 메소드를 통해 쓰레드의 우선순위를
 우선순위가 10인 쓰레드가 우선순위가 1인 쓰레드보다 10배 더 빨리 수행되는 것이 아니다. 단지 
 우선순위가 10인 쓰레드는 우선순위가 1인 쓰레드 보다 좀 더 많이 실행 큐에 포함되어, 
     좀더 많은 작업 시간을 할당받을 뿐이다.   
-
 
 - - -
 
@@ -363,7 +394,15 @@ getPriority() 와 setPriority() 메소드를 통해 쓰레드의 우선순위를
 - Main 쓰레드가 종료되면 데몬 쓰레드는 강제적으로 자동 종료가 된다. (어디까지나 Main 
         쓰레드의 보조 역할을 수행하기 때문에, Main 쓰레드가 없어지면 의미가 없어지기 때문이다.)   
 
+- 데몬 쓰레드는 일반 쓰레드와 작성방법과 실행 방법이 같다. 단 쓰레드를 생성한 다음 setDaemon(true)를 호출 하기만 하면 된다. 
+또, 데몬 쓰레드가 생성한 쓰레드는 자동적으로 데몬 쓰레드가 된다.   
 
+```java
+boolean isDaemon() // 쓰레드가 데몬 쓰레드인지 아닌지를 반환한다.    
+void setDaemon(boolean on) // 쓰레드를 데몬 쓰레드 혹은 사용자 쓰레드로 변경한다.   
+```
+
+- 주로 가비지 컬렉터, (워드 등의)자동저장, 화면 자동갱신 등에 사용된다.   
 
 - - - 
 
@@ -373,21 +412,159 @@ getPriority() 와 setPriority() 메소드를 통해 쓰레드의 우선순위를
 제외한 나머지들을 접근하지 못하게 막는 것이다.`        
 이것을 쓰레드에 안전하다고 한다(**Thread-safe**)   
 
-자바에서 동기화 하는 방법은 3가지로 분류 된다.   
+자바에서 동기화 하는 방법은 3가지로 분류 된다. 여기서는 
+synchronized키워드만 알아보자.   
 
 - Synchronized 키워드 
 - Atomic 클래스 
 - Volatile 키워드   
 
-#### 5-1) Synchronized 키워드   
+#### Synchronized 키워드   
 
 자바의 예약어 중 하나이며, 변수명이나 클래스명으로 사용이 불가능하다.   
+`동기화를 하려면 다른 쓰레드가 간섭해서는 안되는 부분을 임계영역(critical section)으로 설정해 주어야 한다. 
+임계 영역 설정은 synchronized 키워드를 사용한다.`    
+
+여기서 임계영역은 멀티 쓰레드에서 단 하나의 쓰레드만 실행 할 수 있는 코드 영역을 말한다.   
 
 
-#### 5-2) Atomic 클래스    
+```java
+// 메서드 전체를 임계영역으로 설정
+public synchronized void method1 () {
+    ......
+}
 
-Atomicity(원자성)의 개념은 쪼갤 수 없는 가장 작은 단위를 뜻한다.
+// 특정한 영역을 임계영역으로 설정
+synchronized(객체의 참조변수) {
+    ......
+}
+```
 
+먼저 메서드의 타입 앞에 synchronized 키워드를 붙여서 메서드 전체를 임계 영역으로 설정할 수 있다.    
+쓰레드는 synchronized 키워드가 붙은 메서드가 호출된 시점부터 해당 메서드가 포함된 
+객체의 lock(자물쇠)을 얻어 작업을 수행하다가 메서드가 종료되면 lock을 반환한다.     
+
+두 번째로 메서드 내의 코드 일부를 블록으로 감싸고 블록 앞에 synchronized(참조 변수)를 붙이는 방법이 있다. 이때 
+참조 변수는 락을 걸고자 하는 객체를 참조하는 것이어야 한다. 이 영역으로 들어가면서 부터 쓰레드는 
+지정된 객체의 lock을 얻게 되고 블록을 벗어나면 lock을 반납한다.    
+
+
+#### lock   
+
+lock은 일종의 자물쇠 개념이다. `모든 객체는 lock을 하나씩 가지고 있다. 해당 객체의 
+lock을 가지고 있는 쓰레드만 임계 영역의 코드를 수행할 수 있다. 한 객체의 lock은 
+하나 밖에 없기 때문에 다른 쓰레드들은 lock을 얻을 때까지 기다리게 된다.`       
+
+임계 영역은 멀티쓰레드 프로그램의 성능을 좌우하기 때문에 가능하면 메서드 전체에 lock을 거는 것보다 
+synchronized 블록으로 임계영역을 최소화하는 것이 좋다.   
+
+동기화하지 않아서 문제가 발생하는 경우는 아래 예제외 같다.   
+
+```java
+public class Test{
+
+    public static void main(String[] args) {
+
+        Runnable r = new ThreadByInterface();
+        new Thread(r).start();
+        new Thread(r).start();
+    }
+}
+
+public class Account {
+
+    private int balance; //  잔고
+
+    public void withdraw(int money) {
+        // 잔고가 출금액보다 클때만 출금을 실시하므로 잔고가 음수가 되는 일은 없어야함
+        if(balance >= money) {
+
+            try {
+                // 문제 상황을 만들기 위해 고의로 쓰레드를 일시정지
+                Thread.sleep(1000);
+            } catch(InterruptedException e) {}
+
+            balance -= money;
+        }
+    }
+
+    public int getBalance() {
+        return balance;
+    }
+
+    public Account(int balance) {
+        this.balance = balance;
+    }
+}
+
+public class ThreadByInterface implements Runnable{
+
+    Account account = new Account(1000); // 초기 잔고 : 500
+
+    @Override
+    public void run() {
+
+        while(account.getBalance() > 0) {
+            int money = (int) (Math.random() * 3 + 1) * 100;
+            account.withdraw(money); // 100, 200, 300 랜덤 출금
+            System.out.println(Thread.currentThread().getName() + "님 "+money+ " 출금됨. / balance : " + account.getBalance());
+        }
+
+    }
+}
+```
+
+Output
+
+```
+Thread-0님 300 출금됨. / balance : 900
+Thread-1님 100 출금됨. / balance : 900
+Thread-1님 200 출금됨. / balance : 700
+Thread-0님 100 출금됨. / balance : 700
+Thread-0님 300 출금됨. / balance : 100
+Thread-1님 300 출금됨. / balance : 100
+Thread-0님 100 출금됨. / balance : 0
+Thread-1님 100 출금됨. / balance : -100
+```
+
+`분명 잔고는 음수가 되지 않도록 설계했는데 음수가 나왔다. 왜냐하면 쓰레드 하나가 if문을 통과하면서 balance를 검사하고 순서를 
+넘겼는데, 그 사이에 다른 쓰레드가 출금을 실시해서 실제 balance가 if문을 통과할 때 검사 했던 
+balance보다 적어지게 된다.    
+하지만 이미 if문을 통과했기 때문에 출금은 이루어지게 되고 음수가 나오는 것이다. 이 문제를 
+해결하려면 출금하는 로직에 동기화를 해서 한 쓰레드가 출금 로직을 실행하고 있으면 다른 
+쓰레드가 출금 블록에 들어오지 못하도록 막아줘야 한다.`    
+
+아래 코드로 변경하게 되면 실행해도 음수가 나오지 않는다.   
+
+
+```java
+public class Account {
+
+    private int balance; //  잔고
+
+    public void withdraw(int money) {
+        synchronized (this) { // 임계영역 설정 
+        if (balance >= money) {
+            try {
+                // 문제 상황을 만들기 위해 고의로 쓰레드를 일시정지
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+
+            balance -= money;
+        }
+    }
+    }
+
+    public int getBalance() {
+        return balance;
+    }
+
+    public Account(int balance) {
+        this.balance = balance;
+    }
+}
+```
 
 - - - 
 
@@ -396,10 +573,35 @@ Atomicity(원자성)의 개념은 쪼갤 수 없는 가장 작은 단위를 뜻�
 Deadlock(교착상태)란, 둘 이상의 쓰레드가 lock을 획득하기 위해 대기하는데, 이 lock을 잡고 있는 
 쓰레드들도 똑같이 
 
+데드락은 한 시스템 내에서 다음의 네 가지 조건이 동시에 성립할 때 발생한다. 
+아래 네 가지 조건 중 하나라도 성립하지 않도록 만든다면 교착 상태를 해결할 수 있다.   
+
+1) 상호 배제(Mutual exclusion)   
+
+자원은 한 번에 한 프로세스(쓰레드)만이 사용할 수 있어야 한다.   
+
+2) 점유 대기(Hold and wait)   
+
+최소한 하나의 자원을 점유하고 있으면서 다른 프로세스에 할당되어 사용하고 있는 자원을 
+추가로 점유하기 위해 대기하는 프로세스가 있어야 한다.   
+
+3) 비선점(No preemption)   
+
+다른 프로세스에 할당된 자원은 사용이 끝날 때까지 강제로 빼앗을 수 없어야 한다.   
+
+4) 순환 대기 (Circular wait)      
+
+자원을 요구하는 방향이 원을 이루면 양보를 하지 않기 때문에 교착상태가 발생한다.   
+
+
+
+
+
 - - - 
 
 **Reference**    
 
+<https://catch-me-java.tistory.com/47>   
 <https://sujl95.tistory.com/63>   
 <https://wisdom-and-record.tistory.com/48>   
 <https://github.com/whiteship/live-study/issues/10>     
