@@ -191,7 +191,105 @@ int min(int x, int y) {
 
 - - - 
 
+## 10. Java 13 switch 연산자   
 
+`기존에 switch문이 변경된 것이 아니라 switch 연산자가 추가 된 것이다.`    
+
+#### 화살표 연산자    
+
+`:대신 -> 를 사용할수 있다.`          
+
+기존 switch 문은 break가 없다면 계속해서 아래 case를 검사 하게 되는데 
+-> 연산자를 사용하게 되면 실행 후 break가 없어도 switch문을 빠져나오게 된다.   
+
+아래는 기존에 사용하던 switch 문의 모습이다.   
+
+```java
+public enum Day {
+    SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY;
+}
+
+
+public class Test{
+
+    public static void main(String[] args) {
+
+        Day day = Day.THURSDAY;
+
+        int result  = 0;
+
+        switch (day) {
+            case SUNDAY:
+            case MONDAY:
+            case TUESDAY:
+                result = 3;
+                break;
+            case WEDNESDAY:
+            case THURSDAY:
+                result  = 5;
+                break;
+            case FRIDAY:
+            case SATURDAY:
+                result = 7;
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+
+        System.out.println(result); // 출력 : 5 
+    }
+}
+```
+
+위의 소스를 아래처럼 -> 연산자를 이용하여 간결하게 줄일 수 있다.   
+
+```java
+public class Test{
+
+    public static void main(String[] args) {
+
+        Day day = Day.THURSDAY;
+
+        int result  = 0;
+
+        switch (day) {
+            case SUNDAY, MONDAY, TUESDAY -> result = 3; // break 사용없이 빠져나옴   
+            case WEDNESDAY, THURSDAY -> result = 5;
+            case FRIDAY, SATURDAY -> result = 7;
+            default -> throw new IllegalArgumentException();
+        }
+
+        System.out.println(result);
+    }
+}
+```
+
+#### yield    
+
+yield 키워드를 사용하여 결과값을 반환할 수 있다.   
+
+```java
+int a = 1;
+
+String b = switch (a) {
+             case 1 -> {
+                System.out.println("case 1");
+                yield "return : case 1";
+              }
+              case 2 -> {
+                System.out.println("case 2");
+                yield "return : case 2";
+              }
+              default -> throw new IllegalArgumentException();
+          };
+```
+
+Output    
+
+```
+case 1
+return : case 1
+```
 
 
 - - - 
