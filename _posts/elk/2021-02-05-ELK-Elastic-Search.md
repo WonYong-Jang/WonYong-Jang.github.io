@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[ELK] Elastic Search 1"
-subtitle: "Elastic Search, Kibana 를 이용한 기본 실습과 구조 및 용어 정리 "    
+subtitle: "Elastic Search, Kibana 를 이용한 기본 실습과 구조 및 용어 정리"    
 comments: true
 categories : ELK
 date: 2021-02-05
@@ -176,12 +176,16 @@ $ brew install kibana        // http://localhost:5601
 `PUT은 새로운 도큐먼트를 색인하는 데 사용하는 HTTP 메서드이다. 
 여기서 catalog는 인덱스 이름, product는 타입 이름, 1은 색인 생성 후 도큐먼트에 할당되는 ID를 나타낸다.`
 
+> 엘라스틱 서치 버전 7.0부터는 type 이 삭제되었다. 아래 링크를 통해 확인해보자   
+
+[엘라스틱 서치 버전별 변환](http://kimjmin.net/2019/04/2019-04-elastic-stack-7-release/)   
 
 
 - - - 
 
 **Reference**    
 
+<http://kimjmin.net/2019/04/2019-04-elastic-stack-7-release/>    
 <https://abc-sanghoon.tistory.com/entry/%EC%97%98%EB%9D%BC%EC%8A%A4%ED%8B%B1%EC%84%9C%EC%B9%98-%EC%8B%A4%EB%AC%B4%EA%B0%80%EC%9D%B4%EB%93%9C1%EA%B0%95-2%EA%B0%95>    
 <https://medium.com/@victorsmelopoa/an-introduction-to-elasticsearch-with-kibana-78071db3704>   
 <https://velog.io/@jakeseo_me/%EB%B2%88%EC%97%AD-%EC%97%98%EB%9D%BC%EC%8A%A4%ED%8B%B1%EC%84%9C%EC%B9%98%EC%99%80-%ED%82%A4%EB%B0%94%EB%82%98-%EC%8B%A4%EC%9A%A9%EC%A0%81%EC%9D%B8-%EC%86%8C%EA%B0%9C%EC%84%9C>   
