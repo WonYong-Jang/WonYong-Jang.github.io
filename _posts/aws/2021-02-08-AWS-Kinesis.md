@@ -3,7 +3,7 @@ layout: post
 title: "[AWS] Kinesis"
 subtitle: "Amazon Kinesis Data Streams"    
 comments: true
-categories : Java
+categories : AWS
 date: 2021-02-08
 background: '/img/posts/mac.png'
 ---

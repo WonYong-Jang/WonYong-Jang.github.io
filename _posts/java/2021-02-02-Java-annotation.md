@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Java] Annotation "
-subtitle: "@retention, @target, @documented, 어노테이션 프로세서"    
+subtitle: "@retention, @target, @documented, 어노테이션 프로세서, 리플렉션, javadoc"    
 comments: true
 categories : Java
 date: 2021-02-02
@@ -37,11 +37,72 @@ background: '/img/posts/mac.png'
 `단어의 의미인 주석과는 비슷하지만 다른 역할로써 사용되는데 메서드, 클래스 등에 의미를 
 단순히 컴파일러에게 알려주기 위한 표식이 아닌 컴파일타임 이나 런타임에 해석될 수 있다.`    
 
+#### 커스텀 어노테이션 
+
+기본적으로 제공해주는 어노테이션이 아닌 커스텀한 어노테이션을 작성하고 
+싶다면, 다음과 같이 선언해서 사용할 수 있다.   
+
+```java
+@Inherited
+public @interface Hello {
+    String name();
+    int age();
+}
+```
+
+위의 Hello라는 커스텀 어노테이션이며, String 타입과 int 타입의 멤버를 가진다. 이렇게 
+선언한 어노테이션은 아래와 같이 적용해서 사용 가능하다.   
+
+```java
+@Hello(name = "mike", age = 20)
+public class Animal {
+}
+```
+
+위의 예제는 name과 age 값을 반드시 지정해줘야 한다. 아래와 같이 
+기본값이 설정되어 있다면, 어노테이션을 적용할 때 굳이 어떤 값인지 
+작성하지 않아도 된다.   
+
+```java
+public @interface Hello {
+    String name() default "mike";
+    int age() default 20;
+}
+```
+
+다음으로 어노테이션은 value라는 기본 값을 가질 수 있다.   
+value라는 값은 어노테이션을 적용할 때 굳이 element의 이름을 명시해주지 
+않아도 된다.   
+
+```java
+@Hello("mike")
+public class Animal {
+}
+
+public @interface Hello {
+    String value();
+}
+```
+
+String value() 예시로 String 타입을 사용했지만, 굳이 String 타입이 아니어도 가능하다.   
+하지만 한 번에 두 개 이상의 값을 할당해야 하는 경우 value라고 하더라도 value를 명시 해야 한다.   
+
+```java
+@Hello(value = "mike", num = 20)
+public class Animal {
+}
+
+public @interface Hello {
+    String value();
+    int num();
+}
+```
+
 - - - 
 
 ## 2. 자바 어노테이션 종류   
 
-자바에서 기본적으로 제공하는 어노테이션 종류를 알아보자.   
+`자바에서 기본적으로 제공하는 어노테이션(빌트 인 어노테이션)` 종류를 알아보자.   
 
 #### 2-1) @Override     
 
@@ -50,12 +111,48 @@ background: '/img/posts/mac.png'
 
 `해당 어노테이션을 생략할수는 있지만, 권장하지 않는다.`      
 부모 클래스가 수정되었을때 자식클래스에서 오버라이딩 해서 사용하고 있는 메서드에도 
-컴파일러가 에러를 보여준다.   
-오버라이딩 어노테이션을 생략했을 경우 위험한 코드가 될 수 있다.   
+컴파일러가 에러를 보여주기 때문에 실수를 방지할 수 있다. 
+그렇기 때문에 오버라이딩 어노테이션을 생략했을 경우 위험한 코드가 될 수 있다.  
+
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.SOURCE)
+public @interface Override {
+}
+```    
+
 
 #### 2-2) @Deprecated   
 
 해당 메서드가 더 이상 사용되지 않음을 표시한다. 만약 사용할 경우 컴파일 경고를 발생 시킨다.    
+
+예를들어, Date클래스가 있는데, 
+
+```java
+    /**
+     *  ...
+     * @param   year    the year minus 1900.
+     * @param   month   the month between 0-11.
+     * @param   date    the day of the month between 1-31.
+     * @see     java.util.Calendar
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>Calendar.set(year + 1900, month, date)</code>
+     * or <code>GregorianCalendar(year + 1900, month, date)</code>.
+     */
+    @Deprecated
+    public Date(int year, int month, int date) {
+        this(year, month, date, 0, 0, 0);
+    }
+```
+
+Date클래스를 살펴보면 생성자가 deprecated가 존재한다는 것을 확인 할 수 있다. 
+읽어보면 이 클래스는 더 이상 사용하지 말고, Calender클래스를 사용을 권장하고 있다.   
+
+그렇다면 이 클래스를 자바 자체에서 삭제하면 되지 않을까?   
+그렇게 될 경우 기존에 Date클래스가 작성된 프로그램은 동작하지 않게 될 것이다. 
+그러면 개발자가 모두 찾아다니면서 수정해야된다는 뜻이다.
+`결국 호환성 때문에 존재하는 어노테이션이라는 것을 알 수 있다.`   
+
 
 #### 2-3) @SuppressWarnings   
 
@@ -80,17 +177,132 @@ background: '/img/posts/mac.png'
 
 #### 3-1) @Retention    
 
-얼마나 오랫동안 어노테이션 정보가 유지되는지 설정할 수 있다.   
+얼마나 오랫동안 어노테이션 정보가 유지되는지 설정할 수 있다.    
 
-- SOURCE : 어노테이션 정보가 컴파일시 사라짐, 바이트코드에서는 존재하지 않음.   
+아래와 같은 단계로 이루어지며 단 단계별 설정이 가능하다.  
+
+> SOURCE -> CLASS -> RUNTIME   
+
+##### RetentionPolicy.SOURCE   
+
+`어노테이션 정보가 컴파일시 사라진다. 바이트코드에서도 존재하지 않는다.
+즉, 소스 코드에만 유지하겠다는 것이고 컴파일 할때만 사용하고 어노테이션 정보를 
+지우겠다는 뜻이다.`         
+
+아래 예시 중 Override는 오버라이딩 되었다는 것을 나타내며, 컴파일 할때 
+진짜로 오버라이딩 되었는지만 체크한다.   
 
 > ex) @Override, @SuppressWarnings   
 
-- CLASS : 클래스 파일에 존재하고 컴파일러에 의해 사용가능, 가상머신(런타임)에서는 사라짐.   
+##### RetentionPolicy.CLASS   
 
-- RUNTIME : 실행시 어노테이션 정보가 가상 머신에 의해서 참조 가능. 자바 리플렉션에 의해 사용   
+`클래스 파일에 존재하고 컴파일러에 의해 사용가능하다. 가상머신(런타임)에서는 사라진다.   
+바이트코드에는 남겨놓겠다는 것이다.`   
+
+JVM 클래스 로더에 의해서 바이트 코드를 읽어 들이고 메모리에 적재 할때 
+해당 어노테이션 정보를 제외한다.    
+
+리플렉션은 클래스 로더가 메모리에 적재한 정보를 읽어오는 것이기 때문에 
+RetentionPolicy.CLASS일 경우는 리플렉션이 불가능하다.   
+
+아래와 같이 커스텀한 어노테이션을 만들고 실제로 바이트코드를 확인하여 
+컴파일 되었을 때 어노테이션 정보가 남아있는지 확인 해보자.   
+
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.CLASS)
+public @interface Hello {
+}
+
+@Hello
+public static void method(){}
+```
+
+Output
+
+```java
+ public static method()V
+  @Lcom/example/demo/Hello;() // invisible
+   L0
+    LINENUMBER 6 L0
+    RETURN
+    MAXSTACK = 0
+    MAXLOCALS = 0
+```
+
+위와 같이 바이트코드를 확인해 보면, 커스텀 어노테이션인 hello에 
+invisible이라는 주석이 있는 것을 확인 할 수 있다.    
+해당 주석이 붙은 정보는 런타임시 사라진다.   
 
 
+##### RetentionPolicy.RUNTIME   
+
+`런타임까지 해당 어노테이션 정보를 유지 하겠다는 것이다.   
+바이트 코드에 존재 하다가  
+실행시 어노테이션 정보가 JVM에 의해서 참조 가능해진다. 
+즉, 자바 리플렉션이 사용 가능하다.`   
+
+커스텀하게 만든 어노테이션의 RetentionPolicy.RUNTIME일 경우 
+유지 정보가 런타임까지 모두 포함되므로 편하게 사용할 수 있지만 
+런타임까지 가지고 있을 필요가 없는 정보라면 CLASS 또는 SOURCE로 
+설정 변경을 한번 쯤 생각해보는 것을 권장한다.   
+
+```java
+  public static method()V
+  @Lcom/example/demo/Hello;()
+   L0
+    LINENUMBER 6 L0
+    RETURN
+    MAXSTACK = 0
+    MAXLOCALS = 0
+```
+
+위의 바이트 코드를 확인해보면 커스텀 어노테이션인 hello 옆에 invisible이라는 
+주석이 없다. 이는 클래스 로더에 의해 메모리까지 올라간다는 의미 이다.  
+
+
+
+아래는 같이 어노테이션과 리플렉션을 활용하여 연습한 예제이다.   
+
+```java
+public class Loop {
+
+    @AnnotationLoop(loopCnt = 10) 
+    public void method() {
+        System.out.print("*");
+    }
+}
+
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface AnnotationLoop {
+    int loopCnt() default 1;
+}
+
+public class HelloController {
+
+    public static void main(String[] args) throws InvocationTargetException, IllegalAccessException {
+        // Loop 클래스에 선언된 public Method 가져온다
+        // 단, 슈퍼 클래스에 선언된 public Method도 가져온다.
+        // Loop 클래스에 선언된 모든 method를 가져오려면(private도 포함)
+        // getDeclaredMethods()를 이용한다.
+        Method[] methods = Loop.class.getMethods();
+        for (Method method : methods) {
+
+            if(method.isAnnotationPresent(AnnotationLoop.class)) {
+                AnnotationLoop annotation = method.getAnnotation(AnnotationLoop.class);
+
+                for(int i=0; i< annotation.loopCnt(); i++) {
+                    method.invoke(new Loop());
+                }
+            }
+        }
+    }
+}
+
+// Output 
+// **********
+```
 
 #### 3-2) @Target    
 
@@ -98,25 +310,80 @@ background: '/img/posts/mac.png'
 
 종류는 다음과 같다.   
 
-- ElementType.PACKAGE : 패키지 선언   
-- ElementType.TYPE : 타입 선언  
-- ElementType.ANNOTATION_TYPE : 어노테이션 타입 선언   
-- ElementType.CONSTRUCTOR : 생성자 선언   
-- ElementType.FIELD : 멤버 변수 선언  
-- ElementType.LOCAL_VARIABLE : 지역 변수 선언   
-- ElementType.METHOD : 메서드 선언   
-- ElementType.PARAMETER : 전달인자 선언   
-- ElementType.TYPE_PARAMETER : 전달인자 타입 선언   
-- ElementType.TYPE_USE : 타입 선언   
+- ElementType.PACKAGE : package
+- ElementType.TYPE : class, interface, enum
+- ElementType.ANNOTATION_TYPE : annotation
+- ElementType.CONSTRUCTOR : constructor
+- ElementType.FIELD : field
+- ElementType.LOCAL_VARIABLE : local variable   
+- ElementType.METHOD : mehotd
 
+여러 곳에 적용하려면 아래와 같이 배열 형태로 적용 가능하다.   
+
+```
+@Target({ElementType.FIELD, ElementType.METHOD})
+```
 
 #### 3-3) @Documented   
 
-해당 어노테이션을 Javadoc 에 포함시킨다.   
+`어노테이션 정보가 javadoc으로 작성된 문서에 포함된다고 한다.`   
+
+직접 javadoc을 만들 수 있다는 뜻이며, Tools -> Generate JavaDoc 으로 
+만들 수 있다.  
+
+
 
 #### 3-4) @Inherited   
 
-어노테이션의 상속을 가능하게 한다.   
+`상속받은 클래스에도 어노테이션이 유지된다는 뜻이다.`   
+
+아래 예제를 보면 Hello라는 커스텀한 어노테이션을 만들었고 @Inherited를 
+추가하였다.   
+
+그리고 Animal 클래스에만 Hello라는 어노테이션을 붙이고 
+컨트롤러에서 Aminal을 상속받은 Dog클래스를 리플렉션을 이용하여 
+어노테이션을 확인하였다.   
+
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+public @interface Hello {
+}
+
+@Hello
+public class Animal {   
+}
+
+public class Dog extends Animal {
+}
+
+public class HelloController {
+
+    public static void main(String[] args) throws InvocationTargetException, IllegalAccessException {
+
+        Annotation[] annotations = Dog.class.getAnnotations(); // 리플렉션
+
+        for (Annotation annotation : annotations) {
+            System.out.println(annotation);
+        }
+    }
+}
+// Output 
+
+// 출력 :  @com.example.demo.Hello()
+```
+
+결과는 위와 같이 상속받은 클래스의 어노테이션이 유지가 된 것을 확인 할 수 있다.   
+
+`참고로 Dog클래스에 선언되어 있는 어노테이션만 가지고 오고 싶다면 getDeclaredAnnotations() 을 사용하여 
+가져올 수 있다.    
+이것을 getDeclaredMethods() 등으로 응용하여 사용하면 해당 클래스에 선언 되어 
+있는 모든 메소드들(private 포함)을 모두 가져올 수 있다.` 
+
+`getMethods()을 사용할 경우 슈퍼 클래스의 메소드들 까지 모두 가져오지만 public 한 메소드들만 
+가져올 수 있다.`   
+
 
 #### 3-5) @Repeatable   
 
@@ -125,14 +392,95 @@ background: '/img/posts/mac.png'
 
 
 
+위에서 살펴본 어노테이션들은 메타 어노테이션이라고 한다. 위의 어노테이션의 
+공통점을 살펴보면 모두 @Target(ElementType.ANNOTATION_TYPE)로 되어 있다는 점이다.    
+결국, 타겟이 어노테이션 타입으로 지정 되어있으면 메타 어노테이션이라고 생각해도 될 것 같다.   
+
+- - - 
+
+## 4. 어노테이션 프로세서   
+
+`런타임시에 리플렉션을 사용하는 어노테이션과는 달리 컴파일 타임에 이루어진다.`      
+
+어노테이션 프로세싱하는 기술이며, 대표적인 기술로는 롬북이 있다.   
+아래는 롬북 사용 예시 중 하나이다.  
+
+```java
+@Data
+public class Test {
+    private int num;
+}
+```   
+
+위 코드를 컴파일 하여 확인해보면 아래 코드로 
+변경 된 것을 확인 할 수 있다.
+
+```java
+public class Test {
+    private int num;
+
+    public Test() {
+    }
+
+    public int getNum() {
+        return this.num;
+    }
+
+    public void setNum(final int num) {
+        this.num = num;
+    }
+
+    public boolean equals(final Object o) {
+        if (o == this) {
+            return true;
+        } else if (!(o instanceof Test)) {
+            return false;
+        } else {
+            Test other = (Test)o;
+            if (!other.canEqual(this)) {
+                return false;
+            } else {
+                return this.getNum() == other.getNum();
+            }
+        }
+    }
+
+    protected boolean canEqual(final Object other) {
+        return other instanceof Test;
+    }
+
+    public int hashCode() {
+        int PRIME = true;
+        int result = 1;
+        int result = result * 59 + this.getNum();
+        return result;
+    }
+
+    public String toString() {
+        return "Test(num=" + this.getNum() + ")";
+    }
+}
+```
+
+위를 설명하면 @Data라는 어노테이션이 붙으면 자바는 이 어노테이션이 
+붙은 곳을 찾아 컴파일 할때 생성 해 준다. 그렇기 때문에 
+setter, getter등 직접 만들지 않고도 자동으로 생성 해 준다.   
+
+`마지막으로 어노테이션 프로세서의 장점이라고 한다면, 이러한 동작이 컴파일 타임에 
+이루어지기 때문에 런타임에 비용이 추가되지 않는다는 것이다.    
+하지만, 단점으로는 잘 알고 쓰지 않는다면 의도하지 않는 동작을 할 수도 있기 때문에 
+정확히 알고 써야 한다.`   
+
 
 - - - 
 
 **Reference**    
 
+<https://b-programmer.tistory.com/264>   
+<https://blog.naver.com/hsm622/222226824623>  
 <https://blog.naver.com/hsm622/222218251749>   
 <https://wisdom-and-record.tistory.com/52>    
-<https://github.com/whiteship/live-study/issues/11>      
+<https://github.com/whiteship/live-study/issues/12>      
 
 {% highlight ruby linenos %}
 
