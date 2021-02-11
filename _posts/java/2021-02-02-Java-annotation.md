@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Java] Annotation "
-subtitle: "@retention, @target, @documented, 어노테이션 프로세서, 리플렉션, javadoc"    
+subtitle: "@retention, @target, @documented, 어노테이션 프로세서, 리플렉션, javadoc, ServiceLoader"    
 comments: true
 categories : Java
 date: 2021-02-02
@@ -70,13 +70,13 @@ public @interface Hello {
 }
 ```
 
-다음으로 어노테이션은 value라는 기본 값을 가질 수 있다.   
-value라는 값은 어노테이션을 적용할 때 굳이 element의 이름을 명시해주지 
+`다음으로 어노테이션은 value라는 기본 값을 가질 수 있다.`       
+value라는 element는 어노테이션을 적용할 때 굳이 element의 이름을 명시해주지 
 않아도 된다.   
 
 ```java
-@Hello("mike")
-public class Animal {
+@Hello("mike") // 보통은 name = "mike" 라고 해주는데
+public class Animal { // value는 이름 없이 가능하다.
 }
 
 public @interface Hello {
@@ -306,7 +306,8 @@ public class HelloController {
 
 #### 3-2) @Target    
 
-어노테이션이 적용할 위치를 선택한다.   
+어노테이션이 적용할 위치를 선택한다. 명시하지 않는다면 
+어디든 적용이 가능해 진다.   
 
 종류는 다음과 같다.   
 
@@ -326,11 +327,14 @@ public class HelloController {
 
 #### 3-3) @Documented   
 
-`어노테이션 정보가 javadoc으로 작성된 문서에 포함된다고 한다.`   
+`어노테이션 정보가 javadoc으로 작성된 문서에 포함되도록 하는 메타 에노테이션이다.`      
 
 직접 javadoc을 만들 수 있다는 뜻이며, Tools -> Generate JavaDoc 으로 
 만들 수 있다.  
 
+Output Directory에 저장할 폴더를 선택하고 
+Other Command line arguments에 -encoding UTF-8 -charset UTF-8 -docencoding UTF-8 까지 
+지정해줘야 한글이 깨지지 않고 javadoc을 성공적으로 만들 수 있다.   
 
 
 #### 3-4) @Inherited   
@@ -400,9 +404,17 @@ public class HelloController {
 
 ## 4. 어노테이션 프로세서   
 
-`런타임시에 리플렉션을 사용하는 어노테이션과는 달리 컴파일 타임에 이루어진다.`      
+`런타임시에 리플렉션을 사용하는 어노테이션과는 달리 컴파일 타임에 
+이루어지며, 어노테이션 정보를 참고하여 코드를 분석하고 생성하는 등의 작업을 
+할 수 있는 기능이다.`         
 
-어노테이션 프로세싱하는 기술이며, 대표적인 기술로는 롬북이 있다.   
+`어노테이션 프로세서의 장점이라고 한다면, 이러한 동작이 컴파일 타임에
+이루어지기 때문에 런타임에 비용이 추가되지 않는다는 것이다.
+하지만, 단점으로는 잘 알고 쓰지 않는다면 의도하지 않는 동작을 할 수도 있기 때문>
+정확히 알고 써야 한다.`
+
+대표적인 기술로는 롬북(lombok)이 있으며 컴파일 타임에 바이트 코드를 생성해주는 
+라이브러리이다.    
 아래는 롬북 사용 예시 중 하나이다.  
 
 ```java
@@ -466,10 +478,101 @@ public class Test {
 붙은 곳을 찾아 컴파일 할때 생성 해 준다. 그렇기 때문에 
 setter, getter등 직접 만들지 않고도 자동으로 생성 해 준다.   
 
-`마지막으로 어노테이션 프로세서의 장점이라고 한다면, 이러한 동작이 컴파일 타임에 
-이루어지기 때문에 런타임에 비용이 추가되지 않는다는 것이다.    
-하지만, 단점으로는 잘 알고 쓰지 않는다면 의도하지 않는 동작을 할 수도 있기 때문에 
-정확히 알고 써야 한다.`   
+그렇다면 컴파일러는 어노테이션 프로세서가 있는것을 어떻게 알고 
+어노테이션에 대해 전처리를 할 수 있을까?   
+
+lombok 라이브러리를 좀 더 자세히 들여다 보자.   
+
+<img width="941" alt="스크린샷 2021-02-11 오후 10 08 13" src="https://user-images.githubusercontent.com/26623547/107640535-c67ea100-6cb5-11eb-892d-5260b6cbe8e3.png">   
+
+위를 보면 lombok 라이브러리의 META-INF 디렉토리 하위에 
+services라는 폴더가 있다.    
+그 폴더에는 javax.annotaion.processing.Processor 라는 파일이 있고 
+컴파일러는 해당 내용을 참고하게 된다.   
+
+```
+lombok.launch.AnnotationProcessorHider$AnnotationProcessor
+lombok.launch.AnnotationProcessorHider$ClaimingProcessor
+```
+
+
+위의 내용은 `ServiceLoader`라는 개념인데 
+[링크](https://riptutorial.com/java/example/19523/simple-serviceloader-example) 를 참고하자.    
+
+#### ServiceLoader
+
+`ServiceLoader는 인터페이스 구현체들을 dynamic loading을 할 수 있도록 해준다. 즉, 
+ ServiceLoader 클래스를 이용하면 공통 인터페이스를 준수하는 서비스 구현체를 손쉽게 
+ 로드할 수 있다.` 
+
+간단한 예시로 이해를 해보자.    
+HelloService라는 인터페이스를 정의하여 jar파일로 패키징한다.  
+
+```java
+package me.kaven;
+
+public interface HelloService {
+    String method();
+}
+```
+
+<img width="900" alt="스크린샷 2021-02-11 오후 11 28 20" src="https://user-images.githubusercontent.com/26623547/107649579-f3848100-6cc0-11eb-8bd3-48ab5984b228.png">   
+
+위와 같이 install을 클릭하여 jar파일을 생성해준다.
+
+그 후 새 프로젝트를 생성하여 아래와 같이 HelloServiceImpl 구현체를 만든다.   
+
+```java
+package com.example;
+
+import me.kaven.HelloService;
+
+public class HelloServiceImpl implements HelloService {
+    @Override
+    public String method() {
+        return "success";
+    }
+}
+```
+
+`jar파일로 패키징 하기전에 이 jar파일이 HelloService의 구현체를 제공하는 jar 라는것이 
+선언된 file을 선언해야 한다.`        
+
+`META-INF/services 디렉토리를 만들고 그 안에 파일 이름을 인터페이스의
+fully-qualified name로 생성한다.`      
+
+`파일 안의 내용은 구현체의 fully-qualified name을 작성한다.`        
+
+완성된 내용은 아래와 같다.   
+
+<img width="895" alt="스크린샷 2021-02-11 오후 11 50 21" src="https://user-images.githubusercontent.com/26623547/107653243-c0dc8780-6cc4-11eb-9fc1-6d805e306665.png">   
+
+이제 jar 파일로 패키징 후 Test라는 새 프로젝트에서 확인해보자.  
+방금 패키징한 jar를 메이븐에 추가한 후 아래와 같이 사용이 가능하다.   
+
+```java
+public class Test {
+    public static void main(String[] args) {
+        ServiceLoader<HelloService> loader = ServiceLoader.load(HelloService.class);
+        for (HelloService helloService : loader) {
+            System.out.println(helloService.method());
+        }
+    }
+}
+```
+
+```maven
+<dependencies>
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>demo-service-impl</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+```
+
+우리는 HelloService라는 인터페이스만 가지고 이를 구현한 구현체들을 
+동적으로 가져올 수 있는 것을 확인 하였다!    
 
 
 - - - 
