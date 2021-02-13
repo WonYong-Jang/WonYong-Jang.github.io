@@ -22,6 +22,7 @@ h5,
 h6 {
   font-weight: 800;
   line-height: 1.5;
+  margin: 30px 0;  // 위 아래 간격 조절 
   @include sans-serif-font;
 }
 
