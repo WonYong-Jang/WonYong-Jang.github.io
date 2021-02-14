@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[ELK] Elastic Search 1"
-subtitle: "Elastic Search, Kibana 를 이용한 기본 실습과 구조 및 용어 정리"    
+subtitle: "Elastic Search 개념과 구조 및 용어 정리"    
 comments: true
 categories : ELK
 date: 2021-02-05
@@ -13,19 +13,29 @@ background: '/img/posts/mac.png'
 `엘라스틱서치는 확장성이 매우 좋은 오픈소스 검색엔진이다.`   
 많은 양의 데이터를 보관하고 실시간으로 분석할 수 있게 해준다.   
 
-엘라스틱서치는 JSON 문서 파일과 함께 동작한다. JSON 문서 파일의 내부적 구조를 
+`엘라스틱서치는 JSON 문서 파일과 함께 동작한다. JSON 문서 파일의 내부적 구조를 
 이용하여, 데이터를 파싱한다. 파싱을 통해 필요한 정보에 대한 거의 실시간 검색(Near 
-        real time)을 지원한다.   
+        real time)을 지원한다.`      
 
 **빅데이터**를 다룰 때 매우 유용하다.   
 
-데이터를 저장할 때 검색에 유리하도록 데이터를 역색인(Inverted index)구조로 저장하기 
-때문에 데이터 검색에 한해서는 기존에 RDB 보다 성능이 뛰어나다.     
+`데이터를 저장할 때 검색에 유리하도록 데이터를 역색인(Inverted index)구조로 저장하기 
+때문에 데이터 검색에 한해서는 기존에 RDB 보다 성능이 뛰어나다.`          
 
 > 엘라스틱 서치에서는 데이터를 저장하는 과정을 색인(Indexing)이라고 한다. 일반적으로 책 뒷편에 
 색인, 인덱스, 찾아보기와 같은 이름으로 정돈된 목록처럼 정렬/나열하여 저장한다.   
 
 > 역색인(Inverted Index)는 키워드를 통해 문서를 찾아내는 방식을 말한다.   
+
+현재 대규모 시스템들은 대부분 마이크로 서비스 아키텍처(MSA)를 
+기본으로 설계된다. 이러한 구조에 빠질 수 없는 것이 REST API와 같은 표준 
+인터페이스이다. 엘라스틱 서치는 Rest API를 기본으로 지원하여 모든 
+데이터 조회, 입력, 삭제를 http 프로토콜을 통해 `Rest API`로 처리한다.   
+
+또한, 엘라스틱 서치의 데이터들은 인덱스라는 논리적인 집합 단위로 구성되며 
+서로 다른 저장소에 분산되어 저장된다. 서로 다른 인덱스들을 별도의 
+커넥션 없이 하나의 질의로 묶어서 검색하고, 검색 결과들을 하나의 출력으로 
+도출 할 수 있는데, 이러한 특징을 `멀티네넌시(multitenancy)`라고 한다.    
 
 `정리해보면 엘라스틱서치는 실시간, 분산형, 분석엔진이다. 오픈 소스이며, 자바로 개발되었고 
 테이블과 스키마 대신 문서 구조로 된 데이터를 사용한다.`       
@@ -161,30 +171,13 @@ $ brew install kibana        // http://localhost:5601
 개별 조각으로 분리되어 여러 샤드로 나뉜다. 샤드는 클러스터 노드 전반에 걸쳐 
 분산되고, 주 샤드의 복제본을 통해 고가용성과 장애 조치를 지원한다.`     
 
-- - - 
-
-## 엘라스틱 서치, 키바나 시작하기 
-
-엘라스틱 서치와 키바나를 이용하여 실습하고 엘라스틱 서치의 핵심 개념을 같이 알아보자.   
-
-
-<img width="800" alt="스크린샷 2021-02-07 오후 1 54 52" src="https://user-images.githubusercontent.com/26623547/107137065-33a7d480-694c-11eb-9166-e3e9e97c9d89.png">   
-
-키바나 콘솔 UI에서 실행했던 코드 블록의 첫 번째 줄을 보면, 
-    PUT /catalog/product/1 문자열과 JSON 도큐면트가 있다.   
-
-`PUT은 새로운 도큐먼트를 색인하는 데 사용하는 HTTP 메서드이다. 
-여기서 catalog는 인덱스 이름, product는 타입 이름, 1은 색인 생성 후 도큐먼트에 할당되는 ID를 나타낸다.`
-
-> 엘라스틱 서치 버전 7.0부터는 type 이 삭제되었다. 아래 링크를 통해 확인해보자   
-
-[엘라스틱 서치 버전별 변환](http://kimjmin.net/2019/04/2019-04-elastic-stack-7-release/)   
 
 
 - - - 
 
 **Reference**    
 
+<https://esbook.kimjmin.net/01-overview/1.1-elastic-stack/1.1.1-elasticsearch>   
 <http://kimjmin.net/2019/04/2019-04-elastic-stack-7-release/>    
 <https://abc-sanghoon.tistory.com/entry/%EC%97%98%EB%9D%BC%EC%8A%A4%ED%8B%B1%EC%84%9C%EC%B9%98-%EC%8B%A4%EB%AC%B4%EA%B0%80%EC%9D%B4%EB%93%9C1%EA%B0%95-2%EA%B0%95>    
 <https://medium.com/@victorsmelopoa/an-introduction-to-elasticsearch-with-kibana-78071db3704>   

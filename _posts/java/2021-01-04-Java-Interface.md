@@ -22,7 +22,9 @@ background: '/img/posts/mac.png'
 - 인터페이스의 static 메소드, 자바 8   
 - 인터페이스의 private 메소드, 자바 9   
 - 함수형 인터페이스   
-- Constant Interface   
+- Constant Interface  
+
+
 - - -
 
 ## 1. 인터페이스란 ?    
