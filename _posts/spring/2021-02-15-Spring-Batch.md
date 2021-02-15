@@ -4,7 +4,7 @@ title: "[Spring] Spring Batch"
 subtitle: "Tasklet 방식, Chunk oriented processing 방식"
 comments: true
 categories : Spring
-date: 2020-08-27
+date: 2021-02-15
 background: '/img/posts/spring.png'
 ---
 
