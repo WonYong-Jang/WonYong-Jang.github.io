@@ -1,13 +1,12 @@
 ---
 layout: post
 title: "[Java] Stream "
-subtitle: "generate, iterate, Filtering, Mapping, Sorting, Calculating, Reduction, Collecting, Mathing"    
+subtitle: "generate, iterate, Filtering, Mapping, Sorting, Calculating, Reduction, Collecting, Mathing, groupingBy"   
 comments: true
 categories : Java
 date: 2021-02-05
 background: '/img/posts/mac.png'
 ---
-
 
 # Java Stream   
 
@@ -26,9 +25,9 @@ background: '/img/posts/mac.png'
 
 스트림에 대한 내용은 크게 세 가지로 나눌 수 있다.   
 
-1. 생성하기 : 스트림 인스턴스 생성   
-2. 가공하기 : 필터링(filtering) 및 맵핑(mapping) 등 원하는 결과를 만들어가는 중간 작업   
-3. 결과 만들기 : 최종적으로 결과를 만들어내는 작업   
+**1. 생성하기 : 스트림 인스턴스 생성**      
+**2. 가공하기 : 필터링(filtering) 및 맵핑(mapping) 등 원하는 결과를 만들어가는 중간 작업**      
+**3. 결과 만들기 : 최종적으로 결과를 만들어내는 작업**      
 
 - - -
 
@@ -623,7 +622,8 @@ IntSummaryStatistics {count=5, sum=86, min=13, average=17.200000, max=23}
 
 ##### 3-6) Collectors.groupingBy()   
 
-특정 조건으로 요소들을 그룹지을 수 있다. 수량을 기준으로 그룹핑해보겠다. 
+`특정 조건으로 요소들을 그룹지을 수 있다.`  
+수량을 기준으로 그룹핑해보겠다.    
 여기서 받는 인자는 함수형 인터페이스 Function 이다.   
 
 ```java
@@ -642,6 +642,8 @@ Map<Integer, List<Product>> collectorMapOfLists =
  14=[Product{amount=14, name='orange'}]}
 
 ```
+
+
    
 ##### 3-7) Collectors.partitioningBy()   
 
