@@ -23,11 +23,12 @@ Stream의 groupingBy 콜렉터를 이용한 여러가지 예제를 살펴보자.
 groupingBy() 여러 예제를 위해 아래와 같이 클래스를 정의한다.   
 
 ```java
-class BlogPost {
-    String title;
+public class BlogPost {
+    String title; 
     String author;
-    BlogPostType type;
-    int likes;
+    BlogPostType type; // Blog 타입 
+    int likes; // 좋아요 수 
+    Tag tag;  // 태그 
 }
 ```
 
@@ -45,6 +46,17 @@ BlogPostType과 author 조합으로 그룹화 하는데 사용될 Tuple 클래�
 class Tuple {
     BlogPostType type;
     String author;
+}
+```   
+
+그룹화를 응용하기 위해 Tag 클래스도 생성 했다.   
+
+```java
+public class Tag {
+
+    String id;
+    int count;
+    int total;
 }
 ```
 
@@ -116,7 +128,15 @@ Map<BlogPostType, Optional<BlogPost>> collect = list.stream()
 
 마찬가지로 minBy 를 이용하여 최소값을 얻을 수도 있다.    
 
+#### 그룹화 결과 다른 객체로 리턴   
 
+아래 예시는 author로 그룹화를 진행하고 mapping을 이용하여 원하는 Map의 값을 
+리턴하게 한다.     
+
+```java
+Map<String, List<Tag>> collect = list.stream()
+                .collect(groupingBy(BlogPost::getAuthor, mapping(BlogPost::getTag, toList())));
+```
 
 
 - - - 

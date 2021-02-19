@@ -377,7 +377,9 @@ public class Main {
 
 자바 9에서는 추가적으로 private method와 private static mehotd가 추가되었다.   
 
-- 메서드의 몸통 {}이 있고 abstract이 아니다. 
+아래와 같은 특징이 있다.   
+
+- 메서드의 몸통 {}이 있고 abstract이 선언할 수 없다.
 - 구현체에서 구현할 수 없고 자식 인터페이스에서 상속이 불가능하다.   
 - static 메서드도 private이 가능하다.   
 
@@ -387,7 +389,36 @@ public class Main {
     public method로 만들어야 하기때문에 불편함이 있다.   
 
 - interface를 구현하는 다른 interface 혹은 class가 해당 method에 엑세스 하거나 
-상속할 수 있는 것을 원치 않은 경우도 있지만 그렇게 할 수 없었다.   
+상속할 수 있는 것을 원치 않은 경우도 있지만 그렇게 할 수 없었다.  
+
+```java
+public interface Programing {
+
+    default void application(){
+        debug(); // 내부에서만 사용 하여 구현 
+    }
+    private void debug(){                  // private 
+        System.out.println("print");
+    }
+
+    public static void method() {
+        call(); // 접근 가능 !
+    }
+
+    private static void call(){ // private static 메소드
+        System.out.println("접근 가능");
+    }
+}
+```
+
+위의 예제 처럼 private void debug는 외부에서는 접근이 불가능하고 내부에서만 
+재사용 할수 있도록 사용된다.   
+
+private static으로 시작하는 메서드는 접근하고자 하는 메서드가 non-static이든, static이든 접근 가능하다.   
+static은 자원을 공유 하기 때문에 일반 인스턴스 변수, 메서드는 접근이 불가능하다. 따라서 private static을 
+사용함으로써 이러한 문제를 해결할 수 있게 되었다.   
+
+즉, 인터페이스 안에서 코드의 재사용과 캡슐화를 위해서 사용한다.   
 
 - - - 
 
