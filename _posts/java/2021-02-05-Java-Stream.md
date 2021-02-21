@@ -256,7 +256,26 @@ Stream<String> stream = names
 아래 예제를 보자. 스트림 내 String의 toUpperCase 메소드를 실행해서 대문자로 
 변환한 값들이 담긴 스트림을 리턴한다.   
 
+`초기 형태에서 부터 람다식과 메서드 참조가 각각 사용되어서 코드가 간결해 지는 것을 
+볼 수 있다.`     
+
 ```java
+// 초기 형태   
+Stream<String> stream = names.stream().map(new Function<String, String>() {
+
+            @Override
+            public String apply(String s) {
+                return s.toUpperCase();
+            }
+        });
+
+// 람다식 적용   
+Stream<String> stream2 = names
+                .stream()
+                .map(s -> s.toUpperCase());
+
+
+// 메서드 참조 적용   
 Stream<String> stream = names
                 .stream()
                 .map(String::toUpperCase);
@@ -279,19 +298,44 @@ map 이외에도 조금 더 복잡한 flatMap 메소드가 있다.
 다음과 같은 중첩된 리스트가 있다.   
 
 ```java
-List<List<String>> list = 
-Arrays.asList(Arrays.asList("a"), Arrays.asList("b"));
-// [[a], [b]]
+String[][] sample = new String[][]{
+                {"a", "b"}, {"c", "d"}, {"e", "a"}, {"a", "h"}, {"i", "j"}
+        };
 ```
 
 이를 flatMap을 사용해서 중첩 구조를 제거한 후 작업을 할 수 있다.   
 
 ```java
-List<String> flatList = 
-  list.stream()
-  .flatMap(Collection::stream)
-  .collect(Collectors.toList());
-// [a, b]
+List<String> collect = Arrays.stream(sample)
+                .flatMap(name -> Arrays.stream(name))
+                .collect(Collectors.toList());
+// [a, b, c, d, e, a, a, h, i, j]
+```
+
+한가지 예시를 더 확인해 보자.    
+String 리스트의 길이가 3인 리스트를 추출하고 
+한글자씩 subString 하여 리스트를 새로 만드는 예이다.   
+아래와 같이 flatMap을 사용했기 때문에 1차원 리스트로 만들 수 있게 된다.   
+
+```java
+List<String> programing =
+                Arrays.asList("Javascript", "C", "C++", "Nodejs", "Java", "Oracle", "MariaDB", "PHP", "ASP");
+```
+
+```java
+List<String> collect = programing.stream()
+                .filter(str -> str.length() == 3)
+                .flatMap(s -> {
+                    List<String> list = new ArrayList<>();
+                    for (int i = 0; i < s.length(); i++) {
+                        list.add(s.substring(i, i + 1));
+                    }
+                    return list.stream();
+                }).collect(Collectors.toList());
+
+
+// map으로 구현시 [[[C],[+],[+]],[[P],[H],[P]],[[A],[S],[P]]]으로 출력
+// flatMap으로 구현시 [C][+][+][P][H][P][A][S][P]으로 출력
 ```
 
 #### 4. Sorting   
@@ -668,6 +712,8 @@ Map<Boolean, List<Product>> mapPartitioned =
        Product{amount=23, name='bread'}]}
 ```
 
+Collector에 더 자세한 예제는 [링크](https://wonyong-jang.github.io/java/2021/02/06/Java-Stream-groupingBy.html)를 참고하자.    
+
 #### 4. Matching   
 
 매칭은 조건식 람다 Predicate를 받아서 해당 조건을 만족하는 요소가 있는지 
@@ -720,6 +766,7 @@ Output
 
 **Reference**    
 
+<https://jlblog.me/92>   
 <https://futurecreator.github.io/2018/08/26/java-8-streams/>   
 
 {% highlight ruby linenos %}
