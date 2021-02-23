@@ -229,7 +229,7 @@ Java에서는 데이터 손실이 발생하지 않거나, 데이터의 손실이
 
 ```java
 double num = 10;          // int형인 10이 double로 타입 변환 
-double num = 5.0f + 3.14; // float형인 7.0이 double로 타입 변환
+double num = 5.0f + 3.14; // float형인 5.0이 double로 타입 변환
 ```
 
 > int -> double   
