@@ -95,6 +95,27 @@ background: '/img/posts/mac.png'
 
 
 <img width="800" alt="스크린샷 2021-02-23 오후 7 19 53" src="https://user-images.githubusercontent.com/26623547/108830928-06764a00-760d-11eb-9ff8-8ce22aea1f59.png">     
+    
+### RDD   
+
+RDD는 외부 데이터를 읽어서 처리하거나, 자체적으로 컬렉션 데이터를 생성하여 처리할 수 있다. 데이터 처리는 
+파티션 단위로 분리하여 작업을 처리한다. 
+
+<img width="800" alt="스크린샷 2021-02-23 오후 11 13 07" src="https://user-images.githubusercontent.com/26623547/108856037-fa01e980-762c-11eb-8a63-c6523557f1b6.png">    
+
+`RDD는 트랜스포메이션(transformation), 액션(action) 두가지 타입의 연산을 가지고 있다.`    
+트랜스포메이션은 필터링 같은 작업으로 RDD에서 새로운 RDD를 반환한다.    
+액션은 RDD로 작업을 처리하여 결과를 반환한다. 스파크는 지연처리(lazy evalution)를 지원하여 
+트랜스포메이션을 호출할 때는 작업을 처리하지 않고, 액션을 호출하는 시점에 작업을 
+처리하여 효율성을 제공한다.    
+
+RDD는 액션이 실행될 때마다 새로운 연산을 처리한다. 작업의 처리 결과를 
+재사용하고 싶으면 persist()메소드를 사용하여 결과를 메모리에 유지하도록 할 수 있다.   
+
+RDD는 스파크 컨텍스트(SparkContext)객체를 이용하여 생성할 수 있다. 아래와 같이 
+예제를 보자.    
+
+
 
 
 
@@ -109,6 +130,7 @@ background: '/img/posts/mac.png'
 
 <https://wikidocs.net/book/2350>     
 <https://artist-developer.tistory.com/7>    
+<https://subscription.packtpub.com/book/big_data_and_business_intelligence/9781787126497/7/ch07lvl1sec46/rdd-partitioning>    
 
 {% highlight ruby linenos %}
 
