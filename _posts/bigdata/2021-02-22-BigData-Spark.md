@@ -242,6 +242,112 @@ val result = rdd1.count
 println(result) // 5   
 ```
 
+- - - 
+
+### 3. RDD 트랜스포메이션    
+
+트랜스포메이션은 기존 RDD를 이용해 새로운 RDD를 생성하는 연산이다. 이러한 연산에는 
+각 요소의 타입을 문자열에서 숫자로 바꾸거나 불필요한 요소를 제외하거나 기존 요소의 
+값에 특정 값을 더하는 등의 작업이 모두 포함된다.   
+
+#### 3-1) map    
+
+map은 스파크를 이용한 데이터 처리 작업에서 흔히 사용되는 대표적인 연산 중 하나이다.     
+아래 예제는 1부터 5까지의 수로 구성된 RDD의 각 요소에 1을 더하는 함수를 적용해서 
+2부터 6까지의 숫자로 구성된 새로운 RDD를 생성하는 예제이다.   
+
+```scala
+val rdd = sc.parallelize(1 to 5).map(_ + 1)
+println(rdd.collect.mkString(", "))
+// 2, 3, 4 ,5 ,6
+```
+
+```scala
+def map[U: ClassTag](f: T => U): RDD[U]
+```    
+
+`T 타입을 U 타입으로 변환하는 함수 f를 이용해서 RDD[T] 타입의 RDD를 RDD[U] 타입으로 
+변환하는 메서드 라는 의미이다.`    
+
+
+#### 3-2) flatMap    
+
+아래 예제를 보면 fruits는 모두 3개의 단어가 포함되어 있고, ',' 기준으로 분리하여 
+과일 리스트를 생성하려고 한다.    
+
+```scala
+val fruits = List("apple,orange", "grape,apple,mango", "blueberry,tomato,orange")
+val rdd1 = sc.parallelize(fruits); // 단어 3개를 가진 List   
+```
+
+map을 이용해서 분리를 한다면 아래와 같을 것이다.     
+우리는 이런 결과 말고 과일 리스트만 배열로 얻기를 원한 때 flatMap을 사용할 수 있다.    
+
+```scala
+val rdd2 = rdd1.map(_.split(","))    
+println(rdd2.collect.map(_.mkString("{",", ", "}")).mkString("{",", ", "}"))    
+// [{apple, orange}, {grape, apple, mango}, {blueberry, tomato, orange}]      
+```
+
+위의 경우 'apple,orange' 라는 문자열이 apple과 orange 포함한 배열로 변환되는데 
+배열에 포함된 요소를 모두 밖으로 끄집어 내는 작업이 필요하다.   
+`flatMap() 연산은 하나의 입력값에 대응하는 반환값이 여러 개 일 때 유용하게 
+사용 할 수 있다.`     
+
+```scala
+val fruits = List("apple,orange", "grape,apple,mango", "blueberry,tomato,orange")
+val rdd1 = sc.parallelize(fruits);
+val rdd2 = rdd1.flatMap(_.split(","))
+println(rdd2.collect.mkString(", "))
+```
+
+#### 3-3) mapValues      
+
+RDD의 요소가 키와 값의 쌍을 이루고 있는 경우 페어RDD(PairRDD)라는 용어를 
+사용한다.    
+`mapValues()는 RDD의 모든 요소들이 키와 값의 쌍을 이루고 있는 경우에만 
+사용 가능한 메서드이며, 인자로 전달받은 함수를 값에 해당하는 요소에만 
+적용하고 그 결과로 구성된 새로운 RDD를 생성한다.`    
+즉, 키에 해당하는 부분은 그대로 두고 값에만 map() 연산을 적용한 
+것과 같다.   
+
+```scala 
+val rdd = sc.parallelize(List("a", "b", "c")).map((_, 1))
+val result = rdd.mapValues(i => i+1)
+println(result.collect.mkString(", "))   
+// (a,2), (b,2), (c,2)    
+```
+
+#### 3-4) flatMapValues   
+
+마찬가지로 RDD의 구성요소가 키와 값의 쌍으로 구성된 경우에만 사용 할 수 있는 
+메서드이다.    
+
+```scala 
+val rdd = sc.parallelize(Seq((1,"a,b"), (2,"a,c"), (1,"d,e")))
+val result = rdd.flatMapValues(_.split(","))
+println(result.collect.mkString("\t"))
+// (1,a)	(1,b)	(2,a)	(2,c)	(1,d)	(1,e)   
+```
+
+- - - 
+
+### 4. 그룹과 관련된 연산들    
+
+#### 4-1) zip     
+
+zip() 연산은 두 개의 서로 다른 RDD를 각 요소의 인덱스에 따라 하나의 (키, 값) 쌍으로 
+묶어 준다.     
+
+```scala   
+val rdd1 = sc.parallelize(List("a", "b", "c"))
+val rdd2 = sc.parallelize(List(1, 2, 3))
+val result = rdd1.zip(rdd2)
+println(result.collect.mkString(", "))
+```
+
+서로 크기가 다른 RDD 간에는 zip() 메서드를 사용할 수 없다.    
+
 
 
 - - - 
