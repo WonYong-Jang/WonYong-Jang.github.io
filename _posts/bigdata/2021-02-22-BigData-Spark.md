@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] 아파치 스파크(spark) 시작하기 "
-subtitle: "Driver, Executor, Task, Cluster Manager/ RDD, DataFrame, DataSet / Hadoop"    
+subtitle: "Driver, Executor, Task, Cluster Manager/ RDD / Hadoop"    
 comments: true
 categories : BigData
 date: 2021-02-22
@@ -272,7 +272,7 @@ def map[U: ClassTag](f: T => U): RDD[U]
 
 #### 3-2) flatMap    
 
-아래 예제를 보면 fruits는 모두 3개의 단어가 포함되어 있고, ',' 기준으로 분리하여 
+아래 예제를 보면 fruits는 모두 3개의 단어가 포함되어 있고, ' , ' 기준으로 분리하여 
 과일 리스트를 생성하려고 한다.    
 
 ```scala
@@ -298,7 +298,8 @@ println(rdd2.collect.map(_.mkString("{",", ", "}")).mkString("{",", ", "}"))
 val fruits = List("apple,orange", "grape,apple,mango", "blueberry,tomato,orange")
 val rdd1 = sc.parallelize(fruits);
 val rdd2 = rdd1.flatMap(_.split(","))
-println(rdd2.collect.mkString(", "))
+println(rdd2.collect.mkString(", "))   
+// apple, orange, grape, apple, mango, blueberry, tomato, orange
 ```
 
 #### 3-3) mapValues      
@@ -344,9 +345,140 @@ val rdd1 = sc.parallelize(List("a", "b", "c"))
 val rdd2 = sc.parallelize(List(1, 2, 3))
 val result = rdd1.zip(rdd2)
 println(result.collect.mkString(", "))
+// (a,1), (b,2), (c,3)   
 ```
 
 서로 크기가 다른 RDD 간에는 zip() 메서드를 사용할 수 없다.    
+
+#### 4-2) groupBy   
+
+groupBy()는 RDD의 요소를 일정한 기준에 따라 여러 개의 그룹으로 나누고 
+이 그룹으로 구성된 새로운 RDD를 생성한다.
+
+```scala 
+val rdd = sc.parallelize(1 to 10)
+val result = rdd.groupBy{
+   case i: Int if(i % 2 == 0)  => "even"
+   case _                      => "odd"
+}
+result.foreach {
+   v => println(s"${v._1}, [${v._2.mkString(", ")}]")
+}
+// even, [2, 4, 6, 8, 10]
+// odd, [1, 3, 5, 7, 9]
+```
+
+#### 4-3) groupByKey   
+
+groupBy() 메서드가 요소의 키를 생성하는 작업과 그룹으로 분류하는 작업을 
+동시에 수행한다면 `groupByKey()는 이미 RDD의 구성요소가 키와 값으로 쌍으로 
+이루어진 경우에 사용 가능한 메서드이다.`    
+
+```scala   
+val rdd = sc.parallelize(List("a","b","c","c","b")).map((_,1))
+val result = rdd.groupByKey
+
+result.collect.foreach {
+   v => println(s"${v._1}, [${v._2.mkString(",")}]")
+}
+// a, [1]
+// b, [1,1]
+// c, [1,1]
+```
+- - -    
+
+### 5. 집합과 관련된 연산들    
+
+#### 5-1) distinct    
+
+distinct()는 RDD의 원소에서 중복을 제외한 요소로만 구성된 
+새로운 RDD를 생성하는 메서드이다.    
+
+```scala
+val rdd = sc.parallelize(List(1,2,3,1,2,3,1,2,3))
+val result = rdd.distinct()
+println(result.collect.mkString(", "))
+// 1, 2, 3    
+```
+
+#### 5-2) cartesian    
+
+cartesian()은 두 RDD 요소의 카테시안곱을 구하고 그 결과를 요소로 하는 
+새로운 RDD을 생성하는 메서드이다.    
+
+```scala    
+val rdd1 = sc.parallelize(List(1,2,3))
+val rdd2 = sc.parallelize(List("a","b","c"))
+val result = rdd1.cartesian(rdd2)
+println(result.collect.mkString(", ")) 
+// (1,a), (1,b), (1,c), (2,a), (2,b), (2,c), (3,a), (3,b), (3,c)    
+```
+
+#### 5-3) union    
+
+`아래와 같이 rdd1, rdd2을 합쳐서 새로운 RDD를 생성하는 메서드이다.`       
+
+```scala 
+val rdd1 = sc.parallelize(List("a","b","c"))
+val rdd2 = sc.parallelize(List("d","e","f"))
+val result = rdd1.union(rdd2)
+println(result.collect.mkString(", "))   
+// a, b, c, d, e, f    
+```   
+
+#### 5-4) join   
+
+join()은 RDD의 구성요소가 키와 값의 쌍으로 구성된 경우에 사용할 수 있는 
+메서드이다. `같은 키를 가지고 있는 요소를 모아서 그룹을 형성하고, 
+    이 결과로 구성된 새로운 RDD를 생성하는 메서드이다.`    
+
+join() 메서드의 수행 결과로 생성된 RDD는 튜플 타입의 요소를 가지며, 
+    Tuple(키, Tuple(첫번째 RDD, 두번째 RDD)) 형태로 구성된다.    
+
+```scala   
+val rdd1 = sc.parallelize(List("a","b","c","d","e")).map((_, 1))
+val rdd2 = sc.parallelize(List("b","c")).map((_,2))
+val result = rdd1.join(rdd2)
+println(result.collect.mkString("\n"))
+// (b,(1,2))
+// (c,(1,2))
+```
+
+#### 5-5) leftOuterJoin, rightOuterJoin   
+
+RDD의 구성요소가 키와 값의 쌍으로 구성된 경우에 사용 할 수 있는 
+메서드이며, sql 사용하는것과 비슷하게 
+왼쪽 외부조인과 오른쪽 외부 조인을 수행한다.    
+
+```scala 
+val rdd1 = sc.parallelize(List("a","b","c")).map((_, 1))
+val rdd2 = sc.parallelize(List("b","c")).map((_,2))
+val result1 = rdd1.leftOuterJoin(rdd2)
+val result2 = rdd1.rightOuterJoin(rdd2)
+println("Left: " + result1.collect.mkString("\n"))
+println("Right: "+ result2.collect.mkString("\n"))
+
+Left: (a,(1,None))
+(b,(1,Some(2)))
+(c,(1,Some(2)))
+
+Right: (b,(Some(1),2))
+(c,(Some(1),2))
+```
+
+#### 5-6) subtractByKey   
+
+RRD의 구성 요소가 키와 값의 쌍으로 구성된 경우에 사용할 수 있는 
+메서드이다.    
+`rdd1의 요소 중에서 rdd2에 같은 키가 존재하는 요소를 제외한 
+나머지로 구성된 새로운 RDD를 생성한다.`   
+
+```scala 
+val rdd1 = sc.parallelize(List("c","b")).map((_, 1))
+val rdd2 = sc.parallelize(List("b","a")).map((_,2))
+val result = rdd1.subtractByKey(rdd2)
+println(result.collect.mkString("\n"))
+```    
 
 
 
