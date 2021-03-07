@@ -458,12 +458,12 @@ val result2 = rdd1.rightOuterJoin(rdd2)
 println("Left: " + result1.collect.mkString("\n"))
 println("Right: "+ result2.collect.mkString("\n"))
 
-Left: (a,(1,None))
-(b,(1,Some(2)))
-(c,(1,Some(2)))
+// Left: (a,(1,None))
+// (b,(1,Some(2)))
+// (c,(1,Some(2)))
 
-Right: (b,(Some(1),2))
-(c,(Some(1),2))
+// Right: (b,(Some(1),2))
+// (c,(Some(1),2))
 ```
 
 #### 5-6) subtractByKey   
@@ -477,8 +477,14 @@ RRD의 구성 요소가 키와 값의 쌍으로 구성된 경우에 사용할 �
 val rdd1 = sc.parallelize(List("c","b")).map((_, 1))
 val rdd2 = sc.parallelize(List("b","a")).map((_,2))
 val result = rdd1.subtractByKey(rdd2)
-println(result.collect.mkString("\n"))
+println(result.collect.mkString("\n"))   
+// (c,1)
 ```    
+
+- - -    
+
+### 6. 집계와 관련된 연산들    
+
 
 
 
