@@ -84,6 +84,8 @@ $ git clone https://github.com/puckel/docker-airflow
 $ cd docker-airflow
 $ docker pull puckel/docker-airflow 
 $ docker-compose -f docker-compose-LocalExecutor.yml up -d 
+또는 
+$ docker-compose -f docker-compose-CeleryExecutor.yml up -d
 
 $ docker ps // 현재 실행중인 컨테이너 확인    
 
@@ -105,14 +107,14 @@ $ docker ps // 현재 실행중인 컨테이너 확인
 #### simple_bash.py DAG 파일 생성    
 
 simple_bash 라는 이름의 DAG를 생성할 것이다. Docker Compose를 실행한 경로(다른 
-        경로로 이동하지 않았다면 docker-airflow/dag) 에 dag라는 디렉토리가 
+        경로로 이동하지 않았다면 docker-airflow/dags) 에 dags라는 디렉토리가 
 있을 것이다. 이 디렉토리에 simple_bash.py 파일을 생성하고, 작성을 시작한다.    
 
 ##### import 구문   
 
 ```python
 from datetime import datetime, timedelta   
-from airflow import DAG               // 정의할 DAG에 매핑하는 클래스를 임포트 
+from airflow import DAG              
 from airflow.operators.bash_operator import BashOperator
 ```
 
