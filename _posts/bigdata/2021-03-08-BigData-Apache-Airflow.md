@@ -80,10 +80,14 @@ apache/airflow를 docker images로 로컬에서 간단하게 설치하고 테스
 
 
 ```
-git clone https://github.com/puckel/docker-airflow
-cd docker-airflow
-docker pull puckel/docker-airflow 
-docker-compose -f docker-compose-LocalExecutor.yml up -d 
+$ git clone https://github.com/puckel/docker-airflow
+$ cd docker-airflow
+$ docker pull puckel/docker-airflow 
+$ docker-compose -f docker-compose-LocalExecutor.yml up -d 
+
+$ docker ps // 현재 실행중인 컨테이너 확인    
+
+
 ```
      
 자세한 사용방법은 아래 링크를 참고하자.   
@@ -92,7 +96,145 @@ docker-compose -f docker-compose-LocalExecutor.yml up -d
 
 그 후 local:8080을 통해 airflow web ui에 접속 가능하다.   
 
+- - - -
+
+## Airflow Tutorial 진행    
+
+[Airflow Tutorial](https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html) 페이지를 참고해서 Tutorial을 진행해보자.   
+
+#### simple_bash.py DAG 파일 생성    
+
+simple_bash 라는 이름의 DAG를 생성할 것이다. Docker Compose를 실행한 경로(다른 
+        경로로 이동하지 않았다면 docker-airflow/dag) 에 dag라는 디렉토리가 
+있을 것이다. 이 디렉토리에 simple_bash.py 파일을 생성하고, 작성을 시작한다.    
+
+##### import 구문   
+
+```python
+from datetime import datetime, timedelta   
+from airflow import DAG               // 정의할 DAG에 매핑하는 클래스를 임포트 
+from airflow.operators.bash_operator import BashOperator
+```
+
+##### Default Arguments 객체 생성   
+
+DAG 및 DAG 내 Task들에 일괄적으로 적용할 속성 객체를 작성한다.    
+
+```python
+default_args={
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2020, 5, 16, 14, 0),
+    'email': ['leeyh0216@gmail.com'],
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=1),
+}
+```
+
+- owner : 작업 소유자 ID   
+- depends_on_past : 특정 작업의 Upstream이 성공한 경우에만 해당 작업을 Trigger 할 것인지에 대한 여부   
+- start_date : DAG 최초 실행 시간(과거 혹은 예약 가능)    
+- email : 작업 생행 관련 이메일 수신 주소 목록   
+- email_on_failure : 작업 실패 시 이메일 수신 여부   
+- email_on_retry : 작업 재시도 시 이메일 수신 여부    
+- retries : 작업 재시도 횟수   
+- retry_delay : 작업 재시도 간격    
+
+##### DAG 정의    
+
+DAG 객체를 정의한다.    
+
+```python
+dag = DAG(
+    'tutorial_bash',
+    default_args=default_args,
+    description='My first tutorial bash DAG',
+    schedule_interval= '* * * * *'
+)
+```
+
+- schedule_interval : DAG 스케줄링 간격(Cron 표현식 혹은 미리 정의된 속성 사용 가능)   
+
+##### Task 정의    
+
+hello world를 출력하는 작업(say_hello)와 현재 시간을 출력하는 작업(what_time)을 정의할 것이다.   
+
+```python
+t1 = BashOperator(
+    task_id='say_hello',
+    bash_command='echo "hello world"',
+    dag=dag
+)
+
+t2 = BashOperator(
+    task_id='what_time',
+    bash_command='date',
+    dag=dag
+)
+
+t1 >> t2
+```
+
+BashOperator 에는 다음과 같은 속성이 존재한다.   
+
+- task_id : 작업의 ID   
+- bash_command : 실행할 Bash Command   
+- dag : 작업이 속할 DAG   
+
+`또한 t1 >> t2 는 t1이 실행된 후 t2를 실행한다는 의미이다.(t1이 t2의 Upstream Task)`    
+
+
+##### Airflow CLI와 Webserver를 통해 생성된 DAG 확인하기    
+
+Airflow CLI로 방금 만든 DAG가 잘 반영되었는지 확인해보자. 원래는 airflow list_dags 명령어로 Airflow에 
+등록된 DAG 목록을 출력할 수 있는데, 여기서는 Docker Compose로 띄워 놓았기 때문에 
+airflow list_dags 명령어 앞에 docker-compose -f docker-compose-CeleryExecutor.yml run --rm webserver를 붙여주어야 한다.    
+
+단, docker-airflow 위치에서 아래 명령어를 실행 한다.    
+
+```
+$ docker-compose -f docker-compose-CeleryExecutor.yml run --rm webserver airflow list_dags
+
+-------------------------------------------------------------------
+DAGS
+-------------------------------------------------------------------
+tutorial
+tutorial_bash
+```
+
+WebServer에서도 일정 시간이 지나면 아래와 같이 tutorial_bash가 만들어진 것을 
+확인 할 수 있다.   
+
+<img width="830" alt="스크린샷 2021-03-09 오후 11 33 10" src="https://user-images.githubusercontent.com/26623547/110486957-7b2ea580-8130-11eb-8fbe-096c7872cb7a.png">    
+
+
+##### DAG를 활성화하여 실행 확인하기    
+
+만들어진 DAG는 활성화된 상태가 아니어서(Paused) 실행되지 않는다. 실행을 
+위해서는 CLI나 Web UI상에서 'Off' 버튼을 눌러 'On' 상태로 변경해주어야 한다.   
+
+`CLI Command는 airflow unpause [DAG ID] 로써 여기서는 Docker compose 명령어와 함께 아래와 같이 실행하면 된다.`    
+
+```
+> docker-compose -f docker-compose-CeleryExecutor.yml run --rm webserver airflow unpause tutorial_bash
+
+[2020-05-16 06:04:41,772]  INFO - Filling up the DagBag from /usr/local/airflow/dags/tutorial_bash.py
+Dag: tutorial_bash, paused: False
+```
+
+Web UI에서 확인하면 'Off' 였던 상태가 'On' 으로 변경되고, DAG가 실행되고 
+있는 것을 볼 수 있다.   
+
+
+<img width="830" alt="스크린샷 2021-03-09 오후 11 36 35" src="https://user-images.githubusercontent.com/26623547/110486979-7ff35980-8130-11eb-8eed-6f46a134aec4.png">
+
+
 - - - 
+
+다음으로는 Apache airflow를 사용함에 있어서 혼동할 수 있는 부분과 주의사항에 
+대해 살펴보자.     
 
 ## execution_date 주의 사항   
 
@@ -150,8 +292,77 @@ airflow는 분명히 의도와는 다르게 동작할 것이다.
 데이터와 날짜를 넣어야 하다 보니 excution_date를 날짜 변수값으로 이용해 
 꼭 필요한 값이라 생각한다.   
 
+## 한국 시간(UTC +9)에 대한 고려     
 
+UTC 환경을 전제로 작업할 경우, 즉 UTC 기준 날짜로 로그가 쌓이고 UTC 기준으로 로그를 
+읽을 경우 고려하지 않아도 되지만 한국 시간(UTC +9)기준으로 로그를 사용한다면, 
+    UTC 기준 15:00 ~ 24:00 사이에 서로 날짜가 다르기 때문에 문제가 발생할 수 있다.   
 
+바꿔 말하면, 한국 시간으로 오전 9시 이전에 스케줄링해야 하는 경우에 문제가 발생한다.   
+
+우리는 하루에 한번 실행되는 배치를 만든다고 가정하고 실행되는 날짜 기준으로 
+전날 데이터를 작업한다고 가정해보자.   
+
+아래와 같은 경우는 정상적으로 실행된 예시이다.     
+
+```python
+schedule_interval="@daily",
+```
+
+- 실행된 시간 : '2019-06-11T00:00' (= 한국 시간 오전 9시)   
+- execution_date : '2019-060-10'   (= 주문 번호)   
+
+`그런데 아래처럼 한국 시간 오전 9시 이전 시간으로 지정하면 문제가 발생한다.`    
+
+```python
+schedule_interval="31 15 * * *", #(한국 시간 00:31)
+```
+
+- 실행된 시간 : '2019-06-11T15:31' (= 한국 시간 `2019/06/12` 00:31)   
+- execution_date : '2019-06-10' (=주문번호)    
+
+2019/06/12 에 2019/06/10 일자 로그 작업을 하게 된 것이다.    
+
+따라서 한국시간 기준으로 2019-06-12일에 실행되고 2019-06-10일 데이터를 작업하게 된다.   
+
+이러한 오류를 피하기 context 변수를 이용하여 날짜를 조정해야 한다.    
+
+```
+// execution_date 이 "2019-06-10" 인 경우
+
+{'END_DATE': '2019-06-10',
+ 'conf': <module 'airflow.configuration' from '.../configuration.py'>,
+ 'ds_nodash': '20190610',
+ 'end_date': '2019-06-10',
+ 'execution_date': <Pendulum [2019-06-10T00:00:00+00:00]>,
+ 'inlets': [],
+ 'latest_date': '2019-06-10',
+ 'macros': <module 'airflow.macros' from '.../__init__.py'>,
+ 'next_ds': '2019-06-10',
+ 'next_ds_nodash': '20190610',
+ 'next_execution_date': datetime.datetime(2019, 6, 10, 16, 31, tzinfo=<TimezoneInfo [UTC, GMT, +00:00:00, STD]>),
+ 'outlets': [],
+ 'params': {},
+ 'prev_ds': '2019-06-09',
+ 'prev_ds_nodash': '20190609',
+ 'prev_execution_date': datetime.datetime(2019, 6, 9, 16, 31, tzinfo=<TimezoneInfo [UTC, GMT, +00:00:00, STD]>),
+ 'run_id': None,
+ 'tables': None,
+ 'task': <Task(PythonOperator): show_me_the_context>,
+ 'task_instance': <TaskInstance: template.show_me_the_context 2019-06-10T00:00:00+00:00 [None]>,
+ 'task_instance_key_str': 'template__show_me_the_context__20190610',
+ 'templates_dict': None,
+ 'test_mode': True,
+ 'ti': <TaskInstance: template.show_me_the_context 2019-06-10T00:00:00+00:00 [None]>,
+ 'tomorrow_ds': '2019-06-11',
+ 'tomorrow_ds_nodash': '20190611',
+ 'ts': '2019-06-10T00:00:00+00:00',
+ 'ts_nodash': '20190610T000000',
+ 'ts_nodash_with_tz': '20190610T000000+0000',
+ 'var': {'json': None, 'value': None},
+ 'yesterday_ds': '2019-06-09',
+ 'yesterday_ds_nodash': '20190609'}
+```
 
 - - - 
 
@@ -162,6 +373,7 @@ airflow는 분명히 의도와는 다르게 동작할 것이다.
 <https://medium.com/@aldente0630/%EC%95%84%ED%8C%8C%EC%B9%98-%EC%97%90%EC%96%B4%ED%94%8C%EB%A1%9C%EC%9A%B0%EB%A1%9C-%EC%9E%91%EC%97%85%ED%9D%90%EB%A6%84-%EA%B0%9C%EB%B0%9C%ED%95%B4%EB%B3%B4%EA%B8%B0-8f3653d749b4>   
 <https://engineering.linecorp.com/ko/blog/data-engineering-with-airflow-k8s-1/>    
 <https://bomwo.cc/posts/execution_date/>   
+<https://leeyh0216.github.io/2020-05-16/airflow_install_and_tutorial>    
 
 {% highlight ruby linenos %}
 
