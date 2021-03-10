@@ -70,13 +70,72 @@ ISO 8601에 따르면 파싱을 할 수 있는 라이브러리가 많으며 전�
 
 - - - 
 
+## Date와 TimeStamp 차이   
+
+자바에서 날짜 표현으로 많이 쓰이는 date와 timestamp 차이를 알아보자.   
+
+- java.util.Date   
+
+일반적으로 날짜와 시간을 저장할 때 사용한다.(2018-12-09 16:39:20)   
+
+- java.sql.Timestamp   
+date보다 정밀한 시간을 요구할 때 사용한다.   
+시스템간의 프로세스 시간, 우선순위를 정하거나 밀리세컨드 이하까지 사용하기 
+위해 사용한다.   
 
 
+## Scala date example   
+
+스칼라에서 여러가지 날짜 관련 처리 방법을 알아보자.  
+
+#### 현재 분, 시간 가져오기    
+
+```scala 
+val now = Calendar.getInstance()
+println(now.get(Calendar.MINUTE))
+```
+
+현재 분을 int 타입으로 리턴한다. 
+
+```scala   
+val now = Calendar.getInstance()
+println(now.get(Calendar.HOUR_OF_DAY)) 
+```
+
+0부터 23시 까지 현재 시간을 리턴한다.    
+
+#### SimpleDateFormat을 이용하여 시간 가져오기     
+
+자바의 SimpleDateFormat 클래스를 사용하여 날짜를 표현할 수 있다.   
+
+```scala    
+val now = Calendar.getInstance().getTime
+val simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+val result = simpleDateFormat.format(now)
+println(result) // 출력 : 2021-03-10 23:18:13
+```
+
+#### 시,분,초, 밀리세컨 모두 최대치로 초기화     
+
+```scala   
+def maximize(date: Date): Date = {
+    val cal = Calendar.getInstance()
+    cal.setTime(date)
+
+    cal.set(Calendar.HOUR_OF_DAY,23)
+    cal.set(Calendar.MINUTE, 59)
+    cal.set(Calendar.SECOND, 59)
+    cal.set(Calendar.MILLISECOND,999)
+
+    cal.getTime
+  }
+```
 
 - - - 
 
 **Reference**    
 
+<https://alvinalexander.com/scala/scala-get-current-date-time-hour-calendar-example/>   
 <https://vmpo.tistory.com/77>    
 <https://twpower.github.io/29-iso8601-utc-and-python-example>    
 
