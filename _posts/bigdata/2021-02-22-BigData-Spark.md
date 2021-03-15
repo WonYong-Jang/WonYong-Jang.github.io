@@ -481,9 +481,7 @@ println(result.collect.mkString("\n"))
 // (c,1)
 ```    
 
-- - -    
 
-### 6. 집계와 관련된 연산들    
 
 
 
