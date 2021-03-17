@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Scala] 스칼라의 Type에 대해서 "
-subtitle: "제네릭, type bounds, type variance"    
+subtitle: "type bounds(Upper bound, Lower bound), type variance"    
 comments: true
 categories : Scala
 date: 2021-03-05
@@ -64,7 +64,7 @@ def method4 : Double = 6 // 리턴타입 Double
 
 - - -    
 
-## 타입 매개변수    
+## 타입 바운드     
 
 `스칼라에서 타입 바운드(type bounds)는 타입 매개변수와 타입 변수에 제약을 
 거는 행위이다.`    
@@ -77,45 +77,69 @@ def method4 : Double = 6 // 리턴타입 Double
 
 > View Bound를 사용하다가 scala 2.10 부터 deprecated되고 Context Bound로 전환되었다.    
 
+#### Upper Type Bounds    
+
 먼저 `Upper Bound` (한국 말로 상위 타입 경계라 한다)   
 
 [T <: S] 이렇게 표현할 수 있다. T는 타입 매개변수이고 S는 타입이다.   
 
 아래 예시를 살펴보자.   
 
-```scala   
-class Member
-class SchoolMember extends Member
-class ClassMember extends SchoolMember
+```scala  
+abstract class Animal { def name: String }
+
+abstract class Pet extends Animal { def owner: String }  // Pet 에서만 사용할 메서드   
+
+class Cat extends Pet {
+  override def name: String = "Cat"
+  override def owner: String = "mike"
+}
+
+class Dog extends Pet {
+  override def name: String = "Dog"
+  override def owner: String = "kaven"
+}
+
+class Lion extends Animal {
+  override def name: String = "Lion"
+}
+
+class PetContainer[T <: Pet](t: T) {  // Upper bound    
+  def pet: T = t
+}
 
 object Main extends App {
 
-def print[T <: SchoolMember](t: T): Unit = {
-println(t)
-}
+  val dogContainer = new PetContainer[Dog](new Dog)
+  val catContainer = new PetContainer[Cat](new Cat)
 
-val member = new Member
-val schoolMember = new SchoolMember
-val classMember = new ClassMember
-
-print(schoolMember)  // SchoolMember@3a03464    
-print(classMember)   // ClassMember@2d3fcdbd   
+  println(dogContainer.pet.name) // 출력 : Dog
+  println(catContainer.pet.name) // 출력 : Cat
 }
 ```
 
-print 메서드를 살펴보면, upper bound(<:)를 사용했다.   
+PetContainer 클래스를 살펴보면, upper bound(<:)를 사용했다.   
 
+`따라서 Pet의 자식 클래스를 사용할 수 있도록 제한을 걸었다.`
 
-`따라서 SchoolMember의 자식 클래스를 사용할 수 있도록 제한을 걸었다.`
+`upper bound(<:)의 제약을 넘어서면, 타입 파라미터 바운드와 타입이 안 맞는다는 에러가 발생한다.`    
 
-`upper bound(<:)의 제약을 넘어서면, 컴파일 타임 때는 발생하지 않지만, 
-    타입 파라미터 바운드와 타입이 안 맞는다는 에러가 발생한다.`    
+```scala
+val lionContainer = new PetContainer[Lion](new Lion)  // ths would not compile   
+```
 
 ```
 inferred type arguments [Member] do not conform to method print's type parameter bounds [T <: SchoolMember]
 type mismatch;
 ```
 
+`Upper Bound를 사용하는 이유는 제너릭 파라미터에 있는 메서드나 속성만 사용하고자 할때 
+제한을 건다.`    
+위의 경우는 Animal에는 없고 Pet에만 있는 owner 라는 메서드를 사용해야 할때 
+이러한 제한을 걸게 된다.   
+
+
+#### Lower Bounds   
 
 
 다음은 `Lower Bound` 이다.( 한국 말로 하위 타입 경계라 한다.)    
