@@ -34,13 +34,33 @@ var str = "Ousider" // 타입 추론함
 `Any 타입은 모든 타입의 superclass이기 때문에 어떤 타입의 오브젝트도 참조할 수 
 있는 추상클래스이다.`   
 
+Any가 모든 값의 조상이기 때문에 모든 값을 List에 담을 수 있게 되는데 
+아래 예제를 살펴보자.   
+
+```scala   
+val list: List[Any]  = List (
+    "a String", // string
+    455,
+    'c',        // a Character
+    true,
+    () => "an anonymous function returning a string"
+  )
+list.foreach(e => println(e))
+```
+
 `AnyVal, AnyRef는 Any의 자식으로 AnyVal은 Int, Double 같은 Java의 primitive타입과 
 매핑되는 타입들의 기본이 되고 AnyRef는 모든 레퍼런스 타입의 기본이 된다.`   
 
-AnyRef는 바로 자바의 Object에 매핑된다.   
+AnyRef는 바로 자바의 Object에 매핑되며, 모든 user-defined type은 AnyRef의 자손이다.     
 
 `Nothing 타입은 모든 타입의 최하위 타입이다.`   
 정해진 타입외에 exception을 리턴하게 되면 Nothing타입으로 추론한다.    
+
+`Null은 모든 AnyRef의 서브 타입이고, 다른 JVM 언어들과 호환하기 위해서 제공하는 것이다. 
+스칼라에서는 보통 사용하지 않는다.`    
+
+`Unit`은 아무 의미 없는 값 타입이며, 문법적으로 '()'로 표현한다. 모든 함수는 
+항상 리턴타입이 있어야 하는데 아무 리턴값이 없는 경우 Unit을 사용한다.    
 
 `Option[T]타입은 결과가 정해지지 않은 경우를 위해서 지원한다. 상황에 따라 
 Option[T]를 상속받는 Some[T]나 None을 리턴할 수 있으며 이는 NullPointException을 
