@@ -157,7 +157,7 @@ sourceBuilder.query(QueryBuilders.termQuery("user", "mike"));
 
 ```java
 CountRequest countRequest = new CountRequest();
-countRequest.indices("blog", "author");
+countRequest.indices("blog", "author");  // index : blog, author 지정     
 countRequest.source(sourceBuilder);
 ```
 
