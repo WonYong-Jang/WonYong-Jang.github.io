@@ -226,7 +226,10 @@ $ brew install kibana        // http://localhost:5601
 엘라스틱 서치와 키바나를 설치했다면 Restful API로 document를 추가하는 간단한 예제를 
 해보자.   
 
-#### 1) document 생성 
+#### 1) document 생성   
+
+예제를 curl 요청을 통해서 API를 조회하고 있는데, 
+    curl에 대한 자세한 내용은 [링크](https://www.lesstif.com/software-architect/curl-http-get-post-rest-api-14745703.html)를 참고하자.    
 
 ```
 curl -XPOST 'localhost:9200/animal/dog/3?pretty' -d '{"weight":"55"}' -H 'Content-Type:application/json'

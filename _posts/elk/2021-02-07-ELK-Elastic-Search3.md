@@ -9,7 +9,8 @@ background: '/img/posts/mac.png'
 ---
 
 
-[이전 글](https://wonyong-jang.github.io/elk/2021/02/05/ELK-Elastic-Search.html)에서 엘라스틱 서치 기본 개념과 아키텍터에 대해 알아 봤다.   
+[ES 기본 개념](https://wonyong-jang.github.io/elk/2021/02/05/ELK-Elastic-Search.html)에서 엘라스틱 서치 기본 개념과 아키텍터에 대해 알아 봤다.   
+또한, [클러스터](https://wonyong-jang.github.io/elk/2021/02/07/ELK-Elastic-Cluster2.html) 에 대해서도 자세하게 알아보았다.   
 
 `Cluster는 node들의 집합이고 노드는 shard로 구성되며, 데이터는 shard로 분산되어 저장한다.`        
 
@@ -46,7 +47,7 @@ curl -XPUT 'localhost:9200/customer?pretty'
 
 `acknowledged:true 이면, 작업이 성공되었다는 뜻이다.`    
 index 조회를 다시 해보면 지금 생성한 index를 확인 할 수 있다.     
-yellow status인 이유는 [이전글]()을 참고하자.   
+yellow status인 이유는 [이전글](https://wonyong-jang.github.io/elk/2021/02/07/ELK-Elastic-Cluster2.html)을 참고하자.   
 
 
 ## 3. document 추가   
@@ -54,7 +55,13 @@ yellow status인 이유는 [이전글]()을 참고하자.
 다음으로 index에 document를 추가해보자. 문서를 색인화 하려면 어떤 type인지, 
     몇 번 _id에 색인화할 것인지 명시해 줘야 한다.    
 
-> -d 옵션은 --data-binary의 축약이며, 추가할 데이터를 명시한다.  
+```
+-d 옵션은 --data의 축약이며 Form을 POST 하는 HTTP나 JSON으로 데이터를 주고 받는 
+REST 기반의 웹서비스 디버깅시 유용한 옵션이다.   
+
+curl은 POST 시 데이터를 text로 취급하므로 binary 데이터는 깨질 수 있다. 
+제대로 전송하려면 --data-binary 옵션을 추가해야 한다.
+```
 
 > -d 옵션에 @파일 경로를 작성하여 파일을 데이터로 넘길 수 있다. 아래 2번째 예제에서는 data.json을 직접 작성하여 API를 호출하였다.   
 
@@ -145,7 +152,7 @@ curl -XDELETE 'localhost:9200/customer?pretty'
 
 
 이상으로 index, document를 중심으로 데이터를 조작하는 CRUD 실습을 해봤다.   
-다음 자아에서 조금 더 응용 된 방식으로 document를 검색하는 API에 대해 알아보자.   
+다음 장에서 조금 더 응용 된 방식으로 document를 검색하는 API에 대해 알아보자.   
 
 - - - 
 
