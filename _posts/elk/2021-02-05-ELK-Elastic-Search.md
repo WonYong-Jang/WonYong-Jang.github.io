@@ -180,7 +180,7 @@ Elasticsearch는 검색을 위해 단독으로 사용되기도 하며, ELK(Elast
 
 - - - 
 
-## 엘라스틱 서치 클러스터 구성   
+# 4. 엘라스틱 서치 클러스터 구성   
 
 엘라스틱 서치의 노드들은 클라이언트와의 통신을 위한 http 포트(9200~9299), 
     노드 간의 데이터 교환을 위한 tcp 포트(9300~9399)의 총 2개의 네트워크 통신을 
@@ -209,8 +209,11 @@ Elasticsearch는 검색을 위해 단독으로 사용되기도 하며, ELK(Elast
 
 - - -
 
+# 5. 엘라스틱 서치, 키바나 시작하기
 
-## 설치
+먼저 아래와 같이 엘라스틱 서치와 키바나를 설치해보자.   
+
+### 설치
 
 아래 설치 내용은 macOS 기준이다.
 
@@ -219,11 +222,6 @@ $ brew install elasticsearch // http://localhost:9200
 
 $ brew install kibana        // http://localhost:5601
 ```
-
-- - -
-
-
-## 엘라스틱 서치, 키바나 시작하기
 
 엘라스틱 서치와 키바나를 설치했다면 Restful API로 document를 추가하는 간단한 예제를 
 해보자.   
@@ -240,7 +238,7 @@ curl -XPOST 'localhost:9200/animal/dog/3?pretty' -d '{"weight":"55"}' -H 'Conten
 <img width="750" alt="스크린샷 2021-03-19 오후 5 26 53" src="https://user-images.githubusercontent.com/26623547/111751904-61335680-88d8-11eb-88db-978f59fa25ea.png">     
 
 - -d 옵션    
-    - HTTP Post data
+    -    --data-binary의 축약이며, 추가할 데이터를 명시   
 
 - -H 옵션 
     - 헤더를 명시한다. 예제에서는 json으로 전달하기 위해서 application/json으로 작성    
