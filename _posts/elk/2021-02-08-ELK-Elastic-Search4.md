@@ -116,8 +116,40 @@ Query DSL에 대해 알아보기에 앞서 Query Context와 Filter Context에 �
     - Filter Context에서 사용되는 query 절은 '해당 document가 query절과 일치하는가?' 라는 질문에 해당하는데, 그 `대답은 
     true 또는 false이며 점수(score)는 계산하지 않는다.`   
 
-
 쿼리(Query)와 필터(Filter)의 자세한 내용은 [참고 링크](https://m.blog.naver.com/tmondev/220292262363) 를 참고하자.   
+
+#### 5-1) Relevancy ( 정확도 )    
+
+RDBMS 같은 시스템에서는 쿼리 조건에 부합하는 지만 판단하여 결과를 가져올 뿐 
+각 결과들이 얼마나 정확한지에 대한 판단은 보통 불가능하다. ES 와 같은 
+풀 텍스트 검색엔진은 검색 결과과 입력된 검색 조건과 얼마나 일치하는 지를 
+계산하는 알고리즘을 가지고 있어 이 정확도를 기반으로 사용자가 
+가장 원하는 결과를 먼저 보여줄 수 있다.     
+
+> 구글 또는 네이버 같은 웹 검색엔진들도 검색을 하면 찾은 결과들 중에 
+어떤 것이 사용자가 입력한 검색어와 가장 연관성이 있는지를 계산하여 정확도가 
+가장 높은 결과들 부터 보여준다.   
+
+`엘라스틱서치의 검색 결과에는 스코어 점수가 표시가 된다. 이 점수는 
+검색된 결과가 얼마나 검색 조건과 일치하는지를 나타내며 점수가 높은 순으로 
+결과를 보여준다.`    
+
+이 점수를 계산하기 위해 BM25라는 알고리즘을 사용하고 여기서 BM은 Best Matching을 뜻한다.   
+이 알고리즘은 TF, IDF 그리고 Field Length 총 3가지 요소가 사용된다.    
+
+- TF(Term Frequency)    
+    - 구글에서 '쥬라기 공원'이라는 검색어로 검색을 한다고 가정해보자. 해당 단어가 5번 들어 있는 웹 페이지 보다는 
+    10번 들어있는 웹 페이지가 내가 보고 싶어 하는 정보가 있는 페이지일 확률이 높다는 것이다. 즉, document 내에 검색된 
+    term이 더 많을 수록 점수가 높아지는 것을 Term Frequency라고 한다.   
+
+- IDF(Inverse Document Frequency)    
+    - 구글에서 '쥬라기 공원' 이라는 검색어로 검색을 했을 때 '쥬라기'가 포함된 결과는 
+    10개, '공원'이 포함된 결과는 100개 라고 가정한다면 흔한 단어인 '공원' 보다는 희소한 단어인 
+    '쥬라기'가 검색에 더 중요한 term일 가능성이 높다.     
+- Field Length    
+    - 'lazy'를 포함하고 있는 2개 document 들이 나타나지만, 'The quick brown fox jumps over the lazy dog' 보다 
+    'Lazy jumping dog'가 점수가 더 높게 나타난다.     
+
 
 - - - 
 
@@ -169,6 +201,73 @@ curl -XGET 'localhost:9200/bank/account/_search?pretty' -H 'Content-Type: applic
 }
 ```
 
+`match 검색에 여러 개의 검색어를 집어넣게 되면 디폴트로 OR 조건으로 검색이 되어 
+입력된 검색어 별로 하나라도 포함된 모든 문서를 모두 검색한다.`    
+
+아래와 같이 검색어로 'mill street'을 주었을 때 'mill'과 'street' 단어 
+하나라도 포함한 document를 모두 포함한다.   
+
+```
+"match":{
+    "address":"mill street"
+}
+```
+
+`검색어가 여럿일 때 검색 조건을 OR가 아닌 AND로 바꾸려면 operator 옵션을 
+사용할 수 있다.`    
+
+아래와 같은 형식으로 'mill street' 모두 있는 document만 검색한다.   
+
+```
+"query": {
+    "match": {
+      "address": {
+        "query" :"mill street",
+        "operator": "and"
+      }
+    }
+  }
+```
+
+또한, match 쿼리에서 'mill street'라는 구문을 공백을 포함해서 순서까지 정확히 
+일치하는 내용을 검색하려면 어떻게 해야 할까?    
+
+`바로 match_phrase 쿼리를 사용하면 된다.`
+`match_phrase 쿼리는 입력된 검색어를 순서까지 고려하여 검색을 수행한다.`    
+
+```
+"query": {
+  "match_phrase": {
+    "address": "mill street"
+  }
+}
+```
+
+`match_phrase 쿼리는 slop 이라는 옵션을 이용하여 slop에 지정된 값 만큼 
+단어 사이에 다른 검색어가 끼어드는 것을 허용할 수 있다.`       
+slop을 1로 하고 검색을 하면 아래와 같이 쿼리를 만들 수 있다.   
+
+```
+  "query": {
+    "match_phrase": {
+      "address": {
+        "query": "288 street",
+        "slop": 1
+      }
+     }
+  }
+```
+
+slop의 크기를 1로 했기 때문에 '288' 과 'street' 사이에 있는 '288 mill street' document도 
+같이 검색이 된다.   
+
+> 이처럼 match_phrase 쿼리와 slop을 이용하면 정확도를 조절 해 가며 원하는 
+검색 결과의 범위를 넓힐 수 있다. slop을 너무 크게 하면 검색 범위가 넓어져 관련이 없는 
+결과가 나타날 확률도 높아지기 때문에 1이상은 사용하지 않는 것을 권장한다.    
+
+
+
+
 [공식문서](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-dsl-match-query.html) 를 참고하자.   
 
 
@@ -179,7 +278,7 @@ curl -XGET 'localhost:9200/bank/account/_search?pretty' -H 'Content-Type: applic
 - must : bool must 절에 지정된 모든 쿼리가 일치하는 document를 조회    
 - should : bool should 절에 지정된 모든 쿼리 중 하나라도 일치하는 document를 조회   
 - must_not : bool must_not 절에 지정된 모든 쿼리가 모두 일치하지 않는 document를 조회   
-- filter : must와 같이 filter 절에 지정된 모든 쿼리가 일치하는 document를 조회하지만, Filter context에서 실행되기 때문에 score를 무시한다.    
+- filter : 쿼리가 참인 document를 검색하지만 score를 계산하지 않는다. must 보다 검색 속도가 빠르고 캐싱이 가능하다.       
 
 bool 쿼리 내에 위의 각 절들을 조합해서 사용할 수 있다.   
 
@@ -200,6 +299,42 @@ bool 쿼리 내에 위의 각 절들을 조합해서 사용할 수 있다.
 }
 ```
 
+`bool 쿼리의 should 는 검색 점수를 조정하기 위해 사용할 수 있다.`    
+아래 예제를 보면, address가 'street'을 포함하는 도큐먼트를 검색하는데 
+그 결과들 중 'mill' 이 포함된 결과에 가중치를 줘서 상위로 올리고 싶으면 
+should 안에 찾는 검색을 추가 하면된다.
+
+```
+  "query": {
+    "bool": {
+      "must": [
+        {"match": {
+          "address": "street"
+        }}
+      ],
+      "should": [
+        {"match": {
+          "address": "mill"
+        }}
+      ]
+    }
+  }
+```
+
+`should는 match_phrase와 함께 유용하게 사용할 수 있다.`    
+쇼핑몰 상품 검색 같은 사례에서는 보통 검색어로 입력된 단어가 
+하나라도 포함된 결과들은 모두 가져오도록 되어 있다. 이 때 검색 결과 중에서 
+입력한 검색어 전체 문장이 정확히 일치하는 결과를 맨 상위에 위치시키면서 
+다른 결과들을 누락시키지 않게하여 사용자가 정확하게 
+원하는 수준 높은 품질의 결과를 제공할 수 있다.   
+
+> 예를 들어, '스키 장갑' 같은 단어로 검색했을 때 스키 용품들과 각종 장갑들을 모두 가져오면서 
+그 중 스키 장갑을 가장 상위에 표시할 수 있다. 여기서 slop : 1 을 이용하면 '스키 보드 장갑', 
+    '스키 벙어리 장갑' 같이 스키와 장갑 사이에 다른 값이 들어간 결과에도 가중치를 부여할 수 있다.   
+
+
+
+
 [공식문서](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-dsl-bool-query.html) 를 참고하자.   
 
 
@@ -207,6 +342,31 @@ bool 쿼리 내에 위의 각 절들을 조합해서 사용할 수 있다.
 
 `filter 쿼리는 document가 검색 쿼리와 일치하는지 나타내는 _score 값을 계산하지 
 않도록 쿼리 실행을 최적화 한다.`    
+
+bool 쿼리의 filter 안에 하위 쿼리를 사용하면 스코어에 영향을 주지 않는다.   
+
+
+
+`문자열 데이터는 keyword 형식으로 저장하여 정확한 검색이 가능하다.`    
+`아래와 같이 문자열과 공백, 대소문자까지 정확히 일치하는 데이터만을 결과로 리턴한다.`   
+
+```
+"query": {
+    "bool": {
+      "filter": {"match":{
+        "address.keyword":"891 Elton Street"
+      }}
+    }
+  }
+```
+
+keyword 타입으로 저장된 필드는 스코어를 계산하지 않고 정확값의 일치 여부만을 
+따지기 때문에 스코어가 score : 0.0 으로 나오게 된다. 스코어를 계산하지 
+않기 때문에 keyword 값을 검색할 때는 filter 구문 안에 넣도록 한다.   
+
+> filter 안에 넣은 검색 조건들은 스코어를 계산하지 않지만 캐싱이 되기 때문에 
+쿼리가 더 가볍고 빠르게 실행된다. keyword 뒤에 설명할 range 쿼리와 같이 
+스코어 계산이 필요하지 않은 쿼리들은 모두 filter 안에 넣어서 실행하는 것이 좋다.   
 
 
 
@@ -478,6 +638,7 @@ Output
 
 **Reference**    
 
+<https://esbook.kimjmin.net/05-search/5.1-query-dsl>    
 <https://bakyeono.net/post/2016-08-20-elasticsearch-querydsl-basic.html>   
 <https://victorydntmd.tistory.com/313?category=742451>    
 
