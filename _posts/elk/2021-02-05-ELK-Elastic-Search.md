@@ -266,7 +266,7 @@ curl -XPOST 'localhost:9200/animal/dog/3?pretty' -d '{"weight":"55"}' -H 'Conten
 <img width="750" alt="스크린샷 2021-03-19 오후 5 26 53" src="https://user-images.githubusercontent.com/26623547/111751904-61335680-88d8-11eb-88db-978f59fa25ea.png">     
 
 - -d 옵션    
-    -    --data-binary의 축약이며, 추가할 데이터를 명시   
+    -    --data의 축약이며, 추가할 데이터를 명시   
 
 - -H 옵션 
     - 헤더를 명시한다. 예제에서는 json으로 전달하기 위해서 application/json으로 작성    
