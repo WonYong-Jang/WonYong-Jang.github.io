@@ -3,7 +3,7 @@ layout: post
 title: "[DevOps] Blue-Green 배포, A/B 테스트, Canary Release"
 subtitle: "Continuous Deliver(무중단 배포 전략)"    
 comments: true
-categories : ELK
+categories : DevOps
 date: 2021-03-24
 background: '/img/posts/mac.png'
 ---
