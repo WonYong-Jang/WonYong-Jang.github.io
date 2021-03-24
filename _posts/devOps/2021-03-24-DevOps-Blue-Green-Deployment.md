@@ -21,6 +21,8 @@ background: '/img/posts/mac.png'
 관리가 편하지만, 배포 중 한쪽 인스턴스의 수가 감소되므로 서버 처리 용량을 
 미리 고려해야 한다.   
 
+<img width="749" alt="스크린샷 2021-03-24 오전 11 16 59" src="https://user-images.githubusercontent.com/26623547/112332811-67249f80-8cfd-11eb-930d-79461789f8bb.png">   
+
 ## Blue-Green Deployment   
 
 일반적인 서비스 배포 과정에서 항상 맞딱드리게 되는 문제가 있다. 배포 전에 서비스를 
