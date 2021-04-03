@@ -19,9 +19,38 @@ String과 Object과 같이 레퍼런스 타입(AnyRef)이 null이 될 수 있고
 value 타입(AnyVal)은 null이 될 수 없다.    
 스칼라에서 null은 Null의 인스턴스이고 자바의 null과 비슷하다.    
 
-```
+```scala
 val num: Int = null // error 
 ```
+
+아래와 같이 null 레퍼런스를 가진 클래스 예제를 보자.   
+
+```scala
+case class Car(make:String)
+
+//Initializes an instance of Car with null reference
+val nullRefCar:Car = null
+try{
+  println(nullRefCar.make)
+}catch{
+  case npe:NullPointerException => println("Null Pointer Error occurred: %s".format(npe))
+}
+
+//Initializes an instance of Car type with argument as null
+val nullMakeCar = Car(null)
+println(nullMakeCar.make)
+```
+
+Output
+
+```
+Null Pointer Error occurred: java.lang.NullPointerException
+null
+```
+
+위의 결과처럼 NullPointException 에러를 피히가 위해 [Option](https://www.baeldung.com/scala/option-type) 을 
+사용하는 것을 추천한다.   
+
 
 ## Null   
 
