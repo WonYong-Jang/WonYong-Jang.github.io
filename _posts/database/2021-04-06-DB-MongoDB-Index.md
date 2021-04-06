@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[DB] MongoDB Index 설계 전략"
-subtitle: ""
+subtitle: "인덱스 설계와 성능 향상 방법"
 comments: true
 categories : Database
 date: 2021-04-06
