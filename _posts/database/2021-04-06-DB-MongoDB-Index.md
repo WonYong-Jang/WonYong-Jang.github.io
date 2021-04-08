@@ -26,7 +26,7 @@ background: '/img/posts/mac.png'
 
 그렇다면 인덱스가 없는 데이터베이스를 상상해 보자. 정렬되지 않은 채 
 마구잡이로 작성된, 색인마저 없는 책은 어떨까?   
-우리가 할 수 있는 이리은 원하는 단어를 찾을 때까지 첫 장부터 한 단어씩 
+우리가 할 수 있는 일은 원하는 단어를 찾을 때까지 첫 장부터 한 단어씩 
 찾는 것이다. 만약 맨 마지막 페이지에 찾고자 하는 단어가 있다면 얼마나 
 오랫동안 찾고 있어야 할까?   
 
@@ -45,28 +45,31 @@ MongoDB의 인덱스를 잘 작성하는 법을 이야기하기 전에 꼭 기�
 
 무엇이 문제일까? 색인이 너무 큰 범위로 만들어졌다. 이를 데이터베이스 용어로 
 'Selectivity'가 떨어진다고 이야기한다. 효과적인 인덱스 작성 전략을 위해 
-`만드시 고려해야 하는 것이 바로 이 'Selectivity'를 높이는 것이다. 보다 
+'반드시 고려해야 하는 것이 바로 이 'Selectivity'를 높이는 것이다. 보다 
 정확하게 검색 할 수 있도록 좁은 범위를 갖는 색인을 만들어야 한다.`      
 
-`또한, '읽기'와 '쓰기'중 어떤 작업을 주로 하는 가도 잘 파악해야 한다.`       
+`또한, '읽기'와 '쓰기'(CUD) 중 어떤 작업을 주로 하는 가도 잘 파악해야 한다.`       
 내가 만든 단어장은 아직 미완성이어서 계속 새로운 단어를 추가하고 있다.   
 이미 색인을 만들어두었기 때문에 매번 알파벳 순서로 추가 할 위치를 찾고 
 그 사이에 새로운 단어를 추가하는 작업을 해야 한다.    
 따라서 쓰기 작업이 읽기 작업에 비해 많은 데이터베이스는 인덱스를 복잡하게 
 설정하면 오히려 나쁜 성능을 내는 경우가 있다.   
 
-`마지막으로 사용 할 수 있는 메모리 크기를 고려해야 한다.` 인덱스는 실제 데이터와 
-별개의 메모리 공간에 저장을 하게 된다. 따라서 인덱스를 많이 만들다 보면 
+`마지막으로 사용 할 수 있는 메모리 크기를 고려해야 한다. 인덱스는 실제 데이터와 
+별개의 메모리 공간에 저장을 하게 된다.` 따라서 인덱스를 많이 만들다 보면 
 그만큼 많은 메모리를 사용하게 된다. 데이터베이스가 정상적으로 동작하기 
 위해서는 그 외에도 작업 셋(working set)이라는 데이터 구조도 메모리를 점유하게 
 된다. 따라서 메모리가 부족하여 문제가 발생하지 않도록 항상 주의를 
 기울여야 한다.   
 
+또한, MongoDD는 내부적으로 B-Tree(Balanced Tree) 알고리즘을 이용하여 인덱스를 구성한다. 
+
 정리를 해보면 아래와 같다.   
 
 - `가급적 촘촘하게 인덱스를 작성해서 selectivity를 높여야 한다.`   
-- `쓰기 작업이 많은 데이터셋은 인덱스를 복잡하게 설계하지 않는다.`   
+- `쓰기 작업(CUD)이 많은 데이터셋은 인덱스를 복잡하게 설계하지 않는다.`   
 - `메모리를 충분히 확보하고 항상 관찰해야 한다.`   
+
 
 - - - 
 
@@ -92,12 +95,18 @@ MongoDB는 쿼리를 수행 할 때 어떤 방식으로 검색을 할 지 스스
 
 - - - 
 
-## Single-Key Index    
+## Single-Key Index (단일 인덱스)
 
 `쿼리에서 단 하나의 key만을 이용한다면 단일 키 인덱스를 사용해야 한다.`   
 
 ```ruby
 db.products.createIndex({ category: 1 })
+```
+
+생성한 인덱스를 확인하기 위해서 아래와 같이 조회 할 수 있다.    
+
+```ruby
+db.products.getIndexes()
 ```
 
 카테고리 필드를 키로 인덱스를 만든다. `여기서 1은 오름차순, -1은 내림차순을 의미한다.`     
@@ -107,11 +116,16 @@ db.products.createIndex({ category: 1 })
 
 일렬로 나열되어 있기 때문에 찾는 순서는 중요하지 않다. 왼쪽에서 오른쪽으로 읽든, 
     오른쪽에서 왼쪽으로 읽든 어차피 동일하기 때문이다. 즉, 단일 인덱스에서 
-    오름차순으로 정의 된 인덱스의 컬렉션을 내림차순으로 검색해도 동일한 성능을 낸다.   
+    오름차순으로 정의 된 인덱스의 컬렉션을 내림차순으로 검색해도 동일한 성능을 낸다.  
+
+> 하나의 쿼리에서 단일 인덱스를 두 개 사용하면, 쿼리 옵티마이저가 그 중 
+제일 효율적인 인덱스를 선택한다. 하지만 그 결과가 항상 최선인 것은 아니다.    
+
+
 
 - - - 
 
-## Compound Index   
+## Compound Index (복합 인덱스)
 
 복합 인덱스(Compund Index)는 검색어에 여러 키가 사용된다면 이 인덱스 타입으로 
 정의해야 한다.   
@@ -333,6 +347,78 @@ db.orders.find({}).sort({ ord_date: 1 })
 
 - - - 
 
+## 쿼리 상태 점검 
+
+인덱스를 생성 하고 쿼리를 통해 성능 향상이 있는지 확인해 볼 때 
+쿼리를 실행했는데도 도무지 끝날 생각을 안할 때가 있다.    
+이 때, MongoDB 내부에서는 어떤 작업을 하고 있는지 알아 보자.   
+
+더 자세한 내용은 [공식문서](https://docs.mongodb.com/manual/reference/method/db.currentOp/) 를 참고하자.   
+
+쿼리를 실행 후 다른 창을 하나 더 띄워서 아래와 같이 입력해보자.   
+
+```ruby   
+db.currentOp()
+```
+
+결과는 아래와 같고 분석에 중요한 키만 살펴보자.   
+
+- active: menas the query is 'in progress' state.   
+- secs_running: query's duration, in seconds.   
+- ns: a collection name against you perform the query.   
+- query: the query body.   
+
+
+```
+{
+"inprog" : [
+{
+    "desc" : "conn8003244",
+    "threadId" : "0x5e7e56c0",
+    "connectionId" : 8003244,
+    "opid" : 891016392,
+    "active" : true,
+    "secs_running" : 3,
+    "microsecs_running" : NumberLong(3575970),
+    "op" : "query",
+    "ns" : "quickblox_production.custom_data",
+    "query" : {
+        "$query" : {
+            "start" : {
+                "$lte" : ISODate("2017-11-15T13:57:55Z")
+             },
+            "application_id" : 53894,
+            "class_name" : "Broadcast"
+        },
+        "$orderby" : {
+            "start" : -1
+        }
+    },
+    "planSummary": ...,
+    "client" : "10.0.0.87:46290",
+    "numYields" : 5601,
+    "locks" : ...,
+    "waitingForLock" : false,
+    "lockStats" : ...
+}
+]
+}
+```
+
+
+또는, 아래와 같이 쿼리가 3초 이상 나온 것을 찾는 예제이다.   
+
+
+```ruby
+db.currentOp({“secs_running”: {$gte: 3}})
+```
+
+
+
+
+
+- - - 
+
 ## 인덱스 성능 향상시키기   
 
 앞서 최고의 인덱스 전략은 반복 테스트라고 말했다. 이론적으로 타당하더라도 실제로 
@@ -394,7 +480,7 @@ db.orders.aggregate([{ $indexStats: {} }])
 }
 ```
 
-`_id 키의 ops는 0이므로 전혀 사용되지 않았다. 하지만 item_1_quantity_1 키와 
+`id 키의 ops는 0이므로 전혀 사용되지 않았다. 하지만 item_1_quantity_1 키와 
 type_1_item_1 키의 컴파운드 인덱스는 1번씩 사용된 것을 볼 수 있다.`   
 
 ### explain()   
@@ -413,6 +499,32 @@ type_1_item_1 키의 컴파운드 인덱스는 1번씩 사용된 것을 볼 수 
     - 쿼리 계획을 선택하는데 필요한 부분적인 실행 통계   
     - 쿼리 계획을 선택하게 된 이유   
 
+
+`간단하게 인덱스 생성 전과 생성 후 쿼리의 시간을 확인하기 위해서는 
+아래와 같이 확인 가능하다.`   
+
+로컬에서 확인해볼때 764밀리 초로 0.764초 정도 나왔다.   
+
+```ruby
+db.product.find({score:"23"}).explain("executionStats").executionStats.executionTimeMillis   
+// 764
+```
+
+아래와 같이 score에 대한 인덱스를 생성 한다.   
+
+```ruby
+db.product.createIndex({score:1})   
+```
+
+인덱스 생성 후, 실행 속도를 확인해보면 0이라는 값이 나왔다. 실습을 통해 인덱스로 
+매우 빠른 검색이 가능하다는 것을 알 수 있다.   
+
+```ruby
+db.product.find({score:"56"}).explain("executionStats").executionStats.executionTimeMillis   
+// 0
+```
+
+explain()에 대해 자세한 내용은 아래와 같다.
 
 ```ruby 
 {
@@ -462,7 +574,8 @@ type_1_item_1 키의 컴파운드 인덱스는 1번씩 사용된 것을 볼 수 
 ```
 
 explain() 메서드가 반환하는 문서의 내용은 꽤 복잡하다. 확실하게 이해하기 위해서는 
-MongoDB의 [공식문서](https://docs.mongodb.com/manual/reference/explain-results/) 메뉴얼을 읽어보는 것을 추천한다.   
+MongoDB의 [공식문서](https://docs.mongodb.com/manual/reference/explain-results/) 메뉴얼을 읽어보는 것을 추천한다.      
+
 
 ### hint()    
 
@@ -487,13 +600,45 @@ db.people.find(
 ).hint({ $natural: 1 })
 ```
 
+- - - 
+
+
+## index 사용 시 주의점    
+
+`1. 상황에 따라 다르지만 일반적으로 컬렉션에 2~3개 이상의 인덱스를 가지지 않는 것이 좋다.`   
+
+위에서 말한 것처럼 인덱스가 많을 수록 쓰기 작업은 시간이 더 오래걸린다. 그 이유는 
+데이터 변경 될 시 인덱스의 순서도 재구성해야 하기 때문이다.   
+
+`2. 인덱스 구축이 완료 될때까지 데이터베이스의 모든 read/write 작업은 중단하면서 
+인덱스를 구축하게 된다.`    
+
+특히, 데이터가 먼저 삽입되고 난 후에 인덱스를 구축하게 되는 경우는 
+콜렉션에 대량의 데이터가 있다면 인덱스를 생성하는데 몇시간 ~ 몇일까지도 
+걸릴 수 있다.   
+
+따라서 [backgroud 옵션](https://docs.mongodb.com/manual/reference/method/db.collection.createIndex/)을 이용하여 인덱스를 구축하면서 
+다른 작업들도 가능하게 한다.   
+
+백그라운드에서 인덱스 구축하면, 다른 읽기/쓰기 요청 시 잠시 구축을 멈춘다. 
+트래픽이 최소화 되는 시간에 인덱스를 구축하면 시간을 줄일 수 있다.   
+
+하지만 포그라운드 인덱싱보다는 작업이 더 오래 걸리며, 버전에 따라 
+옵션이 Deprecated 일 수도 있으므로 확인하고 사용하도록 하자.   
+
+```ruby
+db.collection.createIndex({'idx_field': 1}, {background: true})
+```
+
 
 
 - - -   
 
 **Reference**
 
+<https://nangkyeong.tistory.com/entry/MongoDB-in-Action%EC%9C%BC%EB%A1%9C-%EC%A0%95%EB%A6%AC%ED%95%B4%EB%B3%B4%EB%8A%94-MongoDB%EC%9D%98-%EC%9D%B8%EB%8D%B1%EC%8A%A4-%EA%B0%9C%EB%85%90>   
 <https://blog.ull.im/engineering/2019/04/05/mongodb-indexing-strategy.html>   
+<https://docs.mongodb.com/manual/core/index-compound/>   
 
 {% highlight ruby linenos %}
 
