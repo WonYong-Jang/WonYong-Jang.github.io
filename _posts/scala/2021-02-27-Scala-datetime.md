@@ -83,6 +83,8 @@ date보다 정밀한 시간을 요구할 때 사용한다.
 시스템간의 프로세스 시간, 우선순위를 정하거나 밀리세컨드 이하까지 사용하기 
 위해 사용한다.   
 
+- - - 
+
 
 ## Scala date example   
 
@@ -99,7 +101,7 @@ println(now.get(Calendar.MINUTE))
 
 ```scala   
 val now = Calendar.getInstance()
-println(now.get(Calendar.HOUR_OF_DAY)) 
+println(now.get(Calendar.HOUR_OF_DAY))  //ex) 출력 : 22
 ```
 
 0부터 23시 까지 현재 시간을 리턴한다.    
@@ -107,6 +109,8 @@ println(now.get(Calendar.HOUR_OF_DAY))
 #### SimpleDateFormat을 이용하여 시간 가져오기     
 
 자바의 SimpleDateFormat 클래스를 사용하여 날짜를 표현할 수 있다.   
+[공식문서](https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html)를 확인하면 
+SimpleDateFormat에서 사용되는 패턴을 확인 할 수 있다.    
 
 ```scala    
 val now = Calendar.getInstance().getTime
@@ -116,6 +120,10 @@ println(result) // 출력 : 2021-03-10 23:18:13
 ```
 
 #### 시,분,초, 밀리세컨 모두 최대치로 초기화     
+
+상황에 따라서 날짜를 23시 59분 59초 999 밀리세컨과 같이 변경이 필요할 때가 있다.   
+예를 들어 하루에 한번 배치가 실행되고 시간 간격을 0시 0분 0초 ~ 23시 59분 59초로 
+변경해서 쿼리를 실행해야 할 때 유용하다.   
 
 ```scala   
 def maximize(date: Date): Date = {
@@ -131,10 +139,23 @@ def maximize(date: Date): Date = {
   }
 ```
 
+#### Parse string to date-time in UTC    
+
+Json으로 받아온 데이터는 모두 String 형태이며, 이 데이터를 시간 타입으로 변경하여 
+사용이 필요한 경우가 종종 있다. UTC 로 표현되는 문자열의 경우 
+조금 까다로울 수 있는데, `자바 8에서는 DateTimeFormatter을 사용하여 
+ZonedDateTime 또는 OffsetDateTime 클래스를 이용하여 변환이 가능하다.`     
+
+
+
+
+
+
 - - - 
 
 **Reference**    
 
+<https://howtodoinjava.com/java/date-time/parse-string-to-date-time-utc-gmt/>   
 <https://alvinalexander.com/scala/scala-get-current-date-time-hour-calendar-example/>   
 <https://vmpo.tistory.com/77>    
 <https://twpower.github.io/29-iso8601-utc-and-python-example>    

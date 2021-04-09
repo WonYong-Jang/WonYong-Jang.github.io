@@ -363,10 +363,11 @@ db.currentOp()
 
 결과는 아래와 같고 분석에 중요한 키만 살펴보자.   
 
-- active: menas the query is 'in progress' state.   
-- secs_running: query's duration, in seconds.   
-- ns: a collection name against you perform the query.   
-- query: the query body.   
+- opid : operation ID    
+- active : menas the query is 'in progress' state.   
+- secs_running : query's duration, in seconds.   
+- ns : a collection name against you perform the query.   
+- query : the query body.   
 
 
 ```
@@ -400,19 +401,23 @@ db.currentOp()
     "locks" : ...,
     "waitingForLock" : false,
     "lockStats" : ...
-}
-]
+    }
+  ]
 }
 ```
 
-
-또는, 아래와 같이 쿼리가 3초 이상 나온 것을 찾는 예제이다.   
+또는, 아래와 같이 쿼리를 줄 수 있고 3초 이상 나온 것을 찾는 예제이다.   
 
 
 ```ruby
 db.currentOp({“secs_running”: {$gte: 3}})
 ```
 
+위의 opid를 이용하여 실행중인 operation을 종료 시킬 수 있다.
+
+```ruby  
+db.killOp(<opid of the query to kill>)   
+```
 
 
 
