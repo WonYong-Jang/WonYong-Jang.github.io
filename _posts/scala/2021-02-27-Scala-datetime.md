@@ -40,7 +40,11 @@ UTC와 GMT는 동일하다고 생각하면 된다. (정확하게
 # ISO 8601    
 
 `UTC 그리고 TImezone과 함께 문자열의 형태로 시간을 표현하는 방법을 
-기술해놓은 표준이다.`     
+기술해놓은 표준이다.`    
+
+`날짜와 시간의 숫자 표현에 대한 오해를 줄이고자 함에 있는데, 숫자로 된 
+날짜와 시간 작성에 있어 다른 관례를 가진 나라들 간의 데이터가 오갈 때 
+특히 그렇다.`    
 
 #### 원칙   
 
@@ -60,7 +64,11 @@ UTC와 GMT는 동일하다고 생각하면 된다. (정확하게
 milliseconds가 표시되기도 한다.   
 - Timezone Offset: 시간뒤에 ±시간:분 형태로 나와있으며 UTC시간시로부터 얼마만큼 차이가 
 있는지를 나타낸다. 현재 위의 예시는 한국시간을 나타내며 UTC기준시로부터 9시간 +된 시간임을 나타낸다.   
-- (Z or +00:00): UTC기준시를 나타내는 표시이며 '+00:00'으로 나타내기도 한다.   
+- (Z or +00:00): UTC기준시를 나타내는 표시이며 '+00:00'으로 나타내기도 한다.     
+
+
+
+
 
 
 #### 왜 UTC와 ISO 8601을 따라야 할까?   
@@ -119,6 +127,91 @@ val result = simpleDateFormat.format(now)
 println(result) // 출력 : 2021-03-10 23:18:13
 ```
 
+#### Joda Time 사용하기   
+
+`위에서 처럼 java에서 제공하는 SimpleDateFormat은 멀티스레딩 환경이 보장이 안되기 때문에 
+날짜가 꼬이는 현상이 발생한다.`   
+
+멀티스레딩 환경에서 사용할 수 있는 자바 라이브러리인 Joda를 사용하는 방법을 살펴보자.   
+
+Joda Time라이브러리는 불변 객체이며, 자바의 Date, Calendar 클래스의 
+tread-safe 하지 않는 점과 무분별한 상수 사용의 단점을 보완 하였다.   
+
+`Joda time을 원하는 포맷으로 사용하기 위해서는 DateTimeFormat을 사용하면 된다. 
+forPattern()으로 원하는 포맷을 지정하고, 이후 메서드(parseDateTime(), print() 등등..)로 
+원하는 행위를 지정하면 된다.`   
+
+아래 예제는 오늘 날짜를 원하는 포맷으로 구해서 String 타입으로 
+리턴하는 함수이다.    
+
+```scala 
+// dateFormat: output 원하는 데이터 포맷 (ex. yyyy-MM-dd)
+def getToday(stringFormat: String): String = {
+    val dt = new DateTime()
+    dt.toString(stringFormat)
+  }
+// 출력 : 2021-04-11 15:28:57
+```
+
+아래는 원하는 날짜에 원하는 일 수 더한 날짜를 리턴 하는 함수이다.   
+
+```scala
+// dateFormat: output 원하는 데이터 포맷 (ex. yyyy-MM-dd)
+// targetDate: 더하려는 날짜 (dataFormat 과 같아야 함)
+// num : 더하려는 일수
+def addDate(stringFormat: String, targetDate: String, num: Int) : String = {
+    val formatter: format.DateTimeFormatter = DateTimeFormat.forPattern(stringFormat)
+    val time = formatter.parseDateTime(targetDate).plusDays(num)
+    
+    formatter.print(time)
+  }
+```
+
+또한 여러 상황에서 사용할 수 있는 날짜 차이를 구하는 함수는 아래와 같다.   
+start 와 end 날짜의 일 수 차이를 구한다. 결과는 2가 나오며 start 와 
+end 의 순서를 바꾸게 되면 -2가 출력된다.   
+
+```scala 
+// dateFormat: output 원하는 데이터 포맷 (ex. yyyy-MM-dd)  
+def diffDate(stringFormat: String, startDate: String, endDate: String) : Int = {
+    val formatter: format.DateTimeFormatter = DateTimeFormat.forPattern(stringFormat)
+    val start = formatter.parseDateTime(startDate)
+    val end = formatter.parseDateTime(endDate)
+
+    val days = Days.daysBetween(start, end)
+    days.getDays
+  }
+
+val start = "2021-01-01"
+val end = "2021-01-03"
+println(diffDate(stringFormat, end, start)) // 출력 : 2
+```
+
+또한, Json으로 받아온 데이터는 모두 String형태이며, 이 데이터를 시간 타입으로 
+변경하여 사용이 필요한 경우가 종종 있다. ISO로 표현되는 문자열의 경우 
+Joda time 라이브러리를 통해 쉽게 변경이 가능하다.  
+
+```scala   
+val parsedDateTime = DateTime.parse("2018-05-05T10:11:12.123Z")
+val parsedDateTime = DateTime.parse("2018-05-05T10:11:12.123+09:00")
+```
+
+마지막으로 기존에 사용하던 API와 호환도 가능하다.   
+
+```scala   
+// java.util.Date -> joda time으로 변경    
+val date: Date = new Date()
+val time:DateTime = new DateTime(date)
+```
+
+```scala
+// joda time -> java.sql.timestamp 로 변경 
+val jodaTime: DateTime = new DateTime()
+val timestamp: Timestamp = new Timestamp(jodaTime.getMillis)
+```
+
+
+
 #### 시,분,초, 밀리세컨 모두 최대치로 초기화     
 
 상황에 따라서 날짜를 23시 59분 59초 999 밀리세컨과 같이 변경이 필요할 때가 있다.   
@@ -139,22 +232,26 @@ def maximize(date: Date): Date = {
   }
 ```
 
-#### Parse string to date-time in UTC    
+joda time으로 아래와 같이 변경해서 사용할 수 있다. 
+jodaTime은 불변 객체이기 때문에 객체를 생성 후 변경 할 수 없다. 
+하지만 아래와 같이 새로운 변수를 생성해서 값을 변경할 수 있다.   
 
-Json으로 받아온 데이터는 모두 String 형태이며, 이 데이터를 시간 타입으로 변경하여 
-사용이 필요한 경우가 종종 있다. UTC 로 표현되는 문자열의 경우 
-조금 까다로울 수 있는데, `자바 8에서는 DateTimeFormatter을 사용하여 
-ZonedDateTime 또는 OffsetDateTime 클래스를 이용하여 변환이 가능하다.`     
+```scala   
+def maximize(date: Date): Timestamp = {
 
+    val jodaTime = new DateTime(date)
 
-
-
+    val time = jodaTime.withTime(23, 59, 59, 999)
+    new Timestamp(time.getMillis)
+  }
+```
 
 
 - - - 
 
 **Reference**    
 
+<https://www.baeldung.com/joda-time>   
 <https://howtodoinjava.com/java/date-time/parse-string-to-date-time-utc-gmt/>   
 <https://alvinalexander.com/scala/scala-get-current-date-time-hour-calendar-example/>   
 <https://vmpo.tistory.com/77>    
