@@ -4,7 +4,7 @@ title: "[Spark] 아파치 스파크(spark) 시작하기 "
 subtitle: "Driver, Executor, Task, Cluster Manager/ RDD / Hadoop"    
 comments: true
 categories : BigData
-date: 2021-02-22
+date: 2021-04-11
 background: '/img/posts/mac.png'
 ---
 
@@ -145,9 +145,11 @@ val sc = new SparkContext(conf)
 
 - - - 
     
-## RDD(Resilient Distributed Datasets)    
+## RDD(Resilient Distributed Datasets)   
 
-`RDD는 문자 그대로 해석하면 회복력을 가진 분산 데이터 집합 정도가 될 것이다.`   
+`RDD는 문자 그대로 해석하면 회복력을 가진 분산 데이터 집합 정도가 될 것이다.`  
+
+또한, 클러스터에 분산된 메모리를 활용하여 계산되는 List라고도 표현 할 수 있을 것 같다.   
 
 여기서 회복력이 있다는 말은 데이터를 처리하는 과정에서 일부 문제가 발생하더라도 스스로 복구할 수 있다는 의미이다.   
 단, 복구의 의미는 스파크 어플리케이션이 정상적으로 동작하고 있는 상황을 가정한 것으로 작업 수행 
@@ -199,16 +201,21 @@ RDD는 액션이 실행될 때마다 새로운 연산을 처리한다. 작업의
 
 이처럼 스파크에서 RDD 생성 작업을 기록해 두는 것을 리니지(lineage)라고 한다.   
 
+이를 DAG(Directed Acyclic Graph)로 표현하여 기록한다.   
+
 데이터를 일단 RDD로 만든 후 데이터 변형이 필요하면 그 RDD로 부터 변형된 새로운 RDD를 만들고 
 그것으로부터 또 다른 RDD를 생성해서 최종적인 모습의 RDD를 만들어 가는 형태로 데이터를 
 처리한다.    
 
-`이때 기존 RDD는 변형되지 않고 매번 새로운 RDD가 재 생성 되기 때문에 장애가 발생하면 
+`이때 기존 RDD는 변형되지 않고 매번 새로운 RDD가 재 생성 되기 때문에 클러스터 중 일부가 장애가 발생하면 
 문제가 발생했던 구간의 작업만 수행해서 RDD를 재빨리 복원할 수 있는 것이다.`   
 
 <img width="659" alt="스크린샷 2021-04-13 오후 11 33 09" src="https://user-images.githubusercontent.com/26623547/114570366-bdf41800-9cb0-11eb-922d-f3df050e7f59.png">   
 
 ### 1. RDD 생성     
+
+RDD의 처음 생성은 디스크에서 데이터를 메모리로 로딩할 때 처음 생성된다. 
+그 후 코드에서 생성되는 데이터를 저장할 때 생성된다.   
 
 위에서 스파크 컨텍스트를 만들었다면 이제 RDD를 생성할 수 있다.    
 스파크는 크게 두 종류의 RDD 생성 방법을 제공한다.   
