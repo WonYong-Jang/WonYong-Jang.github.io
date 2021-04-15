@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kafka] Apache Kafka 이해하기  "
-subtitle: "pub-sub 모델, Broker, Topic, Partition "    
+subtitle: "pub-sub 모델, Broker, Topic, Partition, Zookeeper "    
 comments: true
 categories : BigData
 date: 2021-02-05
@@ -105,16 +105,99 @@ Producer가 메시지를 카프카 클러스터로 전송하면 브로커는 또
 링크드인에서 처음 개발 될 때 기존 메시징 시스템과 비교하여 장점으로 
 내세울 수 있는 몇 가지 특징을 가지도록 설계되었다.   
 
-#### 1. 다중 프로듀서, 다중 컨슈머   
+
+- - - 
+
+## 카프카 설치 및 실습   
+
+mac을 기준으로 작성하였으며, 1 broker, 1 topic 이라는 아주 기본적인 로컬 
+환경으로 구성해서 테스트 하였다.   
+
+#### 1. 설치 및 실행    
+
+아래 사이트에서 Binary downloads에 있는 파일을 다운 받고, 
+    다운로드 받은 파일은 적절한 위치에 압축을 풀어준다.   
+
+<https://kafka.apache.org/downloads>
+
+```
+tar -xzf kafka_2.11-2.3.0.tgz
+```
+
+`Kafka는 zookeeper 위에서 돌아가므로 zookeeper를 먼저 실행한다.`   
+
+```
+bin/zookeeper-server-start.sh config/zookeeper.properties
+```
+
+다음은 kafka를 실행한다.   
+
+```
+bin/kafka-server-start.sh config/server.properties
+```   
+
+아래와 같이 카프카와 주키퍼가 정상적으로 실행되었는지 
+port 확인을 통해서 확인한다. (LISTEN 인지 확인)
+
+```
+lsof -i :9092
+
+lsof -i :2181
+```
+
+#### 2. Topic 생성하기    
+
+localhost:9092 카프카 서버에 quickstart-events란 토픽을 생성한다.   
+
+```
+bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic quickstart-events   
+```
+
+- replication-factor : 복제본 개수   
+- partitions : 파티션 개수  
+- topic : 토픽 이름   
+
+현재 만들어져 있는 토픽은 아래와 같이 확인 가능하다.   
+
+```
+bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+```
+
+특정 토픽의 설정은 아래와 같이 확인 할 수 있다.   
+
+```
+bin/kafka-topics.sh --describe --topic quickstart-events --bootstrap-server localhost:9092
+```
+
+<img width="800" alt="스크린샷 2021-04-15 오후 11 31 15" src="https://user-images.githubusercontent.com/26623547/114886725-be241d00-9e42-11eb-81d3-b837e5121986.png">  
 
 
+#### 3. Consumer, Producer 실행하기       
 
+`콘솔에서 Producer와 Consumer를 실행하여 실시간으로 토픽에 event를 추가하고 
+받을 수 있다.`    
 
+터미널을 분할로 띄워서 진행해본다.   
+
+Consumer를 실행한다.  
+
+```
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic quickstart-events   
+```
+
+Producer를 실행한다.   
+
+```
+bin/kafka-console-producer.sh --broker-list localhost:9092 --topic quickstart-events
+```
+
+<img width="1085" alt="스크린샷 2021-04-15 오후 11 51 45" src="https://user-images.githubusercontent.com/26623547/114889970-92566680-9e45-11eb-84eb-5ee71ef6d15f.png">   
 
 - - - 
 
 **Reference**    
 
+<https://kafka.apache.org/documentation/#quickstart>   
 <https://soft.plusblog.co.kr/3>   
 <https://medium.com/@umanking/%EC%B9%B4%ED%94%84%EC%B9%B4%EC%97%90-%EB%8C%80%ED%95%B4%EC%84%9C-%EC%9D%B4%EC%95%BC%EA%B8%B0-%ED%95%98%EA%B8%B0%EC%A0%84%EC%97%90-%EB%A8%BC%EC%A0%80-data%EC%97%90-%EB%8C%80%ED%95%B4%EC%84%9C-%EC%9D%B4%EC%95%BC%EA%B8%B0%ED%95%B4%EB%B3%B4%EC%9E%90-d2e3ca2f3c2>   
 
