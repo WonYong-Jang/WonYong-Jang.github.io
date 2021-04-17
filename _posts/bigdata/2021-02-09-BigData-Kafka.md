@@ -4,18 +4,20 @@ title: "[Kafka] Apache Kafka 이해하기  "
 subtitle: "pub-sub 모델, Broker, Topic, Partition, Zookeeper "    
 comments: true
 categories : BigData
-date: 2021-02-05
+date: 2021-02-09
 background: '/img/posts/mac.png'
 ---
 
 # Kafka 란?   
 
+대표적인 메시징 시스템으로 Kafka, RabbitMQ, Active MQ가 있다. 
+
 데이터 파이프라인(Data Pipeline)을 구축할 때 가장 많이 고려되는 시스템 중 하나가 
 카프카(Kafka)일 것이다. 아파치 카프카는 링크드인에서 처음 개발된 분산 메시징 시스템이다.   
 
+<img width="700" alt="스크린샷 2021-04-17 오후 5 00 07" src="https://user-images.githubusercontent.com/26623547/115106214-72868600-9f9e-11eb-83c9-8163cc486654.png">   
 
-
-## Publish-Subscribe 모델   
+## Publish-Subscribe(발행 / 구독) 모델   
 
 `카프카는 기본적으로 Publish-Subscribe 모델을 구현한 분산 메시징 시스템이다. 
 pub-sub 모델은 데이터를 만들어내는 Producer, 소비하는 Consumer 그리고 이 둘 사이에서 
@@ -25,6 +27,14 @@ Producer는 Broker를 통해 메시지를 발행(Publish)한다. 이 때 메시�
 명시하지는 않으며 관련 메시지를 구독(Subscribe)할 Consumer가 Broker에게 요청하여 가져
 가는 식이다. 마치 블로그 글을 작성하여 발행하면 블로그 글을 구독한 독자들이 
 따로 읽어가는 형태를 생각하면 된다.   
+
+즉, pub-sub은 메세지를 특정 수신자에게 직접적으로 보내주는 방식이 아니다.    
+publisher는 메세지를 topic을 통해서 카테고리화 한다. 분류된 메시지를 받기를 
+원하는 receiver는 그 해당 topic을 구독(subscribe)함으로써 메세지를 읽어 올 수 있다.   
+`publisher는 topic에 대한 정보만 알고 있고, 마찬가지로 subscriber도 topic만 바라본다. publisher와 
+subscriber는 서로 모르는 상태다.`   
+
+> 간단한 예는, 신문사에서 신문의 종류(topic)에 메세지를 쓴다. 우리는 그 해당 신문을 구독한다.   
 
 > 반대되는 개념으로는 글을 작성한 Producer가 구독하려는 Consumer에게 직접 메일을 보내는 것을 생각하면 된다.   
 
@@ -38,18 +48,7 @@ Consumer 클라이언트 API를 제공한다. 그 밖에 데이터 통합을 위
 `카프카에서 Producer는 특정 토픽(Topic)으로 메시지를 발행할 수 있다. Consumer 역시 토픽의 메시지를 
 읽어 갈 수 있다. 카프카에서 토픽은 Producer와 Consumer가 만나는 지점이라고 생각할 수 있다.`      
 
-<img width="374" alt="스크린샷 2021-02-09 오후 11 28 03" src="https://user-images.githubusercontent.com/26623547/107377833-bbe5cf80-6b2e-11eb-9c24-b24a815ab0cf.png">   
 
-카프카는 슈평적 확장(scale horizontally, scale out)을 위해 클러스터를 구성한다. 
-카프카를 통해 유통되는 메시지가 늘어나면 카프카 브로커의 부담(Load)이 증가하게 되어 
-클러스터의 규모를 확장할 필요가 있다. 카프카는 여러 브로커들의 클러스터링을 위해 
-아파치 주키퍼(Apache ZooKeeper)를 사용한다. 주기퍼를 사용하면 브로커의 
-추가 및 장애 상황을 간단하게 대응할 수 있다.   
-
-카프카 클러스터 위에서 Producer가 전송한 메시지는 중복저장을 보장하게 된다. 
-Producer가 메시지를 카프카 클러스터로 전송하면 브로커는 또 다른 브로커에게 
-프로듀서의 메시지를 중복해서 저장한다. 만약 한 브로커에 장애가 생기더라도 
-중복 저장된 복사본을 Consumer에게 전달 할 수 있으므로 장애 상황에 대비 할 수 있다.   
 
 - - - 
 
@@ -65,8 +64,8 @@ Producer가 메시지를 카프카 클러스터로 전송하면 브로커는 또
 생각하면 된다.`   
 
 
-프로듀서가 메시지를 특정 토픽에 전송하면 카프카 클러스터는 토픽을 좀 더 세분화된 
-단위인 파티션(Partition)으로 나누어 관리한다.    
+`프로듀서가 메시지를 특정 토픽에 전송하면 카프카 클러스터는 토픽을 좀 더 세분화된 
+단위인 파티션(Partition)으로 나누어 관리한다.`        
 기본적으로 프로듀서는 발행한 메시지가 어떤 파티션에 저장되는지 관여하지 않는다. (물론 
         메시지 키와 파티셔너를 이용하여 특정 파티션으로 메시지를 전송할 수 있도록 할 수도 있다.) 
 각 파티션은 카프카 클러스터를 구성하는 브로커들이 고루 나눠 갖는다.    
@@ -74,26 +73,135 @@ Producer가 메시지를 카프카 클러스터로 전송하면 브로커는 또
 > 카프카 클러스터의 브로커 중 한 녀석이 Controller가 되어 이 분배 과정을 담당한다. 컨트롤러는 
 카프카 클러스터의 반장 역할이라고 보면 된다.   
 
-특정 파티션으로 전달된 메시지에는 오프셋(Offset)이라고하는 숫자가 할당된다. 
-오프셋은 해당 파티션에서 몇 번째 메시지인지 알 수 있는 ID 같은 개념이라고 
-생각하면 된다. (배열의 인덱스 같은 역할)   
-오프셋을 이용해서 컨슈머가 메시지를 가져간다. 몇 번째 오프셋까지 읽었다, 몇 번째 오프셋
-부터 읽겠다는 요청을 할 수 있다. 오프셋은 파티션 내에 Unique한 값을 갖는다.   
+위의 내용을 정리를 해보면, 메세지는 topic에 저장되고, topic은 여러개의 
+파티션으로 나눠 질 수 있다. 파티션내의 한 칸은 로그라고 불린다. 데이터는 
+한 칸의 로그에 순차적으로 append 된다.    
+
+> Log는 Key, value, timestamp로 구성된다.   
+
+##### 그러면, 왜 하나의 토픽에 여러개의 파티션을 나눠서 메세지를 쓸까?    
+
+하나의 topic에 하나의 파티션만 가진 상황과 하나의 topic에 
+여러개의 파티션을 가진 경우를 비교해 보면 이해가 쉽다.    
+
+메세지는 카프카의 해당 토픽에 쓰여진다. 쓰는 과정도 시간이 소비된다. 
+몇 천건의 메세지가 동시에 카프카에 쓰여진다고 생각해보자. 그러면 하나의 
+파티션에 순차적으로 append 될 텐데, 처리하는게 조금 버겁지 않을까?    
+`그렇기 때문에 여러개의 파티션을 두어서 분산저장을 하는 것이다.`   
+
+병렬로 처리하기 때문에 시간이 절약되지만 항상 trade-off가 존재한다.   
+
+`한번 늘린 파티션은 절대로 줄일 수 없기 때문에, 파티션을 늘려야 하는건 
+충분히 고려해 봐야 한다.`   
+
+또한, 파티션을 늘렸을 때 메세지가 Round-robin방식으로 쓰여진다. 즉, 순차적으로 
+메세지가 쓰여지지 않는다는 말이다. 
+
+`즉, 순차적으로 메세지가 쓰여지지 않는다는 말이다. 이 말은, 나중에 해당 토픽을 
+소비하는 소비자가 만약에 메세지의 순서가 엄청나게 중요한 모델이라면 
+순차적으로 소비됨을 보장해 주지 않기 때문에 상당히 위험한 것이다.`   
 
 <img width="469" alt="스크린샷 2021-02-09 오후 11 37 08" src="https://user-images.githubusercontent.com/26623547/107379774-9954b600-6b30-11eb-9a5a-d94dd014a78d.png">   
 
+
+`특정 파티션으로 전달된 메시지에는 오프셋(Offset)이라고하는 숫자가 할당된다. 
+오프셋은 해당 파티션에서 몇 번째 메시지인지 알 수 있는 ID 같은 개념이라고 
+생각하면 된다. (배열의 인덱스로 이해하자)`     
+오프셋을 이용해서 컨슈머가 메시지를 가져간다. 몇 번째 오프셋까지 읽었다, 몇 번째 오프셋
+부터 읽겠다는 요청을 할 수 있다. 오프셋은 파티션 내에 Unique한 값을 갖는다.   
+
+
 카프카 브로커는 파티션에 저장된 메시지를 파일 시스템에 저장한다. 
-이 대 만들어지는 파일이 세그먼트 파일(Segment File)이다. 
+이 때 만들어지는 파일이 세그먼트 파일(Segment File)이다. 
 기본적으로 1GB까지 세그먼트 파일이 커지거나 일정 시간이 지나면 
 파일을 다시 만든다. 보존기간이 지난 메시지가 지워질 때 
-세그먼트 파일 단위로 지워진다.
+세그먼트 파일 단위로 지워진다.   
 
-#### 2. 파티션의 복제(Replication)   
 
-카프카는 고가용성(Hig Availability)을 제공하기 위해 파티션 데이터 복사본을 
+- - - 
+
+#### 2. Producer, Consumer   
+
+Producer는 메세지를 생산하는 주체이다. 메세지를 만들고 Topic에 메세지를 쓴다. 
+Producer는 Consumer의 존재를 알지 못한다.   
+
+Consumer는 소비자로써 메세지를 소비하는 주체이다. 역시 Producer의 존재를 모른다.   
+해당 topic을 구독함으로써, 자기가 스스로 조절해가면서 소비할 수 있는 것이다. 
+소비를 했다는 표시는 해당 topic내의 각 파티션에 존재하는 offset의 위치를 
+통해서 이전에 소비했던 offset위치를 기억하고 관리하고 이를 통해서, 
+    혹시나 `Consumer가 죽었다가 다시 살아나도, 전에 마지막으로 읽었던 
+    위치에서 부터 다시 읽어들일 수 있다. 그렇기 때문에 fail-over에 대한 
+    신뢰가 존재한다.`        
+
+<img width="578" alt="스크린샷 2021-04-17 오후 4 42 51" src="https://user-images.githubusercontent.com/26623547/115105783-00ad3d00-9f9c-11eb-8e58-cf572c18dd97.png">    
+
+카프카에서는 Consumer 그룹이라는 개념이 나온다. 말 그대로 consumer들의 묶음이고, 
+    기본적인 룰이 하나가 존재한다.   
+
+`반드시 해당 topic의 파티션은 그 consumer 그룹과 1:n 매칭을 해야한다.`   
+그렇기 때문에 아래의 경우가 존재한다.   
+
+
+
+- - - 
+
+#### 3. 파티션의 복제(Replication)   
+
+카프카는 고가용성(High Availability)을 제공하기 위해 파티션 데이터 복사본을 
 유지할 수 있다. 몇개의 복사본을 저장할 것인지는 Replication Factor로 
 저장할 수 있으며 토픽 별로 다르게 설정 할 수 있다.   
 
+local에 broker 3대를 띄우고(replica-factor=3)로 복제되는 경우를 살펴보자.   
+
+복제는 수평적 스케일 아웃이다. broker 3대에서 하나의 서버만 leader가 되고 
+나머지 둘은 follower 가 된다. producer가 메세지를 쓰고, consumer가 
+메세지를 읽는건 오로지 leader가 전적으로 역할을 담당한다.   
+
+**나머지 follower들의 역할은?**   
+
+나머지 follower들은 leader와 싱크를 항상 맞춘다. 해당 option이 있다. 혹시나 
+leader가 죽었을 경우, 나머지 follower 중에 하나가 leader로 선출되어서 
+메세지의 쓰고/읽는 것을 처리한다.   
+
+
+- - - 
+
+#### 4. Broker, Zookeeper    
+
+`broker는 카프카의 서버를 칭한다.`    
+broker.id = 1..n으로 함으로써 동일한 노드내에서 
+여러개의 broker서버를 띄울 수도 있다.    
+
+
+`zookeeper는 이러한 분산 메세지 큐의 
+정보를 관리해 주는 역할을 하며, 리더 채택, 클러스터의 설정정보 관리하여 서버들이 
+공유하는 데이터를 관리한다.`         
+kafka를 띄우기 위해서는 클러스터를 관리하는 zookeeper가 반드시 실행되어야 한다.
+
+<img width="374" alt="스크린샷 2021-02-09 오후 11 28 03" src="https://user-images.githubusercontent.com/26623547/107377833-bbe5cf80-6b2e-11eb-9c24-b24a815ab0cf.png">
+
+카프카는 수평적 확장(scale horizontally, scale out)을 위해 클러스터를 구성한다.
+카프카를 통해 유통되는 메시지가 늘어나면 카프카 브로커의 부담(Load)이 증가하게 되어
+클러스터의 규모를 확장할 필요가 있다. 카프카는 여러 브로커들의 클러스터링을 위해
+아파치 주키퍼(Apache ZooKeeper)를 사용한다. 주기퍼를 사용하면 브로커의
+추가 및 장애 상황을 간단하게 대응할 수 있다.       
+
+- - - 
+
+#### 5. 설정 방식   
+
+Producer config 정보에서 ack(acknowlegement) 옵션이 있다. 메세지를 보내고 
+잘 받았다고 확인받는 메세지라고 보면된다. 근데 이 ack 옵션에 따라서 
+네트워크를 몇번을 타야하는지를 결정할 수 있다.     
+완전하게 ack=1로 하게 되면, producer가 메세지를 리더한테 보내고 쓰여지고, 
+    나머지 follower들이 똑같이 메세지를 다 복사할 때까지 기다린다. 복사까지 
+    완벽하게 되면, 그제서야 ack옵션을 producer에게 보낸다. (메세지 잘 쓰여졌고, 
+            복사까지 잘 됬어!)라고 이렇게 구성하면 장점은 leader가 어느 순간 
+    뻗어도, 복제 된 데이터가 follower들에게 있으니, 메세지의 유실이 전혀 없다는 
+    장점이 있지만 복제할 때까지 기달려야 하는 네트워크를 타고 흐르는 시간을 
+    기달려야 하는 비용이 든다.    
+
+그래서 보통 default로 한다. 즉, 리더한테만 쓰여지만 바로 ack을 받을 수 있도록 설정한다.   
 
 
 - - -
@@ -106,98 +214,13 @@ Producer가 메시지를 카프카 클러스터로 전송하면 브로커는 또
 내세울 수 있는 몇 가지 특징을 가지도록 설계되었다.   
 
 
-- - - 
-
-## 카프카 설치 및 실습   
-
-mac을 기준으로 작성하였으며, 1 broker, 1 topic 이라는 아주 기본적인 로컬 
-환경으로 구성해서 테스트 하였다.   
-
-#### 1. 설치 및 실행    
-
-아래 사이트에서 Binary downloads에 있는 파일을 다운 받고, 
-    다운로드 받은 파일은 적절한 위치에 압축을 풀어준다.   
-
-<https://kafka.apache.org/downloads>
-
-```
-tar -xzf kafka_2.11-2.3.0.tgz
-```
-
-`Kafka는 zookeeper 위에서 돌아가므로 zookeeper를 먼저 실행한다.`   
-
-```
-bin/zookeeper-server-start.sh config/zookeeper.properties
-```
-
-다음은 kafka를 실행한다.   
-
-```
-bin/kafka-server-start.sh config/server.properties
-```   
-
-아래와 같이 카프카와 주키퍼가 정상적으로 실행되었는지 
-port 확인을 통해서 확인한다. (LISTEN 인지 확인)
-
-```
-lsof -i :9092
-
-lsof -i :2181
-```
-
-#### 2. Topic 생성하기    
-
-localhost:9092 카프카 서버에 quickstart-events란 토픽을 생성한다.   
-
-```
-bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic quickstart-events   
-```
-
-- replication-factor : 복제본 개수   
-- partitions : 파티션 개수  
-- topic : 토픽 이름   
-
-현재 만들어져 있는 토픽은 아래와 같이 확인 가능하다.   
-
-```
-bin/kafka-topics.sh --list --bootstrap-server localhost:9092
-```
-
-특정 토픽의 설정은 아래와 같이 확인 할 수 있다.   
-
-```
-bin/kafka-topics.sh --describe --topic quickstart-events --bootstrap-server localhost:9092
-```
-
-<img width="800" alt="스크린샷 2021-04-15 오후 11 31 15" src="https://user-images.githubusercontent.com/26623547/114886725-be241d00-9e42-11eb-81d3-b837e5121986.png">  
-
-
-#### 3. Consumer, Producer 실행하기       
-
-`콘솔에서 Producer와 Consumer를 실행하여 실시간으로 토픽에 event를 추가하고 
-받을 수 있다.`    
-
-터미널을 분할로 띄워서 진행해본다.   
-
-Consumer를 실행한다.  
-
-```
-bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic quickstart-events   
-```
-
-Producer를 실행한다.   
-
-```
-bin/kafka-console-producer.sh --broker-list localhost:9092 --topic quickstart-events
-```
-
-<img width="1085" alt="스크린샷 2021-04-15 오후 11 51 45" src="https://user-images.githubusercontent.com/26623547/114889970-92566680-9e45-11eb-84eb-5ee71ef6d15f.png">   
 
 - - - 
 
 **Reference**    
 
 <https://kafka.apache.org/documentation/#quickstart>   
+<https://victorydntmd.tistory.com/344>   
 <https://soft.plusblog.co.kr/3>   
 <https://medium.com/@umanking/%EC%B9%B4%ED%94%84%EC%B9%B4%EC%97%90-%EB%8C%80%ED%95%B4%EC%84%9C-%EC%9D%B4%EC%95%BC%EA%B8%B0-%ED%95%98%EA%B8%B0%EC%A0%84%EC%97%90-%EB%A8%BC%EC%A0%80-data%EC%97%90-%EB%8C%80%ED%95%B4%EC%84%9C-%EC%9D%B4%EC%95%BC%EA%B8%B0%ED%95%B4%EB%B3%B4%EC%9E%90-d2e3ca2f3c2>   
 
