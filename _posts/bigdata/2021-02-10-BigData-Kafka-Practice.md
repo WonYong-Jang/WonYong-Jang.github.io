@@ -101,10 +101,93 @@ bin/kafka-console-producer.sh --broker-list localhost:9092 --topic quickstart-ev
 
 <img width="1085" alt="스크린샷 2021-04-15 오후 11 51 45" src="https://user-images.githubusercontent.com/26623547/114889970-92566680-9e45-11eb-84eb-5ee71ef6d15f.png">   
 
+
+- - - 
+
+## Kafkacat     
+
+카프카를 사용하는 개발자라면 로컬 혹은 서버에서 브로커와 직접 통신하여 
+테스트 해야 하는 경우가 있다. 이 때 별도 설치 없이 명령어 한 줄로 편리하게 
+쓸 수 있는 도구인 [Kafkacat](https://github.com/edenhill/kafkacat)을 
+사용 할 수 있다.   
+
+#### 설치   
+
+설치하는 방법은 여러 방식이 있지만 여기서는 mac 기준으로 설치하면 
+아래와 같이 가능하다.   
+
+```
+brew install kafkacat
+```
+
+#### 사용 방법   
+
+사용방법은 아래와 같다.   
+
+```
+kafkacat -b localhost:9092 -t new_topic -G [group_name] -p [partition_num] [-P|-C]   
+```
+
+- -b : 카프카 브로커 주소 목록   
+- -t : 토픽   
+- -p : 파티션   
+- -P : 프로듀서 모드로 실행. 기본 파티션은 0이다.   
+- -C : 컨슈머 모드로 실행. -P, -C가 생략될 경우 기본 컨슈머 모드로 실행한다.   
+- -G : 컨슈머 그룹   
+
+먼저 kafka의 정보를 확인해 보자. -L 을 이용하면 메타데이터 정보를 확인 할 수 있다.   
+
+```
+kafkacat -L -b localhost:9092      
+```
+
+Output
+
+```
+$ kafkacat -L -b localhost:9092
+Metadata for all topics (from broker 0: localhost:9092/0):
+ 1 brokers:
+  broker 0 at localhost:9092 (controller)
+ 1 topics:
+  topic "quickstart-events" with 1 partitions:
+    partition 0, leader 0, replicas: 0, isrs: 0
+```
+
+위와 같이 1개의 broker 서버와 1개의 토픽이 있는 걸 확인 할 수 있다.   
+
+
+또한, 토픽에 대해서 컨슈머와 프로듀서를 테스트 및 모니터링 할 수 있다. 
+`파티션을 명시하지 않으면 모든 파티션으로 부터 메시지를 읽는다.`   
+
+```
+kafkacat -b localhost:9092 -t quickstart-events -C       
+```
+
+Output   
+
+`아래와 같이 몇번 파티션으로 부터 메시지를 읽었는지와 
+각 파티션에서의 offset을 확인 할 수 있다.`      
+
+```
+# kafkacat -b localhost:9092 -t quickstart-events -C
+hi
+% Reached end of topic new_topic [0] at offset 4
+success
+```
+
+토픽에 대한 메타정보도 아래와 같이 확인 해보자.   
+
+```
+kafkacat -b localhost:9092 -L -t quickstart-events   
+
+```
+
+
 - - - 
 
 **Reference**    
 
+<https://github.com/edenhill/kafkacat>   
 <https://kafka.apache.org/documentation/#quickstart>   
 
 {% highlight ruby linenos %}
