@@ -182,6 +182,11 @@ kafkacat -b localhost:9092 -L -t quickstart-events
 
 ```
 
+sasl 인증을 해야 하는 경우 아래와 같이 인증방식과 id, pw를 추가로 입력하면 된다.   
+
+```
+kafkacat -b $BROKERS -C -X security.protocol=SASL_SSL -X sasl.mechanisms=SCRAM-SHA-256 -X sasl.username=$USERNAME -X sasl.password=$PASSWORD -t $TOPIC
+```
 
 - - - 
 
