@@ -190,10 +190,57 @@ kafkacat -b $BROKERS -C -X security.protocol=SASL_SSL -X sasl.mechanisms=SCRAM-S
 
 - - - 
 
+## 스칼라로 구현해보기 ( Consumer )
+
+`Consumer의 경우는 구독(subscribe)을 시작한 후 poll을 통해 레코드를 처리한다.`    
+topic의 경우 list로 설정 가능하다. 즉 여러 topic 처리가 가능하다.    
+poll 메서드의 파라미터는 레코드를 기다릴 최대 블럭 시간이다.   
+
+아래와 같이 소스를 작성하여 실행하고 위에서 실습한 것처럼 Producer Console을 
+이용하여 메시지를 보내면 정상적으로 전송된 것을 확인 할 수 있다.   
+
+```scala 
+import java.time.Duration
+import java.util.{Collections, Properties}
+import org.apache.kafka.clients.consumer.{ConsumerRecords, KafkaConsumer}
+import scala.collection.JavaConversions._
+object KafkaTest extends App {
+
+  val TOPIC = "quickstart-events"
+  val props = new Properties()
+  props.put("bootstrap.servers", "localhost:9092")
+  props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
+  props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
+  props.put("group.id", TOPIC)
+
+  val consumer = new KafkaConsumer[String, String](props)
+
+  consumer.subscribe(Collections.singletonList(TOPIC))
+
+  while(true){
+    val records: ConsumerRecords[String, String] = consumer.poll(Duration.ofMillis(100000))
+
+    for (record <- records) {
+      println(record.topic + " : " + record.value)
+    }
+  }
+}
+```
+
+Output   
+
+```
+quickstart-events : success!
+```
+
+
+- - - 
+
 **Reference**    
 
-<https://github.com/edenhill/kafkacat>   
-<https://kafka.apache.org/documentation/#quickstart>   
+<https://ooeunz.tistory.com/117>     
+<https://github.com/edenhill/kafkacat>      
+<https://kafka.apache.org/documentation/#quickstart>    
 
 {% highlight ruby linenos %}
 
