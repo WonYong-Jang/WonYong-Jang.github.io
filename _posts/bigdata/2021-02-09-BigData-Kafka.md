@@ -264,6 +264,7 @@ replica로 복제된 데이터는 안전하게 보관되어 있으므로
 
 **Reference**    
 
+<https://needjarvis.tistory.com/604>   
 <https://kafka.apache.org/documentation/#quickstart>   
 <https://victorydntmd.tistory.com/344>   
 <https://soft.plusblog.co.kr/3>   
