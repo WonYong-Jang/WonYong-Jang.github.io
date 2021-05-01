@@ -175,7 +175,8 @@ RDD는 항상 같은 데이터를 갖게 된다.
 
 `RDD는 트랜스포메이션(transformation), 액션(action) 두가지 타입의 연산을 가지고 있다.`    
 트랜스포메이션은 필터링 같은 작업으로 RDD에서 새로운 RDD를 반환한다.    
-액션은 RDD로 작업을 처리하여 결과를 반환한다. 스파크는 지연처리(lazy evalution)를 지원하여 
+액션은 RDD로 작업을 처리하여 결과를 반환한다. 주로 드라이버로 연산 결과를 보낼 때 이루어 진다.   
+스파크는 지연처리(lazy evalution)를 지원하여 
 트랜스포메이션을 호출할 때는 작업을 처리하지 않고, 액션을 호출하는 시점에 작업을 
 처리하여 효율성을 제공한다.   
 
@@ -207,6 +208,33 @@ RDD는 액션이 실행될 때마다 새로운 연산을 처리한다. 작업의
 문제가 발생했던 구간의 작업만 수행해서 RDD를 재빨리 복원할 수 있는 것이다.`   
 
 <img width="659" alt="스크린샷 2021-04-13 오후 11 33 09" src="https://user-images.githubusercontent.com/26623547/114570366-bdf41800-9cb0-11eb-922d-f3df050e7f59.png">   
+
+- - -    
+
+### Parallel Processing of RDD    
+
+RDD에서 병렬로 처리 되는 과정을 살펴보자.   
+먼저, 아래 소스를 보면 txt 파일을 RDD로 생성하고 default 
+partition개수를 확인했다.  
+default로 RDD를 생성할 수도 있고 직접 지정할 수도 있다. 
+아래는 5개로 지정해주었다. 마지막 줄에는 각 partition 갯수만큼 
+for each를 순회한다. 
+
+
+```scala 
+//load a text file from current directory
+val flistRDD = sc.textFile("flist.txt")
+//Check number of defaults partitions
+flistRDD.getNumPartitions
+//Reload with five partitions
+val flistRDD = sc.textFile("flist.txt", 5)
+//Count the number of elements in each partition
+flistRDD.foreachPartition(
+  p => println("Items in partition-" + p.count(y => true))
+)
+```
+
+- - - 
 
 ### 1. RDD 생성     
 
@@ -527,6 +555,7 @@ println(result.collect.mkString("\n"))
 **Reference**    
 
 <https://wikidocs.net/book/2350>     
+<https://www.learningjournal.guru/article/apache-spark/apache-spark-parallel-processing/>    
 <https://artist-developer.tistory.com/7>    
 <https://subscription.packtpub.com/book/big_data_and_business_intelligence/9781787126497/7/ch07lvl1sec46/rdd-partitioning>    
 
