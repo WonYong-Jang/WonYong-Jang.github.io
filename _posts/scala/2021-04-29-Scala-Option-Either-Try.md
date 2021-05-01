@@ -78,13 +78,7 @@ val v1 = o1 match {
 }
 ```   
 
-위의 두가지 방법은 스칼라 커뮤니티에서 안티패턴으로 고려된다. 왜냐하면 
-함수형 코딩 방식이 아니며, if/else 를 사용하여 기존 자바에서 처리하던 
-방식과 비슷하기 때문이다.   
-
-
-아래 글 부터 
-조금더 간편한 방식으로 Option의 값을 가져올 수 있다.     
+아래는 더 간편한 방식으로 Option의 값을 가져올 수 있다.     
 
 - getOrElse : Option내에 있는 값이 Some이면 값을 가져오고, 그렇지 않으면 default 값을 리턴한다.     
 
@@ -125,7 +119,7 @@ assert(o2.map(_.toString).isEmpty)
 
 ## Either   
 
-둘 중 하나의 값을 가질 수 있는 타입이다.   
+Either는 Exception과 결과 값을 한번에 받을 수 있는 타입니다.    
 
 아래와 같이 Either에 값을 담을 수 있다.   
 인자로 제대로 된 값이 들어오면 Right 즉, Either의 오른쪽에 담고 
@@ -155,8 +149,24 @@ val result = eitherExample(Some(7)) match {
 
 ## Try   
 
-위에서 살펴본 Either는 Scala 2.10 부터 Either 대신 Try를 통해 더 효율적으로 
-처리할 수 있다.   
+자바에서 try/catch를 이용한 예외처리는 스칼라에서도 가능하다.    
+아래와 같이 예외를 처리할 수 있지만, try/catch를 통한 예외처리는 여러 가지 
+문제가 있다.   
+
+우선 다른 함수를 호출할 때, 어떤 예외가 발생할지 모른다. 
+
+```scala 
+try {
+  methodThatMayThrowAnException()
+} catch {
+  case e: MyException => // do stuff
+  case e: NonFatal => // do stuff
+  case _: Throwable => // do stuff
+} finally {
+  anotherPieceOfCode() // useful to close a database connection for instance
+}
+```
+
 
 <img width="450" alt="스크린샷 2021-04-29 오후 4 11 10" src="https://user-images.githubusercontent.com/26623547/116514217-b0bc6780-a905-11eb-85c8-a52a44361f76.png">   
 
