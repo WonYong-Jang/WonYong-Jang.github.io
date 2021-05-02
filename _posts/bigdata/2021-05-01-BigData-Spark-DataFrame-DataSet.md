@@ -98,7 +98,7 @@ root
  |-- value: integer (nullable = false)
 ```
 
-#### SparkSession   
+#### 1) SparkSession   
 
 `데이터프레임 또는 데이터 셋을 다루기 위해 가장 먼저 알아야 할 것은 
 SparkSession이다. RDD를 생성하기 위해 SparkContext가 필요했던 것처럼 
@@ -134,19 +134,64 @@ val ss = SparkSession
 RDD를 생성하는 부분을 DataFrame 또는 DataSet으로 변경한 것이다.   
 
 
+#### 2) DataSet 생성    
+
+아래 코드를 살펴보면, DataFrame 생성할 때와 비슷하지만, `데이터 셋을 
+생성할 때는 데이터셋에서 사용할 인코더(org.apache.spark.sql.Encoder) 정보를 
+반드시 설정해야 한다는 점에서 차이가 있다.`    
+
+`인코더는 자바 객체와 스파크 내부 바이너리 포맷 간의 변환을 처리하기 위한 
+것으로 스파크 1.6에서 데이터셋과 함께 처음 소개되었다.`   
+`인코더가 하는 역할은 기존 자바 직렬화 프레임워크나 Kyro와 같은 
+자바 객체를 바이너리 포맷으로 변환하는 것이다.`   
+
+> 기존 직렬화 프레임워크처럼 단순히 네트워크 전송 최적화를 위한 
+바이너리 포맷을 만드는 것에 그치는 것이 아니라 데이터의 타입과 
+그 데이터를 대상으로 수행하고자 하는 연산, 데이터를 처리하고 있는 
+하드웨어 환경까지 고려한 최적화된 바이너리를 생성하고 다룬다는 점에서 
+그 차이를 찾아볼 수 있다.    
+
+자바의 경우 반드시 인코더를 지정해야 하는데, 스칼라의 경우는 
+`import spark.implicits._` 형태로 임포트하면 기본 데이터 타입에 
+대해서는 별도의 인코더를 지정하지 않고도 사용할 수 있다.     
+
+> 하지만 스칼라를 사용하더라도 위 방식으로 처리할 수 있는 기본 타입이 
+아니거나 자바 언어를 사용하는 경우에는 org.apache.spark.sql.Encoders 객체가 
+제공하는 인코더 생성 메서드를 이용해 직접 인코더를 생성 및 지정해야 한다.   
+
+
+```scala 
+case class Person(name: String, age: Int, job: String)
+
+import spark.implicits._
+
+val row1 = Person("hayoon", 7, "student")
+val row2 = Person("sunwoo", 8, "student2")
+val data = List(row1, row2)
+val df2: Dataset[Person] = spark.createDataset(data)
+val df2_1: Dataset[Person] = data.toDS
+```
+
+또한, DataFrame으로 부터 DataSet을 생성하려면 아래와 같이 
+as() 메서드를 사용하면 된다.     
+
+```scala 
+val ds = List(1,2,3).toDF().as[Int]
+ds.show()
+```
 
 - - - 
 
 ### RDD vs DataFrame vs DataSet 언제 쓸까?     
 
-나중에 나온 기술이 이전 기술을 보완하고 있기 때문에 더 좋을 것이다. 
+나중에 나온 기술이 이전 기술을 보완하고 있기 때문에 더 좋을 것이다.      
 개인적인 의견은 RDD의 경우 데이터를 직접적으로 핸들링 해야 하는 경우라면 
 낮은 수준의 API를 제공하므로 RDD를 고수할 수 있겠지만 추상화된 API를 사용하여 
 간결하게 코드를 작성하고 Catalyst Optimizer를 통해 성능 향상을 꾀하고자 한다면 
-DataFrame, DataSet을 고려해 볼 수 있다.    
+DataFrame, DataSet을 고려해 볼 수 있다.       
 데이터 엔지니어냐 데이터 분석가냐에 따라 사용하기 편한 언어와 환경은 
-다를 수 있다. Scala/Java 개발자라면 Encoder의 장점을 활용하는 DataSet을 
-추천한다.   
+다를 수 있다.      
+Scala/Java 개발자라면 Encoder의 장점을 활용하는 DataSet을 추천한다.   
 
 
 
