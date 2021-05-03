@@ -208,7 +208,7 @@ Consumer는 소비자로써 메세지를 소비하는 주체이다. 역시 Produ
 
 local에 broker 3대를 띄우고(replica-factor=3)로 복제되는 경우를 살펴보자.  
 
-`3개의 브로커를 사용할 때 Replication 갯수를 3개로 하는 것을 추천한다.`      
+`3대 이상의 브로커를 사용할 때 Replication 갯수를 3개로 하는 것을 추천한다.`      
 
 복제는 수평적 스케일 아웃이다. broker 3대에서 하나의 서버만 leader가 되고 
 나머지 둘은 follower 가 된다. producer가 메세지를 쓰고, consumer가 
@@ -235,7 +235,14 @@ broker.id = 1..n으로 함으로써 동일한 노드내에서
 
 `zookeeper는 이러한 분산 메세지 큐의 
 정보를 관리해 주는 역할을 하며, 리더 채택, 클러스터의 설정정보 관리하여 서버들이 
-공유하는 데이터를 관리한다.`         
+공유하는 데이터를 관리한다.`        
+
+> 보통 토픽의 offset 정보등을 저장하고 있고 zookeeper는 과반수 투표방식으로 결정 하기 때문에 
+홀수로 구성해야 하고, 과반수 이상 살아 있으면 정상으로 동작한다.   
+
+> zookeeper 3대일 경우 2대 이상, zookeeper 5대일 경우 3대 이상     
+
+
 kafka를 띄우기 위해서는 클러스터를 관리하는 zookeeper가 반드시 실행되어야 한다.
 
 <img width="374" alt="스크린샷 2021-02-09 오후 11 28 03" src="https://user-images.githubusercontent.com/26623547/107377833-bbe5cf80-6b2e-11eb-9c24-b24a815ab0cf.png">
@@ -273,6 +280,8 @@ ack=0으로 설정하게 되면 리더에게 데이터를 전송하고 응답값
 
 **Reference**    
 
+<https://www.popit.kr/kafka-%EC%9A%B4%EC%98%81%EC%9E%90%EA%B0%80-%EB%A7%90%ED%95%98%EB%8A%94-%EC%B2%98%EC%9D%8C-%EC%A0%91%ED%95%98%EB%8A%94-kafka/>   
+<https://towardsdatascience.com/10-configs-to-make-your-kafka-producer-more-resilient-ec6903c63e3f>   
 <https://needjarvis.tistory.com/604>   
 <https://kafka.apache.org/documentation/#quickstart>   
 <https://victorydntmd.tistory.com/344>   
