@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "[Java] Redis(Remote Dictionary Server) 1"
+title: "[Redis] Redis(Remote Dictionary Server) 1"
 subtitle: "Redis에서 제공하는 자료구조, sorted set"       
 comments: true
-categories : Java
+categories : BigData
 date: 2021-05-04
 background: '/img/posts/mac.png'
 ---
