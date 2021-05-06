@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Redis] Redis(Remote Dictionary Server) 1"
+title: "[Redis] Redis(Remote Dictionary Server) Collection"
 subtitle: "Redis에서 제공하는 자료구조, sorted set"       
 comments: true
 categories : BigData
@@ -42,11 +42,26 @@ Redis는 기본적으로 String, Bitmap, Hash, List, Set, Sorted Set를 제공�
 
 ## Redis 자료 구조    
 
+Redis가 다양한 자료구조(Collection)를 지원하지만 주의해야 할 점이 있다.   
+
+`하나의 Collection에 너무 많은 아이템을 담으면 좋지 않다.`   
+가능하면 10000개 이하의, 몇천개 수준의 데이터셋을 유지하는게 Redis 성능에 
+영향을 주지 않는다.   
+
+`Expire는 Collection의 아이템 개별로 적용되지 않고, 전체 Collection에 대해서만 
+적용된다.`   
+즉, 10000개의 아이템을 가진 Collection에 expire가 걸려 있다면, 
+    그 시간 이후 10000개의 아이템이 모두 삭제된다.     
+
+- - - 
+
 ### 1) String   
 
 Redis의 String은 키와 연결할 수 있는 가장 간단한 유형의 값이다. Redis의 
 키가 문자열이므로 이 구조는 문자열을 다른 문자열에 매핑하는 것이라고 
 볼 수 있다.   
+
+> 값의 최대 사이즈는 512 MB이다.   
 
 ```
 > set hello world
@@ -95,9 +110,21 @@ OK
 > set mykey newval xx
 OK
 ```
+- - - 
 
+### 2) List    
 
-### 2) Sorted Set   
+자세한 내용은 [공식문서](https://redis.io/topics/data-types)를 참고하자.
+
+- - -
+
+### 3) Set    
+
+자세한 내용은 [공식문서](https://redis.io/topics/data-types)를 참고하자.
+
+- - - 
+
+### 4) Sorted Set   
 
 일반적으로 Set 자료구조는 저장된 value들을 unique하게 관리하기 위해 사용된다.    
 이 때 저장된 value들 사이의 순서는 관리되지 않는다.   
@@ -105,6 +132,8 @@ OK
 Set의 특성을 그대로 가지면서 추가적으로 저장된 value들의 순서도 관리해 준다.`   
 `이 때 이 순서를 위해 각 value에 대해 score를 필요에 맞게 설정할 수 있으며, 이 
 score를 가반으로 정렬이 된다.`   
+
+> 이때, score는 double이기 때문에, 부동소수점에 주의해야 한다.   
 
 즉, Sorted set은 정렬된 형태로 저장되기 때문에 인덱스를 이용하여 빠르게 
 조회할 수 있다.   
@@ -370,6 +399,7 @@ $ redis-cli
 
 **Reference**   
 
+<https://redis.io/topics/data-types>    
 <https://jupiny.com/2020/03/28/redis-sorted-set/>    
 <https://meetup.toast.com/posts/224>    
 <https://blog.voidmainvoid.net/233>    
