@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Redis] Redis(Remote Dictionary Server) Collection"
-subtitle: "Redis에서 제공하는 자료구조, sorted set"       
+subtitle: "Redis에서 제공하는 자료구조, sorted set, Collection 사용시 주의사항 "       
 comments: true
 categories : BigData
 date: 2021-05-04
