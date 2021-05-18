@@ -60,27 +60,40 @@ Producer는 카프카에서 메시지를 생산해서 카프카 토픽으로 보
 
 
 ```scala   
+import java.util.Properties
+
 import org.apache.kafka.clients.producer.{Callback, RecordMetadata}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.StringSerializer
 
-val TOPIC = "quickstart-events"
-val kafkaProducerProps: Properties = {
+object KafkaProducerTest {
+
+  def main(args: Array[String]): Unit = {
+
+    val TOPIC = "quickstart-events"
+    val kafkaProducerProps: Properties = {
       val props = new Properties()
       props.put("bootstrap.servers", "localhost:9092")
       props.put("key.serializer", classOf[StringSerializer].getName)
       props.put("value.serializer", classOf[StringSerializer].getName)
       props
-}
+    }
 
-val producer = new KafkaProducer[String, String](kafkaProducerProps)
-producer.send(new ProducerRecord[String, String](TOPIC, null, "send message"), new Callback {
-     override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
-       if(exception != null) println("success publish")
-       else exception.printStackTrace()
-   }
-})
-producer.close()
+    val producer = new KafkaProducer[String, String](kafkaProducerProps)
+
+    val record = new ProducerRecord[String, String](TOPIC, null, "send message")
+    producer.send(record, new ProducerCallback)
+
+    producer.close()
+  }
+
+  class ProducerCallback extends Callback {
+    override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+      if(exception == null) println("success publish")
+      else exception.printStackTrace()
+    }
+  }
+}
 ```
 
 #### 여러가지 Producer 옵션   
