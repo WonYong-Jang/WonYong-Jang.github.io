@@ -8,8 +8,7 @@ date: 2021-02-11
 background: '/img/posts/mac.png'
 ---
 
-
-## 스칼라로 Consumer 구현하기   
+# 스칼라로 Consumer 구현하기   
 
 `Consumer의 경우는 구독(subscribe)을 시작한 후 poll을 통해 레코드를 처리한다.`    
 topic의 경우 list로 설정 가능하다. 즉 여러 topic 처리가 가능하다.    
@@ -54,7 +53,7 @@ quickstart-events : success!
 
 - - - 
 
-## 스칼라로 Producer 구현하기   
+# 스칼라로 Producer 구현하기   
 
 Producer는 카프카에서 메시지를 생산해서 카프카 토픽으로 보내는 역할을 한다.   
 
@@ -96,7 +95,62 @@ object KafkaProducerTest {
 }
 ```
 
-#### 여러가지 Producer 옵션   
+## Custom Serializer 사용하기    
+
+```scala 
+import java.util
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import org.apache.kafka.common.serialization.Serializer
+
+class JsonSerializer[T] extends Serializer[T] {
+  val mapper = new ObjectMapper()
+  mapper.registerModule(DefaultScalaModule)
+
+  private var encoding = "UTF8"
+
+  override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {
+  }
+
+  override def serialize(topic: String, data: T): Array[Byte] = {
+
+    if (data == null) return null
+    try {
+      mapper.writeValueAsBytes(data)
+    }
+    catch {
+      case e: Exception =>
+        throw new Exception("Error serializing JSON message", e)
+    }
+  }
+}
+```
+
+```scala 
+val TOPIC = "quickstart-events"
+val kafkaProducerProps: Properties = {
+      val props = new Properties()
+      props.put("bootstrap.servers", "localhost:9092")
+      props.put("key.serializer", classOf[StringSerializer].getName)
+      props.put("value.serializer", classOf[JsonSerializer[_]].getName)
+      props
+}
+
+val producer = new KafkaProducer[String, Object](kafkaProducerProps)
+
+val person: Person = createDto()
+
+val record = new ProducerRecord[String, Object](TOPIC, null, person)
+producer.send(record, new ProducerCallback)
+
+producer.close()
+```
+
+- - - 
+
+
+### 여러가지 Producer 옵션   
 
 Producer 동작과 관련된 다양한 옵션들이 있는데 이러한 옵션들에 대해 살펴보자.   
 
@@ -175,6 +229,7 @@ Producer가 보낼 수 있는 최대 메시지 바이트 사이즈이다. defaul
 
 **Reference**   
 
+<https://medium.com/@om.m.mestry/how-to-develop-kafka-consumer-with-customer-deserializer-from-scratch-using-scala-c659a9337ccd>     
 <https://www.learningjournal.guru/article/kafka/how-to-create-a-json-serializer-for-kafka-producer/>    
 <https://ooeunz.tistory.com/117>    
 <https://soft.plusblog.co.kr/30>    
