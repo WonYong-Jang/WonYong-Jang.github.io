@@ -108,8 +108,6 @@ class JsonSerializer[T] extends Serializer[T] {
   val mapper = new ObjectMapper()
   mapper.registerModule(DefaultScalaModule)
 
-  private var encoding = "UTF8"
-
   override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {
   }
 
