@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[AWS] Kinesis"
+title: "[Kinesis] AWS Kinesis"
 subtitle: "Amazon Kinesis Data Streams"    
 comments: true
 categories : AWS
