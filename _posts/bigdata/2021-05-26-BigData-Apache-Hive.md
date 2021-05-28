@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Hive] Apache hive architecture 와 테이블"
-subtitle: "Hive QL의 테이블 생성하기 위한 프로퍼티"       
+title: "[Hive] Apache hive architecture 와 성능 최적화"
+subtitle: "Hive QL의 테이블 생성 프로퍼티, 성능 최적화 설정"       
 comments: true
 categories : BigData
 date: 2021-05-26 
@@ -290,8 +290,84 @@ STORED AS는 데이터를 저장하는 파일 포맷을 지정한다. 저장 포
 
 - - - 
 
+## 6. Hive 성능 최적화      
+
+하이브의 성능을 최적화 하기 위한 설정에 대해 알아보자.    
+
+#### 6-1) 작업 엔진 선택: TEZ 엔진 사용    
+
+`맵리듀스(MR)엔진은 연산의 중간 파일을 로컬 디스크에 쓰면서 진행하여 이로 인한 
+잦은 IO 처리로 작업이 느려진다. 테즈(TEZ)엔진은 작업 처리 결과를 메모리에 
+저장하여 맵리듀스보다 빠른 속도로 작업을 처리할 수 있다.`   
+
+```
+set hive.execution.engine=tez;  
+``` 
+
+#### 6-2) 파일 저장 포맷: ORC 파일 사용    
+
+테이블의 데이터 저장에 ORC 파일을 사용하여 처리 속도를 높일 수 있다. 
+ORC 파일 포맷은 데이터를 컬럼 단위로 저장하기 때문에 검색 속도가 빠르고, 
+    압축률이 높다.    
+
+```
+CREATE TABLE table1 (
+) STORED AS ORC;
+```
+
+#### 6-3) 데이터 처리 방식: 벡터화(Vectorization) 사용     
+
+벡터화 처리는 한 번에 1행을 처리하지 않고, 한 번에 1024행을 처리하여 
+속도를 높이는 기술이다. `ORC 파일 포맷에서만 사용가능하다. 필터링, 조인, 집합 
+연산에서 40~50% 정도의 성능 향상을 기대할 수 있다.`                  
+
+```
+set hive.vectorized.execution.enabled=true;    
+```
+
+#### 6-4) 데이터 저장 효율화: 파티셔닝, 버켓팅 사용    
+
+하이브는 디렉토리 단위로 데이터를 처리하기 때문에 검색에 사용되는 
+데이터를 줄이기 위한 방안으로 파티셔닝, 버켓팅 기능을 이용하면 좋다.   
+
+`파티셔닝은 데이터를 폴더 단위로 구분하여 저장하고, 버켓팅은 지정한 개수의 
+파일에 컬럼의 해쉬값을 기준으로 데이터를 저장한다. 이를 이용하여 
+한번에 읽을 데이터의 크기를 줄일 수 있다.`     
+
+
+
+```
+CREATE TABLE table1 (
+) PARTITIONED BY(part_col STRING);
+```
+
+#### 6-5) 통계정보 이용: 하이브 stat 사용    
+
+하이브는 테이블, 파티션의 정보를 메타스토어에 저장하고 조회나 count, sum 같은 집계함수를 
+처리할 때 이 정보를 이용할 수 있다. 맵리듀스 연산없이 바로 작업을 할 수 있기 때문에 
+작업의 속도가 빨라진다.   
+
+```
+set hive.stats.autogather=true;
+```
+
+#### 6-6) 옵티마이저 이용: CBO   
+
+하이브는 카탈리스트 옵티마이저를 이용하여 효율적으로 작업을 처리할 수 있다. explain을 이용하여 
+작업 분석 상태를 확인할 수 있다.   
+
+```
+set hive.cbo.enable=true;
+
+hive> explain select A from ta, tb where ta.id = tb.id;
+```
+
+
+- - - 
+
 **Reference**   
 
+<https://wikidocs.net/23572>   
 <https://wikidocs.net/23469>   
 <https://datacookbook.kr/88>   
 
