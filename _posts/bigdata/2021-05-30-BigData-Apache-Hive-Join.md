@@ -4,7 +4,7 @@ title: "[Hive] Apache hive 에서의 조인 유형"
 subtitle: "일반 조인, 맵 조인, 스큐 조인, 버킷 조인"       
 comments: true
 categories : BigData
-date: 2021-05-26 
+date: 2021-05-30 
 background: '/img/posts/mac.png'
 ---
 
