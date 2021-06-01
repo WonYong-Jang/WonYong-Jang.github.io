@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Hive] Apache hive 파티션 타입 및 종류"
-subtitle: ""       
+subtitle: "정적, 동적 파티션"       
 comments: true
 categories : BigData
 date: 2021-05-31
@@ -14,7 +14,9 @@ Hive 파티션(partiton)의 개념은 RDBMS와 크게 다르지 않다. 테이�
 일자별로 데이터를 만드는 테이블이 있다고 가정해보자. 이 테이블에서 특정 날짜의 
 데이터를 찾는다면, 전체 테이블을 다 탐색해야만 원하는 결과를 얻을 수 있다.   
 여기서 전체를 찾지 않고 날짜별로 Directory를 만든다고 생각해보자.  
-원하는 날짜가 아니면 파일이 아닌 Directory 단위로 지나칠 수 있다.   
+원하는 날짜가 아니면 파일이 아닌 Directory 단위로 지나칠 수 있다.  
+
+<img width="630" alt="스크린샷 2021-06-01 오후 11 12 40" src="https://user-images.githubusercontent.com/26623547/120338126-e43c4880-c32e-11eb-97de-eeda13b5e60c.png">    
 
 `데이터를 조회 할 때 파티션 키 값을 잘 구성해야 hive 내부적으로 skip-scan이 
 발생하여 불필요한 I/O를 최소화 할 수 있다. 또한 파티션 키의 순서에 따라 
@@ -83,12 +85,16 @@ INSERT INTO TABLE delivery PARTITION(day=20210101)
 SELECT * FROM delivery WHERE day=20210101;
 ```
 
+
+
 #### 2-2) 동적 파티션    
 
 특정 Partition 값을 지정하는 것이 아니라 전체 Partition에 대해서 Insert를 한다고 가정해보자.   
 그러면 Static Partitioning과 같이 어떤 파티션이 있는지 찾아야 하고 
 그에 대해서 일일이 insert 하는 것은 상당히 수고스럽다.   
 `따라서 hive에서는 insert할 때, Partition key를 지정하면 자동으로 source table에 있는 partition이 생성된다.`         
+
+`해당 파티션이 없는 경우에 파티션을 만들어서 입력해주는 방법이다.`    
 
 ```
 -- Dynamic Paritioining 예시
@@ -160,7 +166,10 @@ full-scan 작업을 거쳐야 한다. 그러나 동일한 쿼리를 파티션이
 #### 3-1) partiton에 대한 다양한 명령어   
 
 ```
-#1 Partition 조회하기
+#1 테이블 정보 및 로케이션 확인
+desc formatted [테이블명];
+
+#2 Partition 조회하기
 SHOW PARTITIONS supply;
 day=20190621/cd=21
 day=20190621/cd=22
@@ -171,10 +180,10 @@ SHOW PARTITONS supply(day=20190621)
 day=20190621/cd=21
 day=20190621/cd=22
 
-#2 Partition Description(정보) 보기
+#3 Partition Description(정보) 보기
 DESCRIBE FORMATTED supply PARTITION(day=20190621,cd=25);
 
-#3 ALTER PARTITIONS
+#4 ALTER PARTITIONS
 #파티션 삭제
 ALTER TABLE supply (DROP IF EXISTS) PARTITION(day=20190621, cd=21);
 ```
@@ -192,8 +201,16 @@ alter table delivery partition (createdat=2021-01-01) rename to partition (creat
 -- 파티션 Location 수정 
 alter table delivery partition (createdat=2021-01-01) set location 's3://directory';
 
--- 파티션 삭제 (내부 테이블)
-alter table delivery drop partition (createdat=2021-0101);
+-- 기본적인  파티션 삭제 
+alter table delivery drop if exists partition (createdat=2021-0101);
+
+-- 2개 이상의 파티션 삭제     
+alter table delivery drop if exists partition (type ='order', createdat='2021-01-01');   
+-- order 라는 partiton 내의 createdat 이 2021-01-01인 모든 파티션 데이터가 지워진다.   
+
+-- 범위 지정 파티션 지우기     
+alter table delivery drop if exists partition (type ='order', createdat <'2021-01);   
+-- order 라는 partition 내의 createdat 이 2021-0101보다 과거의 파티션 데이터가 지워진다.   
 ```
 
 - - - 
