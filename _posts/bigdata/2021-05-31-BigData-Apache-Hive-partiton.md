@@ -18,6 +18,32 @@ Hive 파티션(partiton)의 개념은 RDBMS와 크게 다르지 않다. 테이�
 
 <img width="630" alt="스크린샷 2021-06-01 오후 11 12 40" src="https://user-images.githubusercontent.com/26623547/120338126-e43c4880-c32e-11eb-97de-eeda13b5e60c.png">    
 
+하이브에서 테이블 파티셔닝을 하는 가장 큰 이유는 빠르게 데이터를 검색하기 
+위해서이다. 아주 큰 데이터가 있더라도 파티션 스키마가 검색하려는 범위 
+필터링을 반영한다면 파티셔닝 테이블은 쿼리의 성능을 극적으로 올려준다. 
+그래서 특정값을 필터하는 WHERE 절에 파티션 조건을 포함하는데 이러한 조건을 
+파티션 필터라고 부른다.     
+
+그러나 파티셔닝이 잘 되어 있다고 하더라도, 테이블 데이터가 많거나 파티션 개수가 
+많다면 거대한 맵리듀스 작업을 유발할 수 있다. 이러한 맵리듀스의 부하를 
+방지하기 위해 WHERE 절에 파티션 필터가 없는 경우 쿼리 실행이 되지 
+않도록 옵션을 설정할 수 있다.    
+
+```
+--  아래 옵션을 추가할 경우 파티션 필터가 없는 경우 에러를 발생시킨다.    
+hive> set hive.mapred.mode = strict;
+hive> select * from campaign;
+
+FAILED: SemanticException [Error 10056]: Queries against partitioned tables without a partition filter are disabled for safety reasons. If you know what you are doing, please set hive.strict.checks.no.partition.filter to false and make sure that hive.mapred.mode is not set to 'strict' to proceed. Note that you may get errors or incorrect results if you make a mistake while using some of the unsafe features. No partition predicate for Alias "campaign" Table "campaign"    
+
+
+-- 아래 옵션을 주면 WHERE 절에 파티션 필터가 없음에도 쿼리가 샐행된다.    
+hive> set hive.mapred.mode = nonstrict;
+hive> select * from campaign;
+OK
+Time taken: 0.671 seconds
+```
+
 `데이터를 조회 할 때 파티션 키 값을 잘 구성해야 hive 내부적으로 skip-scan이 
 발생하여 불필요한 I/O를 최소화 할 수 있다. 또한 파티션 키의 순서에 따라 
 hdfs 상의 디렉토리 구조가 결정됨으로 워크로드에 따라 그 순서도 적절히 
@@ -233,7 +259,8 @@ alter table delivery drop if exists partition (type ='order', createdat <'2021-0
 
 **Reference**   
 
-<https://pskim-b.github.io/posts/hive/hive_partition_type/>    
+<https://pskim-b.github.io/posts/hive/hive_partition_type/>   
+<https://sungwookkang.com/1448>   
 
 {% highlight ruby linenos %}
 
