@@ -230,7 +230,17 @@ Web UI에서 확인하면 'Off' 였던 상태가 'On' 으로 변경되고, DAG�
 있는 것을 볼 수 있다.   
 
 
-<img width="830" alt="스크린샷 2021-03-09 오후 11 36 35" src="https://user-images.githubusercontent.com/26623547/110486979-7ff35980-8130-11eb-8eed-6f46a134aec4.png">
+<img width="830" alt="스크린샷 2021-03-09 오후 11 36 35" src="https://user-images.githubusercontent.com/26623547/110486979-7ff35980-8130-11eb-8eed-6f46a134aec4.png">   
+
+
+DAG에서 특정 tak를 클랙했을 때 아래와 같이 팝업창을 볼수 있다. 각 task에 
+대해 로그를 보거나 rendered 된 파라미터를 볼수도 있고, task 실패시 Clear 버튼을 
+통해 retry 할수도 있다.   
+
+`여기서 선택한 task 부터 다시 돌리고 싶을 경우 Future 를 선택 후 Clear를 
+클릭한다.`        
+
+<img width="709" alt="스크린샷 2021-06-03 오후 3 13 17" src="https://user-images.githubusercontent.com/26623547/120596279-84ed4e00-c47e-11eb-87b3-1c400081c3c6.png">
 
 
 - - - 
@@ -370,6 +380,7 @@ schedule_interval="31 15 * * *", #(한국 시간 00:31)
 
 **Reference**    
 
+<https://airflow.readthedocs.io/en/1.10.12/dag-run.html>      
 <https://blog.naver.com/gyrbsdl18/221561318823>   
 <https://zzsza.github.io/data/2018/01/04/airflow-1/>    
 <https://medium.com/@aldente0630/%EC%95%84%ED%8C%8C%EC%B9%98-%EC%97%90%EC%96%B4%ED%94%8C%EB%A1%9C%EC%9A%B0%EB%A1%9C-%EC%9E%91%EC%97%85%ED%9D%90%EB%A6%84-%EA%B0%9C%EB%B0%9C%ED%95%B4%EB%B3%B4%EA%B8%B0-8f3653d749b4>   
