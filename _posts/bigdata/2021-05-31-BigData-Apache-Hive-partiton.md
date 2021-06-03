@@ -137,6 +137,9 @@ SELECT id,part,quantity FROM source ;
 -- 주의할 점은, static partition key가 dynamic partition key 보다 상위 partition이어야 한다.
 ```
 
+`주의 : OVERWRITE 예약어를 사용하면 기존 데이터는 삭제되고 전체 데이터를 교체한다. INTO 
+예약어를 사용하면 기존 데이터를 삭제하지 않고 새로운 데이터만 추가된다.`    
+
 
 이것을 사용하기 전에 동적 파티션을 위한 아래와 같은 parameter 설정이 필요하다.   
 해당 option이 있는 이유는 과도한 partiton 생성으로 생기는 side effect를 막고자 함에 있다.   
