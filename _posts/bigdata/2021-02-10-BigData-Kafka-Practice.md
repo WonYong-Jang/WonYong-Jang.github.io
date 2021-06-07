@@ -93,6 +93,12 @@ Consumer를 실행한다.
 bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic quickstart-events   
 ```
 
+```
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic quickstart-events --from-beginning   
+```
+
+`--from-beginning 옵션을 뒤에 추가하면 토픽에 있는 모든 레코드를 확인 할수 있다.`   
+
 Producer를 실행한다.   
 
 ```
