@@ -147,8 +147,8 @@ SELECT col1, col2 FROM t1 DISTRIBUTE BY col1 SORT BY col1 ASC, col2 DESC
 같은 값을 가지는 row는 
 같은 리듀서에 전달되고, 리듀서 처리 결과를 정렬하여 출력한다.   
 
-- 1. Distribute by로 기준 column을 두어 여러개의 reducer로 데이터를 나누어 보낸다.   
-- 2. 여러개의 reducer에서 각각 sort by를 시행한다.    
+1. Distribute by로 기준 column을 두어 여러개의 reducer로 데이터를 나누어 보낸다.    
+2. 여러개의 reducer에서 각각 sort by를 시행한다.     
 
 
 
