@@ -19,7 +19,9 @@ SQL과 유사하지만 다음과 같은 차이점이 있다.
 - 하이브에서 사용하는 데이터가 HDFS에 저장되는데, HDFS가 한번 저장한 
 파일은 수정할 수 없기 때문에 UPDATE와 DELETE는 사용할 수 없다. 또한, INSERT도 비어 있는 
 테이블에 입력하거나 이미 입력된 데이터를 덮어 쓰는 경우에만 가능하다. 따라서 하이브 
-QL은 INSERT OVERWRITE라는 키워드를 사용한다.   
+QL은 INSERT OVERWRITE라는 키워드를 사용한다.  
+
+INSERT OVERWRITE를 사용할 때 주의할점은 [참고링크](http://www.hadoopadmin.co.in/tag/insert-overwrite/)를 참고하자.   
 
 - SQL은 어떠한 절에서도 서브쿼리를 사용할 수 있지만 하이브 QL은 FROM 절에서만 
 서비 쿼리를 사용할 수 있다.    
