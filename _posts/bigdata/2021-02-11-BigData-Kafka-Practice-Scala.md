@@ -8,11 +8,19 @@ date: 2021-02-11
 background: '/img/posts/mac.png'
 ---
 
-# 스칼라로 Consumer 구현하기   
+# 1. 스칼라로 Consumer 구현하기   
 
 `Consumer의 경우는 구독(subscribe)을 시작한 후 poll을 통해 레코드를 처리한다.`    
 topic의 경우 list로 설정 가능하다. 즉 여러 topic 처리가 가능하다.    
-poll 메서드의 파라미터는 레코드를 기다릴 최대 블럭 시간이다.  
+
+Consumer는 poll()을 통해 데이터를 처리하는데, 지속적으로 데이터를 
+처리하기 위해서 반복 호출을 사용해야 한다. 지속적으로 반복 호출하기 위한 
+가장 쉬운 방법은 while처럼 무한 루프를 만드는 것이다. 무한루프 내에서 poll() 메서드를 
+통해 데이터를 가져오고 사용자가 원하는 데이터 처리를 수행한다.    
+
+poll()메서드를 통해 ConsumerRecord 리스트를 반환한다. `poll() 메서드는 Duration 타입을 
+인자로 받는다. 이 인자 값은 브로커로부터 데이터를 가져올 때 Consumer 버퍼에 데이터를 
+기다리기 위한 타임아웃 간격을 뜻한다.`    
 
 아래와 같이 소스를 작성하여 실행하고 위에서 실습한 것처럼 Producer Console을 
 이용하여 메시지를 보내면 정상적으로 전송된 것을 확인 할 수 있다.   
@@ -53,7 +61,146 @@ quickstart-events : success!
 
 - - - 
 
-# 스칼라로 Producer 구현하기   
+## 1-1) 동기 오프셋 커밋    
+
+poll() 메서드가 호출된 이후에 commitSync() 메서드를 호출하여 오프셋 커밋을 
+명시적으로 수행할 수 있다.    
+
+```scala    
+// 명시적으로 오프셋 커밋을 수행할 때는 아래 옵션을 false로 설정한다!    
+props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
+while(true){
+    val records: ConsumerRecords[String, String] = consumer.poll(Duration.ofMillis(100000))
+
+    for (record <- records) {
+      println(record.topic + " : " + record.value)
+    }
+    consumer.commitSync();  // 명시적 오프셋 커밋    
+  }
+```
+
+`commitSync()는 poll() 메서드로 받은 가장 마지막 레코드의 오프셋을 기준으로 커밋한다.`   
+그렇기 때문에 동기 오프셋 커밋을 사용할 경우에는 poll() 메서드로 받은 모든 레코드의 처리가 
+끝난 이후 commitSync() 메서드를 호출해야한다. 동기 커밋의 경우 브로커의 커밋을 
+요청한 이후에 커밋이 완료되기 까지 기다린다.   
+`브로커로부터 컨슈머 오프셋 커밋이 완료되었음을 받기 까지 컨슈머는 
+데이터를 더 처리하지 않고 기다리기 때문에 자동 커밋이나 비동기 오프셋 커밋보다 
+동일 시간당 데이터 처리량이 적다는 특징이 있다.`    
+
+> commitSync() 파라미터가 들어가지 않으면 poll()로 반환된 가장 마지막 레코드의 
+오프셋을 기준으로 커밋된다. 만약 개별 레코드 단위로 매번 오프셋을 커밋하고 싶다면 
+commitSync() 메서드에 Map[TopicPartition, OffsetAndMetadata] 인스턴스를 파라미터로 
+넣으면 된다.     
+
+- - - 
+
+## 1-2) 비동기 오프셋 커밋    
+
+동기 오프셋 커밋을 사용할 경우 커밋 응답을 기다리는 동안 데이터 처리가 일시적으로 
+중단 되기 때문에 더 많은 데이터를 처리하기 위해서 비동기 오프셋 커밋을 
+사용할 수 있다.    
+`비동기 오프셋 커밋은 commitAsync() 메서드를 호출하여 사용할 수 있다.`    
+
+```scala   
+while(true){
+    val records: ConsumerRecords[String, String] = consumer.poll(Duration.ofMillis(1
+
+    for (record <- records) {
+      println(record.topic + " : " + record.value)
+    }
+    consumer.commitAsync();  // 비동기 오프셋 커밋   
+  }
+```
+
+- - - 
+
+## 1-3) Consumer 주요 옵션   
+
+Consumer 어플리케이션을 실행할 때 설정해야 할 필수 옵션과 선택 옵션이 있다.   
+필수 옵션은 사용자가 반드시 설정해야 하는 옵션이다. 선택 옵션은 사용자가 설정을 필수로 
+받지 않는다. 여기서 중요한 점은 선택 옵션을 지정하지 않으면 default 값으로 
+지정되기 때문에 반드시 각 옵션에 대해서 파악하고 있어야 한다.     
+
+#### 필수 옵션    
+
+##### bootstrap.servers   
+
+Producer가 데이터를 전송할 대상 카프카 클러스터에 속한 브로커의 호스트 이름:포트를 1개 이상 
+작성한다. 2개 이상 브로커 정보를 입력하여 일부 브로커에 이슈가 발생하더라도 
+접속하는데에 이슈가 없도록 설정가능하다.    
+
+##### key.deserializer   
+
+레코드의 메시지 키를 역직렬화하는 클래스를 지정한다.   
+
+##### value.deserializer    
+
+레코드의 메시지 값을 역직렬화하는 클래스를 지정한다.    
+
+#### 선택 옵션    
+
+##### group.id    
+
+`Consumer 그룹 아이디를 지정한다. subscribe() 메서드로 토픽을 구독하여 사용할 때는 
+이 옵션을 필수로 넣어야 한다. 기본값은 null이다.`    
+
+##### auto.offset.reset     
+
+Consumer 그룹이 특정 파티션을 읽을 때 저장된 Consumer 오프셋이 없는 경우 어느 
+오프셋부터 읽을지 선택하는 옵션이다.    
+이미 Consumer 오프셋이 있다면 이 옵션값은 무시된다.   
+`이 옵션은 latest, earliest, none 중 1개를 설정 할 수 있다.`    
+
+`latest로 설정하면 가장 높은(가장 최근에 넣은) 오프셋부터 읽기 시작한다.`       
+`earliest로 설정하면 가장 낮은(가장 오래전에 넣은) 오프셋부터 읽기 시작한다.`    
+`none으로 설정하면 Consumer 그룹이 커밋한 기록이 있는지 찾아본다. 만약 커밋 기록이 
+없다면 오류를 반환하고, 커밋 기록이 있다면 기존 커밋 기록 이후 오프셋부터 읽기 
+시작한다.`    
+기본값은 latest이다.   
+
+##### enable.auto.commit    
+
+자동 커밋으로 할지 수동 커밋으로 할지 선택한다. 기본값은 true이다.   
+
+##### auto.commit.interval.ms    
+
+자동 커밋(enable.auto.commit=true)일 경우 오프셋 커밋 간격을 지정한다.   
+기본값은 5000(5초)이다.   
+
+##### max.poll.records    
+
+`poll() 메서드를 통해 반환되는 레코드 개수를 지정한다. 기본값은 500이다.`        
+
+##### session.timeout.ms   
+
+컨슈머가 브로커와 연결이 끊기는 최대 시간이다. 이 시간 내에 하트비트(heartbeat)를 
+전송하지 않으면 브로커는 컨슈머에 이슈가 발생했다고 가정하고 리밸런싱을 시작한다.    
+보통 하트비트 시간 간격의 3배로 설정한다.   
+기본값은 10000(10초)이다.   
+
+##### heartbeat.interval.ms       
+
+하트비트를 전송하는 시간 간격이다. 기본값은 3000(3초)이다.   
+
+##### max.poll.interval.ms   
+
+poll()메서드를 호출하는 간격의 최대 시간을 지정한다. poll() 메서드를 
+호출한 이후에 데이터를 처리하는 데에 시간이 너무 많이 걸리는 경우 
+비정상으로 판단하고 리밸런싱을 시작한다.    
+기본값은 300000(5분)이다.    
+
+##### isolation.level    
+
+트랜잭션 프로듀서가 레코드를 트랜잭션 단위로 보낼경우 사용한다. 이 옵션은 
+read_commited, read_uncommitted로 설정할 수 있다. read_committed로 설정하면 
+커밋이 완료된 레코드만 읽는다. read_uncommitted로 설정하면 커밋 여부와 관계없이 
+파티션에 있는 모든 레코드를 읽는다.     
+기본값은 read_uncommitted이다.    
+
+- - - 
+
+# 2. 스칼라로 Producer 구현하기   
 
 Producer는 카프카에서 메시지를 생산해서 카프카 토픽으로 보내는 역할을 한다.   
 아래와 같이 레코드를 생성해서 Producer를 통해 전송하게 된다.   
@@ -111,7 +258,7 @@ object KafkaProducerTest {
     val producer = new KafkaProducer[String, String](kafkaProducerProps)
 
     val record = new ProducerRecord[String, String](TOPIC, null, "send message")
-    producer.send(record, new ProducerCallback)
+    producer.send(record, new ProducerCallback) // 비동기 방식의 send   
 
     producer.close()
   }
@@ -134,7 +281,11 @@ Producer 내부에 가지고 있다가 배치 형태로 묶어서 브로커에 �
 배치 전송이라고 부른다. 배치 전송을 통해 카프카는 타 메시지 플랫폼과 
 차별화된 전송 속도를 가지게 되었다.`   
 
-또한, send()메서드는 Future객체를 반환한다. 이 객체는 RecordMetadata의 비동기 
+- - -     
+
+## 2-1) 동기, 비동기 방식 Producer     
+
+send()메서드는 Future객체를 반환한다. 이 객체는 RecordMetadata의 비동기 
 결과를 표현한 것으로 ProducerRecord가 카프카 브로커에 정상적으로 적재되었는지에 
 대한 데이터가 포함되어 있다.    
 `아래와 같이 get() 메서드를 사용하면 Producer로 보낸 데이터의 결과를 
@@ -151,10 +302,12 @@ send()의 결과값은 카프카 브로커로부터 응답을 기다렸다가 �
 동기 방식은 빠른 전송에 허들이 될 수 있다. 메시지의 전송 순서가 중요한 경우는 
 이 방식을 이용하면 되지만 아닌 경우는 비동기로 전송하는 것을 권장한다.`    
 
-비동기 방식은 Callback 인터페이스를 이용하여 사용자 정의 클래스를 생성해서 사용 가능하다.   
+`비동기 방식은 위의 예제처럼 
+Callback 인터페이스`를 이용하여 사용자 정의 클래스를 생성해서 사용 가능하다.   
 
+- - -     
 
-## Custom Serializer 사용하기   
+## 2-2) Custom Serializer 사용하기   
 
 위의 예제에서는 브로커로 보낼 메시지를 StringSerializer를 사용하였는데, 
     이를 커스텀하게 사용하기 위해서는 Serializer 인터페이스를 사용하여 
@@ -212,12 +365,9 @@ producer.close()
 
 - - - 
 
-## Producer 주요 옵션   
+## 2-3) Producer 주요 옵션   
 
-Producer 동작과 관련된 옵션 중에 필수 옵션과 선택 옵션이 있다. 필수 옵션은 
-사용자가 반드시 설정해야 하는 옵션이다. 선택 옵션은 사용자가 설정을 필수로 
-받지 않는다. 여기서 중요한 점은 선택 옵션을 지정하지 않으면 default 값으로 
-지정되기 때문에 반드시 각 옵션에 대해서 파악하고 있어야 한다.   
+Producer 동작과 관련된 옵션 중에 필수 옵션과 선택 옵션이 있다.     
 
 #### 필수 옵션    
 
