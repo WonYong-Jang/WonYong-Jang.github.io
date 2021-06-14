@@ -3,7 +3,7 @@ layout: post
 title: "[Spark] 아파치 스파크(spark) 스트리밍 "
 subtitle: "Event-driven 실시간 스파크 스트리밍"    
 comments: true
-categories : BigData
+categories : Spark
 date: 2021-04-12
 background: '/img/posts/mac.png'
 ---
