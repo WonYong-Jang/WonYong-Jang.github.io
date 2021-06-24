@@ -8,6 +8,24 @@ date: 2021-02-10
 background: '/img/posts/mac.png'
 ---
 
+엘라스틱서치는 기본적으로 텍스트 데이터를 색인하고 검색한다. `색인과 
+검색을 진행하기 전에 Analyzer를 통해 문자열을 모두 토큰으로 쪼갠다.`       
+
+Analyzer를 통해 가장 작은 단위의 의미를 가진 토큰으로 구분해서 
+텍스트 의미를 이해하려 한다.    
+
+데이터를 색인할 때와 사용자 질의어를 분석할 때는 서로 다른 종류의 Analyzer를 
+사용하고 상황에 따라 토큰의 포지션 정보를 다르게 사용할 수 있다.   
+예를 들어, 색인할 때는 높은 재현율(recall)을 위해 포지션 정보를 무시하고, 
+    쿼리 분석 시에는 높은 정밀도(precision)을 위해 포지션 정보를 고려한 
+    AND 검색을 실시한다.   
+
+Analyzer는 연산 순서가 있는 3개의 컴포넌트인 Character Filter, Tokenizer, 
+    Token Filter로 구성된다. 말그대로 Character Filter는 character 단위로 
+    전처리하며, 주로 특정 문자열, 문자열 패턴을 치환, 삭제 등을 한다.    
+    Token Filter는 token 단위로 후처리를 실시하며, 대소문자화 등의 다양한 처리를 한다.   
+    또한, Tokenizer에서는 형태소 분석과 함께 품사 태깅을 실시한다.   
+
 ## analyze API   
 
 `Elasticsearch 에서는 분석된 문장을 _analyze API를 이용해서 확인할 수 있다.`   
@@ -324,6 +342,8 @@ GET my_index2/_doc/1/_termvectors?fields=message
 
 **Reference**    
 
+<https://12bme.tistory.com/471>   
+<https://gritmind.blog/2020/07/22/nori_deep_dive/>   
 <https://esbook.kimjmin.net/06-text-analysis/6.1-indexing-data>    
 
 {% highlight ruby linenos %}

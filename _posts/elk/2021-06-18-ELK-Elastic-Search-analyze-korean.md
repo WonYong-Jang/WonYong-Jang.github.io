@@ -44,7 +44,10 @@ analysis-nori 부분을 선택한다.
 
 ## nori_tokenizer   
 
-`Nori는 nori_tokenizer 토크나이저와 nori_part_of_speech, nori_readingform 토큰 필터를 제공한다.`        
+`Nori는 nori_tokenizer 토크나이저와 nori_part_of_speech, nori_readingform 토큰 필터를 제공한다.`       
+
+토크나이저는 사용자 질의 혹은 색인되는 문장을 형태소(토큰)형태로 분리하는데 사용된다.   
+
 먼저 nori tokenizer 토크나이저를 사용해서 한글을 간단하게 테스트 할 수 있다. 
 아래는 standard와 nori tokenizer를 비교해서 '동해물과 백두산이' 를 분석한 
 예제이다. 당연히 테스트 하는 elasticsearch 에는 analaysis nori 플러그인이 
@@ -156,8 +159,8 @@ Output
 - user_dictionary_rules : 사용자 정의 사전을 배열로 입력한다.   
 - decompound_mode : 합성어의 저장 방식을 결정한다. 다음 3개의 값을 사용 가능하다.   
 
-    - none : 어근을 분리하지 않고 완성된 합성어만 저장한다.   
-    - discard (디폴트) : 합성어를 분리하여 각 어근만 저장한다.   
+    - none : 어근을 분리하지 않고 완성된 합성어만 저장한다.    
+    - discard (디폴트) : 합성어를 분리하여 각 어근만 저장한다.    
     - mixed : 어근과 합성어를 모두 저장한다.     
 
 #### user dictionary   
@@ -165,7 +168,9 @@ Output
 `다른 애널라이저들과 마찬가지로 config 디렉토리의 상대 경로를 입력하며 
 수정된 사전을 업데이트 하기 위해서는 
 dictionary file을 가지고 있는 node를 재시작 하거나, 
-           인덱스를 _close / _open 하면 반영된다.`     
+           인덱스를 _close / _open 하면 반영된다.`    
+
+> 인덱스가 close 된 중에는 색인이나 검색이 불가능 하게 되니 주의해야 한다.   
 
 `참고로 elasticsearch는 특정 인덱스를 지정하여 열고 닫는 것이 가능한데 
 더 이상 사용하지 않는 인덱스가 있으면 검색 서버 성능을 고려해서 

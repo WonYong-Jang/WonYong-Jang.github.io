@@ -130,7 +130,8 @@ $ sudo logstash -f logstash.conf
 
 - - - 
 
-## settings 설정   
+## settings 설정    
+
 
 ```
 "settings" : {
@@ -158,6 +159,17 @@ $ sudo logstash -f logstash.conf
       }
     }
   }
+```    
+
+아래와 같이 품사를 확인하여 stoptags를 리스트를 추가하거나 삭제 할 수 있다.   
+
+```
+POST nori-analyzer-temp/_analyze
+{ 
+  "analyzer": "nori", 
+  "text": "때", 
+  "explain": true 
+}
 ```
 
 ## Kibana에서 대시보드 만들기   
