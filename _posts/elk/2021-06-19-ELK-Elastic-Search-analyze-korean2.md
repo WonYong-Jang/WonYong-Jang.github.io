@@ -170,11 +170,203 @@ POST nori-analyzer-temp/_analyze
   "text": "때", 
   "explain": true 
 }
+```   
+
+## 인덱스 정보 확인   
+
+설정한 settings와 mapping 설정을 확인하면 다음과 같다.   
+
+```
+{
+  "nori-analyzer-temp" : {
+    "aliases" : { },
+    "mappings" : {
+      "doc" : {
+        "properties" : {
+          "@timestamp" : {
+            "type" : "date"
+          },
+          "@version" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          },
+          "eval_desc" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              },
+              "nori" : {
+                "type" : "text",
+                "analyzer" : "nori",
+                "fielddata" : true
+              }
+            }
+          },
+          "eval_seq" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          },
+          "fis_year" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          },
+          "host" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          },
+          "message" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          },
+          "path" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          },
+          "reg_dt" : {
+            "type" : "long"
+          },
+          "sugg_no" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          },
+          "tags" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          },
+          "up_dt" : {
+            "type" : "long"
+          },
+          "use_yn" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          }
+        }
+      }
+    },
+    "settings" : {
+      "index" : {
+        "number_of_shards" : "5",
+        "provided_name" : "nori-analyzer-temp",
+        "creation_date" : "1624518890938",
+        "analysis" : {
+          "filter" : {
+            "my_pos_f" : {
+              "type" : "nori_part_of_speech",
+              "stoptags" : [
+                "E",
+                "IC",
+                "J",
+                "MAG",
+                "MAJ",
+                "MM",
+                "SP",
+                "SSC",
+                "SSO",
+                "SC",
+                "SE",
+                "XPN",
+                "XSA",
+                "XSN",
+                "XSV",
+                "UNA",
+                "NA",
+                "VSV",
+                "SF",
+                "VA",
+                "VCN",
+                "VCP",
+                "VX",
+                "VV",
+                "NR",
+                "XR",
+                "NP",
+                "SN",
+                "NNB"
+              ]
+            },
+            "my_stop" : {
+              "type" : "stop",
+              "stopwords_path" : "stopFilter.txt"
+            }
+          },
+          "analyzer" : {
+            "nori" : {
+              "filter" : [
+                "my_pos_f",
+                "my_stop"
+              ],
+              "tokenizer" : "nori_tokenizer"
+            }
+          },
+          "tokenizer" : {
+            "nori" : {
+              "type" : "nori_tokenizer",
+              "decompound_mode" : "mixed"
+            }
+          }
+        },
+        "number_of_replicas" : "1",
+        "uuid" : "0ijTmq3JRLerdyBlLUs2tA",
+        "version" : {
+          "created" : "6080299"
+        }
+      }
+    }
+  }
+}
+
 ```
 
 ## Kibana에서 대시보드 만들기   
 
-<img width="1256" alt="스크린샷 2021-06-24 오전 10 09 28" src="https://user-images.githubusercontent.com/26623547/123187051-5b02d680-d4d4-11eb-8e4e-bbc6eb21b536.png">   
+<img width="1256" alt="스크린샷 2021-06-28 오전 9 43 14" src="https://user-images.githubusercontent.com/26623547/123564721-6e27e600-d7f5-11eb-9737-21f6f69cd610.png">   
 
 - - - 
 
