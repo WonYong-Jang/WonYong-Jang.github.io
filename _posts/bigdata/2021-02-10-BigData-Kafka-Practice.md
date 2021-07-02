@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kafka] Apache Kafka 설치 및 예제, 파티션 수에 따른 메시지 순서"
-subtitle: "토픽 생성하고 메세지 발행 및 구독, kafkacat "    
+subtitle: "토픽 생성하고 메세지 발행 및 구독, kafkacat을 통한 모니터링 "    
 comments: true
 categories : BigData
 date: 2021-02-10
@@ -256,10 +256,17 @@ success
 kafkacat -b localhost:9092 -L -t quickstart-events   
 ```
 
-sasl 인증을 해야 하는 경우 아래와 같이 인증방식과 id, pw를 추가로 입력하면 된다.   
+다음은 메시지를 전송하는 예시이다. text.txt파일에 데이터를 저장하고 이 데이터를 토픽으로 전송한다.   
 
 ```
-kafkacat -b $BROKERS -C -X security.protocol=SASL_SSL -X sasl.mechanisms=SCRAM-SHA-256 -X sasl.username=$USERNAME -X sasl.password=$PASSWORD -t $TOPIC
+kafkacat -b $BROKERS -t $TOPIC -P -l ~/dev/text.txt   
+```
+
+
+`sasl 인증을 해야 하는 경우` 아래와 같이 인증방식과 id, pw를 추가로 입력하면 된다.   
+
+```
+kafkacat -b $BROKERS -C -X security.protocol=SASL_PLAINTEXT -X sasl.mechanisms=SCRAM-SHA-256 -X sasl.username=$USERNAME -X sasl.password=$PASSWORD -t $TOPIC   
 ```
 
 - - - 
