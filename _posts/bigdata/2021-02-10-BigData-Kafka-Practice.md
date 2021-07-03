@@ -1,13 +1,12 @@
 ---
 layout: post
 title: "[Kafka] Apache Kafka 설치 및 예제, 파티션 수에 따른 메시지 순서"
-subtitle: "토픽 생성하고 메세지 발행 및 구독, kafkacat을 통한 모니터링 "    
+subtitle: "토픽 생성하고 메세지 발행 및 구독, kafkacat을 통한 모니터링 및 인증 방식  "    
 comments: true
 categories : BigData
 date: 2021-02-10
 background: '/img/posts/mac.png'
 ---
-
 
 
 ## 카프카 설치 및 실습   
@@ -262,8 +261,41 @@ kafkacat -b localhost:9092 -L -t quickstart-events
 kafkacat -b $BROKERS -t $TOPIC -P -l ~/dev/text.txt   
 ```
 
+##### 카프카 인증    
 
-`sasl 인증을 해야 하는 경우` 아래와 같이 인증방식과 id, pw를 추가로 입력하면 된다.   
+카프카 인증을 처리하는 방식은 ssl 방식과 sasl 방식으로 크게 2가지 방식이 있다.   
+
+ssl 방식을 적용할 경우 클라이언트에서 메시지가 암호화되어 전달된다. 
+이 암호화된 메시지는 브로커에서 다시 복호화가 되는데, 이때 CPU 부하가 
+발생하게 된다. 메시지 암호화가 필수적인 파이프라인이라면 인증과 
+함께 고려해 볼수 있다.     
+
+
+
+`sasl(Simple Authentication and Security Layer)은 어플리케이션 프로토콜로 부터 
+인증 처리를 위한 별도의 층(Layer)를 분리하고, 그 층에서 인증을 
+처리하는 방식이다.`   
+
+그리고 기본적으로 메시지 암호화를 하지 않기 때문에 추가적인 부하가 발생하지 
+않는다.(추가로 SSL을 적용 할 수 있다)    
+
+카프카 연결시 id/pw를 묻는 절차가 추가 된 버전이라고 보면 되며, 
+    클라이언트와 카프카가 처음 연결 할 때 인증을 위한 단계(Layer)를 
+    거친 후에 메시지 요청을 실행하게 된다. 따라서 처음에 
+    인증을 거치면 이후에 어플리케이션 단에서 인증을 처리하지 않아도 된다.   
+
+
+위 그림에서 볼 수 있는 것 처럼 sasl 프레임워크는 다양한 메커니즘으로 
+인증을 처리할 수 있다. 카프카에서 기본적으로 제공하는 sasl 메커니즘은 
+다음 4가지가 있다.   
+
+- PLAIN : 문자열 아이디/패스워드를 이용한 인증   
+- SCRAM : Salt 등을 이용한 SCRAM 방식을 이용한 인증   
+- OAUTHBEARER : OAuth2 방식을 이용한 인증   
+- GSSAPI : Kerberos를 이용한 인증   
+
+
+`sasl 인증을 해야 하는 경우` 아래와 같이 인증방식과 id, pw를 추가로 입력하면 된다.     
 
 ```
 kafkacat -b $BROKERS -C -X security.protocol=SASL_PLAINTEXT -X sasl.mechanisms=SCRAM-SHA-256 -X sasl.username=$USERNAME -X sasl.password=$PASSWORD -t $TOPIC   
@@ -274,6 +306,7 @@ kafkacat -b $BROKERS -C -X security.protocol=SASL_PLAINTEXT -X sasl.mechanisms=S
 
 **Reference**    
 
+<https://always-kimkim.tistory.com/entry/kafka101-security>   
 <https://www.popit.kr/kafka-%EC%9A%B4%EC%98%81%EC%9E%90%EA%B0%80-%EB%A7%90%ED%95%98%EB%8A%94-%EC%B2%98%EC%9D%8C-%EC%A0%91%ED%95%98%EB%8A%94-kafka/>    
 <https://ooeunz.tistory.com/117>    
 <https://soft.plusblog.co.kr/30>    
