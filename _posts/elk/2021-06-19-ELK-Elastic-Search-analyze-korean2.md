@@ -361,8 +361,10 @@ POST nori-analyzer-temp/_analyze
     }
   }
 }
+```   
 
-```
+위에서 fielddata를 true로 하지 않으면 aggregations을 사용하지 못한다.   
+text필드는 fielddata라고 불리는 in-memory 구조의 query-time을 사용한다. 
 
 ## Kibana에서 대시보드 만들기   
 
