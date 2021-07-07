@@ -174,7 +174,7 @@ POST nori-analyzer-temp/_analyze
 
 ## 인덱스 정보 확인   
 
-설정한 settings와 mapping 설정을 확인하면 다음과 같다.   
+최종적으로 settings와 mapping 설정을 확인하면 다음과 같다.   
 
 ```
 {
@@ -363,8 +363,27 @@ POST nori-analyzer-temp/_analyze
 }
 ```   
 
-위에서 fielddata를 true로 하지 않으면 aggregations을 사용하지 못한다.   
-text필드는 fielddata라고 불리는 in-memory 구조의 query-time을 사용한다. 
+위의 mappings 설정에서 nori 애널라이저를 적용할 필드에 직접 추가해 줄 수도 있지만, 
+ 아래와 같이 default로 nori 애널라이저를 지정해서 필드에 직접 추가하지 않고도 
+    모두 default로 nori 애널라이저가 적용되게 할 수도 있다.   
+
+```
+"analyzer" : {
+    "default" : {
+        "type : "nori"
+    },
+    "nori" : {
+        "filter" : ["my_pos_f"],
+        "tokenizer" : "nori_tokenizer"
+    }
+}
+```
+
+> 애널라이저를 추가하지 않으면 default로 standard 애널라이저가 적용된다.   
+
+또한, fielddata를 true로 하지 않으면 aggregations를 사용하지 못한다. 
+자세한 내용은 [링크](https://wonyong-jang.github.io/elk/2021/07/06/ELK-Elastic-Search-fielddata.html)를 
+참고하자.    
 
 ## Kibana에서 대시보드 만들기   
 
