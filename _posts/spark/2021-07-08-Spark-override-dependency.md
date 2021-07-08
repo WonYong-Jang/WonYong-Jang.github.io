@@ -1,0 +1,100 @@
+---
+layout: post
+title: "[Spark] How to override a spark dependency cluster mode"   
+subtitle: "라이브러리 버전 충돌이 발생할 때 shadowJar를 사용하여 package relocate"    
+comments: true
+categories : Spark
+date: 2021-07-08
+background: '/img/posts/mac.png'
+---
+
+Spark 개발을 진행하면서 로컬에서는 정상적으로 나왔던 결과값이 
+실제 클러스터로 배포를 했을 때 문제가 되었던 부분을 공유하고자 한다.   
+
+아래와 같이 Example이라는 클래스를 이용하여 deserialize를 할때만 
+필드 맵핑이 적용되도록 JsonAlias 어노테이션을 사용했었다.    
+
+```scala
+import com.fasterxml.jackson.annotation.JsonAlias
+
+case class Example
+(
+  @JsonAlias(Array("example_id"))
+  id: String
+)
+```
+
+json 필드 중에 example_id 가 deserialize를 했을 때 Example 클래스의 
+id와 맵핑이 정상적으로 되는 것을 확인하고 
+실제 클러스터에도 배포를 진행 했다.   
+
+하지만 실제 클러스터에서 결과값은 null로 리턴되면서 정상적으로 맵핑이 되지 않았다.   
+
+jsonAlias 어노테이션은 jackson 2.9부터 제공되었고, 
+spark 프로젝트 gradle에서 사용중인 jackson 버전은 2.9 보다 상위 버전을 
+사용해서 문제될게 없었다. 
+
+[stackoverflow](https://stackoverflow.com/questions/38495683/what-is-the-solution-for-spark-cluster-libs-version-is-lower-than-my-projects-d)를 
+참고하여 도움을 받았고 같은 문제임을 확인했다.     
+
+`Spark UI에서 system classpath를 확인해보니 jackson 2.6 버전을 
+제공하고 있었고 2.9버전보다 하위 버전을 사용하기 때문에 
+문제가 되는 것을 확인했다.`        
+
+gradle에서 shadowJar 플러그인을 사용하고 있었기 때문에 
+gradle에서 작성한 라이브러리 버전이 모두 override 될 것이라고 
+알고 있었지만, 위의 경우처럼 spark 클러스터내에서 classpath로 제공되어 
+버전이 충돌되는 경우는 해결되지 않는 것 같다.   
+
+> maven의 경우는 shadowJar 대신에 shade 플러그인이 제공된다.   
+
+shadowJar 플러그인에서 relocate 
+
+- - -    
+
+## shadowJar 
+
+기본적으로 gradle 빌드를 하면 내가 만들 코드만 컴파일하여 build/libs 경로에 
+jar 파일로 패키징된다. 개발이 끝나고 IDE를 벗어나 커맨드로 동작시키려면 
+dependency로 걸어서 사용하던 라이브러리 파일들은 내가 손수 찾아서 클래스패스에 
+넣어줘야 한다.   
+
+클래스패스 잡고 하는거 다 귀찮으면, 내 jar 파일에 모든 라이브러리를 넣어주는 
+[shadowJar](https://imperceptiblethoughts.com/shadow/) 플러그인이 있다.   
+
+```
+plugins {
+   id 'java'
+   id 'com.github.johnrengelman.shadow' version "2.0.1"
+}
+
+dependencies {
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.9.4'
+}
+
+shadowJar {
+
+}
+```
+
+생성된 xxx-all.jar 파일을 열어보면 모든 라이브러리가 함께 들어 있는 것을 
+볼 수 있다.   
+
+
+- - - 
+
+**Reference**     
+
+<https://hadoopsters.com/2019/05/08/how-to-override-a-spark-dependency-in-client-or-cluster-mode/>    
+<https://blog.leocat.kr/notes/2017/10/11/gradle-shadowjar-make-fat-jar>    
+<https://stackoverflow.com/questions/38495683/what-is-the-solution-for-spark-cluster-libs-version-is-lower-than-my-projects-d>   
+
+{% highlight ruby linenos %}
+
+{% endhighlight %}
+
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}
+
