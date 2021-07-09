@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spark] How to override a spark dependency cluster mode"   
+title: "[Spark] How to override a spark dependency in cluster mode(AWS EMR)"   
 subtitle: "라이브러리 버전 충돌이 발생할 때 shadowJar를 사용하여 package relocate"    
 comments: true
 categories : Spark
@@ -8,7 +8,7 @@ date: 2021-07-08
 background: '/img/posts/mac.png'
 ---
 
-Spark 개발을 진행하면서 로컬에서는 정상적으로 나왔던 결과값이 
+Amazon EMR에서 실행되는 Spark 개발을 진행하면서 로컬에서는 정상적으로 나왔던 결과값이 
 실제 클러스터로 배포를 했을 때 문제가 되었던 부분을 공유하고자 한다.   
 
 아래와 같이 Example이라는 클래스를 이용하여 deserialize를 할때만 
