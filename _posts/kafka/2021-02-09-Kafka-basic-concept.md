@@ -3,7 +3,7 @@ layout: post
 title: "[Kafka] Apache Kafka 이해하기  "
 subtitle: "pub-sub 모델, Broker, Topic, Partition, Zookeeper "    
 comments: true
-categories : BigData
+categories : Kafka
 date: 2021-02-09
 background: '/img/posts/mac.png'
 ---

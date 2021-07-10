@@ -3,7 +3,7 @@ layout: post
 title: "[Kafka] Apache Kafka Client"
 subtitle: "Scala를 이용하여 Producer, Consumer API 구현하기"    
 comments: true
-categories : BigData
+categories : Kafka
 date: 2021-02-11
 background: '/img/posts/mac.png'
 ---
@@ -433,7 +433,7 @@ Producer가 데이터를 압축해서 보낼 수 있는데, 어떤 타입으로 
 `압축을 하면 데이터 전송 시 네트워크 처리량에 이득을 볼 수 있지만 
 압축을 하는 데에 CPU 또는 메모리 리소스를 사용하므로 사용환경에 따라 
 적절한 압축 옵션을 사용하는 것이 중요하다. 또한, Producer에서 압축한 
-메시지는 컨슈머 어플리케이션이 압축을 풀데 되는데 이때도 컨슈머 어플리케이션 
+메시지는 컨슈머 어플리케이션이 압축을 풀어야 하며 이때도 컨슈머 어플리케이션 
 리소스가 사용되는 점을 주의하자.`     
 
 

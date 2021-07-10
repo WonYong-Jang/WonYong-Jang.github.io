@@ -3,7 +3,7 @@ layout: post
 title: "[Kafka] Apache Kafka 설치 및 예제, 파티션 수에 따른 메시지 순서"
 subtitle: "토픽 생성하고 메세지 발행 및 구독, kafkacat을 통한 모니터링 및 인증 방식  "    
 comments: true
-categories : BigData
+categories : Kafka
 date: 2021-02-10
 background: '/img/posts/mac.png'
 ---
@@ -111,10 +111,10 @@ bin/kafka-console-producer.sh --broker-list localhost:9092 --topic quickstart-ev
 #### 4. 파티션 수에 따른 메시지 순서에 대한 이해    
 
 이번 내용은 카프카를 이해하는데 한참 걸렸던 메시지 순서에 대한 내용을 살펴보자.    
-메시지 순서에 대한 이해를 위해 파티션 수를 8로 메시지 순서를 확인해보자.   
+메시지 순서에 대한 이해를 위해 파티션 수를 4개 생성하여 메시지 순서를 확인해보자.   
 
 ```
-bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 8 --topic quickstart-events      
+bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 4 --topic quickstart-events      
 ```
 
 이해하기 쉽게 문자가 아닌 1부터 8까지 숫자로 메시지를 보내보고 순서를 확인해보자.     
@@ -159,8 +159,8 @@ bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 -
 이런 경우에 파티션 2는 앞서 설명한것 처럼 파티션 1인 경우와 동일하게 
 두번째 데이터 5가 첫번째 데이터 2 앞으로 올 수 없다.    
 마찬가지로 6도 3보다 앞에 올 수 없다.   
-즉, 파티션이 4개를 사용하는 경우에는 전체 순서는 보장을 못하지만 
-각각의 파티션에 담긴 메시지 순서는 보장한다.  
+`즉, 파티션이 4개를 사용하는 경우에는 전체 순서는 보장을 못하지만 
+각각의 파티션에 담긴 메시지 순서는 보장한다.`       
 
 > 파티션 2번의 5는 2보다 뒤에 온다.      
 > 파티션 3번의 6은 3보다 뒤에 온다.   
@@ -170,7 +170,7 @@ bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 -
 앞의 내용을 정리해보자.   
 `카프카는 각각의 파티션에 대해서만 순서를 보장한다. 그래서, 
     위의 천번째 예제에서 살펴본 것처럼 1개의 파티션인 경우에는 프로듀서가 
-    보낸 순서대로 가져올 수 있지만, 파티션이 8개인 경우에는 프로듀서가 
+    보낸 순서대로 가져올 수 있지만, 파티션이 4개인 경우에는 프로듀서가 
     보낸 순서대로 메시지를 가져올수 없었다.`     
 
 
@@ -181,9 +181,9 @@ bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 -
 ## Kafkacat     
 
 카프카를 사용하는 개발자라면 로컬 혹은 서버에서 브로커와 직접 통신하여 
-테스트 해야 하는 경우가 있다. 이 때 별도 설치 없이 명령어 한 줄로 편리하게 
+테스트 해야 하는 경우가 있다. 이 때 명령어 한 줄로 편리하게 
 쓸 수 있는 도구인 [Kafkacat](https://github.com/edenhill/kafkacat)을 
-사용 할 수 있다.  
+사용 할 수 있다.     
 
 개발 단계에서 처음 토픽을 생성하고 메시지를 발행했을 때, 토픽에 전송된 
 메시지를 Consume 하지 않으면 정상적으로 값이 들어갔는지 확인 할 수 없다. 
