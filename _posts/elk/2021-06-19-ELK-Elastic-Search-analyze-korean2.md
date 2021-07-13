@@ -161,7 +161,10 @@ $ sudo logstash -f logstash.conf
   }
 ```    
 
-아래와 같이 품사를 확인하여 stoptags를 리스트를 추가하거나 삭제 할 수 있다.   
+`아래와 같이 analyze api를 이용하여 해당 인덱스 테스트가 가능하다.`   
+`analyzer를 지정하고 text에 테스트하고자 하는 내용을 작성하면 품사 확인이 
+가능하기 때문에 테스트 후 색인에 제외시킬 항목이 있으면 filter를 추가해주면 된다.`     
+
 
 ```
 POST nori-analyzer-temp/_analyze
@@ -370,11 +373,10 @@ POST nori-analyzer-temp/_analyze
 ```
 "analyzer" : {
     "default" : {
-        "type : "nori"
-    },
-    "nori" : {
-        "filter" : ["my_pos_f"],
-        "tokenizer" : "nori_tokenizer"
+        "tokenizer" : "nori",
+        "filter": [
+            "my_pos_f"
+        ]
     }
 }
 ```
