@@ -162,14 +162,13 @@ $ sudo logstash -f logstash.conf
 ```    
 
 `아래와 같이 analyze api를 이용하여 해당 인덱스 테스트가 가능하다.`   
-`analyzer를 지정하고 text에 테스트하고자 하는 내용을 작성하면 품사 확인이 
+`text에 테스트하고자 하는 내용을 작성하면 품사 확인이 
 가능하기 때문에 테스트 후 색인에 제외시킬 항목이 있으면 filter를 추가해주면 된다.`     
 
 
 ```
 POST nori-analyzer-temp/_analyze
 { 
-  "analyzer": "nori", 
   "text": "때", 
   "explain": true 
 }
