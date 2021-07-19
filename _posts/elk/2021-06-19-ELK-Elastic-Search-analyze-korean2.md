@@ -344,11 +344,11 @@ POST nori-analyzer-temp/_analyze
                 "my_pos_f",
                 "my_stop"
               ],
-              "tokenizer" : "nori_tokenizer"
+              "tokenizer" : "nori_t"
             }
           },
           "tokenizer" : {
-            "nori" : {
+            "nori_t" : {
               "type" : "nori_tokenizer",
               "decompound_mode" : "mixed"
             }
@@ -372,7 +372,7 @@ POST nori-analyzer-temp/_analyze
 ```
 "analyzer" : {
     "default" : {
-        "tokenizer" : "nori",
+        "tokenizer" : "nori_t",
         "filter": [
             "my_pos_f"
         ]
