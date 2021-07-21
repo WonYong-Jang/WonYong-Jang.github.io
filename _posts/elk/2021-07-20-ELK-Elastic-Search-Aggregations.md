@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[ELK] 집계 - Aggregations"
-subtitle: "Metrics, Bucket Aggregations( Range, Histogram, Terms )"    
+subtitle: "Metrics, Bucket Aggregations( Range, Histogram, Terms ), sub aggregations, pipeline aggregations"    
 comments: true
 categories : ELK
 date: 2021-07-20
@@ -494,6 +494,188 @@ size 옵션이 있으며 디폴트 값은 10이다.
 상위 몇개의 버킷들만 coordinate 노드로 가져오고, 그것들을 
 취합해서 결과를 나타낸다. 이 과정은 검색의 query 그리고 fetch 과정과 
 유사하다.`   
+
+- - - 
+
+## 3. sub aggregations      
+
+`Bucket Aggregation 으로 만든 버킷들 내부에 다시 "aggs" : { } 를 선언해서 
+또다른 버킷을 만들거나 Metrics Aggregation을 만들어 사용이 가능하다.`     
+
+다음은 terms aggregation을 이용해서 생성한 stations 버킷별로 avg aggregation을 
+이용해서 passangers 필드의 평균값을 계산하는 예제이다.    
+
+```
+GET my_stations/_search
+{
+  "size":0,
+  "aggs" : {
+    "stations" : {
+      "terms": {
+        "field": "station.keyword"
+      },
+      "aggs" : {
+        "avg_psg_per_st" : {
+          "avg" : {
+            "field": "passangers"
+          }
+        }
+      }
+    }
+  }
+}
+```   
+
+Output   
+
+```
+"aggregations" : {
+    "stations" : {
+      "doc_count_error_upper_bound" : 0,
+      "sum_other_doc_count" : 0,
+      "buckets" : [
+        {
+          "key" : "강남",
+          "doc_count" : 5,
+          "avg_psg_per_st" : {
+            "value" : 5931.2
+          }
+        },
+        {
+          "key" : "불광",
+          "doc_count" : 1,
+          "avg_psg_per_st" : {
+            "value" : 971.0
+          }
+        },
+        {
+          "key" : "신촌",
+          "doc_count" : 1,
+          "avg_psg_per_st" : {
+            "value" : 3912.0
+          }
+        },
+        {
+          "key" : "양재",
+          "doc_count" : 1,
+          "avg_psg_per_st" : {
+            "value" : 4121.0
+          }
+        },
+        {
+          "key" : "종각",
+          "doc_count" : 1,
+          "avg_psg_per_st" : {
+            "value" : 2314.0
+          }
+        },
+        {
+          "key" : "홍제",
+          "doc_count" : 1,
+          "avg_psg_per_st" : {
+            "value" : 1021.0
+          }
+        }
+      ]
+    }
+  }
+```   
+
+버킷 안에 또 다른 하위 버킷을 만드는 것도 가능하다. 다음은 terms aggregation을 
+이용해서 line.keyword 별로 lines 버킷을 만들고 그 안에 
+또다시 terms aggregation을 버킷을 만드는 예제이다.   
+
+```
+GET my_stations/_search
+{
+  "size": 0,
+  "aggs": {
+    "lines": {
+      "terms": {
+        "field": "line.keyword"
+      },
+      "aggs": {
+        "stations_per_lines": {
+          "terms": {
+            "field": "station.keyword"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Output   
+
+```
+"aggregations" : {
+    "lines" : {
+      "doc_count_error_upper_bound" : 0,
+      "sum_other_doc_count" : 0,
+      "buckets" : [
+        {
+          "key" : "2호선",
+          "doc_count" : 6,
+          "stations_per_lines" : {
+            "doc_count_error_upper_bound" : 0,
+            "sum_other_doc_count" : 0,
+            "buckets" : [
+              {
+                "key" : "강남",
+                "doc_count" : 5
+              },
+              {
+                "key" : "신촌",
+                "doc_count" : 1
+              }
+            ]
+          }
+        },
+        {
+          "key" : "3호선",
+          "doc_count" : 3,
+          "stations_per_lines" : {
+            "doc_count_error_upper_bound" : 0,
+            "sum_other_doc_count" : 0,
+            "buckets" : [
+              {
+                "key" : "불광",
+                "doc_count" : 1
+              },
+              {
+                "key" : "양재",
+                "doc_count" : 1
+              },
+              {
+                "key" : "홍제",
+                "doc_count" : 1
+              }
+            ]
+          }
+        },
+        {
+          "key" : "1호선",
+          "doc_count" : 1,
+          "stations_per_lines" : {
+            "doc_count_error_upper_bound" : 0,
+            "sum_other_doc_count" : 0,
+            "buckets" : [
+              {
+                "key" : "종각",
+                "doc_count" : 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+```
+
+`하위 버킷이 깊어질수록 elasticsearch가 하는 작업량과 메모리 소모량이 
+기하급수적으로 늘어나기 때문에 예상치 못한 오류를 발생 시킬수도 있다. 
+보통은 2레벨의 깊이 이상의 버킷은 생성하지 않는 것이 좋다.`   
 
 
 - - - 
