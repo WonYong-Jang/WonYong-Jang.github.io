@@ -677,6 +677,119 @@ Output
 기하급수적으로 늘어나기 때문에 예상치 못한 오류를 발생 시킬수도 있다. 
 보통은 2레벨의 깊이 이상의 버킷은 생성하지 않는 것이 좋다.`   
 
+- - - 
+
+## 4. Pipeline Aggregations   
+
+Aggregation 중에는 다른 metrics aggregation의 결과를 새로운 입력으로 하는 
+pipeline aggregation이 있다. `pipeline 에는 다른 버킷의 결과들을 다시 
+연산하는 min_bucket, max_bucket, avg_bucket, sum_bucket, stats_bucket, 
+    이동 평균을 구하는 moving_avg, 미분값을 구하는 derivative, 값의 
+    누적 합을 구하는 cumulative_sum등이 있다.`     
+
+`Pipeline aggregation은 "buckets_path": "<버킷 이름>" 옵션을 이용해서 
+입력 값으로 사용할 버킷을 지정한다.`   
+다음은 my_station에서 date_histogram을 이용해서 월별로 나눈 passangers 의 
+합계 sum을 다시 cumulative_sum을 이용해서 누적값을 구하는 예제이다.   
+
+```
+GET my_stations/_search
+{
+  "size": 0,
+  "aggs": {
+    "months": {
+      "date_histogram": {
+        "field": "date",
+        "interval": "month"
+      },
+      "aggs": {
+        "sum_psg": {
+          "sum": {
+            "field": "passangers"
+          }
+        },
+        "accum_sum_psg": {
+          "cumulative_sum": {
+            "buckets_path": "sum_psg"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Output   
+
+```
+"aggregations" : {
+    "months" : {
+      "buckets" : [
+        {
+          "key_as_string" : "2019-06-01T00:00:00.000Z",
+          "key" : 1559347200000,
+          "doc_count" : 2,
+          "sum_psg" : {
+            "value" : 7726.0
+          },
+          "accum_sum_psg" : {
+            "value" : 7726.0
+          }
+        },
+        {
+          "key_as_string" : "2019-07-01T00:00:00.000Z",
+          "key" : 1561939200000,
+          "doc_count" : 2,
+          "sum_psg" : {
+            "value" : 12699.0
+          },
+          "accum_sum_psg" : {
+            "value" : 20425.0
+          }
+        },
+        {
+          "key_as_string" : "2019-08-01T00:00:00.000Z",
+          "key" : 1564617600000,
+          "doc_count" : 2,
+          "sum_psg" : {
+            "value" : 11545.0
+          },
+          "accum_sum_psg" : {
+            "value" : 31970.0
+          }
+        },
+        {
+          "key_as_string" : "2019-09-01T00:00:00.000Z",
+          "key" : 1567296000000,
+          "doc_count" : 3,
+          "sum_psg" : {
+            "value" : 9054.0
+          },
+          "accum_sum_psg" : {
+            "value" : 41024.0
+          }
+        },
+        {
+          "key_as_string" : "2019-10-01T00:00:00.000Z",
+          "key" : 1569888000000,
+          "doc_count" : 1,
+          "sum_psg" : {
+            "value" : 971.0
+          },
+          "accum_sum_psg" : {
+            "value" : 41995.0
+          }
+        }
+      ]
+    }
+  }
+```   
+
+위 결과에서 accum_sum_psg 결과에 sum_psg 값이 계속 누적되어 더해지고 
+있는 것을 확인 할 수 있다.    
+
+또 다른 예제는 서로 다른 버킷에 있는 값들도 bucket_path에 > 기호를 이용해서 
+
 
 - - - 
 
