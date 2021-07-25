@@ -132,6 +132,10 @@ $ sudo logstash -f logstash.conf
 
 ## settings 설정    
 
+다음과 같이 settings에 사용할 애널라이즈를 입력한다.   
+아래 예시는 standard 애널라이저 대신 nori 토크나이저를 이용하고 
+조사, 형용사 등을 제외하기 위해 my_pos_f 토큰 필터를 
+사용하여 애널라이저를 구성한 예이다.   
 
 ```
 "settings" : {
@@ -387,6 +391,11 @@ POST nori-analyzer-temp/_analyze
 참고하자.    
 
 ## Kibana에서 대시보드 만들기   
+
+다음은 색인된 데이터를 이용하여 키바나를 통해 시각화한 결과이다.   
+terms aggregation을 통해 가장 많이 등장한 단어별로 내림차순 되어 있는 것을 
+볼 수 있다.   
+
 
 <img width="1256" alt="스크린샷 2021-06-28 오전 9 43 14" src="https://user-images.githubusercontent.com/26623547/123564721-6e27e600-d7f5-11eb-9737-21f6f69cd610.png">   
 
