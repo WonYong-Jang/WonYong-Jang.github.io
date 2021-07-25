@@ -788,8 +788,100 @@ Output
 위 결과에서 accum_sum_psg 결과에 sum_psg 값이 계속 누적되어 더해지고 
 있는 것을 확인 할 수 있다.    
 
-또 다른 예제는 서로 다른 버킷에 있는 값들도 bucket_path에 > 기호를 이용해서 
+`서로 다른 버킷에 있는 값들도 bucket_path에 > 기호를 이용해서 
+"부모>자녀" 형태로 지정이 가능하다.`     
+다음은 sum_bucket을 이용해서 mon>sum_psg 버킷에 있는 passangers 필드값의 합을 
+구하는 예제이다.   
 
+```
+GET my_stations/_search
+{
+  "size": 0,
+  "aggs": {
+    "mon": {
+      "date_histogram": {
+        "field": "date",
+        "interval": "month"
+      },
+      "aggs": {
+        "sum_psg": {
+          "sum": {
+            "field": "passangers"
+          }
+        }
+      }
+    },
+    "bucket_sum_psg": {
+      "sum_bucket": {
+        "buckets_path": "mon>sum_psg"
+      }
+    }
+  }
+}
+```
+
+Output   
+
+```
+...
+ "aggregations" : {
+    "mon" : {
+      "buckets" : [
+        {
+          "key_as_string" : "2019-06-01T00:00:00.000Z",
+          "key" : 1559347200000,
+          "doc_count" : 2,
+          "sum_psg" : {
+            "value" : 7726.0
+          }
+        },
+        {
+          "key_as_string" : "2019-07-01T00:00:00.000Z",
+          "key" : 1561939200000,
+          "doc_count" : 2,
+          "sum_psg" : {
+            "value" : 12699.0
+          }
+        },
+        {
+          "key_as_string" : "2019-08-01T00:00:00.000Z",
+          "key" : 1564617600000,
+          "doc_count" : 2,
+          "sum_psg" : {
+            "value" : 11545.0
+          }
+        },
+        {
+          "key_as_string" : "2019-09-01T00:00:00.000Z",
+          "key" : 1567296000000,
+          "doc_count" : 3,
+          "sum_psg" : {
+            "value" : 9054.0
+          }
+        },
+        {
+          "key_as_string" : "2019-10-01T00:00:00.000Z",
+          "key" : 1569888000000,
+          "doc_count" : 1,
+          "sum_psg" : {
+            "value" : 971.0
+          }
+        }
+      ]
+    },
+    "bucket_sum_psg" : {
+      "value" : 41995.0
+    }
+  }
+```    
+
+이번 장에서는 Elasticsearch가 텍스트 검색엔진을 넘어 데이터 분석 엔진으로서의 
+기능을 가능하게 해 준 Aggregations에 대해서 
+알아보았다.   
+Aggregations에는 다양한 값들을 연산하는 metrics, 범위나 종류 별로 값들을 
+분리하는 bucket, 그리고 다른 aggregation의 결과를 입력으로 
+받아 
+새로운 연산을 수행하는 pipeline이 있었다.   
 
 - - - 
 
