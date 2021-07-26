@@ -55,9 +55,9 @@ PUT my_stations/_bulk
 
 - - - 
 
-## 1. Metrics Aggregations   
+# 1. Metrics Aggregations   
 
-#### 1-1) min, max, sum, avg   
+### 1-1) min, max, sum, avg   
 
 가장 흔하게 사용되는 metrics aggregations은 min, max, sum, avg aggregation이다.   
 순서대로 명시한 필드의 최소, 최대, 합, 평균 값을 가져오는 aggregation 이다.    
@@ -132,7 +132,7 @@ GET my_stations/_search
 }
 ```
 
-#### 1-2) stats    
+### 1-2) stats    
 
 min, max, sum, avg 값을 모두 가져와야 한다면 다음과 같이 stats aggregation을 
 사용하면 위 4개의 값 모두와 count 값을 한번에 가져온다.   
@@ -171,7 +171,7 @@ Output
   }
 ```   
 
-#### 1-3) cardinality   
+### 1-3) cardinality   
 
 `필드의 값이 모두 몇 종류인지 분포값을 알려면 cardinality aggregation을 
 사용해서 구할 수 있다.`   
@@ -214,7 +214,7 @@ Output
 
 - - - 
 
-## 2. Bucket Aggregations   
+# 2. Bucket Aggregations   
 
 `Bucket aggregation 은 주어진 조건으로 분류된 버킷 들을 만들고, 
        각 버킷에 소속되는 도큐먼트들을 모아 그룹으로 
@@ -225,7 +225,7 @@ Output
 
 주로 사용되는 bucket aggregation 들은 Range, Histogram, Terms 등이 있다.   
 
-#### 2-1) range   
+### 2-1) range   
 
 range는 숫자 필드 값으로 범위를 지정하고 각 범위에 해당하는 버킷을 
 만드는 aggregation이다. field 옵션에 해당 필드의 이름을 
@@ -296,7 +296,7 @@ Output
 포함하지 않는다. 예를 들어 필드 값이 200인 도큐먼트는 "key": "100-200" 버킷에는 
 포함되지 않고 "key":"200-300" 버킷에는 포함된다.`   
 
-#### 2-2) histogram   
+### 2-2) histogram   
 
 histogram 도 range와 마찬가지로 숫자 필드의 범위를 나누는 aggs 이다.   
 앞에서 본 range는 from 과 to 를 이용해서 각 버킷의 범위를 
@@ -353,7 +353,7 @@ Output
 key 값은 range와 마찬가지로 key 로 지정된 값이 
 버킷에 이상(포함) / 미만(포함하지 않음)으로 지정된다.   
 
-#### 2-3) date_range, date_histogram   
+### 2-3) date_range, date_histogram   
 
 range와 histogram aggs 처럼 숫자 외에도 날짜 필드를 이용해서 
 범위별로 버킷의 생성이 가능하다. `이 때 사용되는 
@@ -421,7 +421,7 @@ date_histogram의 결과에서는 버킷별로 key에 시작 날짜가 epoch_mil
 
 
 
-#### 2-4) terms   
+### 2-4) terms   
 
 terms aggregation은 keyword 필드의 문자열 별로 버키시을 나누어 집계가 
 가능하다. keyword 필드 값으로만 사용이 가능하며, 
@@ -497,7 +497,7 @@ size 옵션이 있으며 디폴트 값은 10이다.
 
 - - - 
 
-## 3. sub aggregations      
+# 3. Sub aggregations      
 
 `Bucket Aggregation 으로 만든 버킷들 내부에 다시 "aggs" : { } 를 선언해서 
 또다른 버킷을 만들거나 Metrics Aggregation을 만들어 사용이 가능하다.`     
@@ -679,7 +679,7 @@ Output
 
 - - - 
 
-## 4. Pipeline Aggregations   
+# 4. Pipeline Aggregations   
 
 Aggregation 중에는 다른 metrics aggregation의 결과를 새로운 입력으로 하는 
 pipeline aggregation이 있다. `pipeline 에는 다른 버킷의 결과들을 다시 
