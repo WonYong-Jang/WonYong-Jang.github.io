@@ -9,7 +9,7 @@ background: '/img/posts/mac.png'
 ---
 
 
-# Batch VS Streaming   
+## Batch VS Streaming   
 
 과거 이야기를 먼저 해보면, 과거에도 데이터를 분석해내는 방법이 있었다. 첫번째로는 데이터를 
 모으는 것이다. 그리고 그것을 특정한 저장소에 저장을 한다. 대부분 데이터베이스 시스템에 
@@ -41,7 +41,7 @@ background: '/img/posts/mac.png'
 
 - - - 
 
-# AWS Kinesis   
+## AWS Kinesis   
 
 `AWS Kinesis 는 데이터 수집구간과 데이터 처리구간 중간에 위치한다. 이렇게 중간에 위치하는 소프트웨어를 
 만든 이유는 다양한 데이터들을 수집하고 이것을 다양한 포맷으로 만들어 주기 때문이다.`        
@@ -63,7 +63,7 @@ Consumer는 Amazon DynamoDB, Amazon Redshift 또는 Amazon S3와 같은 AWS 서�
 사용하여 결과를 저장할 수 있다.
 
 
-## Kinesis Data Streams 용어   
+### Kinesis Data Streams 용어   
 
 Kinesis Data Steams 용어들을 정리 해보자.   
 
@@ -79,7 +79,7 @@ Amazon Kinesis Data Streams Application이라고 한다.
 
 - - - 
 
-# Kafka와의 차이점   
+## Kafka와의 차이점   
 
 <img width="750" alt="스크린샷 2021-07-26 오후 11 40 03" src="https://user-images.githubusercontent.com/26623547/127007955-637cd05e-6c2f-4ade-9b4e-570d7257b8a4.png">   
 
