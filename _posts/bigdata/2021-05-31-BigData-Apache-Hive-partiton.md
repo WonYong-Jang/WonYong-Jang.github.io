@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Hive] Apache hive 파티션 타입 및 종류"
-subtitle: "정적, 동적 파티션"       
+subtitle: "정적, 동적 파티션 "       
 comments: true
 categories : BigData
 date: 2021-05-31
