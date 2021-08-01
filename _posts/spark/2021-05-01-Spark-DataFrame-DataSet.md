@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] 아파치 스파크(spark) SQL과 DataFrame, DataSet "
-subtitle: "DataFrame, DataSet 각 데이터 구조 파악하기 / Spark 2.0 API"    
+subtitle: "DataFrame, DataSet 각 데이터 구조 파악하기 / Spark 2.0 API "    
 comments: true
 categories : Spark
 date: 2021-05-01
