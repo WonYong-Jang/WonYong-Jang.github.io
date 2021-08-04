@@ -213,8 +213,10 @@ case class Person(name: String, age: Int, job: String)
 import spark.implicits._
 
 val row1 = Person("hayoon", 7, "student")
-val row2 = Person("sunwoo", 8, "student2")
-val data = List(row1, row2)
+val row2 = Person("sunwoo", 8, "student")
+val row3 = Person("sunwoo", 9, "police")
+val row4 = Person("sunwoo", 10, "teacher")
+val data = List(row1, row2, row3, row4)
 val df2: Dataset[Person] = spark.createDataset(data)
 val df2_1: Dataset[Person] = data.toDS
 ```
@@ -228,9 +230,57 @@ val ds = List(1,2,3).toDF().as[Int]
 ds.show()
 ```   
 
-- - - 
 
-#### 3. 
+#### 3. dropDuplicates   
+
+데이터셋에서 중복되는 요소를 제외한 데이터셋을 돌려준다. distinct() 메서드와 
+다른 점은 중복 여부를 판단할 때 사용할 컬럼을 지정해 줄 수 있다는 점이다.      
+즉, 아래 예제에서 age 컬럼을 중복 여부 판단 기준으로 지정할 경우 해당 컬럼 
+값이 똑같은 데이터의 경우 한 건만 포함된 것을 확인 할 수 있다.   
+만약 아무 컬럼도 지정하지 않을 경우 모든 컬럼 값을 비교한다.   
+
+
+```
+// 원래 값   
+scala> ds.show
++------+---+-------+
+|  name|age|    job|
++------+---+-------+
+|hayoon|  7|student|
+|sunwoo|  7|student|
+|sunwoo|  9| police|
+|sunwoo| 10|teacher|
++------+---+-------+
+
+// 중복을 제외한 후   
+
+scala> ds.dropDuplicates("job").show   
++------+---+-------+
+|  name|age|    job|
++------+---+-------+
+|sunwoo| 10|teacher|
+|hayoon|  7|student|
++------+---+-------+
+```
+
+
+#### 4. groupByKey()   
+
+groupByKey() 메서드는 RDD의 groupBy() 메서드와 동일한 동작을 수행하는 메서드이다.   
+다음은 Person 객체로 구성된 데이터셋을 대상으로 groupByKey() 메서드를 
+실행해 각 Person 객체를 직업별 그룹으로 분류하는 예제이다.   
+
+```
+scala> ds.groupByKey(_.job).count().show()   
++-------+--------+
+|  value|count(1)|
++-------+--------+
+|teacher|       1|
+|student|       3|
++-------+--------+
+```
+
+
 
 
 - - - 
