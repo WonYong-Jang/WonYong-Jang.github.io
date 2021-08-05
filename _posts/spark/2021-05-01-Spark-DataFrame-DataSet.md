@@ -84,6 +84,9 @@ rdd.map { v => v.charAt(0) }
 처리되기 때문에 비록 데이터프레임에 포함된 데이터가 모두 문자열이라고 
 할지라도 String 클래스의 메서드를 직접 호출할 방법이 없다.`       
 
+즉, 데이터 프레임은 Row 타입을 지닌 배열이고 Row 타입은 내부의 값에 
+대한 타입을 알지 못한다는 것이다.   
+
 물론 데이터프레임의 이런 특징은 RDD 보다 더 뛰어난 성능을 얻기 위한 
 최적화 과정에서 발생하는 것이다. 하지만 개발 과정에서의 
 불편함이 남아 있기 때문에 스파크에서는 `데이터 프레임 고유의 
@@ -95,6 +98,10 @@ rdd.map { v => v.charAt(0) }
 완전히 동일한 클래스이다. 즉, 데이터셋과 데이터프레임은 동일한 
 데이터를 서로 다른 방식으로 표현하기 위한 모델이지 서로 다른 것이 아니다.   
 > 그렇기 때문에 데이터 프레임과 데이터셋은 자유롭게 변환이 가능하다.    
+
+`데이터 셋을 정리해보면 타입이 있는 데이터 집합이며, 데이터 프레임과 RDD를 
+합친 것이다. 그렇기 때문에 RDD 처럼 groupByKey를 사용할 수 있고 또한 
+agg와 같은 데이터 프레임관련 메서드를 사용 할 수 있다.`     
 
 아래와 같이 List를 데이터셋으로 생성할 수 있다.    
 이를 조회할 때 show()를 이용 할 수 있으며, 출력을 위한 println() 메서드를 
@@ -231,7 +238,7 @@ ds.show()
 ```   
 
 
-#### 3. dropDuplicates   
+#### 3) dropDuplicates   
 
 데이터셋에서 중복되는 요소를 제외한 데이터셋을 돌려준다. distinct() 메서드와 
 다른 점은 중복 여부를 판단할 때 사용할 컬럼을 지정해 줄 수 있다는 점이다.      
@@ -253,7 +260,6 @@ scala> ds.show
 +------+---+-------+
 
 // 중복을 제외한 후   
-
 scala> ds.dropDuplicates("job").show   
 +------+---+-------+
 |  name|age|    job|
@@ -264,7 +270,7 @@ scala> ds.dropDuplicates("job").show
 ```
 
 
-#### 4. groupByKey()   
+#### 4) groupByKey()   
 
 groupByKey() 메서드는 RDD의 groupBy() 메서드와 동일한 동작을 수행하는 메서드이다.   
 다음은 Person 객체로 구성된 데이터셋을 대상으로 groupByKey() 메서드를 
@@ -280,6 +286,36 @@ scala> ds.groupByKey(_.job).count().show()
 +-------+--------+
 ```
 
+#### 5) agg()    
+
+rdd의 groupByKey와 달리 데이터 셋은 groupby로 리듀스를 할 수 있는데, 
+    agg()메서드를 이용해서 집계연산이 가능하다.   
+
+```
+// 원래 값    
++------+---+-------+----+
+|  name|age|    job|type|
++------+---+-------+----+
+|hayoon|  7|student|   a|
+|sunwoo|  7|student|   b|
+| kaven|  9|student|   c|
+|  mike| 10|teacher|   d|
+|  mark| 11|teacher|   e|
+| herry| 10|teacher|   f|
++------+---+-------+----+
+
+// 집계 연산 후   
+import spark.implicits._
+import org.apache.spark.sql.functions._
+scala> ds.groupByKey(_.job).agg(sum("age").as[Int], first("name").as[String], first("type").as[String]).show()    
+
++-------+--------+------------------+------------------+
+|  value|sum(age)|first(name, false)|first(type, false)|
++-------+--------+------------------+------------------+
+|teacher|      31|              mike|                 d|
+|student|      23|            hayoon|                 a|
++-------+--------+------------------+------------------+
+```
 
 
 
