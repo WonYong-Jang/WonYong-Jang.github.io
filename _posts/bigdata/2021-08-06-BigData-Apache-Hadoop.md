@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[BigData] Apache Hadoop과 Hive 설치하고 실행하기"
-subtitle: "Mac OS에서 하둡과 하이브 설치 및 실습"       
+title: "[Hadoop] Apache Hadoop과 설치하고 실습하기"
+subtitle: "Hadoop의 hdfs와 mapreduce 실습"       
 comments: true
 categories : BigData
 date: 2021-08-06
