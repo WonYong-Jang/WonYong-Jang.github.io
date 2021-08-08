@@ -53,6 +53,8 @@ $ cd /usr/local/Cellar/hadoop/3.3.1/libexec/etc/hadoop
 
 #### 2-2) core-site.xml    
 
+core-site.xml 파일은 HDFS와 맵리듀스에 공통적으로 사용되는 IO와 같은 
+하둡 코어를 위한 환경을 설정하는 파일이다.   
 파일의 configuration 태그 안에 작성한다.   
 
 ```
@@ -71,6 +73,8 @@ $ cd /usr/local/Cellar/hadoop/3.3.1/libexec/etc/hadoop
 
 #### 2-3) mapred-site.xml    
 
+mapred-site.xml 파일은 Job Tracker와 Task Tracker 같은 맵리듀스 데몬을 
+위한 환경을 설정하는 파일이다.    
 파일의 configuration 태그 안에 작성한다.   
 
 ```
@@ -84,6 +88,8 @@ $ cd /usr/local/Cellar/hadoop/3.3.1/libexec/etc/hadoop
 
 #### 2-4) hdfs-site.xml   
 
+hdfs-site.xml 파일은 네임노드, 보조 네임노드, 데이터 노드 등과 같이 
+HDFS 데몬을 위한 환경을 설정하는 파일이다.   
 파일의 configuration 태그 안에 작성한다.   
 
 ```
@@ -119,13 +125,20 @@ $ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 이제 하둡을 실행할 때 아래와 같이 에러가 날 경우는 
 원격 로그인을 허용하지 않았을 경우 발생 한다.   
 
+
 ```
 "localhost: ssh: connect to host localhost port 22: Connection refused"   
 ```
 
 환경설정의 공유에 들어가서 원격 로그인을 허용한다.    
 
-<img width="591" alt="스크린샷 2021-08-06 오후 11 14 22" src="https://user-images.githubusercontent.com/26623547/128523833-79843bec-8a03-403b-9190-6c9d21ecd0ff.png">
+<img width="591" alt="스크린샷 2021-08-06 오후 11 14 22" src="https://user-images.githubusercontent.com/26623547/128523833-79843bec-8a03-403b-9190-6c9d21ecd0ff.png">   
+
+아래와 같이 ssh가 제대로 접속되는지 확인 할 수 있다.   
+
+```
+$ ssh localhost    
+```   
 
 #### 3-1) 실행 및 종료 명령어    
 
