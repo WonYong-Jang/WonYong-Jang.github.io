@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] 아파치 스파크(spark) SQL과 DataFrame, DataSet "
-subtitle: "DataFrame, DataSet 각 데이터 구조 파악하기 "    
+subtitle: "DataFrame, DataSet 각 데이터 구조 파악하기  "    
 comments: true
 categories : Spark
 date: 2021-05-01
@@ -94,6 +94,10 @@ rdd.map { v => v.charAt(0) }
 컴파일 타입 오류 검증이 가능한 새로운 모델을 제공하게 되는데 
 그것이 바로 데이터 셋 모델이다.`      
 
+또한, 데이터 셋은 join 연산을 수행할 때 High-level API를 사용하면 
+가능한 경우에 자동으로 broadcast join 등으로 바꿔 shuffle이 
+일어나지 않게 해주는 최적화가 이루어 진다.      
+
 > 위에서 설명했듯이 데이터 프레임은 데이터 셋과 다르지 않은 
 완전히 동일한 클래스이다. 즉, 데이터셋과 데이터프레임은 동일한 
 데이터를 서로 다른 방식으로 표현하기 위한 모델이지 서로 다른 것이 아니다.   
@@ -102,6 +106,7 @@ rdd.map { v => v.charAt(0) }
 `데이터 셋을 정리해보면 타입이 있는 데이터 집합이며, 데이터 프레임과 RDD를 
 합친 것이다. 그렇기 때문에 RDD 처럼 groupByKey를 사용할 수 있고 또한 
 agg와 같은 데이터 프레임관련 메서드를 사용 할 수 있다.`     
+
 
 아래와 같이 List를 데이터셋으로 생성할 수 있다.    
 이를 조회할 때 show()를 이용 할 수 있으며, 출력을 위한 println() 메서드를 
@@ -285,6 +290,19 @@ scala> ds.groupByKey(_.job).count().show()
 |student|       3|
 +-------+--------+
 ```
+
+`Spark Dataset API에 reduceByKey가 없는 이유는 RDD와 달리 Dataset API부터는 
+groupBy나 groupByKey를 호출한 이후에 어떤 연산을 수행하냐에 따라 Spark에서 
+자동으로 최적화를 진행해 준다.`   
+
+> 대신 groupBy.reduceGroups 형태로 존재한다.   
+
+즉, groupBy.recueGroups 의 경우에는 맨 처음에 groupBy를 적용하는 것처럼 
+보이지만, 실제로는 reduceByKey 처럼 동작한다. 
+그래도 아직 reduceByKey 보다는 1.x배 느리다는 벤치마크 결과가 있다.   
+
+자세한 내용은 [링크](https://ridicorp.com/story/park-rdd-groupby/)를 
+참고하자.   
 
 #### 5) agg()    
 
