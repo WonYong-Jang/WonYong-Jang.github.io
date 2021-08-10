@@ -108,16 +108,48 @@ task를 처리하는 시간 동안 아무런 처리를 하지 않게 된다.
 할 때는 상대적으로 성능이 좋은 coalesce()를 사용하고, 파티션 수를 늘려야 
 하는 경우에만 repartition() 메서드를 사용하는 것이 좋다.`    
 
+즉, coalesce는 셔플링을 수행하지 않는 대신 데이터 이동을 최소화하려고 부모 RDD의 
+기존 파티션을 최대한 보존한다.    
+
+참고로 파티션이 몇개로 분할되어 있는지 파티션 수를 확인하려면 아래와 같이 가능하다.   
+
+```scala
+df.rdd.getNumPartitions   
+df.rdd.partitions.length   
+df.rdd.partitions.size   
+```
+
+
+
+Spark의 Task는 하나의 partition을 가진다.   
+SparkContext의 parallelize를 실행해서 hadoop HDFS에 데이터를 저장할 때, 
+    병렬(spark core) 개수만큼 파티션이 생긴다. 전문 용어로 level of parallelism이라 한다.    
+
+> hadoop에서도 reduce 개수만큼 파티션 개수가 생긴다.   
+
+HDFS에 저장할 용량이 크지 않다면 spark core 개수와 상관없이 하나의 
+파티션 파일로 모아두는 것이 좋을 수 있다.   
+
+이를 위해 repartiton 또는 coalesce를 사용할 수 있다.    
+
+```scala
+df.repartition(1).write.format('csv')
+.option("path", "s3a://my.bucket.name/location")
+.save(header = 'true')
+```
+
 
 
 - - - 
 
 **Reference**    
 
+<https://blog.devgenius.io/a-neglected-fact-about-apache-spark-performance-comparison-of-coalesce-1-and-repartition-1-80bb4e30aae4>   
 <https://jaemunbro.medium.com/apache-spark-partition-%EA%B0%9C%EC%88%98%EC%99%80-%ED%81%AC%EA%B8%B0-%EC%A0%95%ED%95%98%EA%B8%B0-3a790bd4675d>   
 <https://m.blog.naver.com/syung1104/221103154997>    
 <https://thebook.io/006908/part01/ch04/02-01/>   
 <https://ourcstory.tistory.com/147>    
+<https://knight76.tistory.com/entry/scala-spark%EC%97%90%EC%84%9C-partition-%EC%A4%84%EC%9D%B4%EA%B8%B0-repartition-coalesce>   
 
 {% highlight ruby linenos %}
 
