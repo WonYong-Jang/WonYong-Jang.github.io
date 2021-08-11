@@ -1,14 +1,41 @@
 ---
 layout: post
 title: "[Hadoop] Apache Hadoop과 설치하고 실습하기"
-subtitle: "Hadoop의 hdfs와 mapreduce 실습"       
+subtitle: "Hadoop의 hdfs와 mapreduce 이해하기"       
 comments: true
 categories : BigData
 date: 2021-08-06
 background: '/img/posts/mac.png'
 ---
 
-# 하둡(Hadoop) 
+# 하둡(Hadoop)     
+
+하둡은 빅데이터 인프라 기술 중에 하나로 분산처리를 통해 수많은 데이터를 저장하고 
+처리하는 기술이다.    
+하둡 프레임워크는 몇 가지 프레임워크로 이루어져 있다. 이중에서도 
+`가장 핵심적인 기능을 하는 것은 맵리듀스(MapReduce) 프레임워크와 
+분산형 파일 시스템(HDFS)이다.`    
+
+`하둡의 동작흐름은 데이터가 들어오면, 데이터를 쪼갠다. 그리고 
+그 데이터를 분리해서 저장한다. 따라서 데이터를 쪼갠 후에 어느 데이터 노드에 
+저장이 되어 있는지를 기록해 놓는 부분(메타데이터)이 필요하다.`      
+`정리하면, 하둡에서 데이터를 저장하기 전에 네임노드에서 분산을 하고 
+저장위치를 분배한다. 그 후에 여러개 중에 지정된 데이터 노드에 저장을 한다고 
+간단히 이해하자.`     
+
+
+## 맵리듀스의 원리     
+
+상식적으로 1명이 100개를 훑어보는 것과 100명이 1개씩 훑어보는 것이 빠를 것이다. 
+이것이 분산처리의 핵심이지만 100명이 훑어본 결과를 취합하고 정리하는 소요가 
+있게 마련이다. 또한 탐색할 양이 101개이거나 1개의 길이가 서로 다르다면 
+이를 동일한 업무크기로 나누는 일도 쉽지가 않을 것이다.   
+
+맵리듀스는 이러한 처리를 돕는 역할을 한다. 이름 그대로 Map단계와 Reduce단계로 
+이루어진다. 먼저 Map 단계에서는 흩어져 있는 데이터를 key, value로 데이터를 
+묶어준다. 예를 들어 key는 몇 번째 데이터인지, value는 값을 추출한 정보를 가진다. 
+그리고 Reduce단계는 Map단계의 key를 중심으로 필터링 및 정렬한다.   
+
 
 - - - 
 
@@ -203,6 +230,8 @@ Secondary NameNode status : [http://localhost:9868](http://localhost:9868)
 
 **Reference**   
 
+<https://han-py.tistory.com/361>   
+<http://www.incodom.kr/hadoop_%EC%B4%9D%EC%A0%95%EB%A6%AC>    
 <https://tariat.tistory.com/492>   
 <https://rap0d.github.io/tip/2019/10/01/mac_hadoop_in_mac/>   
 <https://key4920.github.io/p/mac-os%EC%97%90-%ED%95%98%EB%91%A1hadoop-%EC%84%A4%EC%B9%98/>   
