@@ -214,6 +214,15 @@ private String createUserWithEmail(String userEmail) {
 위와 같은 오류를 범한다면 큰 시스템 장애로 돌아오게 된다. 그렇기 때문에 orElse 와 orElseGet의 차이점을 정확하게 
 이해하고 사용하는 것이 중요하다.     
 
+`위의 내용을 정리해보면 불필요한 호출을 줄이기 위해 null 일 경우 반환할 값이 
+primitive type이면 orElse(), 객체를 생성해야만 한다면 orElseGet()을 
+사용하면 될 것 같다.`    
+
+```java
+int value = Optional.ofNullable(obj1).orElse(123);      
+TestObject object = Optional.ofNullable(obj2).orElseGet(() -> new TestObject());   
+TestObject object = Optional.ofNullable(obj2).orElseGet(TestObject::new);    
+```
 
 - - -
 
