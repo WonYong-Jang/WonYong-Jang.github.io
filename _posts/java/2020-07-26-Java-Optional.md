@@ -212,7 +212,7 @@ private String createUserWithEmail(String userEmail) {
 자세하게 풀어쓰면 findByUserEmailDetail과 같다. 하지만 DB에서는 userEmail이 Unique로 설정되어 있기 때문에 
 오류가 발생하게 된다. `그렇기 때문에 위와 같은 경우에는 해당 코드를 orElseGet으로 수정해야 한다.` 실제 서비스에서 
 위와 같은 오류를 범한다면 큰 시스템 장애로 돌아오게 된다. 그렇기 때문에 orElse 와 orElseGet의 차이점을 정확하게 
-이해하고 사용하는 것이 중요하다.   
+이해하고 사용하는 것이 중요하다.     
 
 
 - - -
