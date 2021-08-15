@@ -293,8 +293,8 @@ public class AuthDao {
 }
 ```
 
-테스트 해보고 싶은 것은 AuthService의 isLogin() 메서드입니다. AuthDao.isLogin() 
-    반환값에 따라서 추가 작업을 더 하고 있다. 따라서 이 메서드를 테스트 
+테스트 해보고 싶은 것은 AuthService의 isLogin() 메서드이다.   
+AuthDao.isLogin() 반환값에 따라서 추가 작업을 더 하고 있다. 따라서 이 메서드를 테스트 
     해보고 싶다면 AuthDao의 값도 조작해야 하는 상황이다.   
     다음 코드는 해당 상황을 mockito로 처리한 것이다.   
 
