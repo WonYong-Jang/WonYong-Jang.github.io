@@ -103,7 +103,7 @@ public interface SampleRepository extends MongoRepository<Sample, Long> {
 아래는 MongoDB [공식문서](https://docs.spring.io/spring-data/mongodb/docs/1.2.0.RELEASE/reference/html/mongo.repositories.html)에서 
 query method에서 지원하는 키워드이다.   
 
-<img width="1207" alt="스크린샷 2021-08-17 오전 8 23 29" src="https://user-images.githubusercontent.com/26623547/129641379-97e5188a-2dc6-4222-92fb-a45bc955d132.png">     
+<img width="1400" alt="스크린샷 2021-08-17 오전 8 23 29" src="https://user-images.githubusercontent.com/26623547/129641379-97e5188a-2dc6-4222-92fb-a45bc955d132.png">     
 
 위에서 보는 것처럼 Between 키워드는 exclusive한 것을 확인 할 수 있다.   
 

@@ -288,7 +288,40 @@ STORED AS TEXTFILE;
 ## 5. 저장 포맷(STORED AS)    
 
 STORED AS는 데이터를 저장하는 파일 포맷을 지정한다. 저장 포맷은 TEXTFILE, SEQUENCEFILE, ORC, PARQUET 등이 존재한다. 
-사용자가 개발하여 적용할 수도 있다. 상세한 내용은 [하이브 위키](https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-StorageFormatsStorageFormatsRowFormat,StorageFormat,andSerDe)를 확인하자.    
+사용자가 개발하여 적용할 수도 있다.    
+
+가장 많이 쓰이는 TEXTFILE은 데이터가 많을 수록 데이터 저장 공간과 
+처리 속도면에서 고려를 해야 한다.    
+대표적으로 delimiter를 이용하여 구분한 CSV(Character separated value)가 있다.   
+
+```
+직업,이름,성별   
+학생,David,M
+회사원,Kaven,M
+```
+
+
+Parquet, ORC는 모두 스키마를 가지고 있으며 처리 속도가 빠르다는 장점이 있다.    
+또한, `컬럼 기반 저장 포맷(열 지향 스토리지)` 이기 때문에 데이터를 미리 컬럼 
+단위로 정리해 둠으로써 필요한 컬럼만을 로드하여 디스크 I/O를 줄인다.   
+그렇기 때문에 데이터의 압축률도 우수하며 데이터 집계에 최적화 되어 있다.   
+
+> 반대로 행 지향 스토리지의 예는 RDB(Oracle, MySQL)가 있으며 행(레코드) 단위로 
+읽고 쓰기에 최적화 되어 있다. 하지만, 데이터 집계를 진행 할 때 행 단위이기 때문에 
+사용하지 않는 컬럼도 읽게 된다.   
+
+> 데이터 분석에는 어떤 컬럼이 사용되는지 미리 알 수 없기 때문에 
+인덱스를 작성했다고 해도 거의 도움이 되지 않는다. 필연적으로 대량의 
+데이터 분석은 항상 디스크 I/O를 동반한다. 따라서, 인덱스에 의지하지 
+않는 고속화 기술이 필요하다.   
+
+
+`하지만 ORC는 Hive에 최적화된 형식이고, Parquet는 스파크에 최적화된 형식이다.`    
+
+
+
+
+상세한 내용은 [하이브 위키](https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-StorageFormatsStorageFormatsRowFormat,StorageFormat,andSerDe)를 확인하자.    
 
 - - - 
 
