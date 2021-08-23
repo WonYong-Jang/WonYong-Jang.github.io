@@ -36,7 +36,6 @@ background: '/img/posts/mac.png'
 묶어준다. 예를 들어 key는 몇 번째 데이터인지, value는 값을 추출한 정보를 가진다. 
 그리고 Reduce단계는 Map단계의 key를 중심으로 필터링 및 정렬한다.   
 
-
 - - - 
 
 ## 1. 하둡 설치 
