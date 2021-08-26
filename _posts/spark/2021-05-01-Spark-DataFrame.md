@@ -50,7 +50,7 @@ DataFrame을 생성하는 2가지 방법에 대해 살펴보자.
 RDD를 비롯해 로우와 컬럼 형태로 만들 수 있는 컬렉션 객체만 있다면 이를 이용해 
 새로운 데이터프레임을 만들 수 있다.     
 
-```
+```scala 
 val data = List(row1, row2, row3)
 
 val result: DataFrame = spark.createDataFrame(data) 
@@ -68,9 +68,28 @@ result.show() // 행 과 레코드 확인
 
 ### 2. 명시적 타입 지정을 통한 데이터프레임 생성      
 
+리플렉션 방식을 통한 데이터프레임 생성 방법은 스키마 정보를 일일이 지정하지 않아도 된다는 점에서 사용하기에 편리 하다는 
+장점이 있다. 하지만 이 경우 데이터프레임 생성을 위한 케이스 클래스 같은 것들을 따로 정의해야 하는 불편함이 있고 
+상황에 따라서는 원하는 대로 직접 스키마 정보를 구성할 수 있는 방법이 더 편리할 수 있다.     
+
+스파크SQL은 이런 경우를 위해 개발자들이 직접 스키마를 지정할 수 있는 방법을 제공하는데 리플렉션 방식과 비교해보자.   
+
+```scala 
+val sf1 = StructField("name", StringType, nullable = true)
+val sf2 = StructField("age", IntegerType, nullable = true)
+val sf3 = StructField("job", StringType, nullable = true)
+val schema = StructType(List(sf1, sf2, sf3))
+
+val r1 = Row("mike", 10, "student")
+val r2 = Row("mark", 11, "teacher")
+val r3 = Row("herry", 10, "teacher")
+val rows = spark.parallelize(List(r1, r2, r3))
+spark.createDataFrame(rows, schema)
+```
 
 
 
+- - - 
 
 
 `이러한 DataFrame은 RDD에 비해 풍부한 API와 옵티마이저를 기반으로 한 
@@ -83,8 +102,7 @@ result.show() // 행 과 레코드 확인
 같은 장점들을 유지하면서 RDD에서만 가능했던 컴파일 타임 
 오류 체크 등의 기능을 사용할 수 있게 되었다.       
 
-- - -
-
+다음 장에서는 DataSet에 대해 알아보자.    
 
 
 
