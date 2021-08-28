@@ -3,7 +3,7 @@ layout: post
 title: "[Hive] Apache hive 정렬"
 subtitle: "order by, sort by, distribute by, cluster by"       
 comments: true
-categories : BigData
+categories : Hadoop
 date: 2021-06-02
 background: '/img/posts/mac.png'
 ---

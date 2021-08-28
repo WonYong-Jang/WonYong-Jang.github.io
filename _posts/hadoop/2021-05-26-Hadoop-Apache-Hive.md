@@ -3,7 +3,7 @@ layout: post
 title: "[Hive] Apache hive architecture 와 성능 최적화"
 subtitle: "Hive QL의 테이블 생성 프로퍼티, 성능 최적화 설정"       
 comments: true
-categories : BigData
+categories : Hadoop
 date: 2021-05-26 
 background: '/img/posts/mac.png'
 ---

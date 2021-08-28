@@ -3,7 +3,7 @@ layout: post
 title: "[Hadoop] Apache Hadoop과 설치하고 실습하기"
 subtitle: "Hadoop의 hdfs와 mapreduce 이해하기"       
 comments: true
-categories : BigData
+categories : Hadoop
 date: 2021-08-06
 background: '/img/posts/mac.png'
 ---
