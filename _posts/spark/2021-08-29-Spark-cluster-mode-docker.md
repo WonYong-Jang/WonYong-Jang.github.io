@@ -24,7 +24,7 @@ background: '/img/posts/mac.png'
 다양한 설정 및 매개변수를 이해하는 것이 중요하다.   
 
 따라서, 클러스터 모드를 직접 설정해보는 것이 이해하는데 도움이 된다. 
-하지만 여러대의 서버를 가용하기 부담스러운 경우에는 도커 커네이너를 띄워서 
+하지만 여러대의 서버를 가용하기 부담스러운 경우에는 도커 컨네이너를 띄워서 
 실습해 보는 것이 가능하다.   
 
 `스파크 프로그래밍 모델 관점에서 보면 하나의 애플리케이션은 마스터 
@@ -49,14 +49,16 @@ executor라고 불리는 스파크 프로세스가 구동되면서 작업을 수
 반복적인 작업을 수행할 때 데이터에 대한 접근 속도가 빨라서 전체적으로 
 높은 작업 효율을 기대할 수 있다.   
 
+이제 본격적으로 도커를 이용하여 실습 환경을 구성해보자.   
 
-
-
+- - - 
 
 ## 1. 요구사항   
 
-- master / slave 용으로 각가 하나의 컨테이너를 생성   
-- 각 컨테이너에서는 하둡(정확히는 HDFS)를 사용할 수 있어야 하고 하둡 namenode / datanode는 master 서버에서 가동   
+- master / slave 용으로 각각 하나의 도커 컨테이너를 생성하기   
+- 네트워크(ssh), java, hadoop 설치 및 설정하기   
+- 각 컨테이너에서는 하둡(정확히는 HDFS)를 사용할 수 있어야 하고 하둡 namenode / datanode는 master 서버에서 가동한다.   
+- 도커 컨테이너로 실습 환경을 구성하고 이를 spark-submit을 통해 spark를 실행한다.   
 
 - - - 
 
@@ -66,9 +68,20 @@ executor라고 불리는 스파크 프로세스가 구동되면서 작업을 수
 
 ```shell
 docker pull ubuntu
-docker run -itd --name spark-base ubuntu
+docker run -itd --name spark-base ubuntu    
+
 docker exec -it spark-base /bin/bash
 ```
+
+참고로 run 옵션은 컨테이너를 새로 만들어 실행하고, exec는 이미 실행 중인 컨테이너에 
+명령을 내린다.   
+
+- -d : 보통 데몬모드라고 부르며, 컨테이너가 백그라운드로 실행된다.   
+- -it : -i 와 -t 옵션은 같이 쓰이는 경우가 많다. 두 옵션은 컨테이너를 종료하지 않은 채로 
+터미널의 입력을 계속해서 컨테이너로 전달하기 위해 사용한다. 보통 컨테이너의 shell이나 CLI 도구를 사용할 때 유용하다.   
+- --name : 컨테이너에 이름을 부여해 주어서, 해당 이름으로 컨테이너를 식별 할 수 있게 해준다.   
+- -exec : 실행 중인 컨테이너 상대로 명령어를 날릴 때 사용한다.   
+
 
 컨테이너에 접속했다면 필요한 패키지 및 라이브버리를 설치한다.   
 
@@ -93,7 +106,7 @@ export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 ```shell
 # 폴더 생성 및 하둡 바이너리 파일 다운로드 / 압축 해제
 mkdir /opt/hadoop && cd /opt/hadoop
-wget <https://mirror.navercorp.com/apache/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz>
+wget https://mirror.navercorp.com/apache/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz
 tar -xzf hadoop-3.2.2.tar.gz
 rm hadoop-3.2.2.tar.gz
 
@@ -159,10 +172,31 @@ docker images  # 이미지 확인
 
 ```shell
 docker run -itd --name spark-master -p 9870:9870 -p 8080:8080 -v {로컬 폴더경로}:{컨테이너 내부 폴더경로} hadoop-spark   
+
+# -p 옵션 중 왼쪽은 호스트에서 접속할 실제 포트이고, 오른쪽은 컨테이너에 리스팅하고 있는 포트이다.   
 ```   
 
 - 9870 port : hadoop namenode webserver   
 - 8080 port : spark master sebserver    
+- -p : 호스트(host) 컴퓨터에서 컨테이너에 리스닝하고 있는 포트로 접속을 할 수 있도록 설정 해준다.   
+- -v : 호스트와 컨테이너 간의 볼륨(volume)설정을 위해서 사용된다. 호스트(host) 컴퓨터의 
+파일 시스템의 특정 경로를 컨테이너의 파일 시스템의 특정 경로로 마운트(mount)를 해준다.   
+
+`위에서 설명한 v 옵션은 볼륨 마운트를 해서 로컬에서 작성한 코드를 도커 컨테이너에 바로 마운트가 
+가능하도록 해준다.`   
+로컬 폴더는 코드를 작성하는 폴더라면 아무 폴더나 상관없지만 이 글에서는 
+편의를 위해 [위키북스 spark github](https://github.com/wikibook/spark)를 통으로 clone 받아서 
+마운트를 하겠다.    
+
+포트가 잘 바인딩 되었는지 확인하고, 컨테이너에 접속한다.   
+
+```shell
+docker exec -it spark-master /bin/bash    
+```
+
+접속이 정상적으로 되었다면, 위에서 설치 및 설정한 하둡의 namenode, datanode가
+제대로 올라가는지 확인한다.     
+
 
 
 - - - 
