@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Docker Ubuntu 컨테이너로 Spark 실습환경 만들기"   
-subtitle: "도커를 이용한 master, worker 클러스터 환경 구성 / spark-submit "    
+subtitle: "도커를 이용한 master, worker 클러스터 환경 구성 / spark-submit / 스탠드 얼론 클러스터 매니저"    
 comments: true
 categories : Spark
 date: 2021-08-29
@@ -55,6 +55,19 @@ executor라고 불리는 스파크 프로세스가 구동되면서 작업을 수
 - - - 
 
 ## 1. 요구사항   
+
+클러스터 매니저는 스탠드얼론 클러스터 매니저를 사용할 것이며, 
+    이는 간단한 데이터 분석을 위한 소규모 클러스터 구성이나 스파크의 
+    클러스터 동작을 이해하기 위한 테스트 용도로 빠르게 
+    활용하기에 적합하기 때문이다.    
+
+클러스터를 시작하는 방법은 비교적 간단한데, 먼저 마스터 인스턴스를 구동한 뒤 
+마스터의 접속 주소를 슬레이브(Worker) 인스턴스의 실행 인자로 전달하면서 
+슬레이브 프로세스를 구동시킨다.   
+
+> ex) start-slave.sh spark:127.0.0.1:7077  
+
+그 외 요구사항은 아래와 같다.   
 
 - master / slave 용으로 각각 하나의 도커 컨테이너를 생성하기   
 - 네트워크(ssh), java, hadoop 설치 및 설정하기   
@@ -253,6 +266,9 @@ $ docker run -itd --name spark-worker -p 8081:8081 hadoop-spark
 
 master container에 접속한 뒤 ssh key를 생성해준다.   
 
+> 이때 패스워드를 지정하면 접속할 때마다 패스워드 정보를 추가로 
+전달해야 하는 불편함이 있으므로 패스워드는 지정하지 않는다.   
+
 ```shell   
 $ docker exec -it spark-master /bin/bash   
 
@@ -312,19 +328,22 @@ $ service ssh restart
 
 ## 6. worker 등록   
 
-`master에 worker를 등록한다.`      
+`master에 worker를 등록한다.`     
+`실행 스크립트를 이용해 마스터와 워커 서버를 한 번에 실행할 예정이므로 
+실행 스크립트에게 어떤 서버에서 워커 프로세스를 시작해야 하는지 
+알려줘야 한다.`       
 master 컨테이너에 ${SPARK_HOME}/conf로 들어간 뒤,    
 
 ```shell
 root@master# cd ${SPARK_HOME}/conf   
-root@master:~# cp slaves.template workers   
+root@master:~# cp slaves.template slaves    
 ```
 
 > 정확한 버전은 모르겠으나 3.0 부터는 slave라는 대신 worker라는 단어를 
 사용하고 있다. conf 폴더 안에 설정 파일들이 template 파일로 존재하는데 
 버전마다 그 이름을 slave 또는 worker로 다를 수 있다.   
 
-`파일을 생성했다면 workers 파일 안에 적혀 있는 localhost는 지워주고 
+`파일을 생성했다면 slaves 파일 안에 적혀 있는 localhost는 지워주고 
 아까 확인했던 worker 컨테이너의 ip를 적어준다.`    
 
 `web ui에서 worker 정보를 확인하고 싶다면, worker에 master host를 
