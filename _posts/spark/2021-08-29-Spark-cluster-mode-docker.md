@@ -351,8 +351,9 @@ root@master:~# cp slaves.template slaves
 worker 정보가 web ui에 보이지 않는다.   
 
 ```shell
-root@worker# vi ${SPARK_HOME}/spark-env.sh   
-root@worker# export SPARK_MASTER_HOST=spark://{HOST_NAME}:7077   
+root@worker# vi ~/.bashrc    
+root@worker# export SPARK_MASTER_HOST={HOST_NAME}   # master 서버에서 hostname -f 또는 hostname -I 로 확인    
+root@worker# export SPARK_MASTER_PORT=7077    
 ```
 
 그럼 이제 worker 등록까지 완료되었으니 클러스터 매니저를 실행해보자.    
@@ -370,7 +371,19 @@ root@master# ./start-slave.sh spark://{MASTER_HOST_NAME}:{PORT}
 localhost:8080에 접속해 master web ui를 확인했을 때, worker에 뭔가 
 제대로 등록되어 있다면 성공했다.     
 
-<img width="700" alt="스크린샷 2021-09-03 오전 8 45 17" src="https://user-images.githubusercontent.com/26623547/131929726-56b41101-d945-4ef9-b8b7-229da437bb7f.png">  
+<img width="700" alt="스크린샷 2021-09-03 오전 8 45 17" src="https://user-images.githubusercontent.com/26623547/131929726-56b41101-d945-4ef9-b8b7-229da437bb7f.png">    
+
+지금까지 마스터와 워커 서버를 구동하는 방법을 알아봤다. 이번에는 
+한 번의 실행으로 다수의 프로세스를 구동시키고 종료하는 
+스크립트에 대해 알아보자.   
+
+`마스터와 워커 인스턴스를 모두 실행한다. 이때 워커 인스턴스를 실행할 서버는 
+conf/slaves 파일을 참조한다.`   
+
+```shell
+root@master# cd ${SPARK_HOME}/sbin/start-all.sh  
+root@master# cd ${SPARK_HOME}/sbin/stop-all.sh  
+```
 
 
 - - - 

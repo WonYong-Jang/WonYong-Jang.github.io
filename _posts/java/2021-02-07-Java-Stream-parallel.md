@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Java] Stream parallel"
-subtitle: "병렬 Stream 사용 방법과 사용시 주의사항 / Thread Pool"   
+subtitle: "병렬 Stream 사용 방법과 사용시 주의사항 / Thread Pool / ForkJoinPool"   
 comments: true
 categories : Java
 date: 2021-02-07
@@ -30,6 +30,59 @@ background: '/img/posts/mac.png'
 분할정복 알고리즘과 비슷하다고 보면 되는데 fork를 통해 task를 분담하고 join을 통해 합치게 된다.   
 
 <img width="671" alt="스크린샷 2021-02-21 오후 11 42 06" src="https://user-images.githubusercontent.com/26623547/108628490-a497d200-749e-11eb-9485-1d0ad3b91983.png">   
+
+Fork / Join framework의 중심은 AbstractExecutorService 클래스를 
+확장한 ForkJoinPool이다.   
+
+ForkJoinPool에 대해 알아보기 위해 
+[javaDocs](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html)을 일부 발췌한 내용이다.   
+
+An ExecutorService for running ForkJoinTasks. A ForkJoinPool provides the entry point for submissions from non-ForkJoinTask clients, as well as management and monitoring operations.
+A ForkJoinPool differs from other kinds of ExecutorService mainly by virtue of employing work-stealing: all threads in the pool attempt to find and execute tasks submitted to 
+the pool and/or created by other active tasks (eventually blocking waiting for work if none exist). This enables efficient processing when most tasks spawn other subtasks (as do most ForkJoinTasks), as well as when many small tasks are submitted to the pool from external clients. Especially when setting asyncMode to true in constructors, ForkJoinPools may also be appropriate for use with event-style tasks that are never joined.   
+
+주의 깊게 봐야할 부분은 아래와 같다.    
+- `다른 종류의 ExecutorService와는 다르게 Work-stealing 메커니즘을 사용한다.`   
+- `때문에 대부분의 task가 하위 task를 생성하는 경우, 외부 클라이언트에 의한 small task가 많을 경우 
+효과적일 수 있다.`   
+
+하지만 크게 와닿지 않는다. 조금 더 쉽게 풀어서 예를 들면 아래와 같다.   
+
+1. 1부터 10000까지 더해야하는 task가 있다.   
+2. Fork - Join 을 위해 아래 작업을 수행한다.   
+    2-1. task를 가능한 잘게 쪼갠다. (Fork)   
+    2-2. ForkJoinPool에 있는 Thread들은 각각의 task를 처리하며 그 과정은 아래와 같다.(Join)   
+        2-2-1. ForkJoinPool 내부에는 inbound queue가 존재하며 inbound queue에는 task가 쌓인다.   
+        2-2-2. 각각의 Thread 들은 쌓여있는 task를 자신에게 개별 할당 된 queue에 적재해가며 처리한다.   
+        2-2-3. 만약 각각의 queue에 task가 더 남아 있지 않으면 다른 Thread들의 queue에 남아 있는 task를 steal 한다.   
+
+그림으로는 아래와 같다.   
+`왼족에서 task를 보내면(submit) 하나의 inbound queue에 누적되고 그걸 A와 
+B 쓰레드가 가져다가 일을 처리 한다. A와 B는 각자 큐가 있으며, 자신의 
+큐에 아무 task가 없으면 상대방의 큐에서 steal 하는데 이는 멍청하게 놀고 있는 
+쓰레드를 방지하기 위함이다.`    
+
+> 쓰레드 자신의 task queue로 deque를 사용한다. deque는 양쪽 끝으로 넣다, 뺄 수 있는 
+독특한 구조이며, ForkJoinPool에서 중추를 담당하고 있다. 각 쓰레드는 
+deque의 한쪽 끝에서만 일한다. 스택처럼 한쪽에서만 일하고 있고, 
+    그 나머지 반대 쪽에서는 task를 훔치러 온 다른 쓰레드가 접근한다.    
+
+<img width="733" alt="스크린샷 2021-09-08 오전 8 59 00" src="https://user-images.githubusercontent.com/26623547/132424771-53b5de4f-46af-4066-997b-9bb7ce8f3f05.png">   
+
+지금까지 병렬 stream이 내부적으로 ForkJoinPool을 사용하고 있다고 
+알아보았는데, 아래와 같은 코드를 살펴보자.   
+
+```java
+new ForkJoinPool(10).submit(() -> {   
+    integerList.parallelStream().forEach((integer) -> {
+```
+
+위의 코드는 병렬 stream은 내부적으로 ForkJoinPool을 사용하는데 왜 ForkJoinPool을 
+명시적으로 선언하여 사용하였는지가 의문이 들 수 있다.   
+
+ForkJoinPool 생성자에서 전달하는 인자는 int parallelism으로 병렬지수를 의미한다.   
+
+ 
 
 그리고 병렬 스트림의 Fork / Join Framework의 work Thread의 수는 서비스가 돌아가는 서버의 
 CPU 코어 수에 종속된다. 즉 개인 PC에서 돌렸을 때 4Core PC라면 thread는 4개로 작업을 
@@ -157,6 +210,14 @@ blocking io가 발생하는 작업을 하게 되면 Thread Pool 내부의 스레
 
 - - - 
 
+## 커스텀 ForkJoinPool을 이용한 병렬 스트림    
+
+위에 언급한 문제점은 ForkJoinPool을 커스텀하게 제작함으로써 해결할 수 있다.   
+
+
+
+- - - 
+
 ## 병렬 Stream 처리 성능   
 
 `스트림 병렬 처리가 스트림 순차 처리보다 항상 실행 성능이 좋다고 판단해서는 안된다.`    
@@ -197,7 +258,9 @@ ArrayList, 배열은 랜덤 액세스를 지원(인덱스로 접근)하기 때�
 **Reference**    
 
 <https://multifrontgarden.tistory.com/254>   
-<https://sabarada.tistory.com/102>    
+<https://sabarada.tistory.com/102>   
+<https://dev-milk.tistory.com/5>   
+<https://hamait.tistory.com/612>   
 
 {% highlight ruby linenos %}
 

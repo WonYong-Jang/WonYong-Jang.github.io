@@ -60,12 +60,13 @@ background: '/img/posts/mac.png'
 
 `Runnable과 Thread 모두 java.lang 패키지에 포함되어 있으며, Thread를 
 상속받으면, 다른 클래스를 상속받을 수 없기 때문에 인터페이스를 구현하는 
-방법이 일반적이다.   
+방법이 일반적이다.`       
 
-하지만, Runnable은 FunctionalInterface 이므로 run()메소드 하나만 존재하기 때문에 
+하지만, `Runnable은 FunctionalInterface 이므로 run()메소드 하나만 존재하기 때문에 
 그 외에 메소드를 오버라이딩해서 확장할 필요가 있을 경우에는 Thread를 상속 받아서 사용 한다.`      
 
 Runnable은 오로지 run() 메서드만 구현되어 있는 함수형 인터페이스이다.    
+아래와 같은 Runnable 인터페이스를 이용하여 구현 후 사용하는 방법이 있다.   
 
 ```java
 @FunctionalInterface
@@ -74,11 +75,11 @@ public interface Runnable {
 }
 ```
 
-아래는 Thread 클래스 이며, 이 클래스를 상속받아 run() 메서드를 
+또는, 아래와 같이 Thread 클래스를 상속받아 run() 메서드를 
 오버라이딩해 수행할 작업을 작성할 수 있다.   
 
 ```java
-public class Thread implements Runnable {
+public class ThreadByInheritance extends Thread {
     // (생략)   
 @Override
     public void run() {
