@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Java] 멀티쓰레드 프로그래밍 "
-subtitle: "Thread 클래스, Runnable인터페이스, Main 쓰레드, 동기화, 데드락"
+subtitle: "Thread 클래스, Runnable인터페이스, Main 쓰레드, 동기화, 데드락, Concurrency과 Parallelism, Thread Pool, ExecutorService"
 comments: true
 categories : Java
 date: 2021-01-20
@@ -732,9 +732,95 @@ Deadlock은 다수의 쓰레드가 같은 lock을 동시에, 다른 명령에 �
 자원을 요구하는 방향이 원을 이루면 양보를 하지 않기 때문에 교착상태가 발생한다.   
 
 
-- - - 
+- - -   
 
-## 7. 자바 동시성 프로그래밍의 진화   
+## 7. Thread pool   
+
+개발을 하다보면 스레드 풀에 대해서 들어본적이 있을 것이다.    
+그럼 스레드풀이 왜 필요한지에 대해서 알아보자.   
+
+위에서 예제로 다뤘던 내용 중에 문제점은 스레드를 생성하는데 
+드는 비용이 많다는 것이다. 스레드 생성과 스케줄링으로 인해 
+CPU가 바빠지고, 메모리 사용량이 늘어난다.   
+결국에는 스레드를 생성하고 죽이는 과정 자체가 컴퓨터의 cpu 그리고 
+어플리케이션 자체에 무리를 준다는 것이다. 그렇기 때문에 
+이런 생각을 하게 된다.   
+`스레드를 미리 생성해 놓고 각자 일을 부여시켜주면 되지 않을까?`   
+
+그렇게 되면 아래와 같은 장점이 생기게 된다.   
+
+- 할일보다 스레드가 부족하다고 스레드를 더 생성하지 않는다.   
+- 스레드가 일이 끝난다고, 종료하는게 아니라 queue에 들어간 다른 작업을 할당 받는다.   
+
+ExecutorService를 이용하여 예제코드를 작성해 보면 아래와 같다.   
+
+```java
+ public static void main(String[] args) throws Exception{
+            ExecutorService executorService = Executors.newFixedThreadPool(4); 
+              // 스레드개수 4개
+
+            for(int i=0; i<10; i++){
+                Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        // 스레드 총 개수 및 작업 스레드 이름 출력
+                        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) executorService;
+                        int poolSize = threadPoolExecutor.getPoolSize();  // poolSize 총 스레드 개수
+                        String threadName = Thread.currentThread().getName();
+                        System.out.println("[총 스레드 개수 : " + poolSize + "] 작업 스레드 이름 : " + threadName);
+
+                    }
+                };
+                executorService.submit(runnable);
+
+                Thread.sleep(10);
+            }
+            executorService.shutdown();
+        }
+
+output : 
+[총 스레드 개수 : 1] 작업 스레드 이름 : pool-1-thread-1
+[총 스레드 개수 : 2] 작업 스레드 이름 : pool-1-thread-2
+[총 스레드 개수 : 3] 작업 스레드 이름 : pool-1-thread-3
+[총 스레드 개수 : 4] 작업 스레드 이름 : pool-1-thread-4
+[총 스레드 개수 : 4] 작업 스레드 이름 : pool-1-thread-1
+[총 스레드 개수 : 4] 작업 스레드 이름 : pool-1-thread-2
+[총 스레드 개수 : 4] 작업 스레드 이름 : pool-1-thread-3
+[총 스레드 개수 : 4] 작업 스레드 이름 : pool-1-thread-4
+[총 스레드 개수 : 4] 작업 스레드 이름 : pool-1-thread-1
+[총 스레드 개수 : 4] 작업 스레드 이름 : pool-1-thread-2
+```
+
+`실제로 스레드 개수가 4개로만 고정되어 있으며, 더이상 늘리지도 줄이지도 않는다.`      
+스레드 풀을 선언하는 방법이 여러가지가 있는데, 
+    앞 선 코드는 스레드의 총 개수만 설정해두었지만, 직접 
+    생성자를 호출하게 되면 세부적으로 설정할 수 있다.   
+
+```java
+ // 1번 방법
+ExecutorService ex = new ThreadPoolExecutor(
+    3, //코어 스레드 개수
+    100,// 최대 스레드 개수
+    120L,// 스레드 놀고 있는 시간
+    TimeUnit.SECONDS,//시간 단위
+    new SynchronousQueue<>()  // 작업큐
+);
+ // 2번 방법
+public static ExecutorService newFixedThreadPool(int nThreads) {
+        return new ThreadPoolExecutor(nThreads, nThreads,
+                                      0L, TimeUnit.MILLISECONDS,
+                                      new LinkedBlockingQueue<Runnable>());
+}
+```   
+
+`1번 방법은 여러가지를 설정해 줄 수 있지만 그와 다르게 newFixedThreadPool 메서드는 
+스레드 개수와 최대 스레드 개수는 동일하며, 스레드의 대기시간은 없는 것으로 
+자동 default 된다.`   
+
+
+- - -
+
+## 8. 자바 동시성 프로그래밍의 진화   
 
 멀티 스레딩을 지원하는 API는 시간이 흐름에 따라 지속적으로 발전하였다. 
 위에서 다룬 Runnable과 Thread는 멀티스레딩을 지원하기 위해 
