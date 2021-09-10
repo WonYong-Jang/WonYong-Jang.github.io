@@ -41,6 +41,8 @@ pool-1-thread-1, index=0, ended at Fri Sep 10 13:16:32 KST 2021
 `개발자가 직접 스레드 혹은 스레드풀을 생성하거나 관리할 필요없이 paralleStream(), parallel()만 사용하면 알아서 
 ForkJoinFramework를 이용하여 작업들을 분할하고, 병렬적으로 처리하게 된다.`   
 
+
+
 자바8의 병렬 Stream에 대해서 알아보고 사용함에 있어서 
 주의 사항에 대해서도 알아보자.   
 
@@ -198,7 +200,11 @@ ExecutorService executor = Executors.newFixedThreadPool(5);
 #### 1-1-1) Property 값을 설정하는 방법   
 
 java.util.concurrent.ForkJoinPool.common.parallelism Property값을 
-설정하는 방법이다.   
+설정하는 방법이다.    
+`이 방법은 현재 실행되는 프로세스의 모든 ForkJoinPool의 commonPool에 
+영향을 미칠 수 있기 때문에 가급적 사용하지 않는 것을 
+권장한다.`    
+
 
 ```java
 System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism","6");
@@ -206,6 +212,8 @@ System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism","6");
 
 #### 1-1-2) ForkJoinPool을 사용하는 방법   
 
+두번째 방법은 기본 commonPool을 사용하지 않고 개발자가 정의한 
+ForkJoinPool을 사용하는 방법이다.   
 `ForkJoinPool 생성자에 Thread 개수를 지정하여 사용할 수 있으며, 지정한 수만큼의 
 Thread를 이용하여 처리한다.`   
 
@@ -286,10 +294,16 @@ long sum = pool.submit(() ->
 
 #### 병렬로 처리되는 task들의 독립성  
 
-병렬로 처리되는 작업이 독립적이지 않다면, 수행 성능에 영향이 있을 수 있다.   
+`병렬로 처리되는 작업이 독립적이지 않다면, 병렬처리 하지 말자.`           
 예를 들어, stream의 중간 단계 연산 중 sorted(), distinct()와 같은 
 작업을 수행하는 경우에는 내부적으로 상태에 대한 변수들이 각 작업들에 대해서 
 공유(synchronized)하게 되어 있다.   
+다시 말해 이러한 sorted(), distinct()와 같은 작업을 할 때는 
+내부적으로 어떤 공용 변수를 만들어 놓고 각 worker 들이 
+이 변수에 접근할 경우 동기화 작업(synchronized)등을 통해 
+변수를 안전하게 유지하면서 처리한다. 기존 Thread 작업 시 
+개발자가 해줘야 했던 동기화 등의 작업을 모두 수행하고 있는 것이다.   
+
 이러한 경우에는 순차적으로 실행하는 경우가 더 효과적일 수 있다.   
 즉, 각각 완전히 분리된 task들에 대해서 병렬로 처리하는 경우에 
 성능상 이점이 있을 수 있다.   
