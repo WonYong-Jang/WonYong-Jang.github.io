@@ -25,7 +25,9 @@ background: '/img/posts/mac.png'
 
 ## 1. Thread 클래스와 Runnable 인터페이스   
 
-먼저 프로세스와 쓰레드에 대해 알아보자   
+Thread class, Runnable Interface 는 멀티 쓰레드를 사용할 수 있도록 
+해준다.   
+이 둘을 알아보기 전에 먼저 프로세스와 쓰레드에 대해 알아보자.    
 
 ### 1-1) Process    
 
@@ -79,7 +81,7 @@ public interface Runnable {
 오버라이딩해 수행할 작업을 작성할 수 있다.   
 
 ```java
-public class ThreadByInheritance extends Thread {
+public class Thread implements Runnable {
     // (생략)   
 @Override
     public void run() {
@@ -100,10 +102,12 @@ public class Test {
 
     public static void main(String[] args) {
 
-        // 상속받은 Thread
+        ///// 상속받은 Thread
         ThreadByInheritance threadByInheritance = new ThreadByInheritance();
 
-        // 인터페이스 구현한 Thread
+
+
+        ///// 인터페이스 구현한 Thread
         Runnable r = new ThreadByInterface();
         Thread threadByInterface = new Thread(r); // 생성자 : Thread(Runnable target)
         // 아래로 축약 가능
@@ -131,6 +135,27 @@ public class ThreadByInterface implements Runnable{
         }
     }
 }
+```   
+
+Runnable 인터페이스의 경우 아래와 같이 인터페이스를 
+구현한 익명 클래스로 표현이 가능하다.   
+
+```java
+Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for(int i=0; i< 500; i++) {
+                    System.out.print("0");
+                }     
+            }
+        });
+
+// 함수형 인터페이스 람다식으로 변경 가능   
+Thread thread = new Thread(() -> {
+            for(int i=0; i< 500; i++) {
+                System.out.print("0");
+            }
+        });
 ```
 
 Output   
@@ -151,7 +176,7 @@ Thread클래스를 상속받아 구현한 경우에는 해당 객체를 생성�
 
 쓰레드는 OS의 스케줄링에 따라 작업 시간을 할당 받고 다른 쓰레드와 번갈아가면서 
 작업을 수행한다. 아주 빠른속도로 작업을 번갈아가면서 수행하기 때문에 마치 
-동시에 실행되는 것 같은 효과를 볼 수 있다.   
+동시에 실행되는 것 같은 효과(Concurrent)를 볼 수 있다.   
 
 ##### run() 과 start() 메소드 차이점   
 
@@ -167,7 +192,15 @@ run()을 호출해서 그 안(스택)에 run()이 저장되는 것이다.
 
 run()을 호출하는 것은 원래 main()의 호출스택(call stack)을 하나만 이용하는 것이다.   
 즉, 새로운 쓰레드를 이용하는 것이 아닌 main 쓰레드의 호출 스택을 그대로 이용하는 것이다. 멀티 쓰레딩이 
-아닌 하나의 쓰레드를 사용하는 것과 같다.    
+아닌 하나의 쓰레드를 사용하는 것과 같다.   
+
+```java
+thread1.run();
+thread2.run();   
+
+// Output
+00000000000...0001111111111...111
+```
 
 아래는 각각 main 메소드에서 run 메소드를 호출했을 때와 main 메소드에서 start 메소드를 
 호출했을 때를 그림으로 나타낸 예제이다.    
@@ -212,8 +245,8 @@ getState()메서드를 통해 쓰레드의 상태를 확인할 수 있다.
 
 <img width="731" alt="스크린샷 2021-01-26 오후 10 29 30" src="https://user-images.githubusercontent.com/26623547/105851281-33433b80-6026-11eb-8153-0b68ec421c78.png">    
 
-1. 쓰레드를 생성하고 start()를 호출하면 바로 실행되는 것이 아니라 실행 대기열에 저장되어 자신의 차례가 
-될 때까지 기다려야 한다. (실행 대기열은 큐와 같은 자료구조로 먼저 실행 대기열에 들어온 쓰레드가 먼저 실행된다.)   
+1. `쓰레드를 생성하고 start()를 호출하면 바로 실행되는 것이 아니라 실행 대기열에 저장되어 자신의 차례가 
+될 때까지 기다려야 한다.` (실행 대기열은 큐와 같은 자료구조로 먼저 실행 대기열에 들어온 쓰레드가 먼저 실행된다.)     
 
 2. 자기 차례가 되면 실행 상태가 된다.   
 
@@ -354,19 +387,58 @@ input : abc
 이러한 우선순위에 따라 특정 쓰레드가 더 많은 시간 동안 작업을 할 수 있도록 
 설정한다.  
 
-먼저 동시성과 병렬성을 이해해 보자.   
+```java
+Thread t1 = Thread.currentThread();
+System.out.println("currentThread = " + t1);
+
+Thread t2 = new Thread(new ThreadEx_1());
+System.out.println("newThread = " + t2);
+
+// Output   
+currentThread = Thread[main,5,main]
+newThread = Thread[Thread-0,5,main]
+```  
+
+위의 결과의 대괄호 안에 내용을 살펴보면, 첫번째가 쓰레드 이름이고, 
+    두번째는 해당 쓰레드의 우선순위, 세번째가 쓰레드가 속한 쓰레드 그룹의 
+    이름이다.   
+
+쓰레드의 우선순위를 알아보기 전에 
+먼저 동시성과 병렬성을 이해해 보자.    
 
 #### 동시성(Concurrency) or 병렬성(Parallelism)
 
-쓰레드에서 말하는 동시성에 대해서 명확하게 이해할 필요가 있는데, 동시성이란 코어 1개가
-여러개의 쓰레드의 작업 테이블을 왔다 갔다 하면서 작업을 하는 것이다.
-보통 쓰레드의 개수가 코어의 갯수 보다 많을 경우, 동시성으로 멀티 쓰레드를 지원하게 된다.
-그렇지 않고, 만약 컴퓨터가 좋아(코어 개수가 많거나), 작업을 해야할 쓰레드가 코어보다 적을
-경우 병렬성으로 각 코어마다 task Thread를 할당 받아서 작업하게 된다.
+<img width="733" alt="스크린샷 2021-09-10 오전 11 11 28" src="https://user-images.githubusercontent.com/26623547/132788032-f276edcf-fe2b-4b1f-a9a6-dbb63e49eb53.png">   
+
+쓰레드에서 말하는 동시성에 대해서 명확하게 이해할 필요가 있는데,     
+`동시성이란 코어 1개가
+여러개의 쓰레드의 작업 테이블을 왔다 갔다 하면서(Context Switch) 작업을 하는 것이다.`         
+`각 쓰레드들이 병렬적으로 실행되는 것처럼 보이지만 사실은 번갈아가면서 조금씩 
+실행되고 있는 것이다. 즉, 동시에 실행되는 것처럼 보이는 것이다.`      
+
+`병렬성이란 멀티 코어에서 멀티 쓰레드를 동작시켜서 각 코어들이 동시에 
+실행되는 것을 말한다.`   
 
 <img width="700" alt="스크린샷 2021-01-28 오후 7 13 50" src="https://user-images.githubusercontent.com/26623547/106123511-593f1c00-619d-11eb-8ed2-6ea50a649a16.png">   
 
-그럼 core1개가 쓰레드를 처리할 때 우선순위를 어떻게 지정할까?   
+멀티코어에서도 동시성은 사용 가능하다.   
+
+> 아래와 같이 동시성, 병렬성 처리를 혼용해서 다중 작업 효율을 극대화 할 수도 있다.   
+> 주의할 점은 어떤 작업은 이런 동시적 처리 방식 활용이 완전히 불가능 
+할 수도 있다.    
+
+<img width="774" alt="스크린샷 2021-09-10 오전 11 29 33" src="https://user-images.githubusercontent.com/26623547/132790269-3cf5eb0f-7254-441d-98f9-28e26e2a63cd.png">   
+ 
+
+그럼 core1개가 쓰레드를 처리할 때 우선순위를 어떻게 지정할까?      
+
+```java
+// 10이 제일 높고 1이 제일 낮음
+thread.setPriority(10);
+thread2.setPriority(1);
+thread.start();
+thread2.start();
+```
 
 getPriority() 와 setPriority() 메소드를 통해 쓰레드의 우선순위를 반환하거나 변경 할 수 있다.   
 쓰레드의 우선순위가 가질수 있는 범위는 1부터 10까지이며, 숫자가 높을 수록 우선순위 또한 
@@ -374,6 +446,16 @@ getPriority() 와 setPriority() 메소드를 통해 쓰레드의 우선순위를
 우선순위가 10인 쓰레드가 우선순위가 1인 쓰레드보다 10배 더 빨리 수행되는 것이 아니다. 단지 
 우선순위가 10인 쓰레드는 우선순위가 1인 쓰레드 보다 좀 더 많이 실행 큐에 포함되어, 
     좀더 많은 작업 시간을 할당받을 뿐이다.   
+
+위 우선 순위는 자바 스레드 스케줄링하는 방식이며, 스레드 스케줄링은 
+크게 2가지 방식을 이용하게 된다.   
+
+- 우선순위 : 우선순위가 높은 스레드가 실행 상태를 더 많이 가지도록 
+스케줄링 하는 것을 말한다.   
+
+- 순환 할당 : 순환 할당이라 함은, 각자 시간 할당량을 정해서 하나의 쓰레드를 
+정해진 시간만큼 실행하고 다시 다른 쓰레드를 실행하는 것을 말하는데, 이런 
+순환 할당 방식은 JVM이 정하기 때문에 코드로 제어할 수는 없다.  
 
 - - -
 
@@ -388,6 +470,15 @@ getPriority() 와 setPriority() 메소드를 통해 쓰레드의 우선순위를
 하지만 여러 쓰레드를 실행하면, 메인 쓰레드가 종료되어도 다른 쓰레드가 작업을 
 마칠 때까지 프로그램이 종료되지 않는다.`   
 
+<img width="602" alt="스크린샷 2021-09-09 오전 8 32 39" src="https://user-images.githubusercontent.com/26623547/132599016-84050f04-8a54-42cd-966c-c04e83ca0807.png">   
+
+위와 같이 main 쓰레드가 끝나도 Thread1, Thread2가 끝나야 프로세스가 종료되게 된다.   
+`쓰레드는 사용자 쓰레드(user thead)와 데몬 쓰레드(daemon thread)로 구분되는데, 
+    실행 중인 사용자 쓰레드가 하나도 없을 때 프로그램이 종료 된다.`    
+`하지만 데몬 쓰레드 에서는 예외`다. 아래에서 살펴보자.     
+
+<img width="657" alt="스크린샷 2021-09-10 오전 10 43 33" src="https://user-images.githubusercontent.com/26623547/132785390-c8ff01e7-5f50-4d3a-8638-68fc06ace20b.png">   
+
 #### Daemon Thread   
 
 - Main 쓰레드의 작업을 돕는 보조적인 역할을 하는 쓰레드이다.   
@@ -398,12 +489,55 @@ getPriority() 와 setPriority() 메소드를 통해 쓰레드의 우선순위를
 - 데몬 쓰레드는 일반 쓰레드와 작성방법과 실행 방법이 같다. 단 쓰레드를 생성한 다음 setDaemon(true)를 호출 하기만 하면 된다. 
 또, 데몬 쓰레드가 생성한 쓰레드는 자동적으로 데몬 쓰레드가 된다.   
 
+- 주로 가비지 컬렉터, (워드 등의)자동저장, 화면 자동갱신 등에 사용된다.   
+
+예를 들어 보면 크롬이라는 메인 메서드가 실행 되면서, 유투브의 백그라운드 영상 재생을 
+코드로 표현해 보자.   
+
 ```java
-boolean isDaemon() // 쓰레드가 데몬 쓰레드인지 아닌지를 반환한다.    
-void setDaemon(boolean on) // 쓰레드를 데몬 쓰레드 혹은 사용자 쓰레드로 변경한다.   
+public static void main(String[] args) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for(int i = 0; i < 100; i++){
+                    System.out.println("유튜브 영상 실행중");
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        thread.setDaemon(true); // 데몬 쓰레드 설정
+        thread.start();
+        System.out.println("데몬 쓰레드 여부 : " + thread.isDaemon()); // 데몬 쓰레드인지 사용자 쓰레드인지 확인
+        System.out.println("메인 메소드 종료");
+    }
+// Output    
+유튜브 영상 실행중
+데몬 쓰레드 여부 : true
+메인 메소드 종료
 ```
 
-- 주로 가비지 컬렉터, (워드 등의)자동저장, 화면 자동갱신 등에 사용된다.   
+`메인메서드 종료가 되면서 유투브 영상 실행중이라는 코드 하나를 출력하고 
+종료되고 만다.`    
+`반면에, deamon 쓰레드 설정을 false로 하면 메인 쓰레드가 종료되어도 
+사용자 쓰레드가 모두 종료된 후에 프로그램이 종료된 것을 확인 할 수 있다.`   
+
+```java
+thread.setDaemon(false); // 데몬 쓰레드 설정  
+
+// Output
+메인 메소드 종료
+유튜브 영상 실행중
+데몬 쓰레드 여부 : false  
+유튜브 영상 실행중
+유튜브 영상 실행중
+유튜브 영상 실행중    x 100
+```
+
+
 
 - - - 
 
@@ -500,7 +634,7 @@ public class Account {
 
 public class ThreadByInterface implements Runnable{
 
-    Account account = new Account(1000); // 초기 잔고 : 500
+    Account account = new Account(1000); // 초기 잔고 : 1000
 
     @Override
     public void run() {
@@ -571,8 +705,11 @@ public class Account {
 
 ## 6. 데드락(교착상태, Deadlock)   
 
-Deadlock(교착상태)란, 둘 이상의 쓰레드가 lock을 획득하기 위해 대기하는데, 이 lock을 잡고 있는 
-쓰레드들도 똑같이 
+`Deadlock(교착상태)란, 둘 이상의 쓰레드가 lock을 획득하기 위해 대기하는데, 
+    이 lock을 잡고 있는 쓰레드들도 똑같이 다른 lock을 기다리면서 
+    서로 block 상태에 놓이는 것을 말한다.`    
+Deadlock은 다수의 쓰레드가 같은 lock을 동시에, 다른 명령에 의해 
+획득하려 할 때 발생할 수 있다.   
 
 데드락은 한 시스템 내에서 다음의 네 가지 조건이 동시에 성립할 때 발생한다. 
 아래 네 가지 조건 중 하나라도 성립하지 않도록 만든다면 교착 상태를 해결할 수 있다.   
@@ -593,6 +730,34 @@ Deadlock(교착상태)란, 둘 이상의 쓰레드가 lock을 획득하기 위�
 4) 순환 대기 (Circular wait)      
 
 자원을 요구하는 방향이 원을 이루면 양보를 하지 않기 때문에 교착상태가 발생한다.   
+
+
+- - - 
+
+## 7. 자바 동시성 프로그래밍의 진화   
+
+멀티 스레딩을 지원하는 API는 시간이 흐름에 따라 지속적으로 발전하였다. 
+위에서 다룬 Runnable과 Thread는 멀티스레딩을 지원하기 위해 
+가장 처음 만들어진 API이고 사용하기도 불편하기 때문에 지금은 거의 
+사용하지 않는다.    
+지금은 ExecutorService, Callable, CompletableFuture 등을 주로 사용하거나 
+Stream을 내부적으로 사용가능한 parallel Stream을 주로 사용한다.   
+
+- 처음    
+    - Runnable, Thread   
+
+- Java 5    
+    - Executorservice : 스레드 실행과 태스크 제출을 분리   
+    - Callable : Runnable의 발전된 형태. 제네릭 지원, 결과 리턴 가능, 예외 던지기 가능   
+    - Future : 비동기 결과값을 담기위한 객체   
+- Java 7   
+    - java.util.concurrent.RecursiveTask 추가 : 포크/조인 구현 지원   
+- Java 8  
+    - CompletableFuture : Future를 조합하는 기능을 추가하면서 동시성 강화   
+    - Stream : 내부적으로 병렬처리 가능  
+- Java 9   
+    - 리액티브 프로그래밍을 위한 API 지원 : 발행-구독 프로토콜(java.util.concurrent.Flow) 등    
+
 
 
 
