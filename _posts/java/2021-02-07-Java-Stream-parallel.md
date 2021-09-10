@@ -10,16 +10,41 @@ background: '/img/posts/mac.png'
 
 자바에서는 다양한 방법으로 병렬 처리를 만들 수 있다. 기본적인 Thread 클래스를 이용할 수 
 있으며, ExecutorService를 이용하여 쓰레드 풀도 쉽게 만들 수 있다. 그리고 CompletableFuture를 이용하면 
-쓰레드 간의 데이터 동기화, 실행 순서 등도 원하는 대로 조작 할 수 있다.   
+쓰레드 간의 데이터 동기화, 실행 순서 등도 원하는 대로 조작 할 수 있다.  
 
-그리고 자바8에서 등장한 Stream은 병렬 처리를 쉽게 사용할 수 있게 메서드를 
+Java 8 이전의 병렬처리 방식에서 주로 사용된 ExecutorService 코드를 간단히 살펴보고 
+Parallel Stream과 비교해보자.  
+
+```java
+// Thread 5개의 pool 생성 
+ExecutorService executor = Executors.newFixedThreadPool(5);
+for (int i = 0; i < 5; i++) {
+	final int index = i;
+    executor.submit(() -> {
+		Thread.sleep(1000);
+		System.out.println(Thread.currentThread().getName() 
+			+ ", index=" + index + ", ended at " + new Date()); 	 
+    });
+}       
+executor.shutdown();  
+
+// Output   
+pool-1-thread-2, index=1, ended at Fri Sep 10 13:16:32 KST 2021
+pool-1-thread-5, index=4, ended at Fri Sep 10 13:16:32 KST 2021
+pool-1-thread-4, index=3, ended at Fri Sep 10 13:16:32 KST 2021
+pool-1-thread-3, index=2, ended at Fri Sep 10 13:16:32 KST 2021
+pool-1-thread-1, index=0, ended at Fri Sep 10 13:16:32 KST 2021
+```
+
+그리고 자바8에서 등장한 Stream은 병렬 처리를 쉽게 사용할 수 있도록 메서드를 
 제공해준다. 만들어 놓은 Stream에 parallel를 추가하기만 하면 된다.   
+`개발자가 직접 스레드 혹은 스레드풀을 생성하거나 관리할 필요없이 paralleStream(), parallel()만 사용하면 알아서 
+ForkJoinFramework를 이용하여 작업들을 분할하고, 병렬적으로 처리하게 된다.`   
 
 자바8의 병렬 Stream에 대해서 알아보고 사용함에 있어서 
 주의 사항에 대해서도 알아보자.   
 
 - - - 
-
 
 # Steam parallel      
 
@@ -50,11 +75,11 @@ the pool and/or created by other active tasks (eventually blocking waiting for w
 
 1. 1부터 10000까지 더해야하는 task가 있다.   
 2. Fork - Join 을 위해 아래 작업을 수행한다.   
-    2-1. task를 가능한 잘게 쪼갠다. (Fork)   
-    2-2. ForkJoinPool에 있는 Thread들은 각각의 task를 처리하며 그 과정은 아래와 같다.(Join)   
-        2-2-1. ForkJoinPool 내부에는 inbound queue가 존재하며 inbound queue에는 task가 쌓인다.   
-        2-2-2. 각각의 Thread 들은 쌓여있는 task를 자신에게 개별 할당 된 queue에 적재해가며 처리한다.   
-        2-2-3. 만약 각각의 queue에 task가 더 남아 있지 않으면 다른 Thread들의 queue에 남아 있는 task를 steal 한다.   
+    - 2-1) task를 가능한 잘게 쪼갠다. (Fork)   
+    - 2-2) ForkJoinPool에 있는 Thread들은 각각의 task를 처리하며 그 과정은 아래와 같다.(Join)   
+        - 2-2-1) ForkJoinPool 내부에는 inbound queue가 존재하며 inbound queue에는 task가 쌓인다.   
+        - 2-2-2) 각각의 Thread 들은 쌓여있는 task를 자신에게 개별 할당 된 queue에 적재해가며 처리한다.   
+        - 2-2-3) 만약 각각의 queue에 task가 더 남아 있지 않으면 다른 Thread들의 queue에 남아 있는 task를 steal 한다.   
 
 그림으로는 아래와 같다.   
 `왼족에서 task를 보내면(submit) 하나의 inbound queue에 누적되고 그걸 A와 
@@ -69,18 +94,6 @@ deque의 한쪽 끝에서만 일한다. 스택처럼 한쪽에서만 일하고 �
 
 <img width="733" alt="스크린샷 2021-09-08 오전 8 59 00" src="https://user-images.githubusercontent.com/26623547/132424771-53b5de4f-46af-4066-997b-9bb7ce8f3f05.png">   
 
-지금까지 병렬 stream이 내부적으로 ForkJoinPool을 사용하고 있다고 
-알아보았는데, 아래와 같은 코드를 살펴보자.   
-
-```java
-new ForkJoinPool(10).submit(() -> {   
-    integerList.parallelStream().forEach((integer) -> {
-```
-
-위의 코드는 병렬 stream은 내부적으로 ForkJoinPool을 사용하는데 왜 ForkJoinPool을 
-명시적으로 선언하여 사용하였는지가 의문이 들 수 있다.   
-
-ForkJoinPool 생성자에서 전달하는 인자는 int parallelism으로 병렬지수를 의미한다.   
 
  
 
@@ -105,7 +118,7 @@ CPU 코어 수에 종속된다. 즉 개인 PC에서 돌렸을 때 4Core PC라면
 
 - - - 
 
-## Stream parallel 예제   
+## 1. Stream parallel 예제   
 
 name과 age를 가진 Person이라는 객체가 있다. 우리는 nameList 라는 이름 배열을 가지고 있다고 
 가정하자. nameList에 있는 이름 리스트를 이용하여 Person객체를 생성하고 age는 외부 API를 통해 
@@ -165,24 +178,67 @@ core 4개 기준으로 결과는 3초의 시간이 걸린다.
 ```java
 nameList.stream()
                 .parallel()   // parallel 추가 ! 
+             // 또는 parallelStream()  
                 .map(Person::new)
                 .forEach(s -> s.findAge(s.getName()));
 ```
 
+### 1-1) Parallel Stream Thread 크기 제어   
 
-`위의 결과를 보고 생각해 봐야 할 부분이 많이 있다. 우리가 운영 중인 시스템에 
+Java8 이전 ExecutorService를 사용하는 경우, 다음과 같이 
+쓰레드의 개수를 지정해줄 수 있다.   
+
+```java
+ExecutorService executor = Executors.newFixedThreadPool(5);
+```
+
+그렇다면, Parallel Stream에선 어떨까?   
+개발자가 임의로 Pool 크기를 조절하는 방법은 2가지가 있다.   
+
+#### 1-1-1) Property 값을 설정하는 방법   
+
+java.util.concurrent.ForkJoinPool.common.parallelism Property값을 
+설정하는 방법이다.   
+
+```java
+System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism","6");
+```
+
+#### 1-1-2) ForkJoinPool을 사용하는 방법   
+
+`ForkJoinPool 생성자에 Thread 개수를 지정하여 사용할 수 있으며, 지정한 수만큼의 
+Thread를 이용하여 처리한다.`   
+
+
+```java
+ForkJoinPool forkjoinPool = new ForkJoinPool(5);
+forkjoinPool.submit(() -> {
+	dealmaxList.parallelStream().forEach(index -> {
+		System.out.printIn("Thread : " + Thread.currentThread().getName()
+             + ", index + ", " + new Date());
+		try{
+			Thread.sleep(5000);
+		} catch (InterruptedException e){
+		}
+	});
+}).get();
+```
+
+
+
+`지금까지 내용을 살펴보고 생각해 봐야 할 부분이 많이 있다. 우리가 운영 중인 시스템에 
 이렇게 모든 Stream을 병렬 스트림으로 변경한다고 하면 정말 큰일 날 수가 있다. Stream의 
 paralle에 대해 좀 더 깊게 알아보자.`       
 
 - - - 
 
-## Tread Pool 그리고 주의사항    
+## 2. Tread Pool 그리고 주의사항    
 
-`병렬 Stream 사용할 때 가장 큰 문제는 threadPool을 global하게 이용한다는 것이다. 즉, 모든 병렬 Stream이 
-동일한 ThreadPool에서 thread를 가져와 사용한다.`    
+`병렬 Stream 사용할 때 가장 큰 문제는 threadPool을 global(common fork join pool)하게 이용한다는 것이다. 즉, 모든 병렬 Stream이 
+동일한 ThreadPool에서 thread를 가져와 사용한다.`     
 
-Thread Pool 에 대해 알아보고 주의사항에 대해 확인 해보자.   
 
+그럼 먼저 Thread Pool 에 대해 알아보고 주의사항에 대해 확인 해보자.    
 
 Thread Pool은 무분별하게 Thread의 수가 늘어나는 것을 막아준다.    
 `필요할 때 빌려주고 사용하지 않으면 반납하여 Thread의 숫자를 유지하는 역할을 한다.`       
@@ -210,22 +266,37 @@ blocking io가 발생하는 작업을 하게 되면 Thread Pool 내부의 스레
 
 - - - 
 
-## 커스텀 ForkJoinPool을 이용한 병렬 스트림    
+## 3. 커스텀 ForkJoinPool을 이용한 병렬 스트림    
 
 위에 언급한 문제점은 ForkJoinPool을 커스텀하게 제작함으로써 해결할 수 있다.   
 
+```java
+ForkJoinPool pool = new ForkJoinPool(4); 
+long sum = pool.submit(() -> 
+        LongStream.range(0, 1_000_000_000).parallel() .sum()).get();
+```
 
 
 - - - 
 
-## 병렬 Stream 처리 성능   
+## 4. 병렬 Stream 처리 성능   
 
 `스트림 병렬 처리가 스트림 순차 처리보다 항상 실행 성능이 좋다고 판단해서는 안된다.`    
 병렬 처리에 영향을 미치는 여러가지 요인에 대해 확인해보자.   
 
+#### 병렬로 처리되는 task들의 독립성  
+
+병렬로 처리되는 작업이 독립적이지 않다면, 수행 성능에 영향이 있을 수 있다.   
+예를 들어, stream의 중간 단계 연산 중 sorted(), distinct()와 같은 
+작업을 수행하는 경우에는 내부적으로 상태에 대한 변수들이 각 작업들에 대해서 
+공유(synchronized)하게 되어 있다.   
+이러한 경우에는 순차적으로 실행하는 경우가 더 효과적일 수 있다.   
+즉, 각각 완전히 분리된 task들에 대해서 병렬로 처리하는 경우에 
+성능상 이점이 있을 수 있다.   
+
 #### 요소의 수와 요소당 처리 시간   
 
-컬렉션에 요소의 수가 적고 요소당 처리 시간이 짧으면 순차 처리가 오히려 병렬 처리보다 
+컬렉션에 요소의 수가 적고 요소당 처리 시간이 짧으면 순차 처리가 오히려 병렬 처리보다  
 빠를 수 있다. 병렬 처리는 작업들을 분할하고 다시 합치는 비용, 스레들 간의 컨텍스트 스위치 비용도 포함되기 때문이다.   
 
 #### Stream 소스의 종류    
@@ -246,7 +317,7 @@ ArrayList, 배열은 랜덤 액세스를 지원(인덱스로 접근)하기 때�
 
 - - - 
 
-## 정리   
+## 5. 정리   
 
 병렬 Stream 사용 예제와 내부 동작 원리 및 주의사항에 대해 알아봤다.   
 사용은 간단하지만, 사용함에 있어서 신중해야 한다고 느꼈다. 따라서 문제가 없을지 
@@ -261,6 +332,7 @@ ArrayList, 배열은 랜덤 액세스를 지원(인덱스로 접근)하기 때�
 <https://sabarada.tistory.com/102>   
 <https://dev-milk.tistory.com/5>   
 <https://hamait.tistory.com/612>   
+<https://m.blog.naver.com/tmondev/220945933678>   
 
 {% highlight ruby linenos %}
 
