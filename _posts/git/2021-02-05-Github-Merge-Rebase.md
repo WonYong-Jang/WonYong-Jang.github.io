@@ -203,7 +203,8 @@ pick 4f89861 git rebase test fifth commit
 # Commands:
 ```   
 
-그럼 아래와 같이 커밋 메시지를 vim에서 수정할 수 있게 된다.   
+그럼 아래와 같이 커밋 메시지를 vim에서 수정할 수 있게 된다. 
+reword로 인한 수정 이라는 문구를 추가후 저장한다.   
 
 ```shell
 git rebase test fourth commit(reword로 인한 수정)
@@ -216,7 +217,8 @@ git rebase test fourth commit(reword로 인한 수정)
 # interactive rebase in progress; onto 9e34411
 ```  
 
-`git log --oneline에 대한 결과는 아래와 같다.`       
+`git log --oneline에 대한 결과는 아래와 같다.`     
+커밋 히스토리에도 수정된 커밋 메시지가 잘 나타나는 것을 확인할 수 있다.   
 
 ```
 f821945 (HEAD -> master) git rebase test fifth commit
@@ -225,6 +227,24 @@ d656552 git rebase test fourth commit(reword로 인한 수정)
 9e34411 git rebase test second commit
 c31962c git rebase test first commit
 ```
+
+#### 3-4) edit      
+
+`edit 또는 e는 커밋의 명령어 뿐만 아니라 작업 내용도 수정할 수 있게 하는 
+명령어이다. 아래 예제에서는 커밋 메시지와 작업 내용을 수정하고, 그와 
+동시에 하나의 커밋을 두개로 분리하거나 커밋을 끼워넣는 과정도 
+실습해보자.`        
+
+<img width="500" alt="스크린샷 2021-09-14 오후 11 23 36" src="https://user-images.githubusercontent.com/26623547/133276637-91a8ed9f-dd9e-4585-87b0-01fbc1756b33.png">   
+
+이전 예시에서 사용한 커밋을 수정해보도록 하자. 명령어 edit을 이용해보면 
+아래와 같다.   
+
+<img width="500" alt="스크린샷 2021-09-14 오후 11 24 41" src="https://user-images.githubusercontent.com/26623547/133276655-0937e9e2-5cd3-4fa7-9db3-cfa96254d682.png">   
+ 
+
+해당 커밋으로 HEAD가 옮겨진 것을 확인할 수 있다.    
+Git에서 커밋 메시지를 수정하려면 
 
 - - - 
 
