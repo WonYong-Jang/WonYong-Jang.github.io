@@ -1,0 +1,632 @@
+I"��<h2 id="목표">목표</h2>
+
+<p>자바의 예외 처리에 대해 학습하세요.</p>
+
+<h2 id="학습할-것">학습할 것</h2>
+
+<ul>
+  <li>Exception과 Error의 차이는?</li>
+  <li>자바가 제공하는 예외 계층 구조</li>
+  <li>자바에서 예외처리 방법(try, catch, throw, throws, finally)</li>
+  <li>RuntimeException과 RE가 아닌 것의 차이는?</li>
+  <li>커스텀한 예외 만드는 방법</li>
+  <li>예외의 전파</li>
+</ul>
+
+<hr />
+
+<h2 id="1-exception과-error의-차이">1. Exception과 Error의 차이?</h2>
+
+<p>Exception과 Error의 차이점에 대해 알아보자.</p>
+
+<h5 id="1-error">1) Error</h5>
+
+<p><code class="language-plaintext highlighter-rouge">컴퓨터 하드웨어의 오작동 또는 고장으로 인해 응용프로그램에 이상이 생겼거나
+JVM 실행에 문제가 생겼을 경우 발생한다.</code></p>
+
+<p>java.lang.Error의 서브 클래스들이다. OutOfMemoryError, StackOverFlowError와 같이 
+복구할 수 없는 심각한 수준의 에러를 뜻한다. 시스템에 비정상적인 상황이 생겼을 때 
+발생하므로 System level의 문제이다.</p>
+
+<h5 id="2-exception">2) Exception</h5>
+
+<p><code class="language-plaintext highlighter-rouge">컴퓨터의 에러가 아닌 사용자의 잘못된 조작 또는 개발자의 잘못된 코딩으로 인해 발생한다.</code></p>
+
+<p>예외가 발생하면 프로그램이 종료가 된다는 것은 에러와 동일하지만 예외는 예외처리를 통해서 
+프로그램이 종료되지 않고 정상적으로 작동되게 만들어 줄 수 있다.</p>
+
+<hr />
+
+<h2 id="2-자바가-제공하는-예외-계층-구조">2. 자바가 제공하는 예외 계층 구조</h2>
+
+<p>아래 그림처럼 Throwable은 Object를 직접 상속받고 있고
+Error와 Exception은 Throwable을 상속한다. 부모는 같지만 역할은 다르다.</p>
+
+<p><img width="800" alt="스크린샷 2021-01-17 오후 2 11 15" src="https://user-images.githubusercontent.com/26623547/104831615-f6f93800-58cd-11eb-9682-e192bab57851.png" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">위 계층도에서 Exception은 다시 두 갈래로 나뉜다.</code></p>
+
+<h5 id="1-checked-exception">1) Checked Exception</h5>
+
+<p><code class="language-plaintext highlighter-rouge">Exception을 상속하는 하위 클래스 중 Runtime Exception을 제외한 모든 Exception은 Checked Exception이다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">Checked Exception은 컴파일 시점에서 확인될 수 있는 예외이다.</code>
+만약 코드 내에서 Checked Exception을 발생시킨다면, 해당 예외는 반드시 try-catch 또는 throws 구문을 통해서 처리해야 한다.</p>
+
+<p>예를들면, 존재하지 않는 파일을 처리하려는 경우(FileNotFoundException), 실수로 클래스의 이름을 잘못
+입력한 경우(ClassNotFoundException), 입력한 데이터의 형식이 잘못된 경우(DataFormatException)에 발생한다.</p>
+
+<p>아래와 같이 Checked Exception 중에 하나인 IOException을 발생시키는 메서드를 선언했다고 하면</p>
+
+<p><img width="380" alt="스크린샷 2021-01-17 오후 2 22 17" src="https://user-images.githubusercontent.com/26623547/104831822-7fc4a380-58cf-11eb-8611-d1d2bb3a60fe.png" /></p>
+
+<p>이 코드는 컴파일 자체가 안된다. IOException은 Checked Exception이기 때문에 컴파일 단계에서 예외가 확인이 된다.
+<code class="language-plaintext highlighter-rouge">따라서 위 코드를 컴파일 하려면 try-catch또는 throws로 예외를 던져줘야 한다.</code></p>
+
+<p><img width="380" alt="스크린샷 2021-01-17 오후 2 22 47" src="https://user-images.githubusercontent.com/26623547/104831823-80f5d080-58cf-11eb-8d68-f09628880ab8.png" /></p>
+
+<p>위처럼 예외를 던져주면 컴파일이 가능하다.</p>
+
+<h5 id="2-unchecked-exception">2) UnChecked Exception</h5>
+
+<p><code class="language-plaintext highlighter-rouge">Unchecked Exception은 컴파일 단계에서 확인되지 않는 예외이다.</code>
+RuntimeException과 그 하위 클래스, 그리고 Error와 그 하위 클래스가 이에 속한다.
+이 예외들은 컴파일러가 예외를 처리하거나 선언하도록 강제하지 않는다.</p>
+
+<p>위의 예시를 RuntimeException으로 바꾸면 컴파일 에러가 발생하지 않는다. 이미, 컴파일이 끝나고
+애플리케이션 서비스가 런타임일 때 발생하기 때문에 try-catch 또는 throws 구문을 사용해서
+개발자가 로직상에 방어 코드를 만들 어 줄 수 있다.</p>
+
+<p><img width="380" alt="스크린샷 2021-01-17 오후 2 33 11" src="https://user-images.githubusercontent.com/26623547/104831978-f31ae500-58d0-11eb-9624-bd1e2763b034.png" /></p>
+
+<h5 id="3-왜-checked-unckecked-exception으로-나눴을까">3) 왜 Checked, Unckecked Exception으로 나눴을까?</h5>
+
+<p><a href="https://docs.oracle.com/javase/tutorial/essential/exceptions/runtime.html">오라클 공식문서</a>가 이를 설명하고 있다.</p>
+
+<p>요약해보면, 메서드를 호출하는 쪽은 그 메서드가 어떤 예외를 발생시킬 수 있는가에 대해 반드시 알아야 한다. 따라서 
+Java는 checked exception을 통해 해당 메서드가 발생시킬 있는 예외를 강제로 처리하도록 하고 있다.</p>
+
+<p>그럼 Runtime Exception은 왜 예외를 강제로 처리하지 않도록 했을까?  <br />
+Runtime Exception은 프로그램 코드의 문제로 발생하는 예외이다. 어디서나 매우 빈번하게 발생할 수 있기 때문에 
+모든 Runtime Exception을 메서드에 명시하도록 강제하는 것은 프로그램의 명확성을 떨어뜨릴 수 있다.</p>
+
+<hr />
+
+<h2 id="3-자바에서-예외-처리하는-방법">3. 자바에서 예외 처리하는 방법</h2>
+
+<p>자바에서 예외를 처리할 수 있는 방법은 아래와 같다.</p>
+
+<h5 id="1-try-catch">1) try-catch</h5>
+
+<p>try 블록에는 여러 개의 catch 블록이 올 수 있으며, 이 중 <code class="language-plaintext highlighter-rouge">발생한 예외의 종류와 
+일치하는 단 한 개의 catch 블록만 수행된다.</code></p>
+
+<p>catch 블록안에 예외 클래스의 e는 해당 클래스의 인스턴스를 가르키는 
+참조 변수(Reference variable)이다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">try</span> <span class="o">{</span>
+      <span class="c1">// 1을 0으로 나누었으므로 예외 발생</span>
+      <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">0</span><span class="o">);</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">IllegalArgumentException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>  <span class="c1">// instanceof 확인 -&gt; false </span>
+      <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getName</span><span class="o">());</span>
+      <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">ArithmeticException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>   <span class="c1">// instanceof 확인 -&gt; true, ArithmeticException 인스턴스 생성!   </span>
+      <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getName</span><span class="o">());</span>
+      <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>  
+      <span class="c1">// e.printStackTrace();  </span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">NullPointerException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>  <span class="c1">// skip   </span>
+      <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getName</span><span class="o">());</span>
+      <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Output</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java.lang.ArithmeticException
+/ by zero
+</code></pre></div></div>
+
+<p>위처럼 참조 변수를 통해서 발생한 예외 클래스의 인스턴스를 참조할 수 있다. 해당 인스턴스에는 
+발생한 예외에 대한 정보가 담겨있다. 이를 통해 Message, StackTrace 등 여러 정보를 얻어올 수 있다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">printStackTrace()</code> : 예외 발생 당시의 호출스택에 있었던 메서드의 정보와 예외 메시지를 화면에 출력한다.</p>
+
+<p>메소드가 실행되면 메모리영역의 Stack에 쌓이게 되고 예외가 발생하게 되면 Stack영역에 쌓여있는 메서드 정보를 
+ pop하여 출력해준다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">getMessage()</code> : 발생한 예외클래스의 인스턴스에 저장된 메시지를 얻을 수 있다.</p>
+
+<p>또한, 발생한 예외 클래스는 catch 문을 순차적으로 instanceof를 통해 확인한다. 
+아래 소스에서 더 포괄적인 RuntimeException이 catch문을 통해 먼저 온다면 
+컴파일 에러가 발생하게 된다.</p>
+
+<p>무조건 더 포괄적인 RuntimeException에서 catch 문이 걸리기 때문에 
+더 구체적인 IllegalArgumentException은 의미 없는 코드가 되므로 
+컴파일 에러가 발생한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">try</span> <span class="o">{</span>
+     <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"try block"</span><span class="o">);</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">IllegalArgumentException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span> <span class="c1">// 구체적인 예외 클래스가 먼저 와야함   </span>
+     <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"구체적인 예외"</span><span class="o">);</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">RuntimeException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>         <span class="c1">// 더 포괄적인 예외 클래스  </span>
+     <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"포괄적인 예외"</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h5 id="2-참조-변수-중복">2) 참조 변수 중복</h5>
+
+<p>catch 블록 안에 다시 try-catch 구문을 사용할 수 있는데, 이때 <code class="language-plaintext highlighter-rouge">상위 catch 블록 안에 
+참조 변수의 이름이 중복되어서는 안된다.</code></p>
+
+<p>변수의 스코프를 생각해 보면 당연하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">try</span> <span class="o">{</span>
+    <span class="c1">//...</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">IllegalArgumentException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">try</span><span class="o">{</span>
+         <span class="c1">// ... </span>
+      <span class="o">}</span><span class="k">catch</span> <span class="o">(</span><span class="nc">ArithmeticException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span> <span class="c1">// 에러 발생: 해당 변수 이름을 e로 할 수 없다.   </span>
+                                       <span class="c1">// Variable 'e' is already defined in the scope</span>
+<span class="o">}</span> 
+</code></pre></div></div>
+
+<h5 id="3-multicatch-block">3) Multicatch block</h5>
+
+<p>자바 7부터 여러 catch block을 하나로 합칠 수 있게 되었다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">try</span> <span class="o">{</span>
+       <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">0</span><span class="o">);</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">IllegalArgumentException</span> <span class="o">|</span> <span class="nc">ArithmeticException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+       <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>단, 나열된 예외 클래스들이 부모-자식 관계에 있다면 오류가 발생한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">try</span> <span class="o">{</span>
+       <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">0</span><span class="o">);</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">RuntimeException</span> <span class="o">|</span> <span class="nc">ArithmeticException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span> <span class="c1">// 에러 발생! </span>
+       <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">자식 클래스로 잡아낼 수 있는 예외는 부모 클래스로도 잡아 낼 수 있기 때문에 사실상 코드가 중복된 것이나 
+마찬가지이기 때문이다.</code></p>
+
+<h5 id="4-throw">4) throw</h5>
+
+<p>throw 키워드를 이용해서 고의로 예외를 발생시킬 수도 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">try</span> <span class="o">{</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nf">Exception</span><span class="o">(</span><span class="s">"문제 발생"</span><span class="o">);</span> <span class="c1">// 고의로 예외 발생   </span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+     <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+     <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"message: "</span><span class="o">+</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Output</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java.lang.Exception: 문제 발생
+	at Test.main(Test.java:11)
+message: 문제 발생
+</code></pre></div></div>
+
+<p>예외 인스턴스를 생성할 때, 생성자에 String을 넣어주면 메시지로 저장된다. 
+이 메시지는 getMessage(), printStackTrace() 를 통해 얻을 수 있다.</p>
+
+<h5 id="5-throws">5) throws</h5>
+
+<p>throws 키워드를 통해 메서드에 예외를 선언 할 수 있다.  <br />
+메서드의 선언부에 예외를 선엄함으로써 메서드를 사용하려는 사람이 메서드의 선언부를 보았을 때, 
+이 메서드를 사용하기 위해서는 어떠한 예외들이 처리되어야 하는지 쉽게 알 수 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">method</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">Exception1</span><span class="o">,</span> <span class="nc">Exception2</span><span class="o">,</span> <span class="o">...</span> <span class="o">,</span> <span class="nc">ExceptionN</span> <span class="o">{</span>
+        <span class="c1">// 메서드의 내용</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">예외를 메서드의 throws에 명시하는 것은 예외를 처리하는 것이 아니라, 자신을 호출한 메서드에게 예외를 전달하여 
+예외처리를 떠맡기는 것이다. 예외를 전달받은 메서드는 자신을 호출하는 또다른 메서드에게 전달할 수 있으며, 이런 식으로 
+계속 호출스택에 있는 메서드들을 따라 전달되다가 마지막에 main메서드에서도 예외가 
+처리되지 않으면, main메서드가 종료되면서 프로그램 전체가 종료된다.</code></p>
+
+<p>throws 는 결국 예외처리 되는 것이 아닌 단순히 전달만 되는 것이므로 결국 어느 한 곳에서는 
+try-catch문으로 처리를 해주어야 한다.</p>
+
+<h5 id="6-finally">6) finally</h5>
+
+<p>finally는 try-catch와 함께 예외의 발생 여부와 상관없이 항상 실행되어야 할 코드를 포함시킬 목적으로 사용된다.  <br />
+보통 블록내 처리 후 반드시 실행되어 하는 io나 connect 등 사용 후 종료하는 
+자원이 있을 경우 사용한다. <br />
+try-catch문의 끝에 선택적으로 덧붙여 사용할 수 있으며, try-catch-finally의 순서로 구성된다.</p>
+
+<p>예외가 발생한 경우에는 try -&gt; catch -&gt; finally 순으로 실행되고, 예외가 발생하지 
+않는 경우에는 try - finally 순으로 실행된다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">한가자 주의할 점은 finally 블록 내에 문장은 try, catch 블록에 return문이 있더라도 실행 된다는 것이다.</code></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">try</span> <span class="o">{</span>
+     <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"try block"</span><span class="o">);</span>
+     <span class="k">return</span><span class="o">;</span> <span class="c1">// return 실행!</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+     <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"catch block"</span><span class="o">);</span>
+<span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+     <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"finally block"</span><span class="o">);</span>
+<span class="o">}</span>
+<span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"main"</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>Output</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>try block
+finally block
+</code></pre></div></div>
+
+<p>위처럼 try 문에서 return을 하여도 finally문은 반드시 실행 된다.</p>
+
+<p><strong>(ANTI Pattern) finally 안에서 return 을 하는 경우에는 신중해야 한다.</strong></p>
+
+<ul>
+  <li>try 안에 return: finally 블록을 거쳐 정상 실행</li>
+  <li>catch 안에 return: finally 블록을 거쳐 정상 실행</li>
+  <li><code class="language-plaintext highlighter-rouge">finally 안에 return: try 블록 안에서 발생한 예외 무시되고 finally 거쳐서 정상 종료(예외를 확인 불가능해짐)</code></li>
+</ul>
+
+<p>try블록 안에 return이 있는 경우 (예외 발생하지 않는 경우)</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Test</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">CustomSpaceException</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"실행결과 : "</span> <span class="o">+</span> <span class="n">method</span><span class="o">(</span><span class="s">"study"</span><span class="o">));</span>
+    <span class="o">}</span>
+    <span class="kd">static</span> <span class="nc">String</span> <span class="nf">method</span><span class="o">(</span><span class="nc">String</span> <span class="n">str</span><span class="o">)</span> <span class="o">{</span>
+
+        <span class="nc">StringBuilder</span> <span class="n">sb</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">StringBuilder</span><span class="o">();</span>
+        <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">str</span><span class="o">);</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"try pass"</span><span class="o">);</span>
+            <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">" / try"</span><span class="o">);</span>
+            <span class="k">return</span> <span class="n">sb</span><span class="o">.</span><span class="na">toString</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"catch pass"</span><span class="o">);</span>
+            <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">" / catch"</span><span class="o">);</span>
+            <span class="k">return</span> <span class="n">sb</span><span class="o">.</span><span class="na">toString</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"finally pass"</span><span class="o">);</span>
+            
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Output</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>try pass
+finally pass
+실행결과 : study/ try
+</code></pre></div></div>
+
+<p><strong>예외가 없을 경우 실행 순서</strong>는 try -&gt; finally -&gt; try구문의 return으로 마무리 된다.   <br />
+<strong>예외가 있을 경우 실행 순서</strong>는 try -&gt; catch -&gt; finally -&gt; catch 구문의 return 으로 마무리 된다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">finally에 return이 존재하는 경우는 try또는 catch구문에 있는 return 값을 덮어 써버린다.</code></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Test</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">CustomSpaceException</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"실행결과 : "</span> <span class="o">+</span> <span class="n">method</span><span class="o">(</span><span class="s">"study"</span><span class="o">));</span>
+    <span class="o">}</span>
+    <span class="kd">static</span> <span class="nc">String</span> <span class="nf">method</span><span class="o">(</span><span class="nc">String</span> <span class="n">str</span><span class="o">)</span> <span class="o">{</span>
+
+        <span class="nc">StringBuilder</span> <span class="n">sb</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">StringBuilder</span><span class="o">();</span>
+        <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">str</span><span class="o">);</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"try pass"</span><span class="o">);</span>
+            <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">" / try"</span><span class="o">);</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">Exception</span><span class="o">();</span> <span class="c1">// 예외 발생</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"catch pass"</span><span class="o">);</span>
+            <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">" / catch"</span><span class="o">);</span>
+            <span class="k">return</span> <span class="n">sb</span><span class="o">.</span><span class="na">toString</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"finally pass"</span><span class="o">);</span>
+            <span class="n">sb</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">" / finally"</span><span class="o">);</span>
+            <span class="k">return</span> <span class="s">"finally"</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Output</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>try pass
+catch pass
+finally pass
+실행결과 : finally
+</code></pre></div></div>
+
+<h5 id="7-try-with-resources-자바-7이상이면-반드시-사용할-것">7) try-with-resources (자바 7이상이면 반드시 사용할 것!)</h5>
+
+<p><code class="language-plaintext highlighter-rouge">try-with-resources는 try(...)에서 선언된 객체들에 대해서 try가 종료될 때 
+자동으로 자원을 해제해주는 기능이다.</code></p>
+
+<p>finally 블록에서 예외 발생시, catch블록의 예외 추적이 불가능하다. 이런 문제는 
+자바7부터 try-with-resources로 해결 가능하다.</p>
+
+<p>try에서 선언된 객체가 AutoCloseable을 구현하였다면 Java는 try구문이 종료될 때 
+객체의 close() 메소드를 호출해 준다.</p>
+
+<p>아래 자바 7 이전에 try-catch-finally 구문에서 자원을 해제하려면 지저분했던 코드를 
+예로 보자.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span> <span class="n">args</span><span class="o">[])</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+    <span class="nc">FileInputStream</span> <span class="n">is</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="nc">BufferedInputStream</span> <span class="n">bis</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="n">is</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FileInputStream</span><span class="o">(</span><span class="s">"file.txt"</span><span class="o">);</span>
+        <span class="n">bis</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">BufferedInputStream</span><span class="o">(</span><span class="n">is</span><span class="o">);</span>
+        <span class="kt">int</span> <span class="n">data</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+        <span class="k">while</span><span class="o">((</span><span class="n">data</span> <span class="o">=</span> <span class="n">bis</span><span class="o">.</span><span class="na">read</span><span class="o">())</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="o">){</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">((</span><span class="kt">char</span><span class="o">)</span> <span class="n">data</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+        <span class="c1">// close resources</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">is</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="n">is</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">bis</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="n">bis</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+        <span class="c1">// throws IOException을 해주지 않았다면..</span>
+        <span class="c1">// 여기서도 try-catch로 감싸서 예외처리를 해줘야함   </span>
+        <span class="c1">// 또한, IOException은 checked Exception이므로 </span>
+        <span class="c1">// unckecked Exception에 대한 예외를 잡으로면 2중으로 </span>
+        <span class="c1">// 예외처리를 해야함..</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>다음 코드는 파일을 열고 문자열을 모두 출력하는 코드이다. 코드를 보면 
+try에서 InputStream 객체를 생성하고 finally에서 close를 해주었다. try 안의 
+코드를 실행하다 Exception이 발생하는 경우 모든 코드가 실행되지 않을 수 있기 
+때문에 finally에 close 코드를 넣어주어야 한다. 심지어 InputStream객체가 null 인지 
+체크해줘야 하며 close에 대한 Exception 처리도 해줘야 한다.  <br />
+여기서는 main에서 IOException를 throws한다고 명시적으로 선언했기 때문에 
+close에 대한 try-catch 구문을 작성하지 않았다.</p>
+
+<p>이렇게 복잡한 코드를 자바7부터는 try-with-resources를 사용하여 리팩토링이 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span> <span class="n">args</span><span class="o">[])</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>    
+    <span class="k">try</span> <span class="o">(</span>
+        <span class="nc">FileInputStream</span> <span class="n">is</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FileInputStream</span><span class="o">(</span><span class="s">"file.txt"</span><span class="o">);</span>
+        <span class="nc">BufferedInputStream</span> <span class="n">bis</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">BufferedInputStream</span><span class="o">(</span><span class="n">is</span><span class="o">))</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">data</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+        <span class="k">while</span> <span class="o">((</span><span class="n">data</span> <span class="o">=</span> <span class="n">bis</span><span class="o">.</span><span class="na">read</span><span class="o">())</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">((</span><span class="kt">char</span><span class="o">)</span> <span class="n">data</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>코드를 보면 try(…) 안에 InputStream 객체 선언 및 할당하였다. 여기에서 
+선언한 변수들은 try 안에서 사용할 수 있다. 코드가 try 문을 벗어나면 
+try-with-resources는 try(…) 안에서 선언된 객체의 close() 메소드들을 
+호출하여 자원을 반납해준다. 그래서 <code class="language-plaintext highlighter-rouge">finally에서 close()를 명시적으로 호출해줄 필요가 없다.</code></p>
+
+<p>만약, 위의 코드에서 finally 구문을 추가했을 경우 실행 순서는 try문을 실행 후 
+try이 끝나게 되면 자원을 반납해주고 finally 구문이 실행된다.</p>
+
+<p>try-with-resources의 장점은 코드를 짧고 간결하게 만들어 읽기 쉽고 유지보수가 
+쉬워진다. 또한 명시적으로 close를 호출하려면 많은 if와 try-catch를 사용해야 하기 
+때문에 실수로 close를 빼먹는 경우가 있다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">try-with-resources에서 자동으로 close가 호출되는 것은 AutoCloseable을 구현한 
+객체에만 해당 된다.</code></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// AutoCloseable 인터페이스는 자바 7부터 지원   </span>
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">AutoCloseable</span> <span class="o">{</span>
+    <span class="kt">void</span> <span class="nf">close</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">Exception</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>위의 예제에서 BufferedInputStream의 상속구조는 다음과 같다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java.lang.Object
+  java.io.InputStream
+    java.io.FilterInputStream
+      java.io.BufferedInputStream
+</code></pre></div></div>
+
+<p>InputStream은 AutoCloseable을 상속받은 Closeable을 구현하였다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">InputStream</span> <span class="kd">extends</span> <span class="nc">Object</span> <span class="kd">implements</span> <span class="nc">Closeable</span> <span class="o">{</span>
+  <span class="o">....</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Closeable</span> <span class="kd">extends</span> <span class="nc">AutoCloseable</span> <span class="o">{</span>
+    <span class="kt">void</span> <span class="nf">close</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">IOException</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>이런 이류로 위의 예제에서 BufferedInputStream 객체가 try-with-resources에 
+의해서 해제될 수 있었다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">만약 내가 만든 클래스가 try-with-resources으로 자원이 해제되길 원한다면 
+AutoCloseable을 implements하면 된다.</code></p>
+
+<hr />
+
+<h2 id="4-runtimeexception과-re가-아닌-것의-차이는">4. RuntimeException과 RE가 아닌 것의 차이는?</h2>
+
+<p>RuntimeException은 CheckedExcetpion과 UnCheckedException을 구분하는 기준이다. 
+Exception의 자식 클래스 중 RuntimeException을 제외한 모든 클래스는 CheckedException이며, 
+RuntimeException과 그의 자식 클래스들은 UnCheckedException이라 부른다.</p>
+
+<hr />
+
+<h2 id="5-커스텀한-예외-만드는-방법">5. 커스텀한 예외 만드는 방법</h2>
+
+<p>기존의 정의된 예외 클래스 외에 필요에 따라 개발자가 새로운 예외 클래스를 정의하여 사용할 수 있다. <br />
+먼저, 커스텀 예외를 만들기 전에 참고해야할 몇가지 사항이 있다.</p>
+
+<h5 id="1-always-provide-a-benefit">1) Always Provide a Benefit</h5>
+
+<p>자바 표준 예외들에는 다양한 장점을 가지는 기능들이 포함되어 있다.  <br />
+이미 JDK가 제공하고 있는 방대한 양의 예외들과 비교했을 때 만들고자 하는 커스텀 예외가 어떠한 장점도 제공하지 못한다면? <br />
+커스텀 예외를 만드는 이유를 다시 생각해 볼 필요가 있다.</p>
+
+<p>어떠한 장점을 제공할 수 없는 예외를 만드는 것 보다 오히려 IllegalArgumentException과 같은 
+표준 예외 중 하나를 사용하는 것이 더 좋은 선택이다.</p>
+
+<h5 id="2-follow-the-naming-convention">2) Follow the Naming Convention</h5>
+
+<p>JDK가 제공하는 예외 클래스들을 보면 클래스의 이름이 모두 Exception으로 끝나는 것을 알 수 있다. 
+이러한 네이밍 규칙은 자바 생태계 전체에 사용되는 규칙이다.</p>
+
+<p>즉, 만들고자 하는 커스텀 예외 클래스들도 이러한 네이밍 규칙을 따르는 것이 좋다.</p>
+
+<h5 id="3-provide-javadoc-comments-for-your-exception-class">3) Provide javadoc Comments for your Exception class</h5>
+
+<p>많은 커스텀 예외들이 어떠한 javadoc 코멘트도 없이 만들어진 경우가 있다. 
+기본적으로 API의 모든 클래스, 멤버변수, 생성자에 대해서 문서화 하는 것이 Best Practices이다.</p>
+
+<h5 id="4-provide-a-constructor-that-sets-the-cause">4) Provide a constructor that sets the cause</h5>
+
+<p>커스텀 예외를 던지기 전에 표준 예외를 Catch하는 케이스가 꽤 많다. 이 사실을 꼭 기억하도록 하자.</p>
+
+<p>보통 캐치된 예외에는 제품에 발생한 오류를 분석하는데 필요한 중요한 정보가 포함되어 있다. <br />
+예제를 보면 NumberFormatException은 에러에 대한 상세정보를 제공한다. <br />
+MyBusinessException의 cause처럼 cause정보를 설정하지 않으면 중요한 정보를 잃을 수 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">wrapException</span><span class="o">(</span><span class="nc">String</span> <span class="n">input</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">MyBusinessException</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="c1">// do something</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">NumberFormatException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// root cause 정보인 NumberFormatException을 생성자에 </span>
+        <span class="c1">// 넣어 주므로써 어디에서 온 예외정보인지 확인 가능하다!   </span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">MyBusinessException</span><span class="o">(</span><span class="s">"A message that describes the error."</span><span class="o">,</span> <span class="n">e</span><span class="o">,</span> <span class="nc">ErrorCode</span><span class="o">.</span><span class="na">INVALID_PORT_CONFIGURATION</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><strong>커스텀 예외 만들기 예제</strong></p>
+
+<p>기존에 정의된 예외 클래스 외에 필요에 따라 새로운 예외를 정의할 수 있다. 
+Exception 클래스 상속받거나, 필요에 따라 알맞은 예외 클래스를 장속받아 만든다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Test</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">CustomSpaceException</span> <span class="o">{</span>
+
+        <span class="n">method</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="kd">static</span> <span class="kt">void</span> <span class="nf">method</span><span class="o">(</span><span class="kt">int</span> <span class="n">num</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">CustomSpaceException</span> <span class="o">{</span>
+
+        <span class="k">if</span><span class="o">(</span><span class="n">num</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="o">)</span> <span class="k">throw</span> <span class="k">new</span> <span class="nc">CustomSpaceException</span><span class="o">(</span><span class="s">"공간 부족"</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">CustomSpaceException</span> <span class="kd">extends</span> <span class="nc">Exception</span><span class="o">{</span>
+
+    <span class="kd">public</span> <span class="nf">CustomSpaceException</span><span class="o">(</span><span class="nc">String</span> <span class="n">message</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">(</span><span class="n">message</span><span class="o">);</span> <span class="c1">// 조상 클래스 Exception의 생성자 호출</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="6-예외의-전파">6. 예외의 전파</h2>
+
+<p>아래와 같은 코드에서 doSomething()메서드 수행 시 Exception이 발생하면 어떻게 될까? <br />
+try 의 별도 catch 문이 존재하지 않아서 Exception은 상위로 throw가 될까? 아니면 skip 될까?</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">try</span><span class="o">{</span>
+	<span class="n">doSomething</span><span class="o">();</span>
+<span class="o">}</span><span class="k">finally</span><span class="o">{</span>
+	<span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"finally"</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">발생한 Exception에 대해서 메서드 호출 순서 역방향으로 계속해서 찾아 가게 된다. 찾지 못하는 경우 
+JVM까지 전달되며, 최종적으로 JVM이 Exception을 처리하게 된다.</code></p>
+
+<p>아래 예를 보자.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Test</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+        
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"1. execute something"</span><span class="o">);</span>
+            <span class="n">method1</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">IllegalArgumentException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"6. execute something"</span><span class="o">);</span>
+        <span class="o">}</span>
+
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">method1</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"2. execute something"</span><span class="o">);</span>
+        <span class="k">try</span><span class="o">{</span>
+            <span class="n">method2</span><span class="o">();</span>
+        <span class="o">}</span><span class="k">finally</span><span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"5. finally block"</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">method2</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"3. execute something"</span><span class="o">);</span>
+        <span class="k">try</span><span class="o">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">IllegalArgumentException</span><span class="o">(</span><span class="s">"문제 발생"</span><span class="o">);</span>
+        <span class="o">}</span><span class="k">finally</span><span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"4. finally block"</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Output</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="mi">1</span><span class="o">.</span> <span class="n">execute</span> <span class="n">something</span>
+<span class="mi">2</span><span class="o">.</span> <span class="n">execute</span> <span class="n">something</span>
+<span class="mi">3</span><span class="o">.</span> <span class="n">execute</span> <span class="n">something</span>
+<span class="mi">4</span><span class="o">.</span> <span class="k">finally</span> <span class="n">block</span>
+<span class="mi">5</span><span class="o">.</span> <span class="k">finally</span> <span class="n">block</span>
+<span class="mi">6</span><span class="o">.</span> <span class="n">execute</span> <span class="n">something</span>
+<span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">IllegalArgumentException</span><span class="o">:</span> <span class="n">문제</span> <span class="n">발생</span>
+	<span class="n">at</span> <span class="nc">Test</span><span class="o">.</span><span class="na">method2</span><span class="o">(</span><span class="nc">Test</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">30</span><span class="o">)</span>
+	<span class="n">at</span> <span class="nc">Test</span><span class="o">.</span><span class="na">method1</span><span class="o">(</span><span class="nc">Test</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">22</span><span class="o">)</span>
+	<span class="n">at</span> <span class="nc">Test</span><span class="o">.</span><span class="na">main</span><span class="o">(</span><span class="nc">Test</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">12</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>발생한 Exception을 적절한 catch 구문(Exception Handler)를 만날 때 까지 상위로 전달되며,</p>
+
+<p>최종적으로 JVM까지 전달되어 처리될 수 있다.</p>
+
+<p>따라서, 예상가능한 Exception에 대해서는 꼭 catch문을 통해 적절한 처리를 해야 한다.</p>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="https://docs.oracle.com/javase/tutorial/essential/exceptions/runtime.html">https://docs.oracle.com/javase/tutorial/essential/exceptions/runtime.html</a><br />
+<a href="https://www.notion.so/9-17a778bba6ed4436ac3d7b9415b6babb">https://www.notion.so/9-17a778bba6ed4436ac3d7b9415b6babb</a><br />
+<a href="https://codechacha.com/ko/java-try-with-resources/">https://codechacha.com/ko/java-try-with-resources/</a><br />
+<a href="https://github.com/whiteship/live-study/issues/9">https://github.com/whiteship/live-study/issues/9</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

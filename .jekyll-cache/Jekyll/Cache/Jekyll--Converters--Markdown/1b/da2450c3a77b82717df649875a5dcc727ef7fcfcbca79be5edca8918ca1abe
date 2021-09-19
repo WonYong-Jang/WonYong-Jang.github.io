@@ -1,0 +1,235 @@
+I":<h2 id="트랜잭션">트랜잭션</h2>
+
+<p><code class="language-plaintext highlighter-rouge">트랜잭션은 어떤 일련의 작업을 의미 한다. 
+어떤 일련의 작업들은 모두 에러 없이 끝나야 하며, 작업 중에서 하나라도 잘못되면 이전에 수행한 모든 작업을 취소하고 
+실행 이전의 상태로 되돌리는데, 이것을 롤백이라고 한다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">즉, 데이터에 대한 무결성을 유지하기 위한 처리 방법을 트랜잭션 처리라고 한다.</code></p>
+
+<h3 id="트랜잭션-사용-이유">트랜잭션 사용 이유</h3>
+
+<p>트랜잭션은 데이터베이스를 수정하는 작업에는 꼭 사용해야 되는 기능이다. 만약 데이터베이스에 
+값을 추가하고 있는데 갑자기 오류가 나면 일부 값이 누락이 되어 잘못된 데이터가 들어갈 수 있기 
+때문이다.</p>
+
+<blockquote>
+  <p>예를 들어 쇼핑몰에서 거래를 진행할 때 포인트를 이용하여 결재를 진행 한다고 가정하자. 사용할 포인트 만큼 
+차감을 하고 포인트를 사용하는 과정에서 에러가 발생한다면, 포인트는 전송되지 않고 사라지는 경우가 발생한다. 
+그렇기 때문에 트랜잭션을 이용하여 해당 메서드가 전부 완료되거나 에러가 날경우는 처음상태로 돌려 놓는 
+두 가지 경우로 만들어 완성도를 높일 수 있다.</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Transactional</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">PointBuyService</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">minusPoint</span><span class="o">();</span> <span class="c1">// 포인트 차감   </span>
+    <span class="n">sendPoint</span><span class="o">();</span>  <span class="c1">// 포인트 전송   </span>
+    <span class="n">progressPayment</span><span class="o">();</span> <span class="c1">// 결재 진행 </span>
+<span class="o">}</span>
+</code></pre></div></div>
+<hr />
+
+<h3 id="acid-원칙-트랜잭션의-성격-">ACID 원칙( 트랜잭션의 성격 )</h3>
+
+<p><strong>1) 원자성(Atomicity)</strong></p>
+
+<p>하나의 트랜잭션은 모두 하나의 단위로 처리되어야 한다. 어떤 트랜잭션이 
+A와 B로 구성된다면 항상 처리결과는 A B 동일해야 한다. 즉, A가 성공이면 B도 항상 성공이고
+실패면 둘다 실패!</p>
+
+<p><strong>2) 일관성(Consistency)</strong></p>
+
+<p>트랜잭션이 성공했다면 데이터베이스의 모든 데이터는 일관성을 유지해야만 한다. 
+트랜잭션으로 처리된 데이터와 일반 데이터 사이에는 전혀 차이가 없어야만 한다.</p>
+
+<p><strong>3) 격리(Isolation)</strong></p>
+
+<p>트랜잭션으로 처리되는 중간에 외부에서의 간섭은 없어야만 한다.</p>
+
+<p><strong>4) 영속성(Durability)</strong> <br />
+트랜잭션이 성공적으로 처리되면, 그 결과는 영속적으로 보관되어아 한다.</p>
+
+<p>비즈니스에서 하나의 트랜잭션은 데이터베이스 상에서는 하나 혹은 여러 개의 작업이 같은 묶음을
+이루는 경우가 많다.</p>
+<p>트랜잭션으로 관리한다, 혹은 트랜잭션으로 묶는다는 표현은 프로그래밍에서는 AND연산과 유사하다.</p>
+<p>계좌 이체를 예를 들어보면, 입금과 출금을 각각 데이터 베이스와 연결을 맺고 처리하는데 하나의 트랜잭션으로
+처리해야 할 경우에는 한쪽이 잘못되는 경우에 이미 성공한 작업까지 다시 원상태로 복구되어야 한다.</p>
+
+<hr />
+
+<h3 id="spring-transaction-exception-상황에서-rollback">Spring Transaction Exception 상황에서 Rollback</h3>
+
+<p>스프링을 사용하며서 많은 서비스들이 트랜잭션을 단위로 하는 비즈니스 로직을 구현한다. 
+여기서는 비즈니스 로직을 구현하는 과정에서 많이 놓치는 Exception 발생 상황에 대해 살펴보자. <br />
+<code class="language-plaintext highlighter-rouge">가장 중요한 것은 Exception 타입에 따라서 어떻게 비즈니스 로직이 진행될지 판단하고, 처리하는 것이다.</code></p>
+
+<blockquote>
+  <p>쿠팡 사용자 회원가입 기능을 예로 들어보자. 가입 시에 사용자에게 쿠폰을 발급하는 경우가 존재 할 수 있다. 
+사용자가 가입하는 도중에 원인 모를 상황이 발생 가능한데 시스템이 셧다운 되거나, 메모리를 초과 할 수도 있고, 
+    또는 개발 단계에서 잘못된 구현으로 트랜잭션이 완료되지 못할 수 있다.</p>
+</blockquote>
+
+<p><code class="language-plaintext highlighter-rouge">여기서 우리가 구분해야 할 부분은 Error와 Exception의 구분이다.</code></p>
+
+<p><strong>Error</strong> : 시스템 셧다운이나 메모리 문제와 같이 시스템 레벨에서 정상적으로 실행되지 못하는 상황으로 H/W와 
+관련이 있다. 애플리케이션 코드에서 에러를 잡으려고 하면 안되고 대부분 컴파일시 발견될 수 있는 예외이다.  java.lang.Error 클래스의 서브 클래스들이다.</p>
+
+<p><strong>Exception</strong> : 개발 단계에서 잘못된 구현으로 인하여 구현 단계에서 예측하지 못한 상황으로 S/W와 관련이 있다. 
+Exception이 발생하면 구현 로직을 수정하여 처리가 가능한 상황이다.</p>
+
+<p><img width="754" alt="스크린샷 2020-06-27 오후 4 40 53" src="https://user-images.githubusercontent.com/26623547/85917608-8b4e6f80-b896-11ea-8a9d-765b3e9d9bf7.png" /></p>
+
+<p>위처럼 Error와 Exception은 Throwable을 상속한다. 부모는 같지만 역할은 위에서 설명했듯이 다르다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">위 계층도에서 Exception은 다시 두 갈래로 나뉜다.</code></p>
+
+<h5 id="1-checked-exception">1. Checked Exception</h5>
+
+<p><code class="language-plaintext highlighter-rouge">Exception을 상속받는 하위 클래스 중 Runtime Exception을 제외한 모든 Exception</code></p>
+
+<ul>
+  <li>예를들면, 존재하지 않는 파일을 처리하려는 경우(FileNotFoundException), 실수로 클래스의 
+이름을 잘못 입력한 경우(ClassNotFoundExcetipn), 입력한 데이터의 형식이 잘못된 경우
+(DataFormatException)에 발생한다.</li>
+  <li>컴파일 시점에 에러가 나타나기 때문에 try-catch 또는 throws 구문을 통해서 
+처리할 수 있게 IDE에서 알려준다. 즉, 명시적인 예외 처리를 꼭 해주어야 한다.</li>
+  <li><strong>스프링에서 예외발생시 기본 트랜잭션 처리전략 : non-rollback</strong></li>
+</ul>
+
+<h5 id="2-unchecked-excepton">2. UnChecked Excepton</h5>
+
+<p><code class="language-plaintext highlighter-rouge">Runtime Exception 하위 Exception</code></p>
+
+<ul>
+  <li>예를 들면, 배열의 범위를 벗어난 경우(IndexOutOfBoundsException), 값이 null인 참조 변수의 
+멤버를 호출한 경우(NullPointerException), 클래스 간의 형 변환을 잘못한 경우
+(ClassCastException), 정수를 0으로 나누려하는경우(ArithmeticException)에 발생한다.</li>
+  <li>이미 컴파일이 끝나고, 애플리케이션 서비스가 런타임일때 발생하기 때문에 try-catch 또는 
+throws 구문을 사용해서 로직상에서 방어 코드를 만들어 줄수 있다. 즉, 명시적인 예외 처리를 
+강제하지는 않는다.</li>
+  <li><strong>스프링에서 예외발생시 기본 트랜잭션 처리전략: rollback</strong></li>
+</ul>
+
+<hr />
+
+<blockquote>
+  <p>다시 돌아와서, 쿠팡 사용자 회원가입 기능을 Exception 관점에서 보면 비즈니스 요구사항에 따라서 2가지로 나뉠수 있다.</p>
+  <ol>
+    <li>사용자 가입은 허용하지만, 쿠폰 발급은 보류해도 된다.(Checked Exception)</li>
+    <li>중간에 문제가 발생했을 경우는 모두 Rollback 되어야 한다.(Unchecked Exception)</li>
+  </ol>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nd">@Service</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">UserService</span> <span class="o">{</span>
+
+    <span class="nd">@Autowired</span>
+    <span class="kd">private</span> <span class="nc">UserRepository</span> <span class="n">repository</span><span class="o">;</span>
+
+    <span class="c1">// 1번의 경우!</span>
+    <span class="nd">@Transactional</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">checkedExceptionTest</span><span class="o">(</span><span class="nc">UserDto</span> <span class="n">userDto</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+
+        <span class="n">repository</span><span class="o">.</span><span class="na">save</span><span class="o">(</span><span class="n">userDto</span><span class="o">);</span> <span class="c1">//회원 가입</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">Exception</span><span class="o">();</span>    <span class="c1">// 중간에 예외 발생했다고 가정  </span>
+        <span class="o">...</span>
+        <span class="c1">// 쿠폰 지급   </span>
+    <span class="o">}</span>
+
+    <span class="c1">// 2번의 경우!</span>
+    <span class="nd">@Transactional</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">unCheckedExceptionTest</span><span class="o">(</span><span class="nc">UserDto</span> <span class="n">userDto</span><span class="o">)</span> <span class="o">{</span>
+
+        <span class="n">repository</span><span class="o">.</span><span class="na">save</span><span class="o">(</span><span class="n">userDto</span><span class="o">);</span>     <span class="c1">// 회원가입</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">();</span> <span class="c1">// 중간에 예외 발생했다고 가정 </span>
+        <span class="o">...</span>
+        <span class="c1">// 쿠폰 지급   </span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">1. 임의로 Checked Exception을 발생시켰지만, 회원 정보는 생성되었고 쿠폰 발급은 보류 된다. 스프링에서 
+@Transactional을 사용한 Checked Exception은 롤백되지 않는다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">2. 임의로 Unchecked Exception을 발생과 동시에 모두 Rollback 된다.</code></p>
+
+<p><strong>물론 스프링은 기본적으로 Checked 또는 Unchecked를 구분하여 Rollback을 구분하지만, rollback 시킬 
+Exception을 지정 가능하다!</strong></p>
+
+<blockquote>
+  <p>rollbackFor 옵션을 이용하면 Rollback이 되는 클래스를 지정 가능하다.</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Exception예외로 롤백을 하려면 다음과 같이 지정하면 된다.</span>
+<span class="nd">@Transactional</span><span class="o">(</span><span class="n">rollbackFor</span> <span class="o">=</span> <span class="nc">Exception</span><span class="o">.</span><span class="na">class</span><span class="o">)</span> 
+<span class="c1">// 여러개의 예외를 지정할 수도 있습니다. </span>
+<span class="nd">@Transactional</span><span class="o">(</span><span class="n">rollbackFro</span> <span class="o">=</span> <span class="o">{</span><span class="nc">RuntimeException</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="nc">Exception</span><span class="o">.</span><span class="na">class</span><span class="o">})</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>추가적으로 특정 예외가 발생하면 롤백이 되지 않도록 지정하는 방법이다.</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Transactional</span><span class="o">(</span><span class="n">noRollbackFor</span><span class="o">={</span><span class="nc">IgnoreRollbackException</span><span class="o">.</span><span class="na">class</span><span class="o">})</span>
+</code></pre></div></div>
+
+<hr />
+
+<h5 id="transactional-기본-설정선언적-트랜잭션">@Transactional 기본 설정(선언적 트랜잭션)</h5>
+
+<ul>
+  <li>
+    <p>트랜잭션 전파 설정: Propagation.REQUIRED 
+실행중인 트랜잭션 컨텍스트가 있으면 그 트랜잭션 내에서 실행되고, 없으면 새로 트랜잭션을 생성한다.</p>
+  </li>
+  <li>
+    <p>트랜잭션 고립 레벨: Isolation.DEFAULT
+데이터베이스 설정을 따른다.</p>
+  </li>
+  <li>
+    <p>읽기 전용: false( 읽기/ 쓰기가 기본값) <br />
+성능을 최적화 하기 위해 사용할 수도 있고 특정 트랜잭션 작업 안에서 쓰기 작업이 
+일어나는 것을 의도적으로 방지하기 위해 사용할 수도 있다. <br />
+ex) @Transactional(readOnly = true)</p>
+  </li>
+  <li>
+    <p>타임아웃: -1 ( 타임아웃되지 않는다.) <br />
+지정된 시간 내에 해당 메소드 수행이 완료되지 않는 경우 rollback 수행 <br />
+ex) @Transactional(timeout=10)</p>
+  </li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">선언적 트랜잭션을 사용할 때 예외에 따른 롤백처리는 Checked 예외는 롤백되지 않고, Unchecked 예외는 롤백된다!</code></p>
+
+<hr />
+
+<p>Reference</p>
+
+<p><a href="https://interconnection.tistory.com/122">https://interconnection.tistory.com/122</a></p>
+
+<hr />
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

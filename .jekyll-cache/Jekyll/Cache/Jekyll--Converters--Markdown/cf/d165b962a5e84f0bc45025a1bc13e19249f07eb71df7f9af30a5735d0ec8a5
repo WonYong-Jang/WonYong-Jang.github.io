@@ -1,0 +1,248 @@
+I"A><h1 id="캐싱-전략이란">캐싱 전략이란?</h1>
+
+<p>서비스 사용자가 증가했을 때, 모든 유저의 요청을 DB 접근으로만 처리하게 된다면 
+DB 서버에 무리가 갈 수 밖에 없다. 물론 데이터베이스는 데이터를 디스크에 
+저장하기 때문에 서버의 장애와는 별개로 데이터를 유지할 수 있지만, 요청이 
+증가하는 상황에서는 기존 성능을 기대하기 힘들다.</p>
+
+<p>캐싱 전략은 최근 웹 서비스 환경에서 시스템 성능 향상을 위해 가장 중요한 
+기술이다. 캐시는 메모리를 사용함으로 디스크 기반 데이터 베이스 보다 
+훨씬 빠르게 데이터를 반환할 수 있고, 사용자에게 더 빠르게 서비스를 
+제공할 수 있다.</p>
+
+<p>이러한 캐시가 동작할 수 있는 철학에는 파레토 법칙이 있다. <br />
+파레토 법칙이란 80퍼센트의 결과는 20퍼센트의 원인으로 인해 발생한다는 말이다.</p>
+
+<blockquote>
+  <p>20퍼센트의 고객이 백화점 전체 매출의 80퍼센트의 결과를 일으킨다를 예로 들수 있다.</p>
+</blockquote>
+
+<p><code class="language-plaintext highlighter-rouge">이를 데이터베이스 성능 튜닝 세계에서 얘기해보면 
+데이터베이스에서 성능 문제를 일으키는 것은 20퍼센트의 쿼리들이다. 
+보통 20퍼센트는 자주 사용되는 쿼리일 것이다.</code></p>
+
+<p><img width="400" alt="스크린샷 2021-05-12 오전 12 01 41" src="https://user-images.githubusercontent.com/26623547/117838423-4ae0c000-b2b5-11eb-8e84-015da7986f55.png" /></p>
+
+<p>즉, 이것은 캐시가 효율적일 수 있는 이유가 될 수 있다. 모든 결과를 캐싱할 필요는 
+없으며, 우리는 서비스를 할 때 많이 사용되는 20%를 캐싱한다면 전체적으로 
+영향을 주어 효율을 극대화 할 수 있다는 말이다.</p>
+
+<p>캐싱 전략을 구현 할 때 고려해야 할 점 중 하나는 캐시 데이터의 수명이다.</p>
+
+<p>모든 데이터를 지워지지 않고 평생 캐시 저장소에 저장하는 것은 효율적이지 않다. 그렇기 때문에, 
+    캐시 만료 정책을 적절하게 설정하고 오랜 시간이 지난 데이터는 캐시 저장소에서 
+    제거될 수 있도록 운영해야 한다.</p>
+
+<hr />
+
+<h2 id="1-look-asidelazy-loading">1. Look Aside(=Lazy Loading)</h2>
+
+<p>이름에서 알 수 있듯이 이 구조는 캐시를 옆에 두고 필요할 때만 데이터를 캐시에 
+로드하는 캐싱 전략이다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">자주 조회되는 데이터를 메모리에 캐시해놓고, 요청이 있을 때마다 레디스에 먼저 
+해당 데이터가 있는지 확인 후 있으면(이를 Hit되었다고 한다) 바로 
+메모리에 있는 데이터를 내보내고, 없으면 그 때 DB로 부터 읽어서 
+캐시한 후에 데이터를 내보낸다.</code></p>
+
+<p><img width="700" alt="스크린샷 2021-05-12 오전 12 23 44" src="https://user-images.githubusercontent.com/26623547/117844110-63070e00-b2ba-11eb-9c25-b71563fea060.png" /></p>
+
+<p>위 구조를 사용하면 실제로 사용되는 데이터만 캐시할 수 있고, 
+    <code class="language-plaintext highlighter-rouge">레디스의 장애가 어플리케이션에 치명적인 영향을 주지 않는다는 장점을 
+    가지고 있다.</code>  <br />
+<code class="language-plaintext highlighter-rouge">하지만 캐시에 없는 데이터를 쿼리할 때 더 오랜 시간이 걸린다는 단점과 함께 
+캐시가 최신 데이터를 가지고 있는 다는 것을 보장하지 못한다는 단점이 있다.</code> <br />
+<code class="language-plaintext highlighter-rouge">캐시에 해당 key 값이 존재하지 않을 때만 캐시에 대한 업데이트가 일어나기 
+때문에 데이터베이스에서 데이터가 변경될 때에는 해당 값을 캐시가 
+알지 못하기 때문이다.</code></p>
+
+<hr />
+
+<h2 id="2-write-back">2. Write-Back</h2>
+
+<p>데이터를 레디스에 전부 먼저 저장해놓았다가 특정 시점마다 한번씩 캐시 내 데이터를 
+DB에 insert 및 update하는 방법이다.</p>
+
+<p>insert를 1개씩 500번 수행하는 것보다 500개를 한번에 삽입하는 동작이 훨씬 빠름에서 
+알 수 있듯, write back 방식도 성능면에서 뒤쳐지는 방식은 아니다.</p>
+
+<p>하지만 여기서 데이터를 일정 기간동안 유지하고 있어야 하는데, 이때 이걸 유지하고 있는 
+storage는 메모리 공간이므로 서버 장애 상황에서 데이터가 손실될 수 있다는 
+단점이 있다. 그래서 다시 재생 가능한 데이터나, 극단적으로 heavy한 데이터는 
+write back 방식을 많이 사용한다.</p>
+
+<p><img width="700" alt="스크린샷 2021-05-12 오전 12 23 38" src="https://user-images.githubusercontent.com/26623547/117844140-68645880-b2ba-11eb-86c3-419c50bedc4b.png" /></p>
+
+<hr />
+
+<h2 id="3-session-management">3. Session Management</h2>
+
+<p>사용자가 로그인을 하게 되면 사용자 Session을 레디스에 저장 해두고 
+SessionID를 Cookie값으로 내려준다.  <br />
+다시 사용자가 다른 요청을 보낼 때는 브라우저에 저장된 Cookie를 달고 요청을 
+하게 되고, 서버는 이 Cookie값과 sessionID를 비교하여 일치하면 로그인 될 걸로 
+판단한다.</p>
+
+<p>따라서 사용자는 한 번 로그인 하면 다시 접속하거나 다른 요청을 보낼 때 
+다시 로그인 할 필요가 없다.</p>
+
+<p>레디스를 사용하지 않을 경우는 보통 Session을 서버 메모리에 저장해놓고 사용하는데 
+서버를 재시작하게 되면, 세션 데이터가 모두 지워지게 되어 사용자는 다시 
+로그인을 해야하며, 서버가 클러스터링으로 구축되어 여러 개로 구동된다면, 
+    세션을 공유해야 한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">Session을 레디스에 저장하면 서버가 클러스터링으로 구동되어도 세션 공유가 가능하며, 
+    서버를 재시작하여도 세션이 지워지지 않는다.</code></p>
+
+<p><img width="681" alt="스크린샷 2021-05-12 오전 12 23 51" src="https://user-images.githubusercontent.com/26623547/117843628-ef650100-b2b9-11eb-8b67-b44e4bf5dc95.png" /></p>
+
+<hr />
+
+<h2 id="레디스-활용-사례">레디스 활용 사례</h2>
+
+<h4 id="좋아요-처리하기">좋아요 처리하기</h4>
+
+<p>게시물에 달린 댓글에 좋아요를 표시하는 기능에 대해서 생각해보자.</p>
+
+<p><code class="language-plaintext highlighter-rouge">가장 중요한 것은 한 사용자의 하나의 댓글에 한번만 좋아요를 할 수 있도록 제한 
+하는 것이다.</code></p>
+
+<p>RDBMS에서는 유니크 조건을 생성해서 처리할 수 있다. 하지만 많은 입력이 
+발생하는 환경에서 RDBMS를 이용한다면 insert 와 update에 의한 성능 저하가 
+필연적으로 발생하게 된다.</p>
+
+<p>레디스의 set을 이용하면 이 기능을 간단하게 구현할 수 있으며, 빠른 시간 안에 
+처리할 수 있다.  <br />
+set은 순서가 없고, 중복을 허용하지 않는 집합이다. 댓글의 번호를 사용해서 
+key를 생성하고, 해당 댓글에 좋아요를 누른 사용자의 ID를 아이템으로 추가하면 
+동일한 ID값을 저장할 수 없으므로 한 명의 사용자는 하나의 댓글에 좋아요를 
+누를 수 있게 된다.</p>
+
+<p><img width="700" alt="스크린샷 2021-05-10 오후 6 34 19" src="https://user-images.githubusercontent.com/26623547/117639175-98c6cc80-b1be-11eb-8bcf-28f9d211da64.png" /></p>
+
+<blockquote>
+  <p>Jedis(Java의 redis 라이브러리)를 통한 파이프라인을 사용하여 이 기능을 
+구현한다고 가정했을 때, 초당 약 16만건의 커맨드를 처리할 수 있다. RDMBS와 
+비교했을 때 확인히 빠른 속도이다.</p>
+</blockquote>
+
+<h4 id="일일-순-방문자수unique-visitor-구하기">일일 순 방문자수(Unique Visitor) 구하기</h4>
+
+<p>순 방문자수(UV)는 서비스에 사용자가 하루에 여러번 방문했다 하더라도 
+하나만 카운팅 되는 값이다. <code class="language-plaintext highlighter-rouge">즉 중복 방문을 제거한 방문자의 지표라고 
+생각할 수 있다.</code></p>
+
+<p>많은 서비스에서 이 수치를 이용해 사용자의 동향을 파악하고, 마케팅을 위한 
+자료로 활용하기도 한다.</p>
+
+<p>그렇다면 이제 레디스의 비트 연산을 활용하여 간단하게 실시간 순 방문자를 
+저장하고 조회하는 방법을 알아보자. 서비스의 유저는 천만명이라고 가정하고, 
+    일일 방문자 횟수를 집계하여 이 값은 0시를 기준으로 초기화 된다.</p>
+
+<p>사용자 ID는 0부터 순차적으로 증가된다고 가정하고, string의 각 bit를 
+하나의 사용자로 생각할 수 있다.  <br />
+<code class="language-plaintext highlighter-rouge">사용자가 서비스에 방문할 때 사용자 ID에 해당하는 bit를 1로 설정한다.</code> <br />
+1개의 bit가 1명을 의미하므로, 천만명의 유저는 천만개의 bit로 
+표현할 수 있고, 이는 곧 1.2MB 정도의 크기이다.</p>
+
+<blockquote>
+  <p>레디스 string의 최대 길이는 512MB이므로 천만명의 사용자를 나타내는 건 충분하다.</p>
+</blockquote>
+
+<p><img width="800" alt="스크린샷 2021-05-10 오후 7 00 07" src="https://user-images.githubusercontent.com/26623547/117642201-fd375b00-b1c1-11eb-80f3-2e0e83581837.png" /></p>
+
+<p>2020년 1월 29일에 ID가 7인 사용자가 방문했다면 위 그림처럼 일곱번째 
+인덱스를 1로 설정한다. 이 날에 서비스에 방문한 총 방문자 수를 
+조회하기 위해서는 이 문자열에 1로 설정된 bit의 갯수를 구하는 
+BITCOUNT 연산을 이용하여 간단히 구할 수 있다.</p>
+
+<h4 id="출석-이벤트-구현하기">출석 이벤트 구현하기</h4>
+
+<p><code class="language-plaintext highlighter-rouge">만약 출석 이벤트 등을 진행하기 위해 정해진 기간동안 매일 방문한 사용자를 
+구하고 싶을 수 있다.</code> <br />
+이 때는 레디스의 BITOP 커맨드를 사용하면 간단하다. 
+레디스 서버에서 바로 AND, OR, XOR, NOT 연산을 할 수 있으므로, 레디스에서 
+개별 비트를 가져와서 서버에서 처리하는 번거로움을 줄여준다.</p>
+
+<p><img width="800" alt="스크린샷 2021-05-10 오후 7 00 17" src="https://user-images.githubusercontent.com/26623547/117642216-00324b80-b1c2-11eb-8c76-d0fc27cc2a5f.png" /></p>
+
+<p>2020년 1월 29일부터 31일까지 매일 접속한 사용자는 id가 7인 사용자와 11인 사용자라는 
+것을 BITOP를 이용한 AND 연산을 통해 쉽게 구할 수 있다.</p>
+
+<h4 id="최근-검색-목록-표시하기">최근 검색 목록 표시하기</h4>
+
+<p>사용자별로 최근 검색했던 목록을 조회하는 것도 레디스로 간단하게 
+구현 가능하다.</p>
+
+<p>이 기능을 관계형 데이터베이스를 이용하여 구현하려면 아래와 비슷한 
+쿼리문이 필요하다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>select * from KEYWORD where ID = 123 order by reg_date desc limit 5;   
+</code></pre></div></div>
+
+<p>이 쿼리는 사용자가 최근에 검색했던 테이블에서 최근 5개 데이터를 조회한다. 
+하지만 이렇게 RDBMS의 테이블을 이용해서 데이터를 저장한다면 중복도 
+제거해야 하고, 멤버별로 저장된 데이터의 개수를 확인하고 오래된 검색어는 
+삭제하는 작업까지 이루어 져야 한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">따라서 애초에 중복을 허용하지 않고, 정렬되어 저장되는 레디스의 sorted set을 사용하면 
+간단하게 구현할 수 있다.</code>  <br />
+<code class="language-plaintext highlighter-rouge">sorted set은 가중치를 기준으로 오름차순으로 정렬되기 때문에, 가중치로 시간(유닉스 시간)을 
+사용한다면 시간 별로 정렬해서 관리 할 수 있다.</code></p>
+
+<p><img width="850" alt="스크린샷 2021-05-10 오후 7 49 37" src="https://user-images.githubusercontent.com/26623547/117648258-f7914380-b1c8-11eb-9b08-8fdf79601a2e.png" /></p>
+
+<p>id가 123인 사람이 최근에 검색한 내용은 위 그림처럼 정렬되어 저장된다. 
+50번 데이터를 가장 마지막으로 검색했고 51인 데이터를 검색하면 아래처럼 마지막 
+데이터가 추가된다.</p>
+
+<p><img width="850" alt="스크린샷 2021-05-10 오후 7 49 54" src="https://user-images.githubusercontent.com/26623547/117648273-fb24ca80-b1c8-11eb-87c7-278db1c7802a.png" /></p>
+
+<p>항상 다섯개의 데이터만 저장되기 때문에 인덱스가 0인 아이템을 지우면 된다. 하지만 
+아이템 개수가 6보다 작을 때에는 0번째 인덱스를 삭제하면 안되기 때문에 매번 
+아이템의 수를 먼저 확인해야 하는 번거로움이 있다. <code class="language-plaintext highlighter-rouge">이 때 sorted set의 
+음수 인덱스를 사용하면 더 간단해 진다. 음수 인덱스의 마지막부터 큰 값을 
+작은 값으로 매겨지는데 아래 그림과 같다.</code></p>
+
+<p><img width="850" alt="스크린샷 2021-05-10 오후 7 50 06" src="https://user-images.githubusercontent.com/26623547/117648278-fc55f780-b1c8-11eb-8917-98849a4f4685.png" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ZREMRANGEBYRANK recent:member:123 -6 -6
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">데이터를 추가한 뒤, 항상 -6번째 아이템을 지운다면 특정 개수 이상의 데이터가 저장되는 것을 방지 할 수 있게 된다.</code>  <br />
+인덱스로 아이템을 지우려면 ZREMRANGEBYRANK 커맨드를 사용하면 간단하다. 이렇게 레디스의 
+sorted set을 이용하면 많은 공수를 들이지 않고도 최근 검색한 담당자를 보여줄 수 있는 
+기능을 구현할 수 있게 된다.</p>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="https://www.happykoo.net/@happykoo/posts/40">https://www.happykoo.net/@happykoo/posts/40</a><br />
+<a href="https://wnsgml972.github.io/database/2020/12/13/Caching/">https://wnsgml972.github.io/database/2020/12/13/Caching/</a><br />
+<a href="https://meetup.toast.com/posts/225">https://meetup.toast.com/posts/225</a><br />
+<a href="https://velog.io/@litien/%EB%A6%AC%EB%B7%B0-%EC%9A%B0%EC%95%84%ED%95%9C-Redis">https://velog.io/@litien/%EB%A6%AC%EB%B7%B0-%EC%9A%B0%EC%95%84%ED%95%9C-Redis</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

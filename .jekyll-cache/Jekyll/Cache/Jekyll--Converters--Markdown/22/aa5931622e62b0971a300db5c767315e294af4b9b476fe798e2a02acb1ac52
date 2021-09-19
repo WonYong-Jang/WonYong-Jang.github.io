@@ -1,0 +1,457 @@
+I"0�<h2 id="jwt">JWT</h2>
+
+<p>JWT의 개념은 <a href="https://wonyong-jang.github.io/web/2020/07/21/Web-API-JWT-OAuth.html">링크</a>를 참고하면 된다. <br />
+이번 글은 맨 아래 Referrence를 참조하였으며, Spring Boot에서 JWT를 사용해서 Authentication과 Authorization을 
+수행하는 방법에 대해서 알아본다.</p>
+
+<p><a href="https://wonyong-jang.github.io/spring/2020/08/15/Spring-Security-Database-Authentication.html">이전글</a>을 먼저 실습하는 것을 추천한다.</p>
+
+<hr />
+
+<h3 id="1-restcontroller">1. RestController</h3>
+
+<p><code class="language-plaintext highlighter-rouge">외부 domain인 client( ex) react )가 application server에 resource를 요청하기 위해 
+application server는 cors를 enable 해야한다.</code>  <br />
+<code class="language-plaintext highlighter-rouge">cors를 enable 하지 않으면 기본적으로 application server는 외부 domain에 resource 접근을 허용하지 않는다!</code></p>
+
+<blockquote>
+  <p>Rest API Controller</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@CrossOrigin</span>                    <span class="c1">// cors 허용</span>
+<span class="nd">@RequiredArgsConstructor</span>
+<span class="nd">@RestController</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">LoginApiController</span> <span class="o">{</span>
+
+    <span class="nd">@GetMapping</span><span class="o">(</span><span class="s">"/api/v1/login"</span><span class="o">)</span> <span class="c1">// admin 권한에게만 </span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">login</span><span class="o">()</span> <span class="o">{</span>
+
+        <span class="k">return</span> <span class="s">"Success ADMIN"</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@GetMapping</span><span class="o">(</span><span class="s">"/api/v1/login2"</span><span class="o">)</span> <span class="c1">// manager 권한에게만 </span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">login2</span><span class="o">()</span> <span class="o">{</span>
+
+        <span class="k">return</span> <span class="s">"Success MANAGER"</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>JWT dependency</p>
+</blockquote>
+
+<div class="language-gradle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">implementation</span> <span class="nl">group:</span> <span class="s1">'com.auth0'</span><span class="o">,</span> <span class="nl">name:</span> <span class="s1">'java-jwt'</span><span class="o">,</span> <span class="nl">version:</span> <span class="s1">'3.1.0'</span>
+</code></pre></div></div>
+<hr />
+
+<h3 id="2-authentication">2. Authentication</h3>
+
+<ul>
+  <li>현재 인증 주체의 정보를 담는 목적 / 실제 구조는 아래와 같다.</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Authentication</span> <span class="kd">extends</span> <span class="nc">Principal</span><span class="o">,</span> <span class="nc">Serializable</span> <span class="o">{</span>
+    <span class="c1">//현재 사용자의 권한 정보를 가져옴.</span>
+	<span class="nc">Collection</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="nc">GrantedAuthority</span><span class="o">&gt;</span> <span class="nf">getAuthorities</span><span class="o">();</span>
+    <span class="c1">//증명 값(비밀번호) 같은 것들을 가져옴</span>
+	<span class="nc">Object</span> <span class="nf">getCredentials</span><span class="o">();</span>
+	<span class="nc">Object</span> <span class="nf">getDetails</span><span class="o">();</span>
+    <span class="c1">//Principal 객체를 가져옴.</span>
+	<span class="nc">Object</span> <span class="nf">getPrincipal</span><span class="o">();</span>
+    <span class="c1">//인증 여부를 가져온다.</span>
+	<span class="kt">boolean</span> <span class="nf">isAuthenticated</span><span class="o">();</span>
+	<span class="kt">void</span> <span class="nf">setAuthenticated</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">isAuthenticated</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IllegalArgumentException</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>JwtProperties.java</p>
+</blockquote>
+
+<p>JWT Properties정보를 담고 있는 클래스를 생성한다. <code class="language-plaintext highlighter-rouge">JWT에서는 서명을 생성하기 위해 
+비밀키를 필요로 하는데, 비밀키는 외부에 노출되면 안되므로 .gitignore로 생성해야 한다. 
+이 글에서는 간단한 실습을 위해 클래스로 만든다.</code></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">JwtProperties</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">SECRET</span> <span class="o">=</span> <span class="s">"apple"</span><span class="o">;</span>         <span class="c1">// secret key </span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="no">EXPIRATION_TIME</span> <span class="o">=</span> <span class="mi">864000000</span><span class="o">;</span> <span class="c1">// 10 days</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">TOKEN_PREFIX</span> <span class="o">=</span> <span class="s">"Bearer "</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">HEADER_STRING</span> <span class="o">=</span> <span class="s">"Authorization"</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>SECRET : JWT Token을 hash 할때 사용할 secret key</li>
+  <li>EXPIRATION TIME : JWT Token의 validation 기간</li>
+  <li>TOKEN PREFIX :JWT Token의 prefix는 Bearer( Bearer인증방식 )</li>
+  <li>HEADERS STRING : JWT Token은 Authorization header로 전달</li>
+</ul>
+
+<blockquote>
+  <p>LoginViewModel.java</p>
+</blockquote>
+
+<p>로그인 request dto를 생성한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Getter</span>
+<span class="nd">@Setter</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">LoginViewModel</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">email</span><span class="o">;</span> <span class="c1">// 본실습은 username -&gt; email 변경하여 진행 </span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">password</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>JwtAuthenticationFilter.java (Authentication logic을 수행할 Filter)</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RequiredArgsConstructor</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">JwtAuthenticationFilter</span> <span class="kd">extends</span> <span class="nc">UsernamePasswordAuthenticationFilter</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">AuthenticationManager</span> <span class="n">authenticationManager</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">Authentication</span> <span class="nf">attemptAuthentication</span><span class="o">(</span><span class="nc">HttpServletRequest</span> <span class="n">request</span><span class="o">,</span> <span class="nc">HttpServletResponse</span> <span class="n">response</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">AuthenticationException</span> <span class="o">{</span>
+
+        <span class="nc">LoginViewModel</span> <span class="n">credentials</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="c1">// ObjectMapper 라이브러리를 이용하여 JSON -&gt; Object 변환 (readValue)</span>
+            <span class="c1">// request body 데이터 확인 request.getInputStream()</span>
+            <span class="n">credentials</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ObjectMapper</span><span class="o">().</span><span class="na">readValue</span><span class="o">(</span><span class="n">request</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">(),</span> <span class="nc">LoginViewModel</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span><span class="o">(</span><span class="nc">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+        <span class="o">}</span>
+
+        <span class="c1">// Create login Token</span>
+        <span class="nc">UsernamePasswordAuthenticationToken</span> <span class="n">authenticationToken</span> <span class="o">=</span>
+                <span class="k">new</span> <span class="nf">UsernamePasswordAuthenticationToken</span><span class="o">(</span>
+                        <span class="n">credentials</span><span class="o">.</span><span class="na">getEmail</span><span class="o">(),</span>    <span class="c1">// email 이용</span>
+                        <span class="n">credentials</span><span class="o">.</span><span class="na">getPassword</span><span class="o">(),</span>
+                        <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;()</span>
+                <span class="o">);</span>
+        <span class="c1">// Authentication User !</span>
+        <span class="nc">Authentication</span> <span class="n">auth</span> <span class="o">=</span> <span class="n">authenticationManager</span><span class="o">.</span><span class="na">authenticate</span><span class="o">(</span><span class="n">authenticationToken</span><span class="o">);</span>
+
+        <span class="k">return</span> <span class="n">auth</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">successfulAuthentication</span><span class="o">(</span><span class="nc">HttpServletRequest</span> <span class="n">request</span><span class="o">,</span>
+                                            <span class="nc">HttpServletResponse</span> <span class="n">response</span><span class="o">,</span>
+                                            <span class="nc">FilterChain</span> <span class="n">chain</span><span class="o">,</span>
+                                            <span class="nc">Authentication</span> <span class="n">authResult</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span><span class="o">,</span> <span class="nc">ServletException</span> <span class="o">{</span>
+        <span class="c1">// Grab principal</span>
+        <span class="nc">UserPrincipal</span> <span class="n">principal</span> <span class="o">=</span> <span class="o">(</span><span class="nc">UserPrincipal</span><span class="o">)</span><span class="n">authResult</span><span class="o">.</span><span class="na">getPrincipal</span><span class="o">();</span>
+
+        <span class="c1">// Create JWT Token</span>
+        <span class="nc">String</span> <span class="n">token</span> <span class="o">=</span> <span class="no">JWT</span><span class="o">.</span><span class="na">create</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">withSubject</span><span class="o">(</span><span class="n">principal</span><span class="o">.</span><span class="na">getEmail</span><span class="o">())</span>  <span class="c1">// email 이용</span>
+                <span class="o">.</span><span class="na">withExpiresAt</span><span class="o">(</span><span class="k">new</span> <span class="nc">Date</span><span class="o">(</span><span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">()+</span> <span class="nc">JwtProperties</span><span class="o">.</span><span class="na">EXPIRATION_TIME</span><span class="o">))</span>
+                <span class="o">.</span><span class="na">sign</span><span class="o">(</span><span class="nc">Algorithm</span><span class="o">.</span><span class="na">HMAC512</span><span class="o">(</span><span class="nc">JwtProperties</span><span class="o">.</span><span class="na">SECRET</span><span class="o">.</span><span class="na">getBytes</span><span class="o">()));</span> <span class="c1">// signature</span>
+        <span class="c1">// Add Token in response header</span>
+        <span class="n">response</span><span class="o">.</span><span class="na">addHeader</span><span class="o">(</span><span class="nc">JwtProperties</span><span class="o">.</span><span class="na">HEADER_STRING</span><span class="o">,</span> <span class="nc">JwtProperties</span><span class="o">.</span><span class="na">TOKEN_PREFIX</span> <span class="o">+</span> <span class="n">token</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><strong>attempAuthentication 메소드( /login request 요청시 수행)</strong></p>
+
+<p><img width="700" alt="스크린샷 2020-08-17 오후 4 48 23" src="https://user-images.githubusercontent.com/26623547/90371216-9315dd80-e0a9-11ea-957d-2d6d868bbb19.png" /></p>
+
+<ul>
+  <li>
+    <p>request json body로 전달된 email/password를 LoginViewModel 클래스로 변환한다.</p>
+  </li>
+  <li>
+    <p>LoginViewModel의 필드에서 email/password를 가져와 UsernamePasswordAuthenticationToken을 생성한다.</p>
+  </li>
+  <li>
+    <p>UsernamePasswordAuthenticationToken은 사용자에게 전달하는 JWT Token이 아닌 Spring이 
+Authentication logic에 사용할 Token 이다.</p>
+  </li>
+  <li>
+    <p>AuthenticationManager는 위의 token을 전달해 Authentication 객체를 생성한다.</p>
+  </li>
+  <li>
+    <p>Authentication 객체를 사용해 Spring Security가 인증을 수행하고, 인증이 정상적으로 완료되면 
+Authentication 객체는 successfulAuthentication 메서드로 전달된다.</p>
+  </li>
+</ul>
+
+<p><strong>successfulAuthentication (로그인 성공시 수행되는 메서드)</strong></p>
+
+<p><img width="700" alt="스크린샷 2020-08-17 오후 5 42 24" src="https://user-images.githubusercontent.com/26623547/90376270-256daf80-e0b1-11ea-8c69-3a25979ac207.png" /></p>
+
+<ul>
+  <li>
+    <p>전달된 Authentication 객체에서 UserPrincipal 객체를 가져온다.</p>
+  </li>
+  <li>
+    <p>UserPrincipal의 필드값을 Subject(email)로 하는 JWT Token을 생성한다.</p>
+  </li>
+  <li>
+    <p>생성한 JWT Token은 response의 header에 전달한다.</p>
+  </li>
+</ul>
+
+<p><strong>UsernamePasswordAuthenticationToken</strong></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UsernamePasswordAuthenticationToken</span> <span class="kd">extends</span> <span class="nc">AbstractAuthenticationToken</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">Object</span> <span class="n">principal</span><span class="o">;</span>
+	<span class="kd">private</span> <span class="nc">Object</span> <span class="n">credentials</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="nf">UsernamePasswordAuthenticationToken</span><span class="o">(</span><span class="nc">Object</span> <span class="n">principal</span><span class="o">,</span> <span class="nc">Object</span> <span class="n">credentials</span><span class="o">)</span> <span class="o">{</span>
+		<span class="kd">super</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+		<span class="k">this</span><span class="o">.</span><span class="na">principal</span> <span class="o">=</span> <span class="n">principal</span><span class="o">;</span>
+		<span class="k">this</span><span class="o">.</span><span class="na">credentials</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">;</span>
+		<span class="n">setAuthenticated</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+	<span class="o">}</span>
+	<span class="kd">public</span> <span class="nf">UsernamePasswordAuthenticationToken</span><span class="o">(</span><span class="nc">Object</span> <span class="n">principal</span><span class="o">,</span> <span class="nc">Object</span> <span class="n">credentials</span><span class="o">,</span>
+			<span class="nc">Collection</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="nc">GrantedAuthority</span><span class="o">&gt;</span> <span class="n">authorities</span><span class="o">)</span> <span class="o">{</span>
+		<span class="kd">super</span><span class="o">(</span><span class="n">authorities</span><span class="o">);</span>
+		<span class="k">this</span><span class="o">.</span><span class="na">principal</span> <span class="o">=</span> <span class="n">principal</span><span class="o">;</span>
+		<span class="k">this</span><span class="o">.</span><span class="na">credentials</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">;</span>
+		<span class="kd">super</span><span class="o">.</span><span class="na">setAuthenticated</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span> <span class="c1">// must use super, as we override</span>
+	<span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">UsernamePasswordAuthenticationToken 은 username, passwrod 조합으로 토큰 객체를 만든다.</code></p>
+  </li>
+  <li>
+    <p>username이 principal, password가 credentials역할을 할 것이고, 2개의 생성자를 가지고 있는데, 
+  첫번째 생성자는 username, password로 받아 만들어진 인증 전 객체이기 때문에 isAuthenticated는 false이다!!</p>
+  </li>
+  <li>
+    <p>두번째 파라미터 3개 생성자는 username, password, authorites를 받아 생성된 토큰은 인증이 완료된 인증 후 객체이다.</p>
+  </li>
+</ul>
+
+<h3 id="3-authorization">3. Authorization</h3>
+
+<blockquote>
+  <p>JwtAuthorizationFilter.java (Authorization은 앞서 Authentication에서 획득한 JWT Token을 가지고 request를 
+        요청할 때 수행된다.)</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">JwtAuthorizationFilter</span> <span class="kd">extends</span> <span class="nc">BasicAuthenticationFilter</span><span class="o">{</span>
+
+    <span class="kd">private</span> <span class="nc">IUserDao</span> <span class="n">iUserDao</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">JwtAuthorizationFilter</span><span class="o">(</span><span class="nc">AuthenticationManager</span> <span class="n">authenticationManager</span><span class="o">,</span> <span class="nc">IUserDao</span> <span class="n">iUserDao</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">(</span><span class="n">authenticationManager</span><span class="o">);</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">iUserDao</span> <span class="o">=</span> <span class="n">iUserDao</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// endpoint every request hit with authorization</span>
+    <span class="nd">@Override</span>
+    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">doFilterInternal</span><span class="o">(</span><span class="nc">HttpServletRequest</span> <span class="n">request</span><span class="o">,</span> <span class="nc">HttpServletResponse</span> <span class="n">response</span><span class="o">,</span> <span class="nc">FilterChain</span> <span class="n">chain</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span><span class="o">,</span> <span class="nc">ServletException</span> <span class="o">{</span>
+        <span class="c1">// Read the Authorization header, where the JWT Token should be</span>
+        <span class="nc">String</span> <span class="n">header</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="na">getHeader</span><span class="o">(</span><span class="nc">JwtProperties</span><span class="o">.</span><span class="na">HEADER_STRING</span><span class="o">);</span>
+
+        <span class="c1">// if header does not contain BEARER or is null delegate to Spring impl and exit</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">header</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="o">!</span><span class="n">header</span><span class="o">.</span><span class="na">startsWith</span><span class="o">(</span><span class="nc">JwtProperties</span><span class="o">.</span><span class="na">TOKEN_PREFIX</span><span class="o">)){</span>
+            <span class="n">chain</span><span class="o">.</span><span class="na">doFilter</span><span class="o">(</span><span class="n">request</span><span class="o">,</span><span class="n">response</span><span class="o">);</span>
+            <span class="k">return</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="c1">// If header is present, try grab user principal from database and perform authorization</span>
+        <span class="nc">Authentication</span> <span class="n">authentication</span> <span class="o">=</span> <span class="n">getUsernamePasswordAuthentication</span><span class="o">(</span><span class="n">request</span><span class="o">);</span>
+        <span class="nc">SecurityContextHolder</span><span class="o">.</span><span class="na">getContext</span><span class="o">().</span><span class="na">setAuthentication</span><span class="o">(</span><span class="n">authentication</span><span class="o">);</span>
+
+        <span class="c1">// Continue filter execution</span>
+        <span class="n">chain</span><span class="o">.</span><span class="na">doFilter</span><span class="o">(</span><span class="n">request</span><span class="o">,</span> <span class="n">response</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="nc">Authentication</span> <span class="nf">getUsernamePasswordAuthentication</span><span class="o">(</span><span class="nc">HttpServletRequest</span> <span class="n">request</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">String</span> <span class="n">token</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="na">getHeader</span><span class="o">(</span><span class="nc">JwtProperties</span><span class="o">.</span><span class="na">HEADER_STRING</span><span class="o">);</span>
+        
+        <span class="c1">// parse the token and validate it(decode)</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">token</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nc">String</span> <span class="n">email</span> <span class="o">=</span> <span class="no">JWT</span><span class="o">.</span><span class="na">require</span><span class="o">(</span><span class="nc">Algorithm</span><span class="o">.</span><span class="na">HMAC512</span><span class="o">(</span><span class="nc">JwtProperties</span><span class="o">.</span><span class="na">SECRET</span><span class="o">.</span><span class="na">getBytes</span><span class="o">()))</span>
+                    <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+                    <span class="o">.</span><span class="na">verify</span><span class="o">(</span><span class="n">token</span><span class="o">.</span><span class="na">replace</span><span class="o">(</span><span class="nc">JwtProperties</span><span class="o">.</span><span class="na">TOKEN_PREFIX</span><span class="o">,</span><span class="s">""</span><span class="o">))</span>
+                    <span class="o">.</span><span class="na">getSubject</span><span class="o">();</span>
+
+            <span class="k">if</span><span class="o">(</span><span class="n">email</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+
+                <span class="nc">User</span> <span class="n">user</span> <span class="o">=</span> <span class="n">iUserDao</span><span class="o">.</span><span class="na">findByEmail</span><span class="o">(</span><span class="n">email</span><span class="o">).</span><span class="na">orElseThrow</span><span class="o">(()-&gt;</span> <span class="k">new</span> <span class="nc">UsernameNotFoundException</span><span class="o">(</span><span class="s">"not find"</span><span class="o">));</span>
+                <span class="nc">UserPrincipal</span> <span class="n">principal</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">UserPrincipal</span><span class="o">(</span><span class="n">user</span><span class="o">);</span>
+                <span class="nc">UsernamePasswordAuthenticationToken</span> <span class="n">auth</span>
+                        <span class="o">=</span> <span class="k">new</span> <span class="nc">UsernamePasswordAuthenticationToken</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="n">principal</span><span class="o">.</span><span class="na">getAuthorities</span><span class="o">());</span>
+                <span class="k">return</span> <span class="n">auth</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><strong>doFilterInternal</strong></p>
+
+<p>doFilterInternal 메서드는 authorization이 포함된 request에 대한 endpoint이다.</p>
+
+<p><img width="700" alt="스크린샷 2020-08-17 오후 6 28 33" src="https://user-images.githubusercontent.com/26623547/90380994-bba4d400-e0b7-11ea-880e-6d17f2baf703.png" /></p>
+
+<ul>
+  <li>
+    <p>request에서 Authorization Header를 획득한다.</p>
+  </li>
+  <li>
+    <p>Authorization Header가 null이 아니면, getUserPasswordAuthentication 메서드에 
+header를 전달해 Authentication 객체를 return 받는다.</p>
+  </li>
+  <li>
+    <p>전달 받은 Authentication 객체를 SecurityContextHolder에 저장한다.</p>
+  </li>
+  <li>
+    <p>Authorization이 정상적으로 수행되면, Spring의 나머지 FilterChain들을 수행 할 수 있도록 
+doFilter(request, response)를 호출한다.</p>
+  </li>
+</ul>
+
+<p><strong>getUsernamePasswordAuthentication</strong></p>
+
+<p>getUsernamePasswordAuthentication 메서드는 전달받은 Authorization 헤더에서 
+사용자 정보를 획득해 UsernamePasswordAuthenticationToken 객체를 생성</p>
+
+<p><img width="700" alt="스크린샷 2020-08-18 오후 1 25 57" src="https://user-images.githubusercontent.com/26623547/90470745-340ea200-e157-11ea-8b11-0c5023dd4305.png" /></p>
+
+<ul>
+  <li>
+    <p>Authorization Header에서 JWT Token을 얻는다.</p>
+  </li>
+  <li>
+    <p>JWT Token을 decode 하여 subject에서 username(email)을 획득한다.</p>
+  </li>
+  <li>
+    <p>email으로 DB를 조회해 User객체를 생성한다.</p>
+  </li>
+  <li>
+    <p>User객체를 전달해 UserPrincipal 객체를 생성한다.</p>
+  </li>
+  <li>
+    <p>email과 User의 authorites로 구성된 UserPasswordAuthenticationToken을 생성해 
+Authentication 객체로 return 한다.</p>
+  </li>
+</ul>
+
+<h3 id="4-config">4. Config</h3>
+
+<blockquote>
+  <p>SecurityConfig.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Configuration</span>
+<span class="nd">@RequiredArgsConstructor</span>
+<span class="nd">@EnableWebSecurity</span> <span class="c1">// Spring Security 활성화</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">SecurityConfig</span> <span class="kd">extends</span> <span class="nc">WebSecurityConfigurerAdapter</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">UserPrincipalDetailsService</span> <span class="n">userPrincipalDetailsService</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">IUserDao</span> <span class="n">iUserDao</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">(</span><span class="nc">AuthenticationManagerBuilder</span> <span class="n">auth</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="n">auth</span><span class="o">.</span><span class="na">authenticationProvider</span><span class="o">(</span><span class="n">authenticationProvider</span><span class="o">());</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Bean</span>
+    <span class="nc">DaoAuthenticationProvider</span> <span class="nf">authenticationProvider</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">DaoAuthenticationProvider</span> <span class="n">daoAuthenticationProvider</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">DaoAuthenticationProvider</span><span class="o">();</span>
+        <span class="n">daoAuthenticationProvider</span><span class="o">.</span><span class="na">setPasswordEncoder</span><span class="o">(</span><span class="n">passwordEncoder</span><span class="o">());</span>
+        <span class="n">daoAuthenticationProvider</span><span class="o">.</span><span class="na">setUserDetailsService</span><span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">userPrincipalDetailsService</span><span class="o">);</span>
+
+        <span class="k">return</span>  <span class="n">daoAuthenticationProvider</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">(</span><span class="nc">HttpSecurity</span> <span class="n">http</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="n">http</span>
+                <span class="o">.</span><span class="na">csrf</span><span class="o">().</span><span class="na">disable</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">sessionManagement</span><span class="o">().</span><span class="na">sessionCreationPolicy</span><span class="o">(</span><span class="nc">SessionCreationPolicy</span><span class="o">.</span><span class="na">STATELESS</span><span class="o">)</span>
+                <span class="o">.</span><span class="na">and</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">addFilter</span><span class="o">(</span><span class="k">new</span> <span class="nc">JwtAuthenticationFilter</span><span class="o">(</span><span class="n">authenticationManager</span><span class="o">()))</span>
+                <span class="o">.</span><span class="na">addFilter</span><span class="o">(</span><span class="k">new</span> <span class="nc">JwtAuthorizationFilter</span><span class="o">(</span><span class="n">authenticationManager</span><span class="o">(),</span> <span class="k">this</span><span class="o">.</span><span class="na">iUserDao</span><span class="o">))</span>
+                <span class="o">.</span><span class="na">authorizeRequests</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">antMatchers</span><span class="o">(</span><span class="nc">HttpMethod</span><span class="o">.</span><span class="na">POST</span><span class="o">,</span> <span class="s">"login"</span><span class="o">).</span><span class="na">permitAll</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">antMatchers</span><span class="o">(</span><span class="s">"/api/v1/login"</span><span class="o">).</span><span class="na">hasRole</span><span class="o">(</span><span class="s">"ADMIN"</span><span class="o">)</span>    <span class="c1">// admin 만 접근 가능 </span>
+                <span class="o">.</span><span class="na">antMatchers</span><span class="o">(</span><span class="s">"/api/v1/login2"</span><span class="o">).</span><span class="na">hasRole</span><span class="o">(</span><span class="s">"MANAGER"</span><span class="o">)</span> <span class="c1">// manager 만 접근 가능 </span>
+                <span class="o">.</span><span class="na">anyRequest</span><span class="o">().</span><span class="na">authenticated</span><span class="o">();</span> <span class="c1">// 이외에 모든 request는 로그인한 사용자만 접근 가능 </span>
+
+    <span class="o">}</span>
+
+    <span class="c1">// Custom Security Config에서 사용할 password encoder를 BCryptPasswordEncoder로 정의</span>
+    <span class="nd">@Bean</span>
+    <span class="nc">PasswordEncoder</span> <span class="nf">passwordEncoder</span><span class="o">(){</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nf">BCryptPasswordEncoder</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">JwtAuthentication Filter와 JwtAuthorizationFilter를 위와 같은순서대로 선언한다 이때 반드시 
+Authentication이 앞에 와야한다. (순서대로 진행 되기 때문에)</code></p>
+  </li>
+  <li>
+    <p>csrf와 session은 JWT 기반 Security에서는 사용하지 않으므로 disable 처리한다.</p>
+  </li>
+</ul>
+
+<h3 id="5-test">5. Test</h3>
+
+<p>postman으로 API 테스트를 진행 하였다.</p>
+
+<blockquote>
+  <p>5-1. Login (Authentication)</p>
+</blockquote>
+
+<p><img width="750" alt="스크린샷 2020-08-18 오후 1 53 25" src="https://user-images.githubusercontent.com/26623547/90471986-6d94dc80-e15a-11ea-8474-0db22c6fbd60.png" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">위와 같이 /login으로 email/password와 함께 Post request 요청하면 200 ok 와 함께 
+JWT Token이 return 되는 것을 확인 할수 있다.</code></p>
+
+<blockquote>
+  <p>5-2. Authorization request</p>
+</blockquote>
+
+<p><img width="750" alt="스크린샷 2020-08-18 오후 2 03 08" src="https://user-images.githubusercontent.com/26623547/90472533-b4cf9d00-e15b-11ea-8840-5d5b95c95ab7.png" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">이후 획득한 JWT Token을 Authorization header에 담아 authorization request를 요청하면 
+정상적으로 결과값을 return 하는 것을 확인 할수 있다!</code></p>
+
+<hr />
+<p>Referrence</p>
+
+<ul>
+  <li><a href="https://velog.io/@minholee_93/Spring-Security-JWT-Security-Spring-Boot-10">https://velog.io/@minholee_93/Spring-Security-JWT-Security-Spring-Boot-10</a></li>
+  <li><a href="https://www.youtube.com/playlist?list=PLVApX3evDwJ1d0lKKHssPQvzv2Ao3e__Q">https://www.youtube.com/playlist?list=PLVApX3evDwJ1d0lKKHssPQvzv2Ao3e__Q</a></li>
+</ul>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

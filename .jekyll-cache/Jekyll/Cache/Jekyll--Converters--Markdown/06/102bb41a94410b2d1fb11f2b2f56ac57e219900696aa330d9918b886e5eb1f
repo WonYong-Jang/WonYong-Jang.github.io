@@ -1,0 +1,238 @@
+I"�c<h1 id="스칼라-컬렉션collection-api">스칼라 컬렉션(collection) API</h1>
+
+<p>스칼라 컬렉션은 배열, 리스트, 맵, 집합, 트리와 같이 주어진 타입을 가지는 하나 또는 그 이상의 
+값을 수집하는 데이터 구조를 제공한다.</p>
+
+<p>스칼라 컬렉션은 변경 불가능한 것과 변경 가능한 것으로 구분한다.</p>
+
+<ul>
+  <li>scala.collection.immutable : 변경 불가능</li>
+  <li>scala.collection.mutable : 변경 가능</li>
+</ul>
+
+<p><img width="700" alt="스크린샷 2021-04-25 오후 4 07 42" src="https://user-images.githubusercontent.com/26623547/115984140-80f92100-a5e0-11eb-8a88-38f67ea02f82.png" /></p>
+
+<p><img width="700" alt="스크린샷 2021-04-25 오후 4 07 48" src="https://user-images.githubusercontent.com/26623547/115984144-835b7b00-a5e0-11eb-951b-1fcacba6155b.png" /></p>
+
+<hr />
+
+<h2 id="리스트-list-seq-vector">리스트( List, Seq, Vector)</h2>
+
+<p><code class="language-plaintext highlighter-rouge">자바와 비교해보면, 스칼라의 Seq는 자바의 List와 비슷하고, 스칼라의 List는 
+자바의 LinkedList와 비슷하다.</code></p>
+
+<h4 id="1-list">1) List</h4>
+
+<p>스칼라의 List는 컴파일러에 의해 매우 최적화 되어 있으며 함수형 프로그램에 기본 데이터 타입이다.  <br />
+List는 immutable 컬렉션이기 때문에 mutable한 list를 사용하기 위해서는 ListBuffer를 사용할 수 있다.</p>
+
+<p>List 사용 예제를 보면서 이해해 보자. <br />
+List는 LinkedList와 같이 단방향으로 구성되어 있으므로, head를 이용하여 
+맨 처음 값을 구해올 수 있고, tail을 통해서 첫번째 요소를 제외한 나머지 List를 
+구해올 수도 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">list</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="mi">12</span><span class="o">,</span> <span class="mi">43</span><span class="o">,</span> <span class="mi">99</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">list</span><span class="o">.</span><span class="py">head</span><span class="o">)</span> <span class="c1">// 12 </span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">list</span><span class="o">.</span><span class="py">tail</span><span class="o">)</span> <span class="c1">// List(43, 99)</span>
+</code></pre></div></div>
+
+<p>아래와 같이 각 값에 대해 계산하고 결과를 목록에 추가하는 함수를 사용하여 List를 만들 수도 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">List</span><span class="o">.</span><span class="py">tabulate</span><span class="o">(</span><span class="n">repeat_times</span><span class="o">)(</span><span class="n">evaluation_function</span><span class="o">)</span> <span class="c1">// syntax   </span>
+</code></pre></div></div>
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// creating  Lists  </span>
+<span class="k">val</span> <span class="nv">table5</span> <span class="k">=</span> <span class="nv">List</span><span class="o">.</span><span class="py">tabulate</span><span class="o">(</span><span class="mi">10</span><span class="o">)(</span><span class="n">i</span> <span class="k">=&gt;</span> <span class="n">i</span><span class="o">*</span><span class="mi">5</span><span class="o">)</span>
+<span class="c1">// List(0, 5, 10, 15, 20, 25, 30, 35, 40, 45)</span>
+</code></pre></div></div>
+
+<h4 id="2-seq">2) Seq</h4>
+
+<p>Scala Seq는 길이가 정해져 있고, 각 원소의 위치를 0부터 시작하는 고정된 인덱스로 지정할 수 있는 iterable의 일종이다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">seq</span> <span class="k">=</span> <span class="nc">Seq</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">3</span><span class="o">,</span> <span class="mi">4</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="mi">3</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="s">"Seq ends with (5,3): "</span> <span class="o">+</span> <span class="nv">seq</span><span class="o">.</span><span class="py">endsWith</span><span class="o">(</span><span class="nc">Seq</span><span class="o">(</span><span class="mi">5</span><span class="o">,</span> <span class="mi">3</span><span class="o">)))</span> <span class="c1">// true</span>
+<span class="nf">println</span><span class="o">(</span><span class="s">"Seq contains 4: "</span> <span class="o">+</span> <span class="nv">seq</span><span class="o">.</span><span class="py">contains</span><span class="o">(</span><span class="mi">4</span><span class="o">))</span>              <span class="c1">// true</span>
+<span class="nf">println</span><span class="o">(</span><span class="s">"Start index of 3: "</span> <span class="o">+</span> <span class="nv">seq</span><span class="o">.</span><span class="py">indexOf</span><span class="o">(</span><span class="mi">3</span><span class="o">))</span>             <span class="c1">// 2</span>
+<span class="nf">println</span><span class="o">(</span><span class="s">"Last index of 3: "</span> <span class="o">+</span> <span class="nv">seq</span><span class="o">.</span><span class="py">lastIndexOf</span><span class="o">(</span><span class="mi">3</span><span class="o">))</span>          <span class="c1">// 5</span>
+<span class="nf">println</span><span class="o">(</span><span class="s">"Reversed Seq"</span> <span class="o">+</span> <span class="nv">seq</span><span class="o">.</span><span class="py">reverse</span><span class="o">)</span>                      <span class="c1">// List(3, 5, 4, 3, 2, 1)  </span>
+</code></pre></div></div>
+
+<h4 id="3-vector">3) Vector</h4>
+
+<p>Scala Vector는 immutable data structure이며, 내부적으로 트리로 구성되어 있어 
+랜덤 엑세스에 효율적이고 많은 데이터를 다룰 때 유용하다.</p>
+
+<p>3개의 Scala Collection(Seq, List, Vector)의 <a href="https://danielasfregola.com/2015/06/15/which-immutable-scala-collection/">performance 비교 글</a>을 
+참고해서 상황에 따라서 적절한 collection을 사용하자. <br />
+<a href="https://www.47deg.com/blog/adventures-with-scala-collections/#scala-collections-overview-1">Adventures with Scala Collections</a>도 참고하자.</p>
+
+<hr />
+
+<h2 id="가변적인-클래스">가변적인 클래스</h2>
+
+<p>불변의 타입을 가진 컬렉션은 요소를 추가, 변경, 삭제가 불가능하지만 
+가변적인 컬렉션을 사용하여 처리할 수 있다.</p>
+
+<p>불변 타입의 컬렉션과 대응되는 가변 컬렉션은 아래와 같다.</p>
+
+<p><img width="522" alt="스크린샷 2021-04-23 오후 11 48 30" src="https://user-images.githubusercontent.com/26623547/115888985-7dee1b80-a48e-11eb-80b6-4455fad7a20e.png" /></p>
+
+<h5 id="새로운-가변-컬렉션-생성하기">새로운 가변 컬렉션 생성하기</h5>
+
+<p><code class="language-plaintext highlighter-rouge">가변 컬렉션을 생성할때는 풀패키지명을 포함해서 생성해야 하며 
+필요시에 다시 불변의 리스트로 전환할 수 있다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">list</span><span class="k">:</span> <span class="kt">mutable.Buffer</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="nv">collection</span><span class="o">.</span><span class="py">mutable</span><span class="o">.</span><span class="py">Buffer</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+<span class="nv">list</span><span class="o">.</span><span class="py">append</span><span class="o">(</span><span class="mi">2</span><span class="o">)</span>
+<span class="n">list</span> <span class="o">+=</span> <span class="mi">3</span>   <span class="c1">// ArrayBuffer(1, 2, 3)   </span>
+
+<span class="k">val</span> <span class="nv">immutableList</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="nv">list</span><span class="o">.</span><span class="py">toList</span> <span class="c1">// 불변 List로 변환    </span>
+</code></pre></div></div>
+
+<h5 id="불변-컬렉션---가변-컬렉션">불변 컬렉션 -&gt; 가변 컬렉션</h5>
+
+<p><code class="language-plaintext highlighter-rouge">불변 컬렉션에서 가변 컬렉션으로 변환도 가능하다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">map</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">(</span><span class="s">"a"</span> <span class="o">-&gt;</span> <span class="mi">1</span><span class="o">,</span> <span class="s">"b"</span> <span class="o">-&gt;</span> <span class="mi">2</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">bufferMap</span> <span class="k">=</span> <span class="nv">map</span><span class="o">.</span><span class="py">toBuffer</span> <span class="c1">// map -&gt; buffer</span>
+<span class="nf">println</span><span class="o">(</span><span class="n">bufferMap</span><span class="o">)</span> <span class="c1">// ArrayBuffer((a,1), (b,2))</span>
+
+<span class="n">bufferMap</span> <span class="o">+=</span> <span class="o">(</span><span class="s">"c"</span> <span class="o">-&gt;</span> <span class="mi">3</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="n">bufferMap</span><span class="o">)</span> <span class="c1">// ArrayBuffer((a,1), (b,2), (c,3))</span>
+
+<span class="k">val</span> <span class="nv">map2</span> <span class="k">=</span> <span class="nv">bufferMap</span><span class="o">.</span><span class="py">toMap</span> <span class="c1">// buffer -&gt; map</span>
+</code></pre></div></div>
+
+<h5 id="컬렉션-빌더-사용하기">컬렉션 빌더 사용하기</h5>
+
+<p>Builder를 사용하면 추가(append) 연산만 가능하게 된다. 필요한 요소를 
+추가한 후 result() 메서드를 호출하면 이를 최종 컬렉션 타입으로 반환해 준다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">builder</span> <span class="k">=</span> <span class="nv">collection</span><span class="o">.</span><span class="py">mutable</span><span class="o">.</span><span class="py">Seq</span><span class="o">.</span><span class="py">newBuilder</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span>
+<span class="n">builder</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="n">builder</span> <span class="o">+=</span> <span class="mi">2</span>
+<span class="k">val</span> <span class="nv">result</span><span class="k">:</span> <span class="kt">mutable.Seq</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="nv">builder</span><span class="o">.</span><span class="py">result</span><span class="o">()</span>
+</code></pre></div></div>
+
+<h3 id="array와-arraybuffer">Array와 ArrayBuffer</h3>
+
+<p>Array와 ArrayBuffer는 둘다 mutable 이다. 따라서 아래와 같이 변경이 가능하다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">a</span><span class="o">(</span><span class="n">i</span><span class="o">)</span> <span class="k">=</span> <span class="ss">'hell</span><span class="n">o</span><span class="o">'</span>   
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">차이점은 ArrayBuffer는 사이즈 조정이 자동적이다 라는 점이다. ArrayBuffer에 
+요소를 추가하면 자동적으로 늘어난다는 점이다.</code></p>
+
+<p>그렇다면 Array에 추가한다면? <br />
+<code class="language-plaintext highlighter-rouge">아래와 같이 새로 만들어진 Array가 생겨난다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">array</span> <span class="k">=</span> <span class="nc">Array</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">3</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">array2</span> <span class="k">=</span> <span class="n">array</span> <span class="o">:+</span> <span class="mi">4</span>   <span class="c1">// 새로운 배열 생성 </span>
+<span class="nv">array</span><span class="o">.</span><span class="py">foreach</span><span class="o">(</span><span class="n">print</span><span class="o">)</span>      <span class="c1">// 1 2 3</span>
+<span class="nv">array2</span><span class="o">.</span><span class="py">foreach</span><span class="o">(</span><span class="n">print</span><span class="o">)</span>     <span class="c1">// 1 2 3 4</span>
+</code></pre></div></div>
+
+<p>ArrayBuffer는 아래와 같이 사용 가능하다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">buf</span> <span class="k">=</span> <span class="nv">mutable</span><span class="o">.</span><span class="py">ArrayBuffer</span><span class="o">.</span><span class="py">empty</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span>
+<span class="nv">buf</span><span class="o">.</span><span class="py">append</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+<span class="nv">buf</span><span class="o">.</span><span class="py">append</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">array</span> <span class="k">=</span> <span class="nv">buf</span><span class="o">.</span><span class="py">toArray</span>
+<span class="nv">array</span><span class="o">.</span><span class="py">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span> <span class="c1">// 1 10 </span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="collection에서-제공하는-고차함수">Collection에서 제공하는 고차함수</h2>
+
+<h3 id="map">map</h3>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">a</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span><span class="mi">2</span><span class="o">,</span><span class="mi">3</span><span class="o">)</span>
+<span class="nv">a</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="k">_</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span> <span class="c1">// List(2,3,4)</span>
+</code></pre></div></div>
+
+<h3 id="flatmap">flatMap</h3>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">words</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="s">"the"</span><span class="o">,</span> <span class="s">"quick"</span><span class="o">)</span>    
+<span class="nv">words</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">toList</span><span class="o">)</span>  <span class="c1">// List(List(t, h, e), List(q, u, i, c, k))   </span>
+
+<span class="nv">words</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">toList</span><span class="o">)</span> <span class="c1">// List(t, h, e, q, u, i, c, k)   </span>
+</code></pre></div></div>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">fruits</span> <span class="k">=</span> <span class="nc">Seq</span><span class="o">(</span><span class="s">"apple"</span><span class="o">,</span> <span class="s">"banana"</span><span class="o">)</span>
+<span class="nv">fruits</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">toUpperCase</span><span class="o">)</span> <span class="c1">// List(A, P, P, L, E, B, A, N, A, N, A)   </span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">map과 flatMap의 차이 중에 아래 내용은 중요하니 잘 확인하자.</code> <br />
+<code class="language-plaintext highlighter-rouge">map은 타입을 감싼 타입을 그대로 내보내기 때문에 None도 내보내지만, 
+    flatMap은 감싼 타입을 벗겨내기 때문에 None은 없어진다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">toInt</span><span class="o">(</span><span class="n">s</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="nc">Some</span><span class="o">(</span><span class="nv">Integer</span><span class="o">.</span><span class="py">parseInt</span><span class="o">(</span><span class="nv">s</span><span class="o">.</span><span class="py">trim</span><span class="o">))</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">{</span>
+      <span class="k">case</span> <span class="n">e</span><span class="k">:</span> <span class="kt">Exception</span> <span class="o">=&gt;</span> <span class="nc">None</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</code></pre></div></div>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="nv">strings</span> <span class="k">=</span> <span class="nc">Seq</span><span class="o">(</span><span class="s">"1"</span><span class="o">,</span> <span class="s">"2"</span><span class="o">,</span> <span class="s">"foo"</span><span class="o">,</span> <span class="s">"3"</span><span class="o">,</span> <span class="s">"bar"</span><span class="o">)</span>
+<span class="n">strings</span><span class="k">:</span> <span class="kt">Seq</span><span class="o">[</span><span class="kt">java.lang.String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="n">foo</span><span class="o">,</span> <span class="mi">3</span><span class="o">,</span> <span class="n">bar</span><span class="o">)</span>
+
+<span class="n">scala</span><span class="o">&gt;</span> <span class="nv">strings</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="n">toInt</span><span class="o">)</span>
+<span class="n">res0</span><span class="k">:</span> <span class="kt">Seq</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">]]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="nc">Some</span><span class="o">(</span><span class="mi">1</span><span class="o">),</span> <span class="nc">Some</span><span class="o">(</span><span class="mi">2</span><span class="o">),</span> <span class="nc">None</span><span class="o">,</span> <span class="nc">Some</span><span class="o">(</span><span class="mi">3</span><span class="o">),</span> <span class="nc">None</span><span class="o">)</span>
+
+<span class="n">scala</span><span class="o">&gt;</span> <span class="nv">strings</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span><span class="n">toInt</span><span class="o">)</span>
+<span class="n">res1</span><span class="k">:</span> <span class="kt">Seq</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">3</span><span class="o">)</span>
+
+<span class="n">scala</span><span class="o">&gt;</span> <span class="nv">strings</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span><span class="n">toInt</span><span class="o">).</span><span class="py">sum</span>
+<span class="n">res2</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="mi">6</span>
+</code></pre></div></div>
+
+<p>이 중요한 특성을 이용해서 예외처리를 하여 결과값을 연속적으로 사용하는게 가능해진다.</p>
+
+<p>이 특성을 이용하여 Map을 사용할 때도 적용 할 수 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">scalaMap</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">(</span><span class="mi">1</span> <span class="o">-&gt;</span> <span class="s">"one"</span><span class="o">,</span> <span class="mi">2</span> <span class="o">-&gt;</span> <span class="s">"two"</span><span class="o">,</span> <span class="mi">3</span> <span class="o">-&gt;</span> <span class="s">"three"</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">list</span> <span class="k">=</span> <span class="o">(</span><span class="mi">1</span> <span class="n">to</span> <span class="nv">scalaMap</span><span class="o">.</span><span class="py">size</span><span class="o">).</span><span class="py">map</span><span class="o">(</span><span class="nv">scalaMap</span><span class="o">.</span><span class="py">get</span><span class="o">)</span>
+<span class="c1">// Vector(Some(one), Some(two), Some(three))</span>
+</code></pre></div></div>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">scalaMap</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">(</span><span class="mi">1</span> <span class="o">-&gt;</span> <span class="s">"one"</span><span class="o">,</span> <span class="mi">2</span> <span class="o">-&gt;</span> <span class="s">"two"</span><span class="o">,</span> <span class="mi">3</span> <span class="o">-&gt;</span> <span class="s">"three"</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">list</span> <span class="k">=</span> <span class="o">(</span><span class="mi">1</span> <span class="n">to</span> <span class="nv">scalaMap</span><span class="o">.</span><span class="py">size</span><span class="o">).</span><span class="py">flatMap</span><span class="o">(</span><span class="nv">scalaMap</span><span class="o">.</span><span class="py">get</span><span class="o">)</span>   
+<span class="c1">// Vector(one, two, three)   </span>
+</code></pre></div></div>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="https://www.includehelp.com/scala/list.aspx">https://www.includehelp.com/scala/list.aspx</a><br />
+<a href="https://blog.baesangwoo.dev/posts/scala-learning-scala-chapter7-1/">https://blog.baesangwoo.dev/posts/scala-learning-scala-chapter7-1/</a><br />
+<a href="https://hamait.tistory.com/606">https://hamait.tistory.com/606</a><br />
+<a href="https://stackoverflow.com/questions/10866639/difference-between-a-seq-and-a-list-in-scala">https://stackoverflow.com/questions/10866639/difference-between-a-seq-and-a-list-in-scala</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

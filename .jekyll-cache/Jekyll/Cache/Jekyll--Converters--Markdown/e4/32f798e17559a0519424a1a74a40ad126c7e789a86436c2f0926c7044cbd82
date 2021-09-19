@@ -1,0 +1,6 @@
+I"l<h2 class="section-heading">커넥션 풀(Connection pool) 이란? </h2>
+<p><img width="744" alt="스크린샷 2020-03-17 오후 9 10 48" src="https://user-images.githubusercontent.com/26623547/76855296-2bf2c380-6894-11ea-9eb7-5d26687b9409.png" />
+<code class="language-plaintext highlighter-rouge">웹 컨테이너(WAS)가 실행되면서 DB와 미리 connection(연결)을 해놓은 객체들을 pool에
+저장해두었다가 클라이언트 요청이 오면 connection을 빌려주고, 처리가 끝나면
+다시 connection을 반납받아 pool에 저장하는 방식을 말한다.</code></p>
+:ET

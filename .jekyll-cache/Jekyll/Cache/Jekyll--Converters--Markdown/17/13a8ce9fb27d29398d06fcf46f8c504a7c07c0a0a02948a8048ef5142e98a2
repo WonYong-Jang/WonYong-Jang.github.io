@@ -1,0 +1,92 @@
+I"<h2 id="jpa-엔티티-작성---setter-금지">JPA 엔티티 작성 - Setter 금지</h2>
+
+<p><code class="language-plaintext highlighter-rouge">엔티티를 작성할 때 객체의 일관성을 보장하기 위한 방법 중 하나가 습관적으로 
+모든 필드에 Setter 생성하는것을 금지하는 것이다.</code></p>
+
+<p>Setter를 무분별하게 남용하다 보면 여기저기서 객체(엔티티)의 값을 변경할 수 있으므로 
+객체의 일관성을 보장할수 없다.</p>
+
+<p>또한, Setter는 그 의도를 알기 힘들다. 
+예를 들면 아래 코드의 경우 멤버 객체를 set메소드를 통해 변경하는데 무엇을 
+하는건지 한번에 알 수 없다.(예제의 경우 간단한 변경이지만 복잡해질 경우 객체의 값을 
+        변경하는 행위가 무엇을 위해 변경하는지 한 눈에 알기 힘들 수 있다!)</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Member</span> <span class="n">member</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Member</span><span class="o">();</span>
+<span class="n">member</span><span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="n">value</span><span class="o">);</span>
+<span class="n">member</span><span class="o">.</span><span class="na">setTel</span><span class="o">(</span><span class="n">value</span><span class="o">);</span>
+<span class="o">...</span>
+<span class="n">member</span><span class="o">.</span><span class="na">set</span><span class="o">...</span>
+</code></pre></div></div>
+
+<p><strong>아래 코드 처럼 객체에 메소드를 제공하여 변경하면 변경 의도를 한번에 알 수 있고, 
+    객체 자신의 값을 자신이 변경하는 것이 객체 지향 관점에도 더 바람직하다.</strong></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 멤버의 기본정보를 수정한다는 것을 한눈에 알 수 있다</span>
+<span class="n">member</span><span class="o">.</span><span class="na">changeBasicInfo</span><span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//Member 엔티티 내부에 매서드 생성</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">changeBasicInfo</span><span class="o">(</span><span class="nc">String</span> <span class="n">name</span><span class="o">,</span> <span class="nc">String</span> <span class="n">tel</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">;</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">tel</span> <span class="o">=</span> <span class="n">tel</span><span class="o">;</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+<hr />
+
+<p><code class="language-plaintext highlighter-rouge">객체의 일관성을 유지하기 위해 객체 생성 시점에 값들을 넣어줌으로써 Setter 사용을 줄일 수 있다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">객체의 생성자 설정 (필드가 많을경우 롬복의 @Builder 사용하면 좋다)</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Builder</span>
+<span class="kd">public</span> <span class="nf">Member</span><span class="o">(</span><span class="nc">String</span> <span class="n">username</span><span class="o">,</span> <span class="nc">String</span> <span class="n">password</span><span class="o">,</span> <span class="nc">String</span> <span class="n">name</span><span class="o">,</span> <span class="nc">String</span> <span class="n">tel</span><span class="o">,</span> <span class="nc">Address</span> <span class="n">address</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">username</span> <span class="o">=</span> <span class="n">username</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">password</span> <span class="o">=</span> <span class="n">password</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">tel</span> <span class="o">=</span> <span class="n">tel</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">address</span> <span class="o">=</span> <span class="n">address</span><span class="o">;</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 객체 생성 시 값 세팅(빌더패턴 사용)</span>
+<span class="nc">Member</span> <span class="n">member</span> <span class="o">=</span> <span class="nc">Member</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">username</span><span class="o">(</span><span class="n">value</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">password</span><span class="o">(</span><span class="n">value</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">name</span><span class="o">(</span><span class="n">value</span><span class="o">);</span>
+      <span class="o">.</span><span class="na">tel</span><span class="o">(</span><span class="n">value</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">address</span><span class="o">(</span><span class="n">value</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">무분별한 Setter 생성을 금지하는 것은 엔티티 뿐 아니라 객체 생성 및 변경 시 모두 
+해당하는 부분이다. 객체의 일관성을 유지할 수 있어야 프로그램의 유지 보수성을 
+끌어 올릴수 있다.</code></p>
+
+<hr />
+<p>Referrence</p>
+
+<p><a href="https://jojoldu.tistory.com/295">https://jojoldu.tistory.com/295</a>       <br />
+<a href="https://velog.io/@aidenshin/%EB%82%B4%EA%B0%80-%EC%83%9D%EA%B0%81%ED%95%98%EB%8A%94-JPA-%EC%97%94%ED%8B%B0%ED%8B%B0-%EC%9E%91%EC%84%B1-%EC%9B%90%EC%B9%99">https://velog.io/@aidenshin/%EB%82%B4%EA%B0%80-%EC%83%9D%EA%B0%81%ED%95%98%EB%8A%94-JPA-%EC%97%94%ED%8B%B0%ED%8B%B0-%EC%9E%91%EC%84%B1-%EC%9B%90%EC%B9%99</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

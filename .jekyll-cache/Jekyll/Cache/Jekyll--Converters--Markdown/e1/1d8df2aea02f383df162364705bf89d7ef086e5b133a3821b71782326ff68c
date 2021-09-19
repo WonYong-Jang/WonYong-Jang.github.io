@@ -1,0 +1,5 @@
+I"h<p>스칼라에서 Empty values는 Null, null, Nil, Nothing, None, Unit 이 있다. 
+<code class="language-plaintext highlighter-rouge">이 모든 키워드가 값이 없음을 나타내는데 사용되는 것처럼 보일 수 있지만 
+각 키워드에는 고유한 목적이 있다.</code>  <br />
+각각 차이점과 특징에 대해 확인 해보자.</p>
+:ET

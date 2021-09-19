@@ -1,0 +1,134 @@
+I"E"<h2 id="broadcast">Broadcast</h2>
+
+<p>스파크는 브로드캐스트 변수를 제공하는 효율적인 알고리즘을 제공하며 
+모든 노드에 큰 입력 데이터 셋을 제공할 때 좋은 방법이다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">스파크 연산에 쓸 읽기 전용인 값을 직렬화 한 후 모든 작업 노드에 효과적으로 전송하는데 사용한다.</code>  <br />
+<code class="language-plaintext highlighter-rouge">읽기 전용이기 때문에 Immutable한 객체 타입을 브로드 캐스트 하는 것이 안전하다.</code>   <br />
+<code class="language-plaintext highlighter-rouge">드라이버 코드 밖에서 브로드캐스트 변수의 값을 수정할 수 없으며 드라이버에서 
+태스크로 단방향 전송된다. 즉, 드라이버로 
+역전파 할 수 없다.</code></p>
+
+<p>브로드캐스트 변수는 broadcast() 메소드를 호출하여 생성할 수 있으며 
+value 메소드를 통해 값을 이용할 수 있다.</p>
+
+<p>스파크가 클로저에서 쓰이던 모든 변수들을 작업 노드에 자동으로 보내던 것을 생각해보자.</p>
+
+<ul>
+  <li>편리하지만 작은 작업사이즈에 최적화 되어 있다.</li>
+  <li>병렬 작업에서 동일 변수를 사용할 수도 있으므로 효과적이지 못하다.</li>
+</ul>
+
+<h5 id="클로저closure란">클로저(Closure)란?</h5>
+
+<p>위에서 언급한 클로저란 
+RDD operations 실행하기 위해 각 executor에 visible한 variables or methods를 의미한다.</p>
+
+<p>Job Execution Flow on Spark는 아래와 같다.</p>
+
+<ul>
+  <li>Spark는 RDD operations 처리를 tasks로 나눈다.</li>
+  <li>RDD operation 실행 전에 task의 closure를 계산한다.</li>
+  <li>closure는 serialized 되고 각 executor에 보내진다.</li>
+  <li>executor는 각 task를 주어진 task closure를 이용하여 실행한다. (각 executor에 보내진 closure내의 변수들은 copy를 하고 수행된다.)</li>
+</ul>
+
+<p>클로저라는 개념을 조금 더 이해하기 위해 local 모드와 cluster 모드에서 
+클로저를 비교해보자.</p>
+
+<p>아래 예제는 local mode와 cluster mode에서 각각 다른 결과값을 출력한다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="n">counter</span> <span class="k">=</span> <span class="mi">0</span> 
+<span class="k">var</span> <span class="n">rdd</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="n">data</span><span class="o">)</span> 
+
+<span class="c1">// Wrong: Don't do this!! </span>
+<span class="nv">rdd</span><span class="o">.</span><span class="py">foreach</span><span class="o">(</span><span class="n">x</span> <span class="k">=&gt;</span> <span class="n">counter</span> <span class="o">+=</span> <span class="n">x</span><span class="o">)</span> 
+
+<span class="nf">println</span><span class="o">(</span><span class="s">"Counter value: "</span> <span class="o">+</span> <span class="n">counter</span><span class="o">)</span>
+</code></pre></div></div>
+
+<ul>
+  <li>In cluster mode</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">각 executor에서 실행하는 foreach 함수에서 참조하는 counter는 driver node에서 
+보낸 closure내의 변수(counter)를 copy한 값이다.</code>       <br />
+driver node의 memory에 상주하는 counter는 executor에 visible하지 않고, 
+각 executor는 직렬화된 closure의 copy된 변수만을 볼 수 있다. <br />
+그렇기 때문에 driver node의 counter 변수의 최종 값은 0으로 남게 된다.</p>
+
+<ul>
+  <li>In local mode</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">executor는 driver node와 동일한 JVM에서 실행되며, foreach 함수를 실행 시 
+original counter를 참조하고 counter 값을 업데이트한다.</code></p>
+
+<p>위와 같이 분산 환경에서 global aggregation이 필요한 시나리조에서는 accumulator를 
+사용해야 한다.  <br />
+accumulator는 cluster의 worker nodes에서 실행 시 변수를 안전하게 
+업데이트하는 mechanism을 제공한다.</p>
+
+<p>또한, 바이트 사이즈가 큰 값들을 브로드캐스팅할 때 값을 Serialization하거나 
+Serialization 된 값을 네트워크로 보내는 시간이 오래걸린다면 
+병목현상이 발생한다. <br />
+즉, 빠르고 작은 단위의 데이터 직렬화 포맷을 선택해야 한다. <br />
+<code class="language-plaintext highlighter-rouge">기본적으로 쓰는 Java Serialization 보다는 Kyro Serialization을 사용하자.</code></p>
+
+<h2 id="accumulator">Accumulator</h2>
+
+<p><code class="language-plaintext highlighter-rouge">Accumulator는 병렬환경에서 효율적으로 집계 연산을 수행하기 위해 제공된다.</code> <br />
+스파크에서는 숫자 타입의 accumulator를 기본 제공하며 프로그래머는 
+새로운 타입을 지원하는 accumulator를 작성할 수 있다. <br />
+숫자 형식의 accumulator는 longAccumulator() 또는 doubleAccumulator()를 
+메소드를 통해 생성할 수 있다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">또한, 프로그래머가 직접 accumulator를 작성할 수도 있는데 이럴 경우 accumulatorV2를 
+상속받아 구현하면 된다.</code>  <br />
+accumulatorV2는 추상클래스이며 여러개의 메서드를 가지고 있다. 대표적으로 reset과 
+add인데 reset에는 초기화시 동작을 add에는 추가시 동작을 작성하면 된다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MyAccumulator</span> <span class="k">extends</span> <span class="nc">AccumulatorV2</span><span class="o">[</span><span class="kt">Long</span>, <span class="kt">Long</span><span class="o">]</span> <span class="o">{</span> 
+    <span class="k">private</span> <span class="k">var</span> <span class="n">sum</span> <span class="k">:</span> <span class="kt">Long</span> <span class="o">=</span> <span class="mi">0</span> 
+    <span class="k">override</span> <span class="k">def</span> <span class="nf">reset</span><span class="o">()</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="n">sum</span> <span class="k">=</span> <span class="mi">0</span> 
+    <span class="k">override</span> <span class="k">def</span> <span class="nf">add</span><span class="o">(</span><span class="n">v</span><span class="k">:</span> <span class="kt">Long</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+=</span> <span class="n">v</span> 
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>accumulatorV2를 구현한 사용자의 accumulator는 스파크에서 호출시 
+한번씩만 동작하도록 보장한다. 커스텀 accumulator는 아래와 같이 
+등록해서 사용하면 된다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">sc</span><span class="o">.</span><span class="py">register</span><span class="o">(</span><span class="k">new</span> <span class="nc">MyAccumulator</span><span class="o">,</span> <span class="s">"My Accumulator"</span><span class="o">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="http://spark.apache.org/docs/latest/programming-guide.html#parallelized-collections">http://spark.apache.org/docs/latest/programming-guide.html#parallelized-collections</a><br />
+<a href="https://jjaesang.github.io/spark/2017/04/12/spark_ch6.html">https://jjaesang.github.io/spark/2017/04/12/spark_ch6.html</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

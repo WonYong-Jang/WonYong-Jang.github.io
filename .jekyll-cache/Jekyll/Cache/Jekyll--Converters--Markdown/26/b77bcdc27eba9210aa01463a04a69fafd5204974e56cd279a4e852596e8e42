@@ -1,0 +1,597 @@
+I"��<p><code class="language-plaintext highlighter-rouge">아파치 스파크를 한마디로 정의하자면 '빅데이터 처리를 위한 오픈소스 분산 처리 플랫폼' 또는 
+'빅데이터 분산 처리 엔진' 정도로 표현할 수 있다.</code></p>
+
+<p>여기서 말하는 분산 프로그래밍은 무엇을 의미할까?</p>
+
+<p>간단히 말해 여러 디스크로부터 데이터를 한번에 읽는 것을 말한다. <br />
+사실 하드디스크 드라이브 저장 용량이 엄청나게 증가한데 반해 액세스 속도는 
+그에 훨씬 미치지 못하여 드라이브를 읽는데도 시간이 굉장히 오래 걸렸다. 
+그래서 이 시간을 줄이기 위해 하둡을 사용하게 되었는데, 예를 들어 100개의 
+드라이브가 있고, 각 드라이브에 1/100만큼 데이터를 저장했다고 
+가정했을 때 이것이 병렬로 동작한다면 더 빠른 시간 내에 데이터 읽기가 
+가능하다고 한다.</p>
+
+<p>빅데이터 개념이 등장했을 당시, ‘빅데이터 처리 = 하둡(Hadoop)’ 이라고 할 정도로 
+하둡 에코시스템이 시장을 지배했다.  <br />
+하둡은 HDFS(Hadoop Distributed File System)라고 불리는, 분산형 파일 시스템을 
+기반으로 만들어졌다.</p>
+
+<p>하둡은 여러 대의 서버를 이용해서 하나의 클러스터를 구성하여, 이렇게 클러스터로 
+묶인 서버의 자원을 하나의 서버처럼 사용할 수 있는 클러스터 환경을 제공한다. <br />
+기본적인 동작방식은 분석할 데이터를 하둡 파일 시스템인 HDFS에 저장해 두고 
+HDFS 상에서 맵리듀스 프로그램을 이용해 데이터 처리를 수행하는 방식이다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">문제는 하둡의 맵리듀스가 DISK I/O를 기반으로 동작한다는 것에 있었다.</code>      <br />
+실시간성 데이터에 대한 니즈(NEEDS)가 급격하게 증가하면서, 하둡으로 
+처리하기에는 속도 측면에서 부적합한 상황이 발생하였다.</p>
+
+<p>이 때 등장한 것이 아파치 스파크이다. <br />
+최근에는 경쟁 관계를 넘어서, 
+    하둡+스파크 라는 둘의 연계가 하나의 큰 흐름으로 자리 잡았다.</p>
+
+<p>즉, 스파크는 하둡을 대체하는 것이 아니라 MapReduce를 대체하는 존재다. 예를 들어, 
+    분산 파일 시스템인 HDFS나 리소스 관리자인 YARN 등은 Spark에서도 
+    그대로 사용 할 수 있다. Hadoop을 이용하지 않는 구성도 가능하며, 
+    분산 스토리지로 Amazon S3를 이용하거나 분산 데이터베이스인 
+    카산드라(cassandra)에서 데이터를 읽어 들이는 것도 가능하다.</p>
+
+<p><img width="770" alt="스크린샷 2021-02-22 오후 11 41 28" src="https://user-images.githubusercontent.com/26623547/108723470-a2e61100-7567-11eb-938e-bb6388ac35d7.png" /></p>
+
+<hr />
+
+<h1 id="spark-란">Spark 란?</h1>
+
+<p>현재 빅데이터 분석기술 중에서 가장 주목 받는 기술은 아파치 스파크(spark)이다. <br />
+<code class="language-plaintext highlighter-rouge">스파크는 인메모리(In-Memory) 기반으로 동작하기 때문에, 반복적인 처리가 필요한 작업에서 
+속도가 최소 100배 이상 빠르다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">스파크는 스칼라로 작성되어 자바 보다 간결한 코드로 같은 작업을 표현할 수 있다. 또한 JVM에서 동작하기 
+때문에 기존에 사용하던 자바 라이브러리를 모두 사용할 수 있다.</code></p>
+
+<p>또한, 다양한 방식으로 배포가 가능하며 Java, Scala, Python, R 프로그래밍 언어를 위한 
+네이티브 바인딩을 제공하고 SQL, 스트리밍 데이터, 머신러닝, 그래프 프로세싱을 지원한다.</p>
+
+<h3 id="spark-vs-multiprocessing">Spark vs Multiprocessing</h3>
+
+<p>분산 환경을 사용하는 가장 큰 이유는 유연한 확장성에 있다.(다양한 
+        하둡 에코시스템을 통한 효율적인 빅데이터 저장/분석이 가능한 부분도 있다)  <br />
+데이터가 정적으로 고정되어 있지 않고 지속적으로 증가한다고 생각해보자.</p>
+
+<p>이를 대응하기 위해서 단일 서버는 내부의 하드웨어를 교체하는 등의 고비용이 요구되고, 
+    이를 처리하기 위한 복잡한 저수준의 프로그래밍이 필요하다. 
+    분산환경에서는 값싼 서버를 하나씩 늘리면 될 뿐이다.</p>
+
+<p>병렬 연산을 꼭 분산 클러스터를 구성해서 해결해야 하는지를 먼저 따져봐야 한다. 
+단일 서버에서 많은 메모리와 멀티 코어 수와 함께 multiprocessing을 사용하면 
+웬만한 크기의 병렬은 해결할 수 있다. 분산 환경에서 실행 계획, 리소스 할당 등 
+테스크를 돌리는 과정이 있기에 단일 서버보다 성능이 저하되는 경우도 있다.</p>
+
+<p>컴퓨팅 성능에서 가장 느린 부분은 디스크 입출력이다. 대용량 데이터일수록 
+디스크 입출력은 굉장히 느려진다. 분산 환경은 대용량 파일을 잘게 나눠서 
+저장하고 여러곳에서 동시에 입출력할 수 있다. 즉, 디스크 I/O를 병렬로 
+할 수 있는 것인데 이는 데이터가 많아질수록 유리한 구조이다.</p>
+
+<p>이렇듯 문제를 잘 파악하고 단일 서버에서 multiprocessing으로 돌릴 것인지 
+분산 환경에서 spark로 돌릴 것인지 결정해야 한다. 만일 대용량 데이터가 크지 않고 
+고정되어 있다면 단일 서버도 고려해볼 필요가 있다.</p>
+
+<hr />
+
+<h2 id="spark-구조">Spark 구조</h2>
+
+<p><code class="language-plaintext highlighter-rouge">스파크는 마스터-슬래이브 구조로 실행 되며, 
+    작업을 관장하는 드라이버(driver)와 실제 작업이 동작하는 익스큐터(executor)로 구성된다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">드라이버는 스파크 컨텍스트 객체를 생성하여 클러스터 매니저와 통신하면서 애플리케이션 라이프 사이클을 관리한다.</code></p>
+
+<p><img width="600" alt="스크린샷 2021-02-22 오후 10 36 59" src="https://user-images.githubusercontent.com/26623547/108715646-7ed20200-755e-11eb-830a-4371d800fc96.png" /></p>
+
+<p>스파크 실행 프로그램으로 드라이버와 익스큐터 프로세스로 실행되는 프로그램을 말한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">클러스터 매니저는 스파크의 클러스터 모드를 구성하는 컴포넌트 중 하나로 
+여러 대의 서버로 구성된 클러스터 환경에서 다수의 애플리케이션이 
+함께 구동 될 수 있게 애플리케이션 간의 CPU나 메모리, 디스크와 같은 
+컴퓨팅 자원을 관리해 주는 역할을 담당</code>하며, 
+    클러스터 매니저의 종류는 하둡의 Yarn이나 아파치 메소스(Mesos), 
+    스파크에서 자체적으로 제공하는 스탠드얼론(Standalone), 
+    쿠버네티스 등을 예로 들 수 있다.</p>
+
+<h4 id="스파크-클러스터">스파크 클러스터</h4>
+
+<p><code class="language-plaintext highlighter-rouge">클러스터라고 하면 일반적으로 여러 대의 서버가 마치 한 대의 서버처럼 동작하는 
+것을 의미한다. 스파크 역시 클러스터 환경에서 동작하며, 대량의 데이터를 여러 
+서버로 나누어 병렬로 처리한다.</code></p>
+
+<p>따라서 항상 클러스터 환경에서 동작하는 프로그램을 작성할 때는 
+데이터가 여러 서버에 나눠져 병렬로 처리되고 있다는 사실을 기억하고 있어야 한다.</p>
+
+<h4 id="드라이버driver">드라이버(Driver)</h4>
+
+<p><code class="language-plaintext highlighter-rouge">스파크에서는 잡을 실행하는 프로그램, 즉 메인 함수를 가지고 있는 프로그램을 가리켜 
+드라이버라고 한다. 더 정확하게 표현하자면 드라이버란 스파크컨텍스트를 
+생성하고 그 인스턴스를 포함하고 있는 프로그램을 의미한다.</code></p>
+
+<p>드라이버 프로그램은 자신을 실행한 서버에서 동작하면서 스파크 컨텍스트를 
+생성해 클러스터의 각 워커 노드들에게 작업을 지시하고 결과를 
+취합하는 역할을 수행한다.</p>
+
+<p>즉, 실제 수행 단위인 Task로 변환 해 Executor에게 전달한다.</p>
+
+<h4 id="스파크-컨텍스트">스파크 컨텍스트</h4>
+
+<p><code class="language-plaintext highlighter-rouge">스파크 컨텍스트는 스파크 어플리케이션과 클러스터의 연결을 관리하는 객체로서 
+모든 스파크 어플리케이션은 반드시 스파크 컨텍스트를 생성해야 한다.</code>  <br />
+RDD를 비롯해 스파크에서 사용하는 주요 객체는 스파크 컨텍스트를 이용해 
+생성할 수 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">conf</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">SparkConf</span><span class="o">().</span><span class="py">setMaster</span><span class="o">(</span><span class="s">"local[*]"</span><span class="o">).</span><span class="py">setAppName</span><span class="o">(</span><span class="s">"RDDSample"</span><span class="o">)</span>   
+<span class="k">val</span> <span class="nv">sc</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">SparkContext</span><span class="o">(</span><span class="n">conf</span><span class="o">)</span>   
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">스파크 컨텍스트를 생성할 때는 스파크 동작에 필요한 여러 설정 정보를 지정할 수 있다. 
+이 가운데 클러스터 마스터 정보와 어플리케이션 이름은 반드시 지정해야 하는 
+필수 정보이다.</code></p>
+
+<blockquote>
+  <p>마스터 정보는 스파크가 동작할 클러스터의 마스터 서버를 의미하는 것으로 
+로컬 모드에서는 local 또는 local[3], local[*] 같이 사용된다.</p>
+</blockquote>
+
+<blockquote>
+  <p>local[3]은 3개의 스레드를 의미하고 local[*] 은 가용한 만큼의 Core 갯수로 실행을 의미한다.</p>
+</blockquote>
+
+<h4 id="익스큐터executor">익스큐터(Executor)</h4>
+
+<p>태스크 실행을 담당하는 에이전트로 실제 작업을 진행하는 프로세스이다. 
+태스크 단위로 작업을 실행하고 결과를 드라이버에 알려준다.  <br />
+익스큐터가 동작 중 오류가 발생하면 다시 재작업을 진행한다.</p>
+
+<h4 id="태스크task">태스크(Task)</h4>
+
+<p>익스큐터에서 실행되는 실제 작업이다. 익스큐터의 캐쉬를 공유하여 작업의 
+속도를 높일 수 있다.</p>
+
+<hr />
+
+<h2 id="rdd-dataframe-dataset">RDD, DataFrame, DataSet</h2>
+
+<p>스파크 어플리케이션을 구현 방법은 스파크 v1에서 발표한 RDD를 이용하는 방법과 
+스파크 v2에서 RDD의 단점으로 개선하여 발표한 DataFrame과 DataSet을 
+이용하는 방법 두가지가 있다.</p>
+
+<p><img width="800" alt="스크린샷 2021-02-23 오후 7 19 53" src="https://user-images.githubusercontent.com/26623547/108830928-06764a00-760d-11eb-9ff8-8ce22aea1f59.png" /></p>
+
+<p>스파크가 사용하는 기본 데이터 모델로써 RDD를 잘 이해하고 다루는 것은
+스파크 어플리케이션을 작성하고 이해하는 데 기본이라 할 수 있다.</p>
+
+<p>먼저 RDD에 대해 알아보자.</p>
+
+<hr />
+
+<h2 id="rddresilient-distributed-datasets">RDD(Resilient Distributed Datasets)</h2>
+
+<p><code class="language-plaintext highlighter-rouge">RDD는 문자 그대로 해석하면 회복력을 가진 분산 데이터 집합 정도가 될 것이다.</code></p>
+
+<p>또한, 클러스터에 분산된 메모리를 활용하여 계산되는 List라고도 표현 할 수 있을 것 같다.</p>
+
+<p>여기서 회복력이 있다는 말은 데이터를 처리하는 과정에서 일부 문제가 발생하더라도 스스로 복구할 수 있다는 의미이다. <br />
+단, 복구의 의미는 스파크 어플리케이션이 정상적으로 동작하고 있는 상황을 가정한 것으로 작업 수행 
+도중 서버나 네트워크, 자원 할당 등에 일시적/부분적 문제가 발생했을 때 RDD의 
+작업 히스토리를 이용한 재시도를 수행함으로써 복구를 수행할 수 있다는 뜻이다.</p>
+
+<p>따라서, 어플리케이션 코드 자체에 버그가 있거나 드라이버 프로그램이 오류로 
+종료되어 스파크 어플리케이션과 서버 프로세스 간 연결이 끊어지는 등의 
+영구적 장애 상황은 RDD에서 말하는 복구 대상이 아니라는 점을 알고 있어야 한다.</p>
+
+<p>위에서 언급한 것처럼 <code class="language-plaintext highlighter-rouge">데이터에 문제가 생겨도 원래 상태로 복구가 가능한 것은 
+RDD는 불변성을 띠기 때문이다.</code></p>
+
+<p>스파크는 데이터의 일부가 유실되면 어딘가에 백업해둔 데이터를 다시 불러오는 것이 
+아니고 데이터를 다시 만들어내는 방식으로 복구를 수행한다. 한번 만들어진 RDD는 
+어떤 경우에도 그 내용이 변경되지 않기 때문에 같은 방법으로 만든 
+RDD는 항상 같은 데이터를 갖게 된다.  <br />
+따라서, RDD를 만드는 방법만 기억하고 있으면 언제든 똑같은 데이터를 다시 만들어 낼 수 있게 된다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">또한, RDD 데이터는 클러스터를 구성하는 여러 서버에 나누어 저장한다. 스파크는 이렇게 분할 된 
+데이터를 파티션이라는 단위로 관리한다.</code></p>
+
+<p><img width="800" alt="스크린샷 2021-02-23 오후 11 13 07" src="https://user-images.githubusercontent.com/26623547/108856037-fa01e980-762c-11eb-8a63-c6523557f1b6.png" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">RDD는 트랜스포메이션(transformation), 액션(action) 두가지 타입의 연산을 가지고 있다.</code>  <br />
+트랜스포메이션은 필터링 같은 작업으로 RDD에서 새로운 RDD를 반환한다.  <br />
+액션은 RDD로 작업을 처리하여 결과를 반환한다. 주로 드라이버로 연산 결과를 보낼 때 이루어 진다. <br />
+스파크는 지연처리(lazy evalution)를 지원하여 
+트랜스포메이션을 호출할 때는 작업을 처리하지 않고, 액션을 호출하는 시점에 작업을 
+처리하여 효율성을 제공한다.</p>
+
+<p><img width="763" alt="스크린샷 2021-04-13 오후 11 33 38" src="https://user-images.githubusercontent.com/26623547/114570407-c4828f80-9cb0-11eb-830b-85fa7fdd9f00.png" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">이러한 동작 방식의 차이로 인한 가장 큰 장점은 실행 계획의 최적화가 가능하다는 점이다. 
+사용자가 입력한 변환 연산들을 즉시 수행하지 않고 모아뒀다가 한번에 
+실행함으로써 불필요한 네트워크 통신 비용을 줄일 수 있기 때문이다.</code></p>
+
+<p>RDD는 액션이 실행될 때마다 새로운 연산을 처리한다. 작업의 처리 결과를 
+재사용하고 싶으면 persist()메소드를 사용하여 결과를 메모리에 유지하도록 할 수 있다.</p>
+
+<h3 id="장애시-복구-계획-resilent-">장애시 복구 계획( Resilent )</h3>
+
+<p><code class="language-plaintext highlighter-rouge">스파는 RDD가 생성되어 변경되는 모든 과정을 일일이 기억하는 대신 RDD를 한번 
+생성되면 변경되지 않는 읽기 전용 모델로 만든 후 RDD 생성과 관련된 내용만 기억하고 
+있다가 장애가 발생하면 이전에 RDD를 만들 때 수행했던 작업을 똑같이 실행해(똑같은 데이터를 
+        가진 새로운 RDD를 만들어) 데이터를 복구하는 방식을 사용한다.</code></p>
+
+<p>이처럼 스파크에서 RDD 생성 작업을 기록해 두는 것을 리니지(lineage)라고 한다.</p>
+
+<p>이를 DAG(Directed Acyclic Graph)로 표현하여 기록한다.</p>
+
+<p>데이터를 일단 RDD로 만든 후 데이터 변형이 필요하면 그 RDD로 부터 변형된 새로운 RDD를 만들고 
+그것으로부터 또 다른 RDD를 생성해서 최종적인 모습의 RDD를 만들어 가는 형태로 데이터를 
+처리한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">이때 기존 RDD는 변형되지 않고 매번 새로운 RDD가 재 생성 되기 때문에 클러스터 중 일부가 장애가 발생하면 
+문제가 발생했던 구간의 작업만 수행해서 RDD를 재빨리 복원할 수 있는 것이다.</code></p>
+
+<p><img width="659" alt="스크린샷 2021-04-13 오후 11 33 09" src="https://user-images.githubusercontent.com/26623547/114570366-bdf41800-9cb0-11eb-922d-f3df050e7f59.png" /></p>
+
+<hr />
+
+<h3 id="parallel-processing-of-rdd">Parallel Processing of RDD</h3>
+
+<p>RDD에서 병렬로 처리 되는 과정을 살펴보자. <br />
+먼저, 아래 소스를 보면 txt 파일을 RDD로 생성하고 default 
+partition개수를 확인했다.<br />
+default로 RDD를 생성할 수도 있고 직접 지정할 수도 있다. 
+아래는 5개로 지정해주었다. 마지막 줄에는 각 partition 갯수만큼 
+for each를 순회한다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//load a text file from current directory</span>
+<span class="k">val</span> <span class="nv">flistRDD</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">textFile</span><span class="o">(</span><span class="s">"flist.txt"</span><span class="o">)</span>
+<span class="c1">//Check number of defaults partitions</span>
+<span class="nv">flistRDD</span><span class="o">.</span><span class="py">getNumPartitions</span>
+<span class="c1">//Reload with five partitions</span>
+<span class="k">val</span> <span class="nv">flistRDD</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">textFile</span><span class="o">(</span><span class="s">"flist.txt"</span><span class="o">,</span> <span class="mi">5</span><span class="o">)</span>
+<span class="c1">//Count the number of elements in each partition</span>
+<span class="nv">flistRDD</span><span class="o">.</span><span class="py">foreachPartition</span><span class="o">(</span>
+  <span class="n">p</span> <span class="k">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="s">"Items in partition-"</span> <span class="o">+</span> <span class="nv">p</span><span class="o">.</span><span class="py">count</span><span class="o">(</span><span class="n">y</span> <span class="k">=&gt;</span> <span class="kc">true</span><span class="o">))</span>
+<span class="o">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="1-rdd-생성">1. RDD 생성</h3>
+
+<p>RDD의 처음 생성은 디스크에서 데이터를 메모리로 로딩할 때 처음 생성된다. 
+그 후 코드에서 생성되는 데이터를 저장할 때 생성된다.</p>
+
+<p>위에서 스파크 컨텍스트를 만들었다면 이제 RDD를 생성할 수 있다.  <br />
+스파크는 크게 두 종류의 RDD 생성 방법을 제공한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">첫번째 방법은 드라이버 프로그램의 컬렉션 객체를 이용하는 것이다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"a"</span><span class="o">,</span> <span class="s">"b"</span><span class="o">,</span> <span class="s">"c"</span><span class="o">))</span>
+</code></pre></div></div>
+
+<p>문자열을 포함한 컬렉션 객체를 생성하고 스파크 컨텍스트의 
+parallelize() 메서드를 이용해 RDD를 생성했다.</p>
+
+<p>parallelize() 메서드는 생성될 RDD의 파티션 수를 지정하는 옵션을 가지고 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="mi">1</span> <span class="n">to</span> <span class="mi">1000</span><span class="o">,</span> <span class="mi">10</span><span class="o">)</span> <span class="c1">// 10개 파티션 지정 </span>
+</code></pre></div></div>
+
+<p>위의 예제는 1 부터 1000까지의 숫자를 담은 컬렉션 객체를 생성했고 파티션 크기를 10으로 
+주었다. 만약 RDD에 포함된 전체 요소의 크기보다 파티션의 수가 더 크다면 
+생성된 파티션 중 일부는 요소를 하나도 포함하지 않는 빈 파티션이 된다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">두번째 방법은 파일이나 데이터베이스 같은 외부 데이터를 읽어서 새로운 RDD를 
+생성하는 방법이다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">textFile</span><span class="o">(</span><span class="s">"&lt;spark_home_dir&gt;/README.md"</span><span class="o">)</span>    
+</code></pre></div></div>
+
+<p>이때 파일 각 한줄은 한개의 RDD 구성요소가 된다.</p>
+
+<h3 id="2-rdd-기본-액션">2. RDD 기본 액션</h3>
+
+<p><code class="language-plaintext highlighter-rouge">RDD의 연산은 트랜스포메이션과 액션 연산으로 나눌 수 있으며, 
+    두 연산을 구분하는 기준은 연산의 수행 결과가 RDD인지 아닌지를 확인해보면 
+    구분이 가능하다.</code></p>
+
+<h4 id="2-1-collect">2-1) collect</h4>
+
+<p>₩collect는 RDD의 모든 원소를 모아서 배열로 돌려준다. 반환 타입이 RDD가 아닌 배열이므로 
+연산은 액션에 속하는 연산이다.`</p>
+
+<p>collect 연산을 수행하면 RDD에 있는 모든 요소들이 collect 연산을 호출한 서버의 
+메모리에 수집된다. 따라서 전체 데이터를 모두 담을 수 있을 정도의 
+충분한 메모리 공간이 확보돼 있는 상태에서만 사용해야 한다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="mi">1</span> <span class="n">to</span> <span class="mi">5</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd1</span><span class="o">.</span><span class="py">collect</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">result</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">", "</span><span class="o">))</span>
+<span class="c1">// print : 1, 2, 3, 4, 5</span>
+</code></pre></div></div>
+
+<p>mkString은 리스트에 담긴 요소를 하나의 문자열로 표현하는 메서드이다.</p>
+
+<h4 id="2-2-count">2-2) count</h4>
+
+<p>count는 RDD를 구성하는 전체 요소의 개수를 반환한다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="mi">1</span> <span class="n">to</span> <span class="mi">5</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd1</span><span class="o">.</span><span class="py">count</span>
+<span class="nf">println</span><span class="o">(</span><span class="n">result</span><span class="o">)</span> <span class="c1">// 5   </span>
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="3-rdd-트랜스포메이션">3. RDD 트랜스포메이션</h3>
+
+<p>트랜스포메이션은 기존 RDD를 이용해 새로운 RDD를 생성하는 연산이다. 이러한 연산에는 
+각 요소의 타입을 문자열에서 숫자로 바꾸거나 불필요한 요소를 제외하거나 기존 요소의 
+값에 특정 값을 더하는 등의 작업이 모두 포함된다.</p>
+
+<h4 id="3-1-map">3-1) map</h4>
+
+<p>map은 스파크를 이용한 데이터 처리 작업에서 흔히 사용되는 대표적인 연산 중 하나이다.   <br />
+아래 예제는 1부터 5까지의 수로 구성된 RDD의 각 요소에 1을 더하는 함수를 적용해서 
+2부터 6까지의 숫자로 구성된 새로운 RDD를 생성하는 예제이다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="mi">1</span> <span class="n">to</span> <span class="mi">5</span><span class="o">).</span><span class="py">map</span><span class="o">(</span><span class="k">_</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">rdd</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">", "</span><span class="o">))</span>
+<span class="c1">// 2, 3, 4 ,5 ,6</span>
+</code></pre></div></div>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">map</span><span class="o">[</span><span class="kt">U:</span> <span class="kt">ClassTag</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">T</span> <span class="o">=&gt;</span> <span class="n">U</span><span class="o">)</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[</span><span class="kt">U</span><span class="o">]</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">T 타입을 U 타입으로 변환하는 함수 f를 이용해서 RDD[T] 타입의 RDD를 RDD[U] 타입으로 
+변환하는 메서드 라는 의미이다.</code></p>
+
+<h4 id="3-2-flatmap">3-2) flatMap</h4>
+
+<p>아래 예제를 보면 fruits는 모두 3개의 단어가 포함되어 있고, ‘ , ‘ 기준으로 분리하여 
+과일 리스트를 생성하려고 한다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">fruits</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="s">"apple,orange"</span><span class="o">,</span> <span class="s">"grape,apple,mango"</span><span class="o">,</span> <span class="s">"blueberry,tomato,orange"</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="n">fruits</span><span class="o">);</span> <span class="c1">// 단어 3개를 가진 List   </span>
+</code></pre></div></div>
+
+<p>map을 이용해서 분리를 한다면 아래와 같을 것이다.   <br />
+우리는 이런 결과 말고 과일 리스트만 배열로 얻기를 원한 때 flatMap을 사용할 수 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd2</span> <span class="k">=</span> <span class="nv">rdd1</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">split</span><span class="o">(</span><span class="s">","</span><span class="o">))</span>    
+<span class="nf">println</span><span class="o">(</span><span class="nv">rdd2</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">"{"</span><span class="o">,</span><span class="s">", "</span><span class="o">,</span> <span class="s">"}"</span><span class="o">)).</span><span class="py">mkString</span><span class="o">(</span><span class="s">"{"</span><span class="o">,</span><span class="s">", "</span><span class="o">,</span> <span class="s">"}"</span><span class="o">))</span>    
+<span class="c1">// [{apple, orange}, {grape, apple, mango}, {blueberry, tomato, orange}]      </span>
+</code></pre></div></div>
+
+<p>위의 경우 ‘apple,orange’ 라는 문자열이 apple과 orange 포함한 배열로 변환되는데 
+배열에 포함된 요소를 모두 밖으로 끄집어 내는 작업이 필요하다. <br />
+<code class="language-plaintext highlighter-rouge">flatMap() 연산은 하나의 입력값에 대응하는 반환값이 여러 개 일 때 유용하게 
+사용 할 수 있다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">fruits</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="s">"apple,orange"</span><span class="o">,</span> <span class="s">"grape,apple,mango"</span><span class="o">,</span> <span class="s">"blueberry,tomato,orange"</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="n">fruits</span><span class="o">);</span>
+<span class="k">val</span> <span class="nv">rdd2</span> <span class="k">=</span> <span class="nv">rdd1</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">split</span><span class="o">(</span><span class="s">","</span><span class="o">))</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">rdd2</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">", "</span><span class="o">))</span>   
+<span class="c1">// apple, orange, grape, apple, mango, blueberry, tomato, orange</span>
+</code></pre></div></div>
+
+<h4 id="3-3-mapvalues">3-3) mapValues</h4>
+
+<p>RDD의 요소가 키와 값의 쌍을 이루고 있는 경우 페어RDD(PairRDD)라는 용어를 
+사용한다.  <br />
+<code class="language-plaintext highlighter-rouge">mapValues()는 RDD의 모든 요소들이 키와 값의 쌍을 이루고 있는 경우에만 
+사용 가능한 메서드이며, 인자로 전달받은 함수를 값에 해당하는 요소에만 
+적용하고 그 결과로 구성된 새로운 RDD를 생성한다.</code>  <br />
+즉, 키에 해당하는 부분은 그대로 두고 값에만 map() 연산을 적용한 
+것과 같다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"a"</span><span class="o">,</span> <span class="s">"b"</span><span class="o">,</span> <span class="s">"c"</span><span class="o">)).</span><span class="py">map</span><span class="o">((</span><span class="k">_</span><span class="o">,</span> <span class="mi">1</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd</span><span class="o">.</span><span class="py">mapValues</span><span class="o">(</span><span class="n">i</span> <span class="k">=&gt;</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">result</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">", "</span><span class="o">))</span>   
+<span class="c1">// (a,2), (b,2), (c,2)    </span>
+</code></pre></div></div>
+
+<h4 id="3-4-flatmapvalues">3-4) flatMapValues</h4>
+
+<p>마찬가지로 RDD의 구성요소가 키와 값의 쌍으로 구성된 경우에만 사용 할 수 있는 
+메서드이다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">Seq</span><span class="o">((</span><span class="mi">1</span><span class="o">,</span><span class="s">"a,b"</span><span class="o">),</span> <span class="o">(</span><span class="mi">2</span><span class="o">,</span><span class="s">"a,c"</span><span class="o">),</span> <span class="o">(</span><span class="mi">1</span><span class="o">,</span><span class="s">"d,e"</span><span class="o">)))</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd</span><span class="o">.</span><span class="py">flatMapValues</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">split</span><span class="o">(</span><span class="s">","</span><span class="o">))</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">result</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">"\t"</span><span class="o">))</span>
+<span class="c1">// (1,a)	(1,b)	(2,a)	(2,c)	(1,d)	(1,e)   </span>
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="4-그룹과-관련된-연산들">4. 그룹과 관련된 연산들</h3>
+
+<h4 id="4-1-zip">4-1) zip</h4>
+
+<p>zip() 연산은 두 개의 서로 다른 RDD를 각 요소의 인덱스에 따라 하나의 (키, 값) 쌍으로 
+묶어 준다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"a"</span><span class="o">,</span> <span class="s">"b"</span><span class="o">,</span> <span class="s">"c"</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">rdd2</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">3</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd1</span><span class="o">.</span><span class="py">zip</span><span class="o">(</span><span class="n">rdd2</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">result</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">", "</span><span class="o">))</span>
+<span class="c1">// (a,1), (b,2), (c,3)   </span>
+</code></pre></div></div>
+
+<p>서로 크기가 다른 RDD 간에는 zip() 메서드를 사용할 수 없다.</p>
+
+<h4 id="4-2-groupby">4-2) groupBy</h4>
+
+<p>groupBy()는 RDD의 요소를 일정한 기준에 따라 여러 개의 그룹으로 나누고 
+이 그룹으로 구성된 새로운 RDD를 생성한다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="mi">1</span> <span class="n">to</span> <span class="mi">10</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd</span><span class="o">.</span><span class="py">groupBy</span><span class="o">{</span>
+   <span class="k">case</span> <span class="n">i</span><span class="k">:</span> <span class="kt">Int</span> <span class="kt">if</span><span class="o">(</span><span class="kt">i</span> <span class="kt">%</span> <span class="err">2</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span>  <span class="k">=&gt;</span> <span class="s">"even"</span>
+   <span class="k">case</span> <span class="k">_</span>                      <span class="k">=&gt;</span> <span class="s">"odd"</span>
+<span class="o">}</span>
+<span class="nv">result</span><span class="o">.</span><span class="py">foreach</span> <span class="o">{</span>
+   <span class="n">v</span> <span class="k">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="n">s</span><span class="s">"${v._1}, [${v._2.mkString("</span><span class="o">,</span> <span class="s">")}]"</span><span class="o">)</span>
+<span class="o">}</span>
+<span class="c1">// even, [2, 4, 6, 8, 10]</span>
+<span class="c1">// odd, [1, 3, 5, 7, 9]</span>
+</code></pre></div></div>
+
+<h4 id="4-3-groupbykey">4-3) groupByKey</h4>
+
+<p>groupBy() 메서드가 요소의 키를 생성하는 작업과 그룹으로 분류하는 작업을 
+동시에 수행한다면 <code class="language-plaintext highlighter-rouge">groupByKey()는 이미 RDD의 구성요소가 키와 값으로 쌍으로 
+이루어진 경우에 사용 가능한 메서드이다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"a"</span><span class="o">,</span><span class="s">"b"</span><span class="o">,</span><span class="s">"c"</span><span class="o">,</span><span class="s">"c"</span><span class="o">,</span><span class="s">"b"</span><span class="o">)).</span><span class="py">map</span><span class="o">((</span><span class="k">_</span><span class="o">,</span><span class="mi">1</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd</span><span class="o">.</span><span class="py">groupByKey</span>
+
+<span class="nv">result</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">foreach</span> <span class="o">{</span>
+   <span class="n">v</span> <span class="k">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="n">s</span><span class="s">"${v._1}, [${v._2.mkString("</span><span class="o">,</span><span class="s">")}]"</span><span class="o">)</span>
+<span class="o">}</span>
+<span class="c1">// a, [1]</span>
+<span class="c1">// b, [1,1]</span>
+<span class="c1">// c, [1,1]</span>
+</code></pre></div></div>
+
+<p>참고로, GroupByKey를 사용하게 되면 
+Spark에서 가장 기피해야 하지만 어쩔 수 없이 발생하는 
+data shuffling이 모든 node 사이에서 일어나게 된다.</p>
+
+<p>reduceByKey를 사용해도 동일하게 shuffling은 일어나지만, 두 함수의 
+가장 큰 차이점은 reduceByKey는 shuffle 하기 전에 먼저 
+reduce 연산을 수행해서 네트워크를 타는 데이터를 현저히 줄여준다.</p>
+
+<p>그래서 가급적이면 reduceByKey나 aggregateByKey 등 shuffling 이전에 
+데이터 크기를 줄여줄 수 있는 함수를 먼저 고려해야 한다. 똑같은 Wide 
+transformation 함수라도 성능 차이가 많이 날 수 있다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">즉, 스파크 성능에 영향을 미칠 수 있는 요소 중 하나가 groupByKey 대신에 
+reduceByKey로 해결할 수 있는 문제 상황에서는 무조건 reduceByKey를 
+사용했을 때 성능에 이점을 볼 수 있다.</code></p>
+
+<hr />
+
+<h3 id="5-집합과-관련된-연산들">5. 집합과 관련된 연산들</h3>
+
+<h4 id="5-1-distinct">5-1) distinct</h4>
+
+<p>distinct()는 RDD의 원소에서 중복을 제외한 요소로만 구성된 
+새로운 RDD를 생성하는 메서드이다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span><span class="mi">2</span><span class="o">,</span><span class="mi">3</span><span class="o">,</span><span class="mi">1</span><span class="o">,</span><span class="mi">2</span><span class="o">,</span><span class="mi">3</span><span class="o">,</span><span class="mi">1</span><span class="o">,</span><span class="mi">2</span><span class="o">,</span><span class="mi">3</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd</span><span class="o">.</span><span class="py">distinct</span><span class="o">()</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">result</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">", "</span><span class="o">))</span>
+<span class="c1">// 1, 2, 3    </span>
+</code></pre></div></div>
+
+<h4 id="5-2-cartesian">5-2) cartesian</h4>
+
+<p>cartesian()은 두 RDD 요소의 카테시안곱을 구하고 그 결과를 요소로 하는 
+새로운 RDD을 생성하는 메서드이다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span><span class="mi">2</span><span class="o">,</span><span class="mi">3</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">rdd2</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"a"</span><span class="o">,</span><span class="s">"b"</span><span class="o">,</span><span class="s">"c"</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd1</span><span class="o">.</span><span class="py">cartesian</span><span class="o">(</span><span class="n">rdd2</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">result</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">", "</span><span class="o">))</span> 
+<span class="c1">// (1,a), (1,b), (1,c), (2,a), (2,b), (2,c), (3,a), (3,b), (3,c)    </span>
+</code></pre></div></div>
+
+<h4 id="5-3-union">5-3) union</h4>
+
+<p><code class="language-plaintext highlighter-rouge">아래와 같이 rdd1, rdd2을 합쳐서 새로운 RDD를 생성하는 메서드이다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"a"</span><span class="o">,</span><span class="s">"b"</span><span class="o">,</span><span class="s">"c"</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">rdd2</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"d"</span><span class="o">,</span><span class="s">"e"</span><span class="o">,</span><span class="s">"f"</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd1</span><span class="o">.</span><span class="py">union</span><span class="o">(</span><span class="n">rdd2</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">result</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">", "</span><span class="o">))</span>   
+<span class="c1">// a, b, c, d, e, f    </span>
+</code></pre></div></div>
+
+<h4 id="5-4-join">5-4) join</h4>
+
+<p>join()은 RDD의 구성요소가 키와 값의 쌍으로 구성된 경우에 사용할 수 있는 
+메서드이다. <code class="language-plaintext highlighter-rouge">같은 키를 가지고 있는 요소를 모아서 그룹을 형성하고, 
+    이 결과로 구성된 새로운 RDD를 생성하는 메서드이다.</code></p>
+
+<p>join() 메서드의 수행 결과로 생성된 RDD는 튜플 타입의 요소를 가지며, 
+    Tuple(키, Tuple(첫번째 RDD, 두번째 RDD)) 형태로 구성된다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"a"</span><span class="o">,</span><span class="s">"b"</span><span class="o">,</span><span class="s">"c"</span><span class="o">,</span><span class="s">"d"</span><span class="o">,</span><span class="s">"e"</span><span class="o">)).</span><span class="py">map</span><span class="o">((</span><span class="k">_</span><span class="o">,</span> <span class="mi">1</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">rdd2</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"b"</span><span class="o">,</span><span class="s">"c"</span><span class="o">)).</span><span class="py">map</span><span class="o">((</span><span class="k">_</span><span class="o">,</span><span class="mi">2</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd1</span><span class="o">.</span><span class="py">join</span><span class="o">(</span><span class="n">rdd2</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">result</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">"\n"</span><span class="o">))</span>
+<span class="c1">// (b,(1,2))</span>
+<span class="c1">// (c,(1,2))</span>
+</code></pre></div></div>
+
+<h4 id="5-5-leftouterjoin-rightouterjoin">5-5) leftOuterJoin, rightOuterJoin</h4>
+
+<p>RDD의 구성요소가 키와 값의 쌍으로 구성된 경우에 사용 할 수 있는 
+메서드이며, sql 사용하는것과 비슷하게 
+왼쪽 외부조인과 오른쪽 외부 조인을 수행한다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"a"</span><span class="o">,</span><span class="s">"b"</span><span class="o">,</span><span class="s">"c"</span><span class="o">)).</span><span class="py">map</span><span class="o">((</span><span class="k">_</span><span class="o">,</span> <span class="mi">1</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">rdd2</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"b"</span><span class="o">,</span><span class="s">"c"</span><span class="o">)).</span><span class="py">map</span><span class="o">((</span><span class="k">_</span><span class="o">,</span><span class="mi">2</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">result1</span> <span class="k">=</span> <span class="nv">rdd1</span><span class="o">.</span><span class="py">leftOuterJoin</span><span class="o">(</span><span class="n">rdd2</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">result2</span> <span class="k">=</span> <span class="nv">rdd1</span><span class="o">.</span><span class="py">rightOuterJoin</span><span class="o">(</span><span class="n">rdd2</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="s">"Left: "</span> <span class="o">+</span> <span class="nv">result1</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">"\n"</span><span class="o">))</span>
+<span class="nf">println</span><span class="o">(</span><span class="s">"Right: "</span><span class="o">+</span> <span class="nv">result2</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">"\n"</span><span class="o">))</span>
+
+<span class="c1">// Left: (a,(1,None))</span>
+<span class="c1">// (b,(1,Some(2)))</span>
+<span class="c1">// (c,(1,Some(2)))</span>
+
+<span class="c1">// Right: (b,(Some(1),2))</span>
+<span class="c1">// (c,(Some(1),2))</span>
+</code></pre></div></div>
+
+<h4 id="5-6-subtractbykey">5-6) subtractByKey</h4>
+
+<p>RRD의 구성 요소가 키와 값의 쌍으로 구성된 경우에 사용할 수 있는 
+메서드이다.  <br />
+<code class="language-plaintext highlighter-rouge">rdd1의 요소 중에서 rdd2에 같은 키가 존재하는 요소를 제외한 
+나머지로 구성된 새로운 RDD를 생성한다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">rdd1</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"c"</span><span class="o">,</span><span class="s">"b"</span><span class="o">)).</span><span class="py">map</span><span class="o">((</span><span class="k">_</span><span class="o">,</span> <span class="mi">1</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">rdd2</span> <span class="k">=</span> <span class="nv">sc</span><span class="o">.</span><span class="py">parallelize</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"b"</span><span class="o">,</span><span class="s">"a"</span><span class="o">)).</span><span class="py">map</span><span class="o">((</span><span class="k">_</span><span class="o">,</span><span class="mi">2</span><span class="o">))</span>
+<span class="k">val</span> <span class="nv">result</span> <span class="k">=</span> <span class="nv">rdd1</span><span class="o">.</span><span class="py">subtractByKey</span><span class="o">(</span><span class="n">rdd2</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">result</span><span class="o">.</span><span class="py">collect</span><span class="o">.</span><span class="py">mkString</span><span class="o">(</span><span class="s">"\n"</span><span class="o">))</span>   
+<span class="c1">// (c,1)</span>
+</code></pre></div></div>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="https://wikidocs.net/book/2350">https://wikidocs.net/book/2350</a><br />
+<a href="https://www.learningjournal.guru/article/apache-spark/apache-spark-parallel-processing/">https://www.learningjournal.guru/article/apache-spark/apache-spark-parallel-processing/</a><br />
+<a href="https://artist-developer.tistory.com/7">https://artist-developer.tistory.com/7</a><br />
+<a href="https://subscription.packtpub.com/book/big_data_and_business_intelligence/9781787126497/7/ch07lvl1sec46/rdd-partitioning">https://subscription.packtpub.com/book/big_data_and_business_intelligence/9781787126497/7/ch07lvl1sec46/rdd-partitioning</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

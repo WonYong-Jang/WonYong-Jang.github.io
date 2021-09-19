@@ -1,0 +1,384 @@
+I")�<p>이 글에서는 스칼라를 처음 시작하기 위해서 기본적인 기능들에 대해 
+간략하게 요약한 내용을 다루려고 한다.</p>
+
+<h2 id="tuples">Tuples</h2>
+
+<p><code class="language-plaintext highlighter-rouge">Tuples는 불변이며, 몇개의 정해진 요소의 값을 담고 있다. 특히, 여러 개의 
+값을 리턴 할 때 유용하다.</code></p>
+
+<p>두개의 요소의 값을 담고 있는 Tuples은 아래와 같이 만들 수 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">ingredient</span> <span class="k">=</span> <span class="o">(</span><span class="s">"Sugar"</span><span class="o">,</span> <span class="mi">25</span><span class="o">)</span>   
+</code></pre></div></div>
+
+<p>각각 타입추론이 되어 (String, Int)인걸 알 수 있고 Tuple2(String, Int)를 
+줄여 쓴 표현이다.</p>
+
+<blockquote>
+  <p>Tuple2, Tuple3 … Tuple22 까지 요소를 포함하여 생성 가능하다.</p>
+</blockquote>
+
+<p>Tuples의 각 요소를 출력하기 위해서는 위치를 이용하여 가능하다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">println</span><span class="o">(</span><span class="nv">ingredient</span><span class="o">.</span><span class="py">_1</span><span class="o">)</span> <span class="c1">// 첫번째 요소 출력 : Sugar</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">ingredient</span><span class="o">.</span><span class="py">_2</span><span class="o">)</span> <span class="c1">// 두번째 요소 출력 : 25   </span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">또한, 패턴 매칭을 이용으로 추출하여 값을 가져올 수도 있다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">val</span> <span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">quantity</span><span class="o">)</span> <span class="k">=</span> <span class="n">ingredient</span>
+<span class="nf">println</span><span class="o">(</span><span class="n">name</span><span class="o">)</span> <span class="c1">// Sugar</span>
+<span class="nf">println</span><span class="o">(</span><span class="n">quantity</span><span class="o">)</span> <span class="c1">// 25</span>
+</code></pre></div></div>
+
+<p>아래는 Tuples을 가지는 list가 있고 각 Tuples을 패턴 매칭으로 
+확인을 하며 조건에 맞는 값이 있다면 y값을 출력해 주는 예제이다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">p</span> <span class="k">=</span> <span class="nc">List</span><span class="o">((</span><span class="mi">10</span><span class="o">,</span><span class="mi">1</span><span class="o">),</span> <span class="o">(</span><span class="mi">20</span><span class="o">,</span> <span class="mi">2</span><span class="o">),</span> <span class="o">(</span> <span class="mi">30</span><span class="o">,</span> <span class="mi">3</span><span class="o">),</span> <span class="o">(</span> <span class="mi">40</span><span class="o">,</span> <span class="mi">4</span><span class="o">))</span>
+  <span class="nv">p</span><span class="o">.</span><span class="py">foreach</span><span class="o">{</span>
+    <span class="nf">case</span><span class="o">(</span><span class="mi">20</span><span class="o">,</span> <span class="n">y</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="n">y</span><span class="o">)</span> <span class="c1">// 2 출력</span>
+    <span class="k">case</span> <span class="k">_</span> <span class="k">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="s">"didn't find"</span><span class="o">)</span>
+  <span class="o">}</span>
+</code></pre></div></div>
+
+<p>for문을 이용하여 Tuples을 분해하여 사용도 가능하다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">p</span> <span class="k">=</span> <span class="nc">List</span><span class="o">((</span><span class="mi">10</span><span class="o">,</span><span class="mi">1</span><span class="o">),</span> <span class="o">(</span><span class="mi">20</span><span class="o">,</span> <span class="mi">2</span><span class="o">),</span> <span class="o">(</span> <span class="mi">30</span><span class="o">,</span> <span class="mi">3</span><span class="o">),</span> <span class="o">(</span> <span class="mi">40</span><span class="o">,</span> <span class="mi">4</span><span class="o">))</span>
+  <span class="nf">for</span> <span class="o">((</span><span class="n">a</span><span class="o">,</span><span class="n">b</span><span class="o">)</span> <span class="k">&lt;-</span> <span class="n">p</span><span class="o">)</span> <span class="o">{</span>
+    <span class="nf">println</span><span class="o">(</span><span class="n">a</span><span class="o">*</span><span class="n">b</span><span class="o">)</span>
+  <span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">case classes와 tuples 사이에서 어떤 것을 사용할 지에 대해서 어려움이 있을 수 있다.</code>  <br />
+<code class="language-plaintext highlighter-rouge">보통 함수에서 여러 값을 리턴해야 할 경우나 이름이 필요 없는 경우는 Tuples를 사용하고 
+이름을 붙여서 가독성을 높히는 경우 case classes를 사용하는 것을 권장한다.</code></p>
+
+<hr />
+
+<h2 id="믹스인mixin-클래스-컴포지션">믹스인(Mixin) 클래스 컴포지션</h2>
+
+<p>단일 상속만을 지원하는 언어들과는 다르게 스칼라 클래스를 재사용을 위한 
+다른 개념을 가지고 있다.  <br />
+Scala는 단일 상속을 지원하지만, 다중 상속 같은 느낌을 믹스인으로 해결한다.
+<code class="language-plaintext highlighter-rouge">믹스인은 매우 간단하다. extends로 단일 상속으로 하게 하고, with로 믹스인을 구현한다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">abstract</span> <span class="k">class</span> <span class="nc">A</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="nv">message</span><span class="k">:</span> <span class="kt">String</span>
+<span class="o">}</span>
+
+<span class="k">class</span> <span class="nc">B</span> <span class="k">extends</span> <span class="n">A</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="nv">message</span> <span class="k">=</span> <span class="s">"I'm an instance of class B"</span>
+<span class="o">}</span>
+
+<span class="k">trait</span> <span class="nc">C</span> <span class="k">extends</span> <span class="n">A</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">loudMessage</span> <span class="k">=</span> <span class="nv">message</span><span class="o">.</span><span class="py">toUpperCase</span><span class="o">()</span>
+<span class="o">}</span>
+
+<span class="k">class</span> <span class="nc">D</span> <span class="k">extends</span> <span class="n">B</span> <span class="k">with</span> <span class="n">C</span>   
+
+<span class="k">val</span> <span class="nv">d</span> <span class="k">=</span> <span class="k">new</span> <span class="n">D</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">d</span><span class="o">.</span><span class="py">message</span><span class="o">)</span> <span class="c1">// I'm an instance of class B    </span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">d</span><span class="o">.</span><span class="py">loudMessage</span><span class="o">)</span> <span class="c1">// I'M AN INSTANCE OF CLASS B   </span>
+</code></pre></div></div>
+
+<p>위의 예제에서 클래스 D는 슈퍼클래스 B를 가지고 있고 mixin C를 가지고 있다.</p>
+
+<hr />
+
+<h2 id="패턴-매칭">패턴 매칭</h2>
+
+<p>패턴 매칭은 switch와 비슷하지만 훨씬 간결하며, 강력한 기능을 제공한다.  <br />
+<code class="language-plaintext highlighter-rouge">패턴매칭을 사용해서 자료형에 따라 달라지는 표현들을 하나의 표현으로 묶어서 표현할 수도 있고 
+collection에서 특징을 가지는 collection들을 처리하는 코드를 작성할 수도 있다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test</span><span class="o">(</span><span class="n">a</span><span class="k">:</span> <span class="kt">Any</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="n">a</span> <span class="k">match</span> <span class="o">{</span>
+      <span class="k">case</span> <span class="n">target</span><span class="k">:</span> <span class="kt">Int</span> <span class="kt">if</span><span class="o">(</span><span class="kt">target</span> <span class="kt">&gt;</span> <span class="err">5</span><span class="o">)</span> <span class="o">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="s">"five over"</span><span class="o">)</span>
+      <span class="k">case</span> <span class="mi">1</span> <span class="k">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="s">"One"</span><span class="o">)</span>
+      <span class="k">case</span> <span class="n">str</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span>  <span class="nf">println</span><span class="o">(</span><span class="n">str</span> <span class="o">+</span> <span class="s">" is String"</span><span class="o">)</span>
+      <span class="k">case</span> <span class="k">_</span> <span class="k">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="s">"Others"</span><span class="o">)</span> <span class="c1">// 와일드 카드 매칭 </span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</code></pre></div></div>
+
+<p>매칭되는 case문은 선언된 순서대로 Top-Down으로 매칭을 시도하여 
+매칭되는 것이 있으면 그 아래 케이스는 더이상 확인하지 않는다. 만약 매칭되는 것이 없으면 
+와일드카드 매칭이 실행된다.</p>
+
+<hr />
+
+<h2 id="동반-객체companion-object">동반 객체(Companion Object)</h2>
+
+<p><code class="language-plaintext highlighter-rouge">동반객체(Companion Object)는 class나 trait와 같은 파일에 동일한 이름을 가지는 object를 말한다.</code></p>
+
+<p>동일한 이름을 가져 서로 동반 관계에 있는 클래스와 Object는 서로 간의 
+private, protected 필드와 메서드에 접근할 수 있다.</p>
+
+<p>또한, 스칼라는 자바와 다르게 static 키워드가 없다. 대신 비슷한 역할을
+할 수 있게 클래스와 같은 이름을 가지는 object를 만들 수 있다.
+object안에 필드나 메서드를 구현해 자바에서 static 키워드를 사용한 것과
+같이 사용할 수 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LearnScala</span> <span class="o">{</span>
+<span class="o">}</span>
+<span class="k">object</span> <span class="nc">LearnScala</span> <span class="o">{</span>   <span class="c1">// 동반 객체</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">trait</span> <span class="nc">LearnScala</span> <span class="o">{</span>
+<span class="o">}</span>
+<span class="k">object</span> <span class="nc">LearnScala</span> <span class="o">{</span>   <span class="c1">// 동반 객체</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LearnScala</span> <span class="o">{</span>
+   <span class="k">private</span> <span class="k">val</span> <span class="nv">privateValue</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="o">}</span>
+<span class="k">object</span> <span class="nc">LearnScala</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="nv">learnScala</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">LearnScala</span>
+  <span class="k">def</span> <span class="nf">hardStudy</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="o">{</span>
+    <span class="nv">learnScala</span><span class="o">.</span><span class="py">privateValue</span> <span class="c1">// 접근 가능    </span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>위에서 private한 변수나 함수에 접근할 수 있다고 언급했는데 접근할 수 없는 예외가 몇가지 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TestClass</span><span class="o">(</span><span class="n">b</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">private</span><span class="o">[</span><span class="kt">this</span><span class="o">]</span> <span class="k">def</span> <span class="nf">a</span> <span class="k">=</span> <span class="mi">1</span>
+  <span class="k">private</span> <span class="k">val</span> <span class="nv">c</span> <span class="k">=</span> <span class="mi">3</span>
+<span class="o">}</span>
+<span class="k">object</span> <span class="nc">TestClass</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="nv">test</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TestClass</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+  <span class="k">def</span> <span class="nf">aaa</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="nv">test</span><span class="o">.</span><span class="py">b</span>     <span class="c1">// 생성자의 파라미터는 접근할 수 없다. "Cannot resolve symbol b" 라는 에러 발생</span>
+  <span class="k">def</span> <span class="nf">aaaa</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="nv">test</span><span class="o">.</span><span class="py">a</span>   <span class="c1">// private[this] 한 변수는 접근할 수 없다. "Symbol a is inaccessible from this place" 라는 에러발생</span>
+  <span class="k">def</span> <span class="nf">aaaaa</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="nv">test</span><span class="o">.</span><span class="py">c</span> <span class="c1">// 접근 가능하다.</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>아래와 같이 apply 메서드를 구현해 new 키워드 없이 객체를 만들거나 
+unapply를 구현해 패턴 매칭에 사용할 수도 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Dog</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">bark</span> <span class="k">=</span> <span class="nf">println</span><span class="o">(</span><span class="s">"bark! bark!"</span><span class="o">)</span>
+  <span class="k">def</span> <span class="nf">getName</span> <span class="k">=</span> <span class="n">name</span>
+<span class="o">}</span>
+
+<span class="k">object</span> <span class="nc">Dog</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">apply</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Dog</span><span class="o">(</span><span class="n">name</span><span class="o">)</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>아래와 같이 자바 리플렉션으로 확인 한 결과 런타임 코드에서 static으로 
+되어 있음을 확인할 수 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Dog</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">bark</span> <span class="k">=</span> <span class="nf">println</span><span class="o">(</span><span class="s">"bark! bark!"</span><span class="o">)</span>
+<span class="o">}</span>
+
+<span class="k">object</span> <span class="nc">Dog</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="nv">age</span> <span class="k">=</span> <span class="mi">2</span>
+  <span class="k">def</span> <span class="nf">barkable</span> <span class="k">=</span> <span class="kc">true</span>
+  <span class="k">def</span> <span class="nf">apply</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Dog</span><span class="o">(</span><span class="n">name</span><span class="o">)</span>
+<span class="o">}</span>
+
+<span class="k">object</span> <span class="nc">Test</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="nv">dog</span> <span class="k">=</span> <span class="nc">Dog</span><span class="o">(</span><span class="s">"dog1"</span><span class="o">)</span>
+  <span class="k">val</span> <span class="nv">dogClass</span> <span class="k">=</span> <span class="nv">dog</span><span class="o">.</span><span class="py">getClass</span>
+  <span class="nv">dogClass</span><span class="o">.</span><span class="py">getDeclaredFields</span><span class="o">.</span><span class="py">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+  <span class="nv">dogClass</span><span class="o">.</span><span class="py">getDeclaredMethods</span><span class="o">.</span><span class="py">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+
+  <span class="cm">/* 결과
+      public static pack.Dog pack.Dog.apply(java.lang.String)
+      public static boolean pack.Dog.barkable()
+      public static int pack.Dog.age()
+      public void pack.Dog.bark()
+   */</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">결국 companion object - companion class는 같은 클래스를 인스턴스 부분과 
+static 부분으로 분리해둔 것이라고도 볼 수 있다.</code></p>
+
+<p>동반 클래스라는 용어도 있는데 용어 정리를 해보면 아래와 같다.</p>
+
+<ul>
+  <li>동반 객체 : 어떤 클래스 이름과 동일한 이름의 싱글톤 객체</li>
+  <li>동반 클래스 : 어떤 싱글톤 객체와 동일한 이름의 클래스</li>
+  <li>독립 객체(Standalone Object) : 동반 클래스가 없는 싱글톤 객체</li>
+  <li>클래스와 동반 객체는 서로 비공개 멤버에 접근할 수 있다.</li>
+</ul>
+
+<hr />
+
+<h2 id="sealed-키워드">sealed 키워드</h2>
+
+<p>sealed, final 키워드 모두 자바에서 사용하고 있고 클래스에 쓰게 되면 
+더 이상 상속하지 못하게 할 때 사용한다.  <br />
+<code class="language-plaintext highlighter-rouge">하지만 sealed 키워드는 final 키워드와 달리 같은 파일에서는 상속할 수 있다.    
+하나의 파일에 하나의 구현만 가능한 자바와 달리 스칼라는 그런 제한이 없기 때문에 
+존재하는 키워드라고 볼 수 있다.</code></p>
+
+<p>아래는 같은 파일에서의 sealed class를 상속한 예제이다.  <br />
+<code class="language-plaintext highlighter-rouge">다른 파일에서 sealed class를 상속했을 때는 에러메시지가 출력된다</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">sealed</span> <span class="k">class</span> <span class="nc">Fruit</span><span class="o">(</span><span class="n">color</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">printColor</span> <span class="k">=</span> <span class="nf">println</span><span class="o">(</span><span class="n">color</span><span class="o">)</span>
+<span class="o">}</span>
+
+<span class="k">class</span> <span class="nc">Apple</span> <span class="k">extends</span> <span class="nc">Fruit</span><span class="o">(</span><span class="s">"Red"</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">print</span> <span class="k">=</span> <span class="s">"Apple"</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><a href="https://stackoverflow.com/questions/32199989/what-are-the-differences-between-final-class-and-sealed-class-in-scala">StackOverFlow</a>를 보면 sealed 키워드 사용한 예로 Option의 
+구현을 예로 들고 있다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">sealed</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Option</span><span class="o">[</span><span class="kt">+A</span><span class="o">]</span> <span class="nc">extends</span> <span class="nc">Product</span> <span class="k">with</span> <span class="nc">Serializable</span> <span class="o">{</span>    
+</code></pre></div></div>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Some</span><span class="o">[</span><span class="kt">+A</span><span class="o">](</span><span class="n">x</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Option</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">isEmpty</span> <span class="k">=</span> <span class="kc">false</span>
+  <span class="k">def</span> <span class="nf">get</span> <span class="k">=</span> <span class="n">x</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">case</span> <span class="k">object</span> <span class="nc">None</span> <span class="k">extends</span> <span class="nc">Option</span><span class="o">[</span><span class="kt">Nothing</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">isEmpty</span> <span class="k">=</span> <span class="kc">true</span>
+  <span class="k">def</span> <span class="nf">get</span> <span class="k">=</span> <span class="k">throw</span> <span class="k">new</span> <span class="nc">NoSuchElementException</span><span class="o">(</span><span class="s">"None.get"</span><span class="o">)</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Option과 마찬가지로 Try도 Success와 Failure 2개의 자식을 가지고 있고 같은 구조로 
+이루어져있다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">Option과 Try는 sealed로 선언되어 같은 파일에서 선언한 Some, None과 Success, Failure 이외에는 
+자식을 가지지 못하게 하고, Some, Success, Failure는 final class로 None은 상속 할 수 없는 object로 
+선언하여 사용자가 추가로 상속받을 방법을 막아 놓았다.</code></p>
+
+<p>또한, sealed 키워드는 class 뿐만 아니라 trait 에도 사용이 가능하다.</p>
+
+<hr />
+
+<h2 id="implicit">implicit</h2>
+
+<p>스칼라의 암묵적 변환은 자바나 파이썬 등에서는 찾아볼 수 없는 
+스칼라의 특별한 문법이다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">아래는 암묵적 변환을 보여주는 대표적인 코드로써 실행하면 "Hello, Kaven"이 
+호출된다. 이 코드가 특별한 이유는 sayHello()메서드에 인자값으로 
+Person 객체를 전달해야 하는데 문자열을 전달하고 있기 때문이다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">object</span> <span class="nc">ImplicitTest</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">main</span><span class="o">(</span><span class="n">args</span><span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+
+    <span class="k">case</span> <span class="k">class</span> <span class="nc">Person</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+
+    <span class="k">implicit</span> <span class="k">def</span> <span class="nf">stringToPerson</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">:</span> <span class="kt">Person</span> <span class="o">=</span> <span class="nc">Person</span><span class="o">(</span><span class="n">name</span><span class="o">)</span>
+
+    <span class="k">def</span> <span class="nf">sayHello</span><span class="o">(</span><span class="n">p</span><span class="k">:</span> <span class="kt">Person</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+      <span class="nf">println</span><span class="o">(</span><span class="s">"Hello, "</span><span class="o">+</span><span class="nv">p</span><span class="o">.</span><span class="py">name</span><span class="o">)</span>
+    <span class="o">}</span>
+
+    <span class="nf">sayHello</span><span class="o">(</span><span class="s">"kaven!"</span><span class="o">)</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>이것이 가능한 이유는 바로 스칼라의 암묵적 변환 때문인데 implicit으로 선언된 
+stringToPerson()이라는 메서드가 스칼라 컴파일러에 의해 자동으로 호출됐기 
+때문이다.   <br />
+<code class="language-plaintext highlighter-rouge">즉, sayHello("kaven!")이라고 호출했을 때 정상적인 경우라면 오류를 발생시키고 
+종료돼야 하지만 스칼라에서는 implicit으로 선언된 메서드 중에 
+문자열을 Person으로 변환할 수 있는 
+메서드가 호출 가능한 범주 내에 선언돼 있는지를 조사해 봐서, 있다면 그 메서드를 
+먼저 호출해 문자열을 Person으로 바꾸고 그 결과로 sayHello()를 호출한다.</code></p>
+
+<p>암묵적 호출의 또 다른 형태는 좀 더 당황스러운 코드를 만들어 내기도 한다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">object</span> <span class="nc">ImplicitTest</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">main</span><span class="o">(</span><span class="n">args</span><span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+
+    <span class="k">case</span> <span class="k">class</span> <span class="nc">Person</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+
+    <span class="k">implicit</span> <span class="k">class</span> <span class="nc">myClass</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">def</span> <span class="nf">toPerson</span><span class="k">:</span> <span class="kt">Person</span> <span class="o">=</span> <span class="o">{</span>
+        <span class="nc">Person</span><span class="o">(</span><span class="n">name</span><span class="o">)</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="k">def</span> <span class="nf">sayHello</span><span class="o">(</span><span class="n">p</span><span class="k">:</span> <span class="kt">Person</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+      <span class="nf">println</span><span class="o">(</span><span class="s">"Hello, "</span><span class="o">+</span><span class="nv">p</span><span class="o">.</span><span class="py">name</span><span class="o">)</span>
+    <span class="o">}</span>
+
+    <span class="nf">sayHello</span><span class="o">(</span><span class="s">"kaven!"</span><span class="o">.</span><span class="py">toPerson</span><span class="o">)</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<p>위 코드 역시 실행하면 “Hello, kaven!”이 호출된다. 그런데 이번에는 sayHello() 메서드를 
+호출하면서 “kaven!”.toPerson과 같이 문자열에는 없는 toPerson이라는 메서드를 
+호출하고 있다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">실제로 이 메서드는 String이 아닌 myClass라는 클래스에 정의된 메서드로써 이 역시 
+스칼라 컴파일러에 의해 암묵적으로 호출된 것이다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">이 경우 myClass 앞에 implicit라는 키워드가 표시돼 있는 것이 중요한데 스칼라 
+컴파일러는 특정 객체에서 그 객체에 존재하지 않는 메서드가 호출됐을 때 
+암묵적으로 호출 가능한 메서드가 있는지 찾아보고 있다면 
+그것을 호출해 주는 역할을 수행하기 때문이다.</code></p>
+
+<p>이처럼 원래 클래스에는 없는 메서드를 암묵적 변환 방법을 사용해서 
+타입별로 다르게 구현하여 추가하는 방법을 흔히 <code class="language-plaintext highlighter-rouge">타입 클래스 패턴</code>이라고 하며, 
+    특히, 스파크SQL에서 이와 같은 형태를 자주 볼 수 있다.</p>
+
+<p>예를 들어, 스파크SQL에서 튜플의 시퀀스를 데이터셋 등으로 변환하거나 
+컬럼명을 나타내는 문자열을 컬럼 객체로 변환할 때 saprk.implicits._ 와 같은
+ 방법으로 사용하는데, 이는 SparkSession.implicits 클래스에 
+ 정의된 암묵적 변환 요소들을 임포트함으로써 원래의 Seq나 Tuple, List, String 
+ 등에는 없는 메서드를 마치 해당 클래스에 있는 것처럼 사용하기 위함이다.</p>
+
+<p>따라서 만약 암묵적 변환을 사용하지 않았다면 매번 변환을 위한 코드를 
+일일이 적어야 했을 것이다.</p>
+
+<p>사실 암묵적 변환은 단순히 코드를 간결하게 해주는 것 말고도 스칼라의 타입 시스템 
+및 제네릭과 연동되어 스칼라의 정교한 타입 시스템을 제어하는 곳에도 응용되고 
+있다. 지금 당장 스칼라 코드를 작성하지 않더라도 스칼라의 함수적 
+특징과 타입 시스템에 대해 알아두는 것은 스파크를 비롯한 
+여러 부분에서 크게 도움이 될 것이다.</p>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="https://partnerjun.tistory.com/56">https://partnerjun.tistory.com/56</a><br />
+<a href="https://groups.google.com/g/scala-korea/c/dfkcfM5yM9M">https://groups.google.com/g/scala-korea/c/dfkcfM5yM9M</a><br />
+<a href="https://docs.scala-lang.org/ko/tour/tour-of-scala.html">https://docs.scala-lang.org/ko/tour/tour-of-scala.html</a><br />
+<a href="https://docs.scala-lang.org/ko/tutorials/scala-for-java-programmers.html#%EC%8B%9C%EC%9E%91%ED%95%98%EB%A9%B4%EC%84%9C">https://docs.scala-lang.org/ko/tutorials/scala-for-java-programmers.html#%EC%8B%9C%EC%9E%91%ED%95%98%EB%A9%B4%EC%84%9C</a><br />
+<a href="https://partnerjun.tistory.com/11">https://partnerjun.tistory.com/11</a><br />
+<a href="https://sung-studynote.tistory.com/73">https://sung-studynote.tistory.com/73</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

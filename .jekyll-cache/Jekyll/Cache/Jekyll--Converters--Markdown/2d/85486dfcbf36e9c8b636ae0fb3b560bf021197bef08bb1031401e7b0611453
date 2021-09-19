@@ -1,0 +1,3 @@
+I"<p>엘라스틱서치는 기본적으로 텍스트 데이터를 색인하고 검색한다. <code class="language-plaintext highlighter-rouge">색인과 
+검색을 진행하기 전에 Analyzer를 통해 문자열을 모두 토큰으로 쪼갠다.</code></p>
+:ET

@@ -1,0 +1,308 @@
+I"�c<h2 id="database-authentication">Database Authentication</h2>
+
+<p><img width="750" alt="스크린샷 2020-08-15 오후 3 45 27" src="https://user-images.githubusercontent.com/26623547/90307174-f3bce300-df0e-11ea-8b1c-b389875f780f.png" /></p>
+
+<p>1) User 데이터를 저장할 User 클래스를 생성한다. <br />
+2) User를 Database에 저장한다. <br />
+3) 생성한 User 클래스를 Spring Security의 내장 class와 연결한다. 이때 UserDetails와 UserDetailsService Interface를 사용한다.   <br />
+4) Security Configuration에 Database Auth를 정의한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">Spring Security에는 default User가 정의되어있으므로 사용자가 직접 정의한 User를 
+사용하기 위해선 Interface를 사용해 연결해야 한다!</code></p>
+
+<p><img width="750" alt="스크린샷 2020-08-15 오후 3 52 21" src="https://user-images.githubusercontent.com/26623547/90307251-5910d400-df0f-11ea-92bd-7326cf1da66c.png" /></p>
+
+<ul>
+  <li>AppUserPrincipal / User / AppUserRepository는 사용자가 정의한 클래스이다.</li>
+  <li>UserDetails 클래스는 Spring Security에서 User 클래스 역할을 수행한다.</li>
+  <li>UserDetailsService 클래스는 Spring Security에서 UserRepository 역할을 수행한다.</li>
+</ul>
+
+<hr />
+
+<h3 id="1-user">1. User</h3>
+
+<p>아래와 같이 User 클래스를 생성한다. ( MongoDB 사용 )  <br />
+Authentication을 사용하기 위해 User 필드값에 permission과 role 모두 정의 해야 하지만 
+간단한 실습을 위해 한개의 Role만 가질 수 있도록 하였다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Getter</span>
+<span class="nd">@NoArgsConstructor</span>
+<span class="nd">@Document</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">User</span> <span class="o">{</span>
+
+    <span class="nd">@Id</span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">id</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">username</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">password</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">email</span><span class="o">;</span>  <span class="c1">// user를 찾을 때 email을 이용하여 찾는다.  </span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">active</span><span class="o">;</span> <span class="c1">// 1: active, 0: inactive</span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">role</span><span class="o">;</span>
+
+    <span class="nd">@Builder</span>
+    <span class="kd">public</span> <span class="nf">User</span><span class="o">(</span><span class="nc">String</span> <span class="n">username</span><span class="o">,</span> <span class="nc">String</span> <span class="n">password</span><span class="o">,</span> <span class="nc">String</span> <span class="n">email</span><span class="o">,</span> <span class="nc">String</span> <span class="n">active</span><span class="o">,</span> <span class="nc">String</span> <span class="n">role</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">username</span> <span class="o">=</span> <span class="n">username</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">password</span> <span class="o">=</span> <span class="n">password</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">email</span> <span class="o">=</span> <span class="n">email</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">active</span> <span class="o">=</span> <span class="n">active</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">role</span> <span class="o">=</span> <span class="n">role</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="2-user-dao-또는-repository">2. User Dao (또는 Repository)</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">IUserDao</span> <span class="kd">extends</span> <span class="nc">MongoRepository</span><span class="o">&lt;</span><span class="nc">User</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span> <span class="o">{</span>
+    <span class="nc">Optional</span><span class="o">&lt;</span><span class="nc">User</span><span class="o">&gt;</span> <span class="nf">findByEmail</span><span class="o">(</span><span class="nc">String</span> <span class="n">email</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="3-integrate-with-spring-security">3. Integrate with Spring Security</h3>
+
+<blockquote>
+  <p>위에서 생성한 User 클래스를 Spring Security와 연결한다. 이를 
+위해서 UserDetails와 UserDetailsService를 Implements 해야한다.</p>
+</blockquote>
+
+<p><img width="750" alt="스크린샷 2020-08-15 오후 4 58 05" src="https://user-images.githubusercontent.com/26623547/90308215-a5144680-df18-11ea-8119-a462eb0877cf.png" /></p>
+
+<blockquote>
+  <p>3-1 UserPrincipal</p>
+</blockquote>
+
+<p><code class="language-plaintext highlighter-rouge">UserPrincipal 클래스를 생성하여 UserDetails를 implements 한다. User를 생성자로 
+전달받아 Spring Security에 User 정보를 전달한다!</code></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UserPrincipal</span> <span class="kd">implements</span> <span class="nc">UserDetails</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="nc">User</span> <span class="n">user</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">UserPrincipal</span><span class="o">(</span><span class="nc">User</span> <span class="n">user</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">user</span> <span class="o">=</span> <span class="n">user</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="nc">UserPrincipal</span> <span class="nf">create</span><span class="o">(</span><span class="nc">User</span> <span class="n">user</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nf">UserPrincipal</span><span class="o">(</span><span class="n">user</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">Collection</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="nc">GrantedAuthority</span><span class="o">&gt;</span> <span class="nf">getAuthorities</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">GrantedAuthority</span><span class="o">&gt;</span> <span class="n">authorities</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+
+        <span class="nc">GrantedAuthority</span> <span class="n">grantedAuthority</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">SimpleGrantedAuthority</span><span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">user</span><span class="o">.</span><span class="na">getRole</span><span class="o">());</span>
+        <span class="n">authorities</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">grantedAuthority</span><span class="o">);</span>
+
+        <span class="k">return</span> <span class="n">authorities</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">getPassword</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="k">this</span><span class="o">.</span><span class="na">user</span><span class="o">.</span><span class="na">getPassword</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">getUsername</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="k">this</span><span class="o">.</span><span class="na">user</span><span class="o">.</span><span class="na">getUsername</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isAccountNonExpired</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isAccountNonLocked</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isCredentialsNonExpired</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isEnabled</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="na">getActive</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="s">"1"</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>3-2 UserPrincipalDetailService</p>
+</blockquote>
+
+<p><code class="language-plaintext highlighter-rouge">UserPrincipalDetailService로 UserDetailService를 implements 한다. UserRepository(UserDao)를 생성자로 
+주입받아, User정보를 DB에서 가져온다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">DB에서 가져온 User 정보는 UserPrincipal 클래스로 변경해 Spring Security로 전달한다. UserPrincipal은 Spring Security의 
+UserDetails를 implements 하였으므로, 이제 Srping Security는 User 클래스를 사용해 
+Authentication을 사용 할수 있게 되었다.</code></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RequiredArgsConstructor</span>
+<span class="nd">@Service</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">UserPrincipalDetailsService</span> <span class="kd">implements</span> <span class="nc">UserDetailsService</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">IUserDao</span> <span class="n">iUserDao</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">UserDetails</span> <span class="nf">loadUserByUsername</span><span class="o">(</span><span class="nc">String</span> <span class="n">email</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">UsernameNotFoundException</span> <span class="o">{</span>
+
+        <span class="nc">User</span> <span class="n">user</span> <span class="o">=</span> <span class="n">iUserDao</span><span class="o">.</span><span class="na">findByEmail</span><span class="o">(</span><span class="n">email</span><span class="o">)</span>
+                <span class="o">.</span><span class="na">orElseThrow</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="k">new</span> <span class="nc">UsernameNotFoundException</span><span class="o">(</span><span class="s">"User not found with email"</span><span class="o">));</span>
+
+        <span class="k">return</span> <span class="nc">UserPrincipal</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">user</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="4-configure-database-provider">4. Configure Database Provider</h3>
+
+<p><code class="language-plaintext highlighter-rouge">이제 SecurityConfig 클래스를 생성해 database Authentication을 사용할 수 있도록 변경하자.</code> <br />
+<code class="language-plaintext highlighter-rouge">database authentication을 사용하기위해 DaoAuthenticationProvider를 정의하고 configure 메서드에 authenticationProvider에 
+전달한다.</code></p>
+
+<blockquote>
+  <p>SecurityConfig</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Configuration</span>
+<span class="nd">@RequiredArgsConstructor</span>
+<span class="nd">@EnableWebSecurity</span> <span class="c1">// Spring Security 활성화</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">SecurityConfig</span> <span class="kd">extends</span> <span class="nc">WebSecurityConfigurerAdapter</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">UserPrincipalDetailsService</span> <span class="n">userPrincipalDetailsService</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">(</span><span class="nc">AuthenticationManagerBuilder</span> <span class="n">auth</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="n">auth</span><span class="o">.</span><span class="na">authenticationProvider</span><span class="o">(</span><span class="n">authenticationProvider</span><span class="o">());</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Bean</span>
+    <span class="nc">DaoAuthenticationProvider</span> <span class="nf">authenticationProvider</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">DaoAuthenticationProvider</span> <span class="n">daoAuthenticationProvider</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">DaoAuthenticationProvider</span><span class="o">();</span>
+        <span class="n">daoAuthenticationProvider</span><span class="o">.</span><span class="na">setPasswordEncoder</span><span class="o">(</span><span class="n">passwordEncoder</span><span class="o">());</span>
+        <span class="n">daoAuthenticationProvider</span><span class="o">.</span><span class="na">setUserDetailsService</span><span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">userPrincipalDetailsService</span><span class="o">);</span>
+
+        <span class="k">return</span>  <span class="n">daoAuthenticationProvider</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">(</span><span class="nc">HttpSecurity</span> <span class="n">http</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="n">http</span>
+                <span class="o">.</span><span class="na">authorizeRequests</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">antMatchers</span><span class="o">(</span><span class="s">"/"</span><span class="o">).</span><span class="na">permitAll</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">antMatchers</span><span class="o">(</span><span class="s">"/api/v1/login"</span><span class="o">).</span><span class="na">hasRole</span><span class="o">(</span><span class="s">"ADMIN"</span><span class="o">)</span> <span class="c1">// 각 url에 접근 가능한지 </span>
+                <span class="o">.</span><span class="na">antMatchers</span><span class="o">(</span><span class="s">"/api/v1/login1"</span><span class="o">).</span><span class="na">hasRole</span><span class="o">(</span><span class="s">"MANAGER"</span><span class="o">)</span> <span class="c1">// 확인하기 위해 설정 </span>
+                <span class="o">.</span><span class="na">and</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">httpBasic</span><span class="o">();</span> <span class="c1">// 기본 로그인 창 제공 </span>
+    <span class="o">}</span>
+
+    <span class="c1">// Custom Security Config에서 사용할 password encoder를 BCryptPasswordEncoder로 정의</span>
+    <span class="nd">@Bean</span>
+    <span class="nc">PasswordEncoder</span> <span class="nf">passwordEncoder</span><span class="o">(){</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nf">BCryptPasswordEncoder</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="5-db-data-저장">5. DB Data 저장</h3>
+
+<p>아래와 같이 JUnit를 이용하여 Test 계정을 생성하였고 ROLE 권한을 가진 계정과 
+MANAGER 권한을 가진 계정을 각각 저장한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@SpringBootTest</span>
+<span class="nd">@RunWith</span><span class="o">(</span><span class="nc">SpringRunner</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">IUserDaoTest</span> <span class="o">{</span>
+
+    <span class="nd">@Autowired</span>
+    <span class="kd">private</span> <span class="nc">PasswordEncoder</span> <span class="n">passwordEncoder</span><span class="o">;</span>
+
+    <span class="nd">@Autowired</span>
+    <span class="kd">private</span> <span class="nc">IUserDao</span> <span class="n">iUserDao</span><span class="o">;</span>
+
+    <span class="nd">@Test</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">saveTestUser</span><span class="o">()</span> <span class="o">{</span>
+
+        <span class="nc">String</span> <span class="n">testEmail</span> <span class="o">=</span> <span class="s">"test@naver.com"</span><span class="o">;</span>
+
+        <span class="c1">// Role 작명규칙은 반드시 prefix로 ROLE_  을 명시해야 함!</span>
+        <span class="n">iUserDao</span><span class="o">.</span><span class="na">save</span><span class="o">(</span><span class="nc">User</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">username</span><span class="o">(</span><span class="s">"WonYong"</span><span class="o">)</span>
+                <span class="o">.</span><span class="na">email</span><span class="o">(</span><span class="n">testEmail</span><span class="o">)</span>
+                <span class="o">.</span><span class="na">password</span><span class="o">(</span><span class="n">passwordEncoder</span><span class="o">.</span><span class="na">encode</span><span class="o">(</span><span class="s">"test"</span><span class="o">))</span>
+                <span class="o">.</span><span class="na">role</span><span class="o">(</span><span class="s">"ROLE_ADMIN"</span><span class="o">)</span>
+                <span class="o">.</span><span class="na">active</span><span class="o">(</span><span class="s">"1"</span><span class="o">)</span>
+                <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+
+        <span class="nc">User</span> <span class="n">user</span> <span class="o">=</span> <span class="n">iUserDao</span><span class="o">.</span><span class="na">findByEmail</span><span class="o">(</span><span class="n">testEmail</span><span class="o">).</span><span class="na">orElseThrow</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="k">new</span> <span class="nc">UsernameNotFoundException</span><span class="o">(</span><span class="s">"not find"</span><span class="o">));</span>
+        <span class="c1">// MANAGER 도 동일하게 생성하기 </span>
+
+        <span class="n">assertThat</span><span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="na">getEmail</span><span class="o">()).</span><span class="na">isEqualTo</span><span class="o">(</span><span class="n">testEmail</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="6-restcontroller">6. RestController</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RequiredArgsConstructor</span>
+<span class="nd">@RestController</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">LoginApiController</span> <span class="o">{</span>
+
+    <span class="nd">@GetMapping</span><span class="o">(</span><span class="s">"/api/v1/login"</span><span class="o">)</span> <span class="c1">// Admin만 접속 가능 </span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">login</span><span class="o">()</span> <span class="o">{</span>
+
+        <span class="k">return</span> <span class="s">"Success ADMIN"</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@GetMapping</span><span class="o">(</span><span class="s">"/api/v1/login2"</span><span class="o">)</span> <span class="c1">// Manager만 접속 가능 </span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">login2</span><span class="o">()</span> <span class="o">{</span>
+
+        <span class="k">return</span> <span class="s">"Success MANAGER"</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<hr />
+
+<h3 id="7-test">7. Test</h3>
+
+<p><code class="language-plaintext highlighter-rouge">/api/v1/login접속 했을 경우 httpBasic() 설정한 로그인 창이 보이며 
+email과 password를 입력했을 경우 로그인이 성공한다. (ADMIN 권한)</code></p>
+
+<p><img width="800" alt="스크린샷 2020-08-16 오후 2 08 19" src="https://user-images.githubusercontent.com/26623547/90327166-c71ad100-dfcb-11ea-983b-18a43fc7f50d.png" /></p>
+
+<p><img width="500" alt="스크린샷 2020-08-16 오후 2 17 52" src="https://user-images.githubusercontent.com/26623547/90327167-ca15c180-dfcb-11ea-944a-f62aef5985ec.png" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">반면 login2 화면은 Manager 권한만 접근가능하므로 ADMIN권한으로 접근시도 할경우 403 에러가 발생한다.</code></p>
+
+<p><img width="500" alt="스크린샷 2020-08-16 오후 2 18 00" src="https://user-images.githubusercontent.com/26623547/90327168-cda94880-dfcb-11ea-8849-6dc7d1547334.png" /></p>
+
+<hr />
+<p>Referrence</p>
+
+<p><a href="https://velog.io/@minholee_93/Spring-Security-Database-Authentication-Spring-Boot-6">https://velog.io/@minholee_93/Spring-Security-Database-Authentication-Spring-Boot-6</a>      <br />
+<a href="https://www.youtube.com/playlist?list=PLVApX3evDwJ1d0lKKHssPQvzv2Ao3e__Q/">https://www.youtube.com/playlist?list=PLVApX3evDwJ1d0lKKHssPQvzv2Ao3e__Q/</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

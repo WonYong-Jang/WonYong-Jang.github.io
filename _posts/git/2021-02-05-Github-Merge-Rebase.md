@@ -8,6 +8,8 @@ date: 2021-02-05
 background: '/img/posts/mac.png'
 ---
 
+Git에서 한 브랜치에서 다른 브랜치로 합치는 방법으로는 두 가지가 있다.     
+하나는 Merge이고 다른 하나는 Rebase이며 
 다른 사람과 협업을 할 때 git을 이용하여 형상관리를 함에 있어서 branch 간의 merge 또는 rebase의 
 차이점을 알고있는 것이 매우 도움이 된다.    
 
@@ -29,7 +31,8 @@ $ git checkout my-branch
 누군가가 master 브랜치에 다른 작업을 한 후 commit하고 push했다. 그렇다면 
 이런 모양이 될 것이다.   
 
-<img width="600" alt="스크린샷 2021-02-05 오전 12 17 36" src="https://user-images.githubusercontent.com/26623547/106913915-da6f5380-6747-11eb-8a14-79c8143b91d1.png">   
+<img width="649" alt="스크린샷 2021-09-19 오후 7 39 35" src="https://user-images.githubusercontent.com/26623547/133924477-e1247a69-2936-4ee1-afb2-3ca2f9943fee.png">   
+
 
 **이 경우 my-branch를 master에 병합하는 방법에는 다음과 같은 것들이 있다.**   
 
@@ -47,9 +50,7 @@ $ git merge my-branch
 $ git push origin master   
 ```
 
-<img width="488" alt="스크린샷 2021-02-05 오전 12 31 55" src="https://user-images.githubusercontent.com/26623547/106915764-c0367500-6749-11eb-9ffa-36bc49954712.png">   
-
-<img width="600" alt="스크린샷 2021-02-05 오전 12 41 40" src="https://user-images.githubusercontent.com/26623547/106918064-376d0880-674c-11eb-82b0-58e2f468c605.png">   
+<img width="500" alt="스크린샷 2021-09-19 오후 7 35 52" src="https://user-images.githubusercontent.com/26623547/133924388-396d76e0-a267-407b-b567-85aa23d384da.png">    
 
 - - - 
 
@@ -67,10 +68,8 @@ $ git merge --squash my-branch
 $ git commit -m "message"
 ```
 
+<img width="600" alt="스크린샷 2021-09-19 오후 7 17 34" src="https://user-images.githubusercontent.com/26623547/133923887-dda62e49-7038-4b4c-8855-0b9daea8fa0b.png">     
 
-<img width="400" alt="스크린샷 2021-02-05 오전 12 50 39" src="https://user-images.githubusercontent.com/26623547/106918175-4fdd2300-674c-11eb-9db6-bca8d08f115c.png">   
-
-<img width="600" alt="스크린샷 2021-02-05 오전 12 50 18" src="https://user-images.githubusercontent.com/26623547/106918097-3dfb8000-674c-11eb-81da-eb04ee942ef4.png">    
 
 - - - 
 
@@ -78,7 +77,9 @@ $ git commit -m "message"
 
 rebase와 merge를 이용하면 모든 commit들이 합쳐지지 않고 각각 master 브랜치에 추가할 수 있다.      
 
-<img width="600" alt="스크린샷 2021-02-05 오전 12 22 47" src="https://user-images.githubusercontent.com/26623547/106914395-523d7e00-6748-11eb-8a95-786223859f34.png">     
+<img width="600" alt="스크린샷 2021-02-05 오전 12 22 47" src="https://user-images.githubusercontent.com/26623547/106914395-523d7e00-6748-11eb-8a95-786223859f34.png">    
+
+
 
 `또한 rebase를 이용하면 작업 도중 커밋 히스토리를 수정해야 하는 상황에서 
 유용하게 사용할 수 있다.`       
@@ -290,13 +291,35 @@ $ git commit --amend
 저장을 하게되면 두 커밋이 합쳐진 것을 확인 할 수 있다.   
 
 
+`위와 같이 rebase의 reword, squash 등의 옵션을 적절하게 이용하면 여러 
+commit을 남겼어도 꼭 필요한 commit만 남길 수 있어서 
+master의 커밋 히스토리에 불필요한 커밋을 남기지 않고 
+관리 할 수 있다.`     
+
+`또한, rebase를 통해 이미 push 한 커밋을 수정할 수도 있지만 
+주의할 점은 협업을 할 경우 이미 push 한 커밋을 수정했을 때  
+반드시 동료와 커뮤니케이션이 필요하다는 점이다. push 한 커밋의 
+일부를 수정 후 다른 동료가 해당 내용을 git pull로 당겨 받으면 
+엄청난 conflict를 만날 수 있다.`    
+
+즉 local에서 작업을 하고 push 하기전 commit들을 정리할 때 사용하는 것을 
+권장하고, push 한 커밋을 수정해야 할 경우는 반드시 동료와 커뮤니케이션을 
+하자.   
+
+
+
+
+
+
 
 - - - 
 
 Refererence  
 
+<https://flyingsquirrel.medium.com/git-rebase-%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95-ce6816fa859d>    
 <https://im-developer.tistory.com/182>     
 <https://wormwlrm.github.io/2020/09/03/Git-rebase-with-interactive-option.html?fbclid=IwAR0AHUnsFJXXVnckeX79Sl5cJ-WDevprKuNWva5anEMAjgO-NtZYbIFNuic>    
+<https://git-scm.com/book/ko/v2/Git-%EB%B8%8C%EB%9E%9C%EC%B9%98-Rebase-%ED%95%98%EA%B8%B0>    
 
 {% highlight ruby linenos %}
 

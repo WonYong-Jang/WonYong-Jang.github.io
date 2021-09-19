@@ -1,0 +1,187 @@
+I"=<h2 id="1-security-configuration">1. Security Configuration</h2>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Configuration</span>
+<span class="nd">@RequiredArgsConstructor</span>
+<span class="nd">@EnableWebSecurity</span>           <span class="c1">// Spring Security 활성화</span>
+<span class="nd">@EnableGlobalMethodSecurity</span><span class="o">(</span> <span class="c1">// SecurityMethod 활성화</span>
+        <span class="n">securedEnabled</span> <span class="o">=</span> <span class="kc">true</span><span class="o">,</span>
+        <span class="n">jsr250Enabled</span> <span class="o">=</span> <span class="kc">true</span><span class="o">,</span>
+        <span class="n">prePostEnabled</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">SecurityConfig</span> <span class="kd">extends</span> <span class="nc">WebSecurityConfigurerAdapter</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">CustomUserDetailsService</span> <span class="n">customUserDetailsService</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">CustomOAuth2UserService</span> <span class="n">customOAuth2UserService</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">OAuth2AuthenticationSuccessHandler</span> <span class="n">oAuth2AuthenticationSuccessHandler</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">OAuth2AuthenticationFailureHandler</span> <span class="n">oAuth2AuthenticationFailureHandler</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">HttpCookieOAuth2AuthorizationRequestRepository</span> <span class="n">httpCookieOAuth2AuthorizationRequestRepository</span><span class="o">;</span>
+
+    <span class="nd">@Bean</span>
+    <span class="kd">public</span> <span class="nc">TokenAuthenticationFilter</span> <span class="nf">tokenAuthenticationFilter</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nf">TokenAuthenticationFilter</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="cm">/*
+          By default, Spring OAuth2 uses HttpSessionOAuth2AuthorizationRequestRepository to save
+          the authorization request. But, since our service is stateless, we can't save it in
+          the session. We'll save the request in a Base64 encoded cookie instead.
+        */</span>
+    <span class="nd">@Bean</span>
+    <span class="kd">public</span> <span class="nc">HttpCookieOAuth2AuthorizationRequestRepository</span> <span class="nf">cookieAuthorizationRequestRepository</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nf">HttpCookieOAuth2AuthorizationRequestRepository</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Authorization에 사용할 userDetailService와 password Encoder를 정의한다.</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">(</span><span class="nc">AuthenticationManagerBuilder</span> <span class="n">authenticationManagerBuilder</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="n">authenticationManagerBuilder</span>
+                <span class="o">.</span><span class="na">userDetailsService</span><span class="o">(</span><span class="n">customUserDetailsService</span><span class="o">)</span>
+                <span class="o">.</span><span class="na">passwordEncoder</span><span class="o">(</span><span class="n">passwordEncoder</span><span class="o">());</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Custom Security Config에서 사용할 password encoder를 BCryptPasswordEncoder로 정의</span>
+    <span class="nd">@Bean</span>
+    <span class="nc">PasswordEncoder</span> <span class="nf">passwordEncoder</span><span class="o">(){</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nf">BCryptPasswordEncoder</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="c1">// AuthenticationManager 외부에서 사용하기 위해서, AuthenticationManagerBean을 이용하여</span>
+    <span class="c1">// SpringSecurity 밖으로 Authentication을 빼 내야 한다. ( @Bean 설정 해야함 )</span>
+    <span class="c1">// 단순히 @Autowired 사용하면 에러</span>
+    <span class="nd">@Bean</span><span class="o">(</span><span class="nc">BeanIds</span><span class="o">.</span><span class="na">AUTHENTICATION_MANAGER</span><span class="o">)</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">AuthenticationManager</span> <span class="nf">authenticationManagerBean</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="kd">super</span><span class="o">.</span><span class="na">authenticationManagerBean</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">(</span><span class="nc">HttpSecurity</span> <span class="n">http</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="n">http</span>
+                <span class="o">.</span><span class="na">cors</span><span class="o">()</span> <span class="c1">// cors 허용</span>
+                    <span class="o">.</span><span class="na">and</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">sessionManagement</span><span class="o">()</span> <span class="c1">// session Creation Policy를 stateless 정의하여 session 사용 안함</span>
+                    <span class="o">.</span><span class="na">sessionCreationPolicy</span><span class="o">(</span><span class="nc">SessionCreationPolicy</span><span class="o">.</span><span class="na">STATELESS</span><span class="o">)</span> <span class="c1">// 토큰 사용하기 위해</span>
+                    <span class="o">.</span><span class="na">and</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">csrf</span><span class="o">()</span>       <span class="c1">// csrf 사용 안함</span>
+                    <span class="o">.</span><span class="na">disable</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">formLogin</span><span class="o">()</span>
+                    <span class="o">.</span><span class="na">disable</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">httpBasic</span><span class="o">()</span>
+                    <span class="o">.</span><span class="na">disable</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">authorizeRequests</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">antMatchers</span><span class="o">(</span><span class="s">"/"</span><span class="o">).</span><span class="na">permitAll</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">antMatchers</span><span class="o">(</span><span class="s">"/api/v1/**"</span><span class="o">).</span><span class="na">hasAnyRole</span><span class="o">(</span><span class="nc">Role</span><span class="o">.</span><span class="na">GUEST</span><span class="o">.</span><span class="na">name</span><span class="o">()</span> <span class="o">,</span><span class="nc">Role</span><span class="o">.</span><span class="na">USER</span><span class="o">.</span><span class="na">name</span><span class="o">(),</span> <span class="nc">Role</span><span class="o">.</span><span class="na">ADMIN</span><span class="o">.</span><span class="na">name</span><span class="o">())</span>
+                <span class="o">.</span><span class="na">antMatchers</span><span class="o">(</span><span class="s">"/auth/**"</span><span class="o">,</span> <span class="s">"/oauth2/**"</span><span class="o">).</span><span class="na">permitAll</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">anyRequest</span><span class="o">().</span><span class="na">authenticated</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">and</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">oauth2Login</span><span class="o">()</span>
+                    <span class="o">.</span><span class="na">authorizationEndpoint</span><span class="o">()</span>
+                        <span class="o">.</span><span class="na">baseUri</span><span class="o">(</span><span class="s">"/oauth2/authorization"</span><span class="o">)</span> <span class="c1">// client 에서 처음 로그인 시도 URI</span>
+                        <span class="o">.</span><span class="na">authorizationRequestRepository</span><span class="o">(</span><span class="n">cookieAuthorizationRequestRepository</span><span class="o">())</span>
+                        <span class="o">.</span><span class="na">and</span><span class="o">()</span>
+                    <span class="o">.</span><span class="na">userInfoEndpoint</span><span class="o">()</span>
+                        <span class="o">.</span><span class="na">userService</span><span class="o">(</span><span class="n">customOAuth2UserService</span><span class="o">)</span>
+                        <span class="o">.</span><span class="na">and</span><span class="o">()</span>
+                    <span class="o">.</span><span class="na">successHandler</span><span class="o">(</span><span class="n">oAuth2AuthenticationSuccessHandler</span><span class="o">)</span>
+                    <span class="o">.</span><span class="na">failureHandler</span><span class="o">(</span><span class="n">oAuth2AuthenticationFailureHandler</span><span class="o">);</span>
+
+        <span class="c1">// Add our custom Token based authentication filter</span>
+        <span class="c1">// UsernamePasswordAuthenticationFilter 앞에 custom 필터 추가!</span>
+        <span class="n">http</span><span class="o">.</span><span class="na">addFilterBefore</span><span class="o">(</span><span class="n">tokenAuthenticationFilter</span><span class="o">(),</span> <span class="nc">UsernamePasswordAuthenticationFilter</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h5 id="1-1-enableglobalmethodsecurity">1-1 @EnableGlobalMethodSecurity</h5>
+
+<p><code class="language-plaintext highlighter-rouge">Spring Security는 Override된 configure(HttpSecurity http)에서 AntMatcher를 이용해 Role을 
+확인할 수 있다. 하지만 관리 대상과 요구사항이 많아지면 Role만으로는 문제 해결이 용이하지 않다.</code></p>
+
+<p>특정 메서드에 권한 처리를 하는 MethodSecurity 설정 기능 제공한다. 
+ 각 설정값 true로 변경하면 사용가능 ( default값은 false)</p>
+
+<p>MethodSecurity는 WebSecurity와는 별개로 동작하기 때문에 추가 설정이 필요</p>
+
+<blockquote>
+  <p>1) securedEnable : @Secured 사용하여 인가처리하는 옵션</p>
+</blockquote>
+
+<blockquote>
+  <p>2) prePostEnable : @PreAuthorize, @PostAuthorize 사용하여 인가처리 옵션</p>
+</blockquote>
+
+<blockquote>
+  <p>3) jsr250Enabled : @RolesAllowed 사용하여 인가처리 옵션</p>
+</blockquote>
+
+<h5 id="1-2-customuserdetailservice">1-2 CustomUserDetailService</h5>
+
+<p>인증시 사용할 custom User Service이다. 자세한 내용은 <a href="https://wonyong-jang.github.io/spring/2020/08/15/Spring-Security-Database-Authentication.html">이 글</a>을 참고하면 된다.</p>
+
+<h5 id="1-3-tokenauthenticationfilter">1-3 TokenAuthenticationFilter</h5>
+
+<p><code class="language-plaintext highlighter-rouge">로그인시 JWT Token을 확인해 인가된 사용자 유무를 판별하고 내부 process를 수행한다.</code>  <br />
+자세한 내용은 <a href="https://wonyong-jang.github.io/spring/2020/08/17/Spring-Security-JWT.html">이 글</a>을 참고하면 된다.  <br />
+<code class="language-plaintext highlighter-rouge">여기서는 인가된 사용자를 확인할 때 DB를 조회하지 않고 JWT 토큰에 저장된 값들로만 확인 할수 있도록 하였다.</code></p>
+
+<h5 id="1-4-httpcookieoauth2authorizationreqeustrepository">1-4 HttpCookieOAuth2AuthorizationReqeustRepository</h5>
+
+<p>Spring OAuth2는 기본적으로 HttpSessionOAuth2AuthorizationRequestRepository를 사용해 
+Authorization Request를 저장한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">우리는 JWT를 사용하므로, Session에 이를 저장할 필요가 없다. 따라서 custom으로 구현한 
+HttpCookieOAuth2AuthorizationRequestRepository를 사용해 Authorization Reqeust를 Based64 encoded cookie에 
+저장한다.</code></p>
+
+<hr />
+
+<h2 id="2-oauth2-login-process">2. OAuth2 Login Process</h2>
+
+<ul>
+  <li>
+    <p>login process 는 먼저 client 에서 http://localhost:8080/oauth2/authorize/{provider}?redirect_uri={로그인 인증 후 JWT 보낼 uri}로 request 하면서 
+시작된다.</p>
+  </li>
+  <li>
+    <p>이 때 위의 provider는 google/naver와 같은 oauth provider가 된다.</p>
+  </li>
+</ul>
+
+<p><img width="700" alt="스크린샷 2020-08-29 오후 4 12 23" src="https://user-images.githubusercontent.com/26623547/91631155-82068e00-ea12-11ea-836d-b26450582b63.png" /></p>
+
+<hr />
+<p>Referrence</p>
+
+<ul>
+  <li><a href="https://velog.io/@minholee_93/Spring-Security-JWT-Security-Spring-Boot-10">https://velog.io/@minholee_93/Spring-Security-JWT-Security-Spring-Boot-10</a></li>
+  <li><a href="https://www.youtube.com/playlist?list=PLVApX3evDwJ1d0lKKHssPQvzv2Ao3e__Q">https://www.youtube.com/playlist?list=PLVApX3evDwJ1d0lKKHssPQvzv2Ao3e__Q</a></li>
+  <li><a href="https://www.callicoder.com/spring-boot-security-oauth2-social-login-part-1/">https://www.callicoder.com/spring-boot-security-oauth2-social-login-part-1/</a></li>
+</ul>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

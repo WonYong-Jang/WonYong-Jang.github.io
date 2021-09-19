@@ -1,0 +1,146 @@
+I"V*<h1 id="auditing으로-생성시간수정시간-자동화">Auditing으로 생성시간/수정시간 자동화</h1>
+
+<p><code class="language-plaintext highlighter-rouge">보통 entity에는 해당 데이터의 생성시간과 수정시간을 포함한다. 언제 만들어졌는지, 
+언제 수정되었는지 등은 차후 유지보수에 있어 굉장히 중요한 정보이기 때문이다.</code>  <br />
+그렇다 보니 매번 DB에 insert하기 전에 날짜 데이터를 등록/수정하는 코드가 여기저기 
+들어가게 된다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 생성일 추가 코드 예제</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">savePosts</span><span class="o">()</span> <span class="o">{</span>
+    <span class="o">...</span>
+    <span class="n">posts</span><span class="o">.</span><span class="na">setCreateDate</span><span class="o">(</span><span class="k">new</span> <span class="nc">LocalDate</span><span class="o">());</span> <span class="c1">// 매번 set 해줘야함 </span>
+    <span class="n">postsRepository</span><span class="o">.</span><span class="na">save</span><span class="o">(</span><span class="n">posts</span><span class="o">);</span>
+    <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>이런 단순하고 반복적인 코드가 모든 테이블과 서비스 메소드에 포함되어야 한다고 
+생각하면 어마어마하게 귀찮고 코드가 지저분해진다. <br />
+이 문제를 JPA Auditing을 이용하여 해결 가능하다.</p>
+
+<hr />
+
+<h2 id="localdate-사용">LocalDate 사용</h2>
+
+<p><code class="language-plaintext highlighter-rouge">Java8부터 LocalDate와 LocalDateTime이 등장했고, 그간 Java의 기본 날짜 타입인 
+Date의 문제점을 제대로 고친 타입이라 Java8인 경우 무조건 써야한다.</code></p>
+
+<blockquote>
+  <p>Java8이 나오기 전까지 사용되었던 Date와 Calendar 클래스는 아래와 같은 문제가 있다.</p>
+  <ol>
+    <li>불변(변경이 불가능한)객체가 아니기 때문에 멀티스레드 환경에서 언제든 문제 발생 가능성이 있다.</li>
+    <li>Calendar는 월(Month)값이 설계가 잘못되었다. ( ex) 10월을 나타내는 Calendar.OCTOBER의 숫자 값은 9로 되어 있다.</li>
+  </ol>
+</blockquote>
+
+<hr />
+
+<h2 id="entity-생성">Entity 생성</h2>
+
+<p><code class="language-plaintext highlighter-rouge">아래 BaseTimeEntity 클래스는 모든 Entity의 상위 클래스가 되어 Entity들의 
+createdDate, modifiedDate를 자동으로 관리하는 역할을 한다.</code></p>
+
+<p><img width="234" alt="스크린샷 2020-06-21 오후 4 44 27" src="https://user-images.githubusercontent.com/26623547/85219482-1505c500-b3df-11ea-8608-e8d428e6a6ce.png" /></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Getter</span>
+<span class="nd">@MappedSuperclass</span> <span class="c1">// JPA Entity 클래스들이 BaseTimeEntity을 상속할 경우 필드들 (createdDate, modifiedDate)도 컬럼으로 인식하도록 한다!   </span>
+<span class="nd">@EntityListeners</span><span class="o">(</span><span class="nc">AuditingEntityListener</span><span class="o">.</span><span class="na">class</span><span class="o">)</span> <span class="c1">// BaseTimeEntity 클래스에 Auditing 기능을 포함시킨다!   </span>
+<span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">BaseTimeEntity</span> <span class="o">{</span>
+
+    <span class="c1">// Entity가 생성되어 저장될 때 시간이 자동 저장된다.</span>
+    <span class="nd">@CreatedDate</span>
+    <span class="kd">private</span> <span class="nc">LocalDateTime</span> <span class="n">createdDate</span><span class="o">;</span>
+
+    <span class="c1">// 조회한 Entity의 값을 변경할 때 시간이 자동 저장된다.   </span>
+    <span class="nd">@LastModifiedDate</span>
+    <span class="kd">private</span> <span class="nc">LocalDateTime</span> <span class="n">modifiedDate</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>아래 Entity가 BaseTimeEntity를 상속받도록 변경한다.</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">...</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Posts</span> <span class="kd">extends</span> <span class="nc">BaseTimeEntity</span> <span class="o">{</span>
+<span class="o">...</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>마지막으로 JPA Auditing 어노테이션들을 모두 활성화할 수 있도록 Application 클래스에 
+활성화 어노테이션 하나를 추가한다.</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@EnableJpaAuditing</span> <span class="c1">// JPA Auditing</span>
+<span class="nd">@SpringBootApplication</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Application</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">SpringApplication</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="nc">Application</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">args</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<hr />
+
+<h2 id="테스트-코드-작성">테스트 코드 작성</h2>
+
+<ul>
+  <li>
+    <p>LocalDateTime.of() : 인자로 전달한 값에 따른 시간 데이터 생성한다.</p>
+  </li>
+  <li>
+    <p>isAfter() : 검증 대상의 시간이 인자로 전달된 시간 이후인지를 검증하는 메서드</p>
+  </li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nd">@Test</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="n">BaseTimeEntity_등록</span><span class="o">()</span> <span class="o">{</span>
+
+        <span class="nc">LocalDateTime</span> <span class="n">now</span> <span class="o">=</span> <span class="nc">LocalDateTime</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="mi">2020</span><span class="o">,</span> <span class="mi">6</span><span class="o">,</span><span class="mi">4</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">);</span>
+        <span class="n">postsRepository</span><span class="o">.</span><span class="na">save</span><span class="o">(</span><span class="nc">Posts</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">title</span><span class="o">(</span><span class="s">"title"</span><span class="o">).</span><span class="na">content</span><span class="o">(</span><span class="s">"content"</span><span class="o">).</span><span class="na">author</span><span class="o">(</span><span class="s">"author"</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+
+        <span class="nc">Posts</span> <span class="n">posts</span> <span class="o">=</span> <span class="n">postsRepository</span><span class="o">.</span><span class="na">findAll</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"&gt;&gt;&gt;&gt;&gt;&gt;&gt; createDate="</span><span class="o">+</span><span class="n">posts</span><span class="o">.</span><span class="na">getCreatedDate</span><span class="o">()+</span><span class="s">", modifiedDate="</span><span class="o">+</span><span class="n">posts</span><span class="o">.</span><span class="na">getModifiedDate</span><span class="o">());</span>
+
+        <span class="n">assertThat</span><span class="o">(</span><span class="n">posts</span><span class="o">.</span><span class="na">getCreatedDate</span><span class="o">()).</span><span class="na">isAfter</span><span class="o">(</span><span class="n">now</span><span class="o">);</span>
+        <span class="n">assertThat</span><span class="o">(</span><span class="n">posts</span><span class="o">.</span><span class="na">getModifiedDate</span><span class="o">()).</span><span class="na">isAfter</span><span class="o">(</span><span class="n">now</span><span class="o">);</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>아래와 같이 실제 시간이 잘 저장된 것을 확인 가능하다.</p>
+</blockquote>
+
+<p><code class="language-plaintext highlighter-rouge">앞으로 추가될 엔티티들은 더이상 등록일/수정일로 고민할 필요가 없다. @EntityListeners(AuditingEntityListener.class) 로 등록된 
+클래스만 상속받으면 자동으로 해결 가능하다!</code></p>
+
+<p><img width="825" alt="스크린샷 2020-06-21 오후 5 23 35" src="https://user-images.githubusercontent.com/26623547/85220105-f655fd00-b3e3-11ea-842d-3ab431661445.png" /></p>
+
+<hr />
+<p>Referrence</p>
+
+<p><a href="https://jojoldu.tistory.com">https://jojoldu.tistory.com</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

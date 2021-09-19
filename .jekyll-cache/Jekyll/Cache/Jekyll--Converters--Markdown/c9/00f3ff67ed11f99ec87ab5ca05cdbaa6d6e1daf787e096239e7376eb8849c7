@@ -1,0 +1,149 @@
+I"�)<h1 id="tree">Tree</h1>
+
+<p><code class="language-plaintext highlighter-rouge">트리란 연결 리스트와 유사한 자료구조지만 연결 리스트가 단순히 다음 노드를 가르키는 선형이라면 
+트리는 각 노드가 여러개의 노드를 가르키는 비선형이다.</code>   <br />
+<code class="language-plaintext highlighter-rouge">트리 구조는 그래프의 한 종류로 1개 이상의 노드로 구성되며 사이클이 없는 그래프로 
+임의의 두 노드간에 하나의 경로만이 존재한다.</code></p>
+
+<ul>
+  <li>트리의 root는 부모를 가지지 않고 최대 하나의 root 노드가 있을수 있다.</li>
+  <li>edge는 부모와 자식을 잊는 연결 선이다. 자식이 없는 노드를 leaf 노드라고 부르고 자식이
+하나라도 있는 노드는 internal 노드라 한다.</li>
+  <li>노드의 차수 <code class="language-plaintext highlighter-rouge">degree</code>는 특정 노드의 자식 수라고 부르며 트리의 모든 노드 중에
+가장 높은 차수를 트리의 차수라고 한다.</li>
+  <li>자식의 노드에 대하여 상위노드를 부모라고 하고, 동일한 부모를 가진 자식노드를 형제(Sibling), 
+ 특정 노드의 부모노드의 집합을 조상(Ancestors)이라 한다. 또한, 반대로 특정 노드의 부속 트리의 모든 노드집합을 자손(descendant)이라 한다.</li>
+  <li>노드의 <code class="language-plaintext highlighter-rouge">depth</code>는 root에서 해당 노드까지 경로의 길이이다.</li>
+  <li>노드의 <code class="language-plaintext highlighter-rouge">height</code>는 해당 노드에서 가장 깊은 노드까지 경로의 길이( 하나의 노드를 가진 트리의 높이는 0)</li>
+  <li>노드의 크기는 자신을 포함한 descendant 들의 수를 말한다.</li>
+  <li>노드의 <code class="language-plaintext highlighter-rouge">level</code>은 루트 노드 아래로 한단계식 레벨을 가지며 루트가 레벨 1 이 된다.</li>
+  <li>모든 노드들이 자식을 하나만 가질 때 이를 skew 트리(편향 트리)라고 부른다 (left skew, right skew)</li>
+</ul>
+
+<hr />
+
+<h2 id="이진-트리">이진 트리</h2>
+
+<p><img width="560" alt="스크린샷 2020-04-01 오후 10 03 05" src="https://user-images.githubusercontent.com/26623547/78140196-972bc080-7464-11ea-9381-5270b6404e4c.png" /></p>
+
+<p><u>모든 노드들이 둘 이하의 자식을 가질 때 이진 트리라고 한다.</u></p>
+
+<h4 id="1-포화-이진-트리full-binary-tree">1) &gt;포화 이진 트리(Full Binary Tree)</h4>
+
+<p>마지막 레벨까지 모든 노드가 있는 이진 트리</p>
+
+<h4 id="2-완전-이진-트리complete-binary-tree">2) 완전 이진 트리(Complete Binary Tree)</h4>
+
+<p>노드를 삽입할 때 왼쪽부터 차례대로 추가하는 이진 트리</p>
+
+<h4 id="3-이진-탐색-트리binary-search-tree">3) 이진 탐색 트리(Binary Search Tree)</h4>
+
+<p>각 부모노드의 값은 왼쪽 서브트리 값보다 크고 오른쪽 서브트리보다 작다.</p>
+
+<blockquote>
+  <p>==&gt; 98. Validate Binary Search Tree ( 이진탐색 트리 확인 방법은 Inorder 순회로 줄 세워 봐서 값이 오름차순 정렬되어 있으면 Valid !)</p>
+</blockquote>
+
+<h3 id="이진트리-특징">이진트리 특징</h3>
+
+<ul>
+  <li>
+    <p>높이가 h인 포화 이진 트리(full binary tree)는 2^h-1 개의 노드를 가진다.</p>
+  </li>
+  <li>
+    <p>노드가 N개인 포화(full) 혹은 완전(complete) 이진트리의 높이는 O(logN)이다.</p>
+  </li>
+  <li>
+    <p>노드가 N개인 이진트리의 높이는 최악의 경우 O(N)이 될 수 있다.</p>
+  </li>
+</ul>
+
+<hr />
+
+<h2 class="section-heading">트리 순회</h2>
+<p>트리는 선형이 아닌 비선형이기 때문에 모든 노드들을 거쳐가기 위한 방법이 필요하다.</p>
+
+<p><b>전위순회( Pre-order )</b></p>
+<p><img width="500" alt="스크린샷 2020-04-01 오후 10 10 51" src="https://user-images.githubusercontent.com/26623547/78141102-f807c880-7465-11ea-8a21-4877ccfa19db.png" /></p>
+<p><b>중위순회( In-order )</b></p>
+<p><img width="500" alt="스크린샷 2020-04-01 오후 10 11 58" src="https://user-images.githubusercontent.com/26623547/78141112-fa6a2280-7465-11ea-9402-2fd939000bc2.png" /></p>
+<p><b>후위순회( Post-order )</b></p>
+<p><img width="500" alt="스크린샷 2020-04-01 오후 10 12 38" src="https://user-images.githubusercontent.com/26623547/78141130-ffc76d00-7465-11ea-92be-448812a3471c.png" /></p>
+
+<p><b>레벨순회( Level-order )</b></p>
+<p><img width="500" alt="스크린샷 2020-04-01 오후 10 15 52" src="https://user-images.githubusercontent.com/26623547/78141451-77959780-7466-11ea-9811-501ca0017813.png" /></p>
+<h2 class="section-heading">수식 트리</h2>
+<p><b>포스팅 준비중 </b></p>
+
+<hr />
+
+<h4 id="이진트리-소스-코드">이진트리 소스 코드</h4>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Node</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">value</span><span class="o">;</span>
+    <span class="nc">Node</span> <span class="n">left</span><span class="o">,</span> <span class="n">right</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">Node</span><span class="o">(</span><span class="kt">int</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BinaryTree</span> <span class="o">{</span>
+
+    <span class="c1">// 레벨 순회 </span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">level_order</span><span class="o">(</span><span class="nc">Node</span> <span class="n">node</span><span class="o">)</span> <span class="o">{</span>
+
+        <span class="nc">Queue</span><span class="o">&lt;</span><span class="nc">Node</span><span class="o">&gt;</span> <span class="n">que</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">LinkedList</span><span class="o">&lt;&gt;();</span>
+
+        <span class="n">que</span><span class="o">.</span><span class="na">offer</span><span class="o">(</span><span class="n">node</span><span class="o">);</span>
+        <span class="k">while</span><span class="o">(!</span><span class="n">que</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">())</span> <span class="o">{</span>
+
+            <span class="nc">Node</span> <span class="n">cur</span> <span class="o">=</span> <span class="n">que</span><span class="o">.</span><span class="na">poll</span><span class="o">();</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">cur</span><span class="o">.</span><span class="na">value</span><span class="o">);</span>
+
+            <span class="k">if</span><span class="o">(</span><span class="n">cur</span><span class="o">.</span><span class="na">left</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="n">que</span><span class="o">.</span><span class="na">offer</span><span class="o">(</span><span class="n">cur</span><span class="o">.</span><span class="na">left</span><span class="o">);</span>
+            <span class="k">if</span><span class="o">(</span><span class="n">cur</span><span class="o">.</span><span class="na">right</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="n">que</span><span class="o">.</span><span class="na">offer</span><span class="o">(</span><span class="n">cur</span><span class="o">.</span><span class="na">right</span><span class="o">);</span>
+        <span class="o">}</span>
+
+
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">inorder</span><span class="o">(</span><span class="nc">Node</span> <span class="n">node</span><span class="o">)</span> <span class="o">{</span>
+
+        <span class="k">if</span><span class="o">(</span><span class="n">node</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="k">return</span><span class="o">;</span>
+
+        <span class="n">inorder</span><span class="o">(</span><span class="n">node</span><span class="o">.</span><span class="na">left</span><span class="o">);</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">node</span><span class="o">.</span><span class="na">value</span><span class="o">);</span>
+        <span class="n">inorder</span><span class="o">(</span><span class="n">node</span><span class="o">.</span><span class="na">right</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Reference</p>
+
+<p><a href="https://3dmpengines.tistory.com/423">https://3dmpengines.tistory.com/423</a></p>
+<p><a href="https://blog.naver.com/muramura12/220704218849">https://blog.naver.com/muramura12/220704218849</a></p>
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

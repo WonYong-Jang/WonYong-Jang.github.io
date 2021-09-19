@@ -1,0 +1,11 @@
+I"�<h1 id="jsessionid란">JSESSIONID란?</h1>
+<ul>
+  <li>톰캣 컨테이너에서 세션을 유지하기 위해 발급하는 키 (세션에 사용되는 쿠키 이름)</li>
+  <li>HTTP 프로토콜은 stateless하다. 요청시마다 새로운 연결이 생성되고 응답후 연결은 
+끊기게 되므로 상태를 유지할 수 없다.  <br />
+<code class="language-plaintext highlighter-rouge">따라서, 상태를 저장하기 위해서 톰캣은 JSESSIONID 쿠키를 클라이언트에게 발급해주고 
+이 값을 통해 세션을 유지할 수 있도록 한다.</code></li>
+  <li>단, 쿠키기술을 허용하지 않는 환경이라면 URL 재작성 매커니즘을 사용해서 세션 아이디를 
+전송해야 한다. (URL Rewriting 방식)</li>
+</ul>
+:ET

@@ -1,0 +1,406 @@
+I"�c<p>지난 글에서는 여러 대의 서버가 아닌 한 대의 서버(PC)에서 스파크를 
+구동시키고 동작을 테스트 했다. <br />
+<code class="language-plaintext highlighter-rouge">실무에서 스파크를 사용할 때 보통 여러대의 서버를 직접 클러스터 환경으로 구성하거나 
+AWS EMR 클러스터 환경을 사용하는데 
+여러 서버를 마치 하나의 서버인 것처럼 다뤄야 하기 때문에 
+하나의 작업을 여러 서버에 분산해서 실행하고 그 결과를 
+취합 하는 과정에서 예상하지 못한 문제를 겪을 수 있다.</code></p>
+
+<p>간단한 예로는 DB 커넥션 문제가 있을 수 있다. DB 를 접근 할 때 
+커넥션 풀로 관리하게 되며, 작업을 나눠서 여러 서버에 
+나눠 DB를 접근할 때 각각 독립적은 JVM 위에서 동작하기 때문에 
+이를 고려하지 않으면 문제가 발생할 수 있다.</p>
+
+<p>그렇기 때문에 분산 처리를 위한 시스템 아키텍처와 그와 관련된 
+다양한 설정 및 매개변수를 이해하는 것이 중요하다.</p>
+
+<p>따라서, 클러스터 모드를 직접 설정해보는 것이 이해하는데 도움이 된다. 
+하지만 여러대의 서버를 가용하기 부담스러운 경우에는 도커 컨네이너를 띄워서 
+실습해 보는 것이 가능하다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">스파크 프로그래밍 모델 관점에서 보면 하나의 애플리케이션은 마스터 
+역할을 담당하는 Driver 프로그램과 실제 데이터 처치를 담당하는 
+여러 개의 executor로 구성된다고 할 수 있다.</code> <br />
+Driver 프로그램이 구동되어 애플리케이션이 실행될 때 각 워커 노드에는 
+executor라고 불리는 스파크 프로세스가 구동되면서 작업을 수행하게 된다.</p>
+
+<p>즉, “스파크 애플리케이션을 실행했다” 라고 하는 말은 곧 드라이버 프로그램에 
+있는 메인 함수를 실행해 스파크 컨텍스트를 생성하고, 이를 이용해 각 
+워커 노드(작업에 투입되는 서버)에 익스큐터 프로세스를 구동시켜 작업을 수행했다라는 뜻이다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">여기서 주의할 점은 익스큐터가 스레드가 아닌 프로세스라는 점이다.</code> <br />
+<code class="language-plaintext highlighter-rouge">익스큐터는 CPU와 메모리 등의 자원을 할당받는 프로세스에 해당하는데, 익스큐터에서 
+할당 받은 CPU core 갯수에 따라서 익스큐터 내에서도 병렬로 처리가 가능하기 
+때문이다.</code></p>
+
+<p>또한, <code class="language-plaintext highlighter-rouge">익스큐터는 크게 두 가지 역할을 수행하는데, 하나는 할당받은 
+태스크를 처리하는 것이고, 또 하나는 이미 처리된 데이터를 
+나중에 재사용할 수 있게 메모리에 저장해 두는 역할이다.</code> 이처럼 
+동일한 익스큐터에서 작업을 처리함과 동시에 저장도 함께 하기 때문에 
+반복적인 작업을 수행할 때 데이터에 대한 접근 속도가 빨라서 전체적으로 
+높은 작업 효율을 기대할 수 있다.</p>
+
+<p>이제 본격적으로 도커를 이용하여 실습 환경을 구성해보자.</p>
+
+<hr />
+
+<h2 id="1-요구사항">1. 요구사항</h2>
+
+<p>클러스터 매니저는 스탠드얼론 클러스터 매니저를 사용할 것이며, 
+    이는 간단한 데이터 분석을 위한 소규모 클러스터 구성이나 스파크의 
+    클러스터 동작을 이해하기 위한 테스트 용도로 빠르게 
+    활용하기에 적합하기 때문이다.</p>
+
+<p>클러스터를 시작하는 방법은 비교적 간단한데, 먼저 마스터 인스턴스를 구동한 뒤 
+마스터의 접속 주소를 슬레이브(Worker) 인스턴스의 실행 인자로 전달하면서 
+슬레이브 프로세스를 구동시킨다.</p>
+
+<blockquote>
+  <p>ex) start-slave.sh spark:127.0.0.1:7077</p>
+</blockquote>
+
+<p>그 외 요구사항은 아래와 같다.</p>
+
+<ul>
+  <li>master / slave 용으로 각각 하나의 도커 컨테이너를 생성하기</li>
+  <li>네트워크(ssh), java, hadoop 설치 및 설정하기</li>
+  <li>각 컨테이너에서는 하둡(정확히는 HDFS)를 사용할 수 있어야 하고 하둡 namenode / datanode는 master 서버에서 가동한다.</li>
+  <li>도커 컨테이너로 실습 환경을 구성하고 이를 spark-submit을 통해 spark를 실행한다.</li>
+</ul>
+
+<hr />
+
+<h2 id="2-이미지-준비">2. 이미지 준비</h2>
+
+<p>먼저 ubuntu 이미지를 받은 뒤 컨테이너를 띄우고 bash로 접속한다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>docker pull ubuntu
+<span class="nv">$ </span>docker run <span class="nt">-itd</span> <span class="nt">--name</span> spark-base ubuntu    
+
+<span class="nv">$ </span>docker <span class="nb">exec</span> <span class="nt">-it</span> spark-base /bin/bash
+</code></pre></div></div>
+
+<p>참고로 run 옵션은 컨테이너를 새로 만들어 실행하고, exec는 이미 실행 중인 컨테이너에 
+명령을 내린다.</p>
+
+<ul>
+  <li>-d : 보통 데몬모드라고 부르며, 컨테이너가 백그라운드로 실행된다.</li>
+  <li>-it : -i 와 -t 옵션은 같이 쓰이는 경우가 많다. 두 옵션은 컨테이너를 종료하지 않은 채로 
+터미널의 입력을 계속해서 컨테이너로 전달하기 위해 사용한다. 보통 컨테이너의 shell이나 CLI 도구를 사용할 때 유용하다.</li>
+  <li>–name : 컨테이너에 이름을 부여해 주어서, 해당 이름으로 컨테이너를 식별 할 수 있게 해준다.</li>
+  <li>-exec : 실행 중인 컨테이너 상대로 명령어를 날릴 때 사용한다.</li>
+</ul>
+
+<p>컨테이너에 접속했다면 필요한 패키지 및 라이브버리를 설치한다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>apt-get update
+<span class="nv">$ </span>apt-get <span class="nb">install </span>vim wget unzip ssh openjdk-8-jdk python3-pip
+<span class="nv">$ </span>pip3 <span class="nb">install </span>pyspark
+</code></pre></div></div>
+
+<p>위에서 openjdk로 자바를 설치 했으니 환경 변수를 아래와 같이 작성한다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>vi ~/.bashrc
+
+<span class="nb">export </span><span class="nv">JAVA_HOME</span><span class="o">=</span>/usr/lib/jvm/java-8-openjdk-amd64
+</code></pre></div></div>
+
+<h3 id="2-1-하둡-바이너리-다운로드">2-1) 하둡 바이너리 다운로드</h3>
+
+<p>하둡은 바이너리 파일을 다운로드 받아 환경변수를 설정하는 것으로 충분하다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 폴더 생성 및 하둡 바이너리 파일 다운로드 / 압축 해제</span>
+<span class="nv">$ </span><span class="nb">mkdir</span> /opt/hadoop <span class="o">&amp;&amp;</span> <span class="nb">cd</span> /opt/hadoop
+<span class="nv">$ </span>wget https://mirror.navercorp.com/apache/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz
+<span class="nv">$ </span><span class="nb">tar</span> <span class="nt">-xzf</span> hadoop-3.2.2.tar.gz
+<span class="nv">$ </span><span class="nb">rm </span>hadoop-3.2.2.tar.gz
+
+<span class="c"># 환경변수 등록</span>
+<span class="nv">$ </span>vi ~/.bashrc
+<span class="nb">export </span><span class="nv">HADOOP_HOME</span><span class="o">=</span>/opt/hadoop/hadoop-3.2.2
+<span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="k">${</span><span class="nv">HADOOP_HOME</span><span class="k">}</span>/bin:<span class="nv">$PATH</span>
+
+<span class="nv">$ </span><span class="nb">source</span> ~/.bashrc
+</code></pre></div></div>
+
+<p>그 외에 기본적인 hadoop 설정(core-site.xml, hdfs-site.xml..)은 
+<a href="https://alibaba-cloud.medium.com/how-to-install-hadoop-cluster-on-ubuntu-16-04-bd9f52e5447c">미디엄 포스트</a>를 참고했다.   <br />
+하둡 파일 시스템에 접근할 때 네임노드(namenode) 정보를 
+추가하지 않고도 좀 더 편리하게 접근 
+할 수 있다는 장점이 있기 때문에 설정하는 것을 권장한다.</p>
+
+<h3 id="2-2-스파크-바이너리-다운로드">2-2) 스파크 바이너리 다운로드</h3>
+
+<p>하둡과 동일하게 스파크도 바이너리 파일을 설치하고 환경변수를 등록한다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 폴더 생성 및 하둡 바이너리 파일 다운로드 / 압축 해제   </span>
+<span class="nv">$ </span><span class="nb">mkdir</span> /opt/spark <span class="o">&amp;&amp;</span> <span class="nb">cd</span> /opt/spark
+<span class="nv">$ </span>wget https://mirror.navercorp.com/apache/spark/spark-3.1.1/spark-3.1.1-bin-hadoop2.7.tgz   
+<span class="nv">$ </span><span class="nb">tar</span> <span class="nt">-xzf</span> spark-2.3.2-bin-hadoop2.7.tgz
+<span class="nv">$ </span><span class="nb">rm </span>spark-2.3.2-bin-hadoop2.7.tgz
+
+<span class="c"># 환경 변수 등록  </span>
+<span class="nv">$ </span>vi ~/.bashrc
+<span class="nb">export </span><span class="nv">SPARK_HOME</span><span class="o">=</span>/opt/spark/spark-2.3.2-bin-hadoop2.7
+<span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="k">${</span><span class="nv">SPARK_HOME</span><span class="k">}</span>/bin:<span class="nv">$PATH</span>
+<span class="nb">export </span><span class="nv">PYSPARK_PYTHON</span><span class="o">=</span>/usr/bin/python3
+
+<span class="nv">$ </span><span class="nb">source</span> ~/.bashrc
+</code></pre></div></div>
+
+<h3 id="2-3-이미지-생성">2-3) 이미지 생성</h3>
+
+<p>일반적으로 도커 컨테이너 상에서 작업한 내용들은 컨테이너가 종료되면 
+함께 사라진다.  <br />
+<code class="language-plaintext highlighter-rouge">도커 컨테이너 상에서 작업한 내용을 이미지로 커밋(commit)하여 나중에 
+해당 이미지로부터 다시 컨테이너를 실행함으로써 작업했던 내용을 다시 사용할 수 
+있다.</code>  <br />
+환경설정이 완료된 컨테이너를 이미지로 만든다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>docker commit spark-base hadoop-spark   
+
+<span class="c"># docker commit -m "메시지" 컨테이너명 이미지명:태그   </span>
+<span class="c"># docker commit -m "first commit" spark-base hadoop-spark:0.0.1   </span>
+<span class="c"># 컨테이너명, 이미지명은 각각 아이디로 대체 가능하다.   </span>
+<span class="c"># -a, --author string 작성자  </span>
+
+<span class="nv">$ </span>docker images  <span class="c"># 이미지 확인   </span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="3-마스터-컨테이너-띄우기">3. 마스터 컨테이너 띄우기</h2>
+
+<p>먼저 마스터로 사용할 컨테이너를 띄운다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>docker run <span class="nt">-itd</span> <span class="nt">--name</span> spark-master <span class="nt">-p</span> 9870:9870 <span class="nt">-p</span> 8080:8080 <span class="nt">-v</span> <span class="o">{</span>로컬 폴더경로<span class="o">}</span>:<span class="o">{</span>컨테이너 내부 폴더경로<span class="o">}</span> hadoop-spark   
+
+<span class="c"># -p 옵션 중 왼쪽은 호스트에서 접속할 실제 포트이고, 오른쪽은 컨테이너에 리스팅하고 있는 포트이다.   </span>
+</code></pre></div></div>
+
+<ul>
+  <li>9870 port : hadoop namenode webserver</li>
+  <li>8080 port : spark master webserver</li>
+  <li>-p : 호스트(host) 컴퓨터에서 컨테이너에 리스닝하고 있는 포트로 접속을 할 수 있도록 설정 해준다.</li>
+  <li>-v : 호스트와 컨테이너 간의 볼륨(volume)설정을 위해서 사용된다. 호스트(host) 컴퓨터의 
+파일 시스템의 특정 경로를 컨테이너의 파일 시스템의 특정 경로로 마운트(mount)를 해준다.</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">위에서 설명한 v 옵션은 볼륨 마운트를 해서 로컬에서 작성한 코드를 도커 컨테이너에 바로 마운트가 
+가능하도록 해준다.</code> <br />
+로컬 폴더는 코드를 작성하는 폴더라면 아무 폴더나 상관없지만 이 글에서는 
+편의를 위해 <a href="https://github.com/wikibook/spark">위키북스 spark github</a>를 통으로 clone 받아서 
+마운트를 하겠다.</p>
+
+<p>포트가 잘 바인딩 되었는지 확인하고, 컨테이너에 접속한다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>docker <span class="nb">exec</span> <span class="nt">-it</span> spark-master /bin/bash    
+</code></pre></div></div>
+
+<p>접속이 정상적으로 되었다면, 위에서 설치 및 설정한 하둡의 namenode, datanode가
+제대로 올라가는지 확인한다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>hdfs namenode <span class="nt">-format</span>   <span class="c"># 포맷</span>
+<span class="nv">$ </span>hdfs namenode 
+
+<span class="nv">$ </span>hdfs datanode <span class="nt">-foramt</span>   <span class="c"># 포맷  </span>
+<span class="nv">$ </span>hdfs datanode 
+</code></pre></div></div>
+
+<p>localhost:9870으로 접속했을 때 하둡에 대한 overview 페이지가 
+나온다면 성공이다.</p>
+
+<p><img width="695" alt="스크린샷 2021-09-02 오후 10 50 23" src="https://user-images.githubusercontent.com/26623547/131855913-e9cf1b38-a40f-4e7f-8bde-360e91894624.png" /></p>
+
+<p>namenode host와 port는 위에서 설정한 하둡 파일 중 core-site.xml의 
+fs.defaultFS의 value를 따라간다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c"># hdfs sample 폴더 생성 </span>
+<span class="c"># hdfs dfs -mkdir hdfs://{namenode_host:port}/sample   </span>
+<span class="nv">$ </span>hdfs dfs <span class="nt">-mkdir</span> hdfs://localhost:9000/sample  
+
+<span class="c"># README.md 파일 hdfs sample 폴더에 추가  </span>
+<span class="nv">$ </span><span class="nb">cd</span> <span class="k">${</span><span class="nv">SPARK_HOME</span><span class="k">}</span>
+<span class="nv">$ </span>hdfs dfs <span class="nt">-put</span> ./README.md hdfs://localhost:9000/sample/   
+
+<span class="c"># 폴더에 파일 확인   </span>
+<span class="nv">$ </span>hdfs dfs <span class="nt">-ls</span> hdfs://localhost:9000/sample   
+Found 1 items
+<span class="nt">-rw-r--r--</span>   1 root supergroup       4488 2021-05-08 22:21 hdfs://localhost:9000/sample/README.md
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="4-worker-컨테이너-생성하고-띄우기">4. worker 컨테이너 생성하고 띄우기</h2>
+
+<p>다음으로는 worker 컨테이너를 띄우고 master 컨테이너와 연결해보자. <br />
+따로 설정하지 않으면 worker web ui는 8081 포트로 바인딩되기 때문에 
+8081 포트만 하나 열어주자.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>docker run <span class="nt">-itd</span> <span class="nt">--name</span> spark-worker <span class="nt">-p</span> 8081:8081 hadoop-spark    
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="5-ssh">5. ssh</h2>
+
+<p>사실 도커 컨테이너 내부 ssh 통신을 권장하지는 않는다. <a href="https://docs.docker.com/samples/running_ssh_service/">공식문서</a>  <br />
+컨테이너끼리 자체적인 <a href="https://docs.docker.com/network/">network</a>를 제공하고 있다. 
+그러나 docker network가 spark 환경에서 원하는대로 잘 작동하는지 모르기 때문에, 
+    ssh를 이용해서 서버들을 연결해보자.</p>
+
+<p>master container에 접속한 뒤 ssh key를 생성해준다.</p>
+
+<blockquote>
+  <p>이때 패스워드를 지정하면 접속할 때마다 패스워드 정보를 추가로 
+전달해야 하는 불편함이 있으므로 패스워드는 지정하지 않는다.</p>
+</blockquote>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>docker <span class="nb">exec</span> <span class="nt">-it</span> spark-master /bin/bash   
+
+<span class="c"># ssh key 생성   </span>
+root@master# ssh-keygen <span class="nt">-t</span> rsa 
+...
+생략
+...
+</code></pre></div></div>
+
+<p>그럼 이제 worker 컨테이너에 key를 등록해보자.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker <span class="nb">exec</span> <span class="nt">-it</span> spark-worker /bin/bash  
+
+root@worker# <span class="nb">mkdir</span> ~/.ssh
+root@worker# <span class="nb">cd</span> ~/.ssh
+root@worker# vi authorized_keys
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">~/.ssh 폴더 안에 authorized_keys라는 파일을 생성한 뒤 master의 id_rsa.pub(공개키) 파일 내용을 
+복사해 붙여넣는다.</code> <br />
+<code class="language-plaintext highlighter-rouge">master의 public key를 이 곳에 등록함으로써 master가 ssh를 이용해 
+worker에 접속할 수 있게 된다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">worker도 master와 동일하게 ssh key를 만들어 master의 authorized_keys에 
+등록한다.</code></p>
+
+<p>등록이 완료되었다면 master 컨테이너에서 worker 컨테이너에 접속이 가능한지 
+확인해본다. worker container IP는 컨테이너 내부 /etc/hosts 파일에서 
+확인 또는 hostname -I 명령어로 확인 가능하다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@master# ssh <span class="k">${</span><span class="nv">worker</span><span class="p"> container IP</span><span class="k">}</span>
+Welcome to Ubuntu 20.04.2 LTS <span class="o">(</span>GNU/Linux 5.10.25-linuxkit x86_64<span class="o">)</span>
+
+ <span class="k">*</span> Documentation:  https://help.ubuntu.com
+ <span class="k">*</span> Management:     https://landscape.canonical.com
+ <span class="k">*</span> Support:        https://ubuntu.com/advantage
+
+This system has been minimized by removing packages and content that are
+not required on a system that <span class="nb">users </span><span class="k">do </span>not log into.
+</code></pre></div></div>
+
+<p>만약 ssh 접속시 Permission denied 에러가 발생한다면 아래와 같이 해결한다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>vi /etc/ssh/sshd_config
+<span class="c"># Port 22</span>
+<span class="c"># 위와 같이 되어 있는 부분을 주석을 푼다.   </span>
+
+<span class="nv">$ </span>service ssh restart   
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="6-worker-등록">6. worker 등록</h2>
+
+<p><code class="language-plaintext highlighter-rouge">master에 worker를 등록한다.</code>   <br />
+<code class="language-plaintext highlighter-rouge">실행 스크립트를 이용해 마스터와 워커 서버를 한 번에 실행할 예정이므로 
+실행 스크립트에게 어떤 서버에서 워커 프로세스를 시작해야 하는지 
+알려줘야 한다.</code>     <br />
+master 컨테이너에 ${SPARK_HOME}/conf로 들어간 뒤,</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@master# <span class="nb">cd</span> <span class="k">${</span><span class="nv">SPARK_HOME</span><span class="k">}</span>/conf   
+root@master:~# <span class="nb">cp </span>slaves.template slaves    
+</code></pre></div></div>
+
+<blockquote>
+  <p>정확한 버전은 모르겠으나 3.0 부터는 slave라는 대신 worker라는 단어를 
+사용하고 있다. conf 폴더 안에 설정 파일들이 template 파일로 존재하는데 
+버전마다 그 이름을 slave 또는 worker로 다를 수 있다.</p>
+</blockquote>
+
+<p><code class="language-plaintext highlighter-rouge">파일을 생성했다면 slaves 파일 안에 적혀 있는 localhost는 지워주고 
+아까 확인했던 worker 컨테이너의 ip를 적어준다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">web ui에서 worker 정보를 확인하고 싶다면, worker에 master host를 
+등록해줘야 한다.</code> 등록을 하지 않더라도 worker는 작동하지만 
+worker 정보가 web ui에 보이지 않는다.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@worker# vi ~/.bashrc    
+root@worker# <span class="nb">export </span><span class="nv">SPARK_MASTER_HOST</span><span class="o">={</span>HOST_NAME<span class="o">}</span>   <span class="c"># master 서버에서 hostname -f 또는 hostname -I 로 확인    </span>
+root@worker# <span class="nb">export </span><span class="nv">SPARK_MASTER_PORT</span><span class="o">=</span>7077    
+</code></pre></div></div>
+
+<p>그럼 이제 worker 등록까지 완료되었으니 클러스터 매니저를 실행해보자.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@master# <span class="nb">cd</span> <span class="k">${</span><span class="nv">SPARK_HOME</span><span class="k">}</span>/sbin
+root@master# ./start-master.sh
+starting org.apache.spark.deploy.....
+
+<span class="c"># 위에서 작성한 마스터 ip와 port를 작성한다.   </span>
+root@master# ./start-slave.sh spark://<span class="o">{</span>MASTER_HOST_NAME<span class="o">}</span>:<span class="o">{</span>PORT<span class="o">}</span>
+...
+</code></pre></div></div>
+
+<p>localhost:8080에 접속해 master web ui를 확인했을 때, worker에 뭔가 
+제대로 등록되어 있다면 성공했다.</p>
+
+<p><img width="700" alt="스크린샷 2021-09-03 오전 8 45 17" src="https://user-images.githubusercontent.com/26623547/131929726-56b41101-d945-4ef9-b8b7-229da437bb7f.png" /></p>
+
+<p>지금까지 마스터와 워커 서버를 구동하는 방법을 알아봤다. 이번에는 
+한 번의 실행으로 다수의 프로세스를 구동시키고 종료하는 
+스크립트에 대해 알아보자.</p>
+
+<p><code class="language-plaintext highlighter-rouge">마스터와 워커 인스턴스를 모두 실행한다. 이때 워커 인스턴스를 실행할 서버는 
+conf/slaves 파일을 참조한다.</code></p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@master# <span class="nb">cd</span> <span class="k">${</span><span class="nv">SPARK_HOME</span><span class="k">}</span>/sbin/start-all.sh  
+root@master# <span class="nb">cd</span> <span class="k">${</span><span class="nv">SPARK_HOME</span><span class="k">}</span>/sbin/stop-all.sh  
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="7-spark-submit">7. spark-submit</h2>
+
+<p>spark-submit은 스파크에서 제공해주는 실행 스크립트이다. 이를 
+이용해서 여러 라이브러리를 참조하는 소스코드를 직접 실행시키거나, 
+    배포 파일을 만든 뒤 스파크 클러스터에 배포해 사용할 수 있다.</p>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="https://eprj453.github.io/spark/2021/05/08/spark-docker-ubuntu-%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88%EB%A1%9C-spark-%EC%8B%A4%EC%8A%B5%ED%99%98%EA%B2%BD-%EB%A7%8C%EB%93%A4%EA%B8%B0-1.-%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88-%EC%A4%80%EB%B9%84/">https://eprj453.github.io/spark/2021/05/08/spark-docker-ubuntu-%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88%EB%A1%9C-spark-%EC%8B%A4%EC%8A%B5%ED%99%98%EA%B2%BD-%EB%A7%8C%EB%93%A4%EA%B8%B0-1.-%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88-%EC%A4%80%EB%B9%84/</a><br />
+<a href="https://www.daleseo.com/docker-volumes-bind-mounts/#%EB%B3%BC%EB%A5%A8-vs-%EB%B0%94%EC%9D%B8%EB%93%9C-%EB%A7%88%EC%9A%B4%ED%8A%B8">https://www.daleseo.com/docker-volumes-bind-mounts/#%EB%B3%BC%EB%A5%A8-vs-%EB%B0%94%EC%9D%B8%EB%93%9C-%EB%A7%88%EC%9A%B4%ED%8A%B8</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

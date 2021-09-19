@@ -1,0 +1,148 @@
+I"Z1<h1 id="steam-groupingby-collectors">Steam GroupingBy Collectors</h1>
+
+<p>Stream의 groupingBy 콜렉터를 이용한 여러가지 예제를 살펴보자. 
+여기서 다루는 내용을 이해하려면 Java 8 기능에 대한 기본 지식이 필요하다. 
+<a href="https://www.baeldung.com/java-8-streams-introduction">Java 8 Stream 소개</a> 및 
+<a href="https://www.baeldung.com/java-8-collectors">Java 8 Collectors 안내서</a>를 
+살펴 볼 수 있다.</p>
+
+<hr />
+
+<h2 id="코드-설정-예">코드 설정 예</h2>
+
+<p>groupingBy() 여러 예제를 위해 아래와 같이 클래스를 정의한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BlogPost</span> <span class="o">{</span>
+    <span class="nc">String</span> <span class="n">title</span><span class="o">;</span> 
+    <span class="nc">String</span> <span class="n">author</span><span class="o">;</span>
+    <span class="nc">BlogPostType</span> <span class="n">type</span><span class="o">;</span> <span class="c1">// Blog 타입 </span>
+    <span class="kt">int</span> <span class="n">likes</span><span class="o">;</span> <span class="c1">// 좋아요 수 </span>
+    <span class="nc">Tag</span> <span class="n">tag</span><span class="o">;</span>  <span class="c1">// 태그 </span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">enum</span> <span class="nc">BlogPostType</span> <span class="o">{</span>
+    <span class="no">NEWS</span><span class="o">,</span>
+    <span class="no">REVIEW</span><span class="o">,</span>
+    <span class="no">GUIDE</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>BlogPostType과 author 조합으로 그룹화 하는데 사용될 Tuple 클래스도 정의 한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Tuple</span> <span class="o">{</span>
+    <span class="nc">BlogPostType</span> <span class="n">type</span><span class="o">;</span>
+    <span class="nc">String</span> <span class="n">author</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>그룹화를 응용하기 위해 Tag 클래스도 생성 했다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Tag</span> <span class="o">{</span>
+
+    <span class="nc">String</span> <span class="n">id</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="n">count</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="n">total</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h4 id="단일-열로-간단한-그룹화">단일 열로 간단한 그룹화</h4>
+
+<p>게시물 목록에서 BlogPostType 기준으로 그룹화하려면 
+아래와 같이 가능하다. 같은 Type이라면 같은 그룹으로 묶인다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Map</span><span class="o">&lt;</span><span class="nc">BlogPostType</span><span class="o">,</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">BlogPost</span><span class="o">&gt;&gt;</span> <span class="n">collect</span> <span class="o">=</span> 
+                <span class="n">list</span><span class="o">.</span><span class="na">stream</span><span class="o">().</span><span class="na">collect</span><span class="o">(</span><span class="n">groupingBy</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getType</span><span class="o">));</span>
+</code></pre></div></div>
+
+<h4 id="리턴-된-맵-값-유형-수정">리턴 된 맵 값 유형 수정</h4>
+
+<p>위의 예제와는 동일하지만 리턴된 맵의 값 유형을 수정이 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Map</span><span class="o">&lt;</span><span class="nc">BlogPostType</span><span class="o">,</span> <span class="nc">Set</span><span class="o">&lt;</span><span class="nc">BlogPost</span><span class="o">&gt;&gt;</span> <span class="n">collect</span> <span class="o">=</span> 
+                <span class="n">list</span><span class="o">.</span><span class="na">stream</span><span class="o">().</span><span class="na">collect</span><span class="o">(</span><span class="n">groupingBy</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getType</span><span class="o">,</span> <span class="n">toSet</span><span class="o">()));</span>
+</code></pre></div></div>
+
+<h4 id="여러-필드로-그룹화">여러 필드로 그룹화</h4>
+
+<p>SQL과 마찬가지로 여러 필드 기준으로 그룹화가 가능하다. <br />
+아래 예제와 같이 author 와 type 기준으로 그룹화 한다면
+첫 번째 그룹화인 author 기준으로 그룹화한 결과값으로 
+type으로 한번더 그룹화 한다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>select author, type
+from table
+group by author, type;
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">BlogPostType</span><span class="o">,</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">BlogPost</span><span class="o">&gt;&gt;&gt;</span> <span class="n">collect</span> <span class="o">=</span> <span class="n">list</span><span class="o">.</span><span class="na">stream</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">collect</span><span class="o">(</span><span class="n">groupingBy</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getAuthor</span><span class="o">,</span> <span class="n">groupingBy</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getType</span><span class="o">)));</span>
+</code></pre></div></div>
+
+<h4 id="그룹화-된-결과에서-평균-얻기">그룹화 된 결과에서 평균 얻기</h4>
+
+<p>type을 기준으로 그룹화 할때 포스터에 있는 like 갯수의 평균을 알고싶다면
+ 아래와 같이 사용 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Map</span><span class="o">&lt;</span><span class="nc">BlogPostType</span><span class="o">,</span> <span class="nc">Double</span><span class="o">&gt;</span> <span class="n">collect</span> <span class="o">=</span> <span class="n">list</span><span class="o">.</span><span class="na">stream</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">collect</span><span class="o">(</span><span class="n">groupingBy</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getType</span><span class="o">,</span> <span class="n">averagingInt</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getLikes</span><span class="o">)));</span>
+</code></pre></div></div>
+
+<h4 id="그룹화-된-결과에서-합계-얻기">그룹화 된 결과에서 합계 얻기</h4>
+
+<p>위와 동일하되 그룹별 like 갯수 총 합을 계산하려면 아래와 같이 사용 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Map</span><span class="o">&lt;</span><span class="nc">BlogPostType</span><span class="o">,</span> <span class="nc">Integer</span><span class="o">&gt;</span> <span class="n">collect</span> <span class="o">=</span> <span class="n">list</span><span class="o">.</span><span class="na">stream</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">collect</span><span class="o">(</span><span class="n">groupingBy</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getType</span><span class="o">,</span> <span class="n">summingInt</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getLikes</span><span class="o">)));</span>
+</code></pre></div></div>
+
+<h4 id="그룹화-된-결과에서-최대-또는-최소-얻기">그룹화 된 결과에서 최대 또는 최소 얻기</h4>
+
+<p>type 기준으로 그룹화 하되, 최대 like 수를 가진 BlogPost를 얻기 위해서는 
+아래와 같이 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Map</span><span class="o">&lt;</span><span class="nc">BlogPostType</span><span class="o">,</span> <span class="nc">Optional</span><span class="o">&lt;</span><span class="nc">BlogPost</span><span class="o">&gt;&gt;</span> <span class="n">collect</span> <span class="o">=</span> <span class="n">list</span><span class="o">.</span><span class="na">stream</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">collect</span><span class="o">(</span><span class="n">groupingBy</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getType</span><span class="o">,</span> <span class="n">maxBy</span><span class="o">(</span><span class="nc">Comparator</span><span class="o">.</span><span class="na">comparingInt</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getLikes</span><span class="o">))));</span>
+</code></pre></div></div>
+
+<p>마찬가지로 minBy 를 이용하여 최소값을 얻을 수도 있다.</p>
+
+<h4 id="그룹화-결과-다른-객체로-리턴">그룹화 결과 다른 객체로 리턴</h4>
+
+<p>아래 예시는 author로 그룹화를 진행하고 mapping을 이용하여 원하는 Map의 값을 
+리턴하게 한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Tag</span><span class="o">&gt;&gt;</span> <span class="n">collect</span> <span class="o">=</span> <span class="n">list</span><span class="o">.</span><span class="na">stream</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">collect</span><span class="o">(</span><span class="n">groupingBy</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getAuthor</span><span class="o">,</span> <span class="n">mapping</span><span class="o">(</span><span class="nl">BlogPost:</span><span class="o">:</span><span class="n">getTag</span><span class="o">,</span> <span class="n">toList</span><span class="o">())));</span>
+</code></pre></div></div>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="https://futurecreator.github.io/2018/08/26/java-8-streams/">https://futurecreator.github.io/2018/08/26/java-8-streams/</a><br />
+<a href="https://recordsoflife.tistory.com/55">https://recordsoflife.tistory.com/55</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

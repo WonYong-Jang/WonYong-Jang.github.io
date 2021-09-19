@@ -1,0 +1,397 @@
+I"Ɇ<h1 id="mockito-란">Mockito 란?</h1>
+
+<p><code class="language-plaintext highlighter-rouge">Mockito란 Mock을 지원하는 프레임워크이며, Mock 객체를 쉽게 만들고 
+관리하고 검증할 수 있는 방법을 제공한다.   
+Mock이란 진짜 객체와 비슷하게 동작하지만 프로그래머가 직접 그 객체의 행동을 
+관리하는 객체이다.</code></p>
+
+<hr />
+
+<p>이제부터 예제를 하나씩 살펴 보자.</p>
+
+<h2 id="1-mock">1. mock()</h2>
+
+<p>mock() 메소드는 mock 객체를 만들어서 반환한다. 예를 들어 아래와 같이 
+커스텀 클래스를 하나 만들었다고 가정하자.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Getter</span>
+<span class="nd">@Setter</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Person</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">name</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">age</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>이제 mock() 메소드를 사용해 보자.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">static</span> <span class="n">org</span><span class="o">.</span><span class="na">mockito</span><span class="o">.</span><span class="na">Mockito</span><span class="o">.</span><span class="na">mock</span><span class="o">;</span>
+
+<span class="kd">class</span> <span class="nc">PersonTest</span> <span class="o">{</span>
+    
+    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">example</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mock</span><span class="o">(</span><span class="nc">Person</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+        <span class="n">assertNotNull</span><span class="o">(</span><span class="n">p</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>위 처럼 mock()을 사용하면 손쉽게 mock 객체를 생성해낼 수 있다.</p>
+
+<hr />
+
+<h2 id="2-mock">2. @Mock</h2>
+
+<p><code class="language-plaintext highlighter-rouge">mock() 메소드 외에도 mock 객체를 만들기 위해 @Mock 어노테이션을 
+선언</code>하는 방법도 있다. 이 방법은 다음처럼 사용한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">PersonTest</span> <span class="o">{</span>
+
+    <span class="nd">@Mock</span> <span class="nc">Person</span> <span class="n">p</span><span class="o">;</span>
+
+    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">example</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">MockitoAnnotations</span><span class="o">.</span><span class="na">openMocks</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+        <span class="n">assertNotNull</span><span class="o">(</span><span class="n">p</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>기존에 사용하던 MockitoAnnotations.initMocks(this)는 deprecated 되어 
+openMocks를 사용하면 된다.</p>
+
+<hr />
+
+<h2 id="3-when">3. when()</h2>
+
+<p>처음 생성한 Mock의 메서드를 호출하면 아무런 행동도 하지 않는다.  <br />
+<code class="language-plaintext highlighter-rouge">stub은 메서드의 행동을 원하는 대로 미리 정해두는 것을 말한다.</code> when(), thenReturn(), 
+    thenThrow() 등을 사용해서 mock의 메서드의 리턴값 또는 예외 발생을 정할 수 있다. 
+    메서드 호출 시 파라미터 값까지 조건을 넣을 수 있어서 세세한 컨트롤이 가능하다. 같은 
+    조건으로 다시 stub 할 경우 이전의 행동을 덮어 씌운다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">특정 목 객체를 만들었다면 이 객체로부터 특정 조건을 지정할 수 있다. 
+이때 사용하는 것이 when() 메소드이다.</code></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">PersonTest</span> <span class="o">{</span>
+
+    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">example</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mock</span><span class="o">(</span><span class="nc">Person</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+        <span class="n">when</span><span class="o">(</span><span class="n">p</span><span class="o">.</span><span class="na">getName</span><span class="o">()).</span><span class="na">thenReturn</span><span class="o">(</span><span class="s">"mike"</span><span class="o">);</span>
+        <span class="n">when</span><span class="o">(</span><span class="n">p</span><span class="o">.</span><span class="na">getAge</span><span class="o">()).</span><span class="na">thenReturn</span><span class="o">(</span><span class="mi">20</span><span class="o">);</span>
+        <span class="n">assertEquals</span><span class="o">(</span><span class="s">"mike"</span><span class="o">,</span> <span class="n">p</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+        <span class="n">assertEquals</span><span class="o">(</span><span class="mi">20</span><span class="o">,</span><span class="n">p</span><span class="o">.</span><span class="na">getAge</span><span class="o">());</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>위 코드에서처럼 지정 메소드에 대해 반환해줄 값을 설정 할 수 있다. <br />
+아래와 같이 더 복잡한 경우를 생각해보자. 다음과 같은 
+getList()메소드가 아직 구현 전이거나 어떤 로직인지 확인이 안될 경우에도 
+이 메소드를 이용해서 테스트를 할 수 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Getter</span>
+<span class="nd">@Setter</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Person</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">name</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">age</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="nf">getList</span><span class="o">(</span><span class="nc">String</span> <span class="n">name</span><span class="o">,</span> <span class="kt">int</span> <span class="n">age</span><span class="o">){</span>
+        <span class="c1">// to do  ...</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>아래처럼 파라미터에 ArgumentMatchers를 이용한 anyString 과 
+anyInt를 이용하여 어떤 string, int가 와도 메소드를 실행 할 수 있도록 
+설정 했다. 그 후에 예상하는 결과값을 직접 생성해서 getList() 메소드가 
+실제로 동작하는 것처럼 해서 테스트 할 수 있게 된다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">static</span> <span class="n">org</span><span class="o">.</span><span class="na">mockito</span><span class="o">.</span><span class="na">ArgumentMatchers</span><span class="o">.</span><span class="na">anyInt</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">static</span> <span class="n">org</span><span class="o">.</span><span class="na">mockito</span><span class="o">.</span><span class="na">ArgumentMatchers</span><span class="o">.</span><span class="na">anyString</span><span class="o">;</span>
+
+<span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mock</span><span class="o">(</span><span class="nc">Person</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+        <span class="n">when</span><span class="o">(</span><span class="n">p</span><span class="o">.</span><span class="na">getList</span><span class="o">(</span><span class="n">anyString</span><span class="o">(),</span> <span class="n">anyInt</span><span class="o">()))</span>
+                <span class="o">.</span><span class="na">thenReturn</span><span class="o">(</span><span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;(</span><span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="s">"a"</span><span class="o">,</span><span class="s">"b"</span><span class="o">)));</span>
+
+<span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="na">getList</span><span class="o">(</span><span class="s">"mike"</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+<span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">result</span><span class="o">);</span> <span class="c1">// 출력 : [a, b]   </span>
+</code></pre></div></div>
+
+<p>아래와 같이 특정 값을 넣어야 한다면 eq() 메소드를 활용 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">when</span><span class="o">(</span><span class="n">p</span><span class="o">.</span><span class="na">getList</span><span class="o">(</span><span class="n">eq</span><span class="o">(</span><span class="s">"mike"</span><span class="o">),</span> <span class="n">anyInt</span><span class="o">()))</span>
+</code></pre></div></div>
+
+<p>또한 아래와 같이 when()을 이용하여 호출 횟수에 따라 다른 
+결과값을 리턴하도록 stubbing 할 수 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">example</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mock</span><span class="o">(</span><span class="nc">Person</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+        <span class="n">when</span><span class="o">(</span><span class="n">p</span><span class="o">.</span><span class="na">getName</span><span class="o">()).</span><span class="na">thenReturn</span><span class="o">(</span><span class="s">"mike"</span><span class="o">)</span>         <span class="c1">// 첫번째 호출 할때 </span>
+                <span class="o">.</span><span class="na">thenThrow</span><span class="o">(</span><span class="k">new</span> <span class="nc">RuntimeException</span><span class="o">());</span> <span class="c1">//두번째 호출 할때 에러 발생 하도록 stubbing   </span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="4-dothrow">4. doThrow()</h2>
+
+<p>만약 예외를 던지고 싶으면 doThrow() 메소드를 활용 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">PersonTest</span> <span class="o">{</span>
+
+    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">example</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mock</span><span class="o">(</span><span class="nc">Person</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+        <span class="n">doThrow</span><span class="o">(</span><span class="nc">IllegalArgumentException</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">when</span><span class="o">(</span><span class="n">p</span><span class="o">).</span><span class="na">setName</span><span class="o">(</span><span class="s">"mike"</span><span class="o">);</span>
+
+        <span class="n">assertThrows</span><span class="o">(</span><span class="nc">IllegalArgumentException</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="o">()</span> <span class="o">-&gt;{</span>
+            <span class="n">p</span><span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">"mike"</span><span class="o">);</span>
+        <span class="o">});</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="5-donothing">5. doNothing()</h2>
+
+<p>void로 선언된 메서드에 when()을 사용하여 테스트 하고 싶은 경우는 doNoting()을 
+사용한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">example</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mock</span><span class="o">(</span><span class="nc">Person</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+        <span class="n">doNothing</span><span class="o">().</span><span class="na">when</span><span class="o">(</span><span class="n">p</span><span class="o">).</span><span class="na">setName</span><span class="o">(</span><span class="s">"mike"</span><span class="o">);</span>
+        <span class="n">p</span><span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">"mike"</span><span class="o">);</span>
+        <span class="n">verify</span><span class="o">(</span><span class="n">p</span><span class="o">).</span><span class="na">setName</span><span class="o">(</span><span class="s">"mike"</span><span class="o">);</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<p>verify() 메소드는 다음에서 설명한다.</p>
+
+<h2 id="6-verify">6. verify()</h2>
+
+<p>verify()는 해당 구문이 호출 되었는지를 체크한다. 단순히 호출 뿐만 아니라 
+횟수나 타임아웃 시간까지 지정해서 체크해 볼 수 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">PersonTest</span> <span class="o">{</span>
+
+    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">example</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mock</span><span class="o">(</span><span class="nc">Person</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">"mike"</span><span class="o">);</span>
+        <span class="c1">// n번 호출했는지 호출</span>
+        <span class="n">verify</span><span class="o">(</span><span class="n">p</span><span class="o">,</span> <span class="n">times</span><span class="o">(</span><span class="mi">1</span><span class="o">)).</span><span class="na">setName</span><span class="o">(</span><span class="n">anyString</span><span class="o">());</span> <span class="c1">// success</span>
+        <span class="c1">// 호출 안했는지 체크</span>
+        <span class="n">verify</span><span class="o">(</span><span class="n">p</span><span class="o">,</span> <span class="n">never</span><span class="o">()).</span><span class="na">getName</span><span class="o">();</span> <span class="c1">// success</span>
+        <span class="n">verify</span><span class="o">(</span><span class="n">p</span><span class="o">,</span> <span class="n">never</span><span class="o">()).</span><span class="na">setName</span><span class="o">(</span><span class="n">eq</span><span class="o">(</span><span class="s">"kaven"</span><span class="o">));</span> <span class="c1">// success</span>
+        <span class="n">verify</span><span class="o">(</span><span class="n">p</span><span class="o">,</span> <span class="n">never</span><span class="o">()).</span><span class="na">setName</span><span class="o">(</span><span class="n">eq</span><span class="o">(</span><span class="s">"mike"</span><span class="o">));</span> <span class="c1">// fail</span>
+
+        <span class="c1">// 최소한 1번 이상 호출했는지 체크</span>
+        <span class="n">verify</span><span class="o">(</span><span class="n">p</span><span class="o">,</span> <span class="n">atLeastOnce</span><span class="o">()).</span><span class="na">setName</span><span class="o">(</span><span class="n">anyString</span><span class="o">());</span> <span class="c1">// success</span>
+        <span class="c1">// 2번 이하 호출 했는지 체크</span>
+        <span class="n">verify</span><span class="o">(</span><span class="n">p</span><span class="o">,</span> <span class="n">atMost</span><span class="o">(</span><span class="mi">2</span><span class="o">)).</span><span class="na">setName</span><span class="o">(</span><span class="n">anyString</span><span class="o">());</span> <span class="c1">// success</span>
+        <span class="c1">// 2번 이상 호출 했는지 체크</span>
+        <span class="n">verify</span><span class="o">(</span><span class="n">p</span><span class="o">,</span> <span class="n">atLeast</span><span class="o">(</span><span class="mi">2</span><span class="o">)).</span><span class="na">setName</span><span class="o">(</span><span class="n">anyString</span><span class="o">());</span> <span class="c1">// fail</span>
+        <span class="c1">// 지정된 시간(mills)안으로 메소드를 호출 했는지 체크</span>
+        <span class="n">verify</span><span class="o">(</span><span class="n">p</span><span class="o">,</span> <span class="n">timeout</span><span class="o">(</span><span class="mi">100</span><span class="o">)).</span><span class="na">setName</span><span class="o">(</span><span class="n">anyString</span><span class="o">());</span> <span class="c1">// success</span>
+        <span class="c1">// 지정된 시간(mills)안으로 1번이상 메소드를 호출 했는지 체크</span>
+        <span class="n">verify</span><span class="o">(</span><span class="n">p</span><span class="o">,</span> <span class="n">timeout</span><span class="o">(</span><span class="mi">100</span><span class="o">).</span><span class="na">atLeast</span><span class="o">(</span><span class="mi">1</span><span class="o">)).</span><span class="na">setName</span><span class="o">(</span><span class="n">anyString</span><span class="o">());</span> <span class="c1">// success</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="7-inorder">7. Inorder</h2>
+
+<p>메소드 호출 순서도 검증이 가능하다</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">example</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mock</span><span class="o">(</span><span class="nc">Person</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">"mike"</span><span class="o">);</span>
+        <span class="n">p</span><span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">"kaven"</span><span class="o">);</span>
+
+        <span class="nc">InOrder</span> <span class="n">inorder</span> <span class="o">=</span> <span class="n">inOrder</span><span class="o">(</span><span class="n">p</span><span class="o">);</span>
+
+        <span class="n">inorder</span><span class="o">.</span><span class="na">verify</span><span class="o">(</span><span class="n">p</span><span class="o">).</span><span class="na">setName</span><span class="o">(</span><span class="s">"mike"</span><span class="o">);</span>
+        <span class="n">inorder</span><span class="o">.</span><span class="na">verify</span><span class="o">(</span><span class="n">p</span><span class="o">).</span><span class="na">setName</span><span class="o">(</span><span class="s">"kaven"</span><span class="o">);</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="8-injectmocks">8. @InjectMocks</h2>
+
+<p>만약 클래스 내부에 ‘다른 클래스’를 포함하는 경우엔 어떻게 테스트 해야 할까?  <br />
+그리고 이 ‘다른 클래스’로 로직을 점검해야 한다면 외부에서 주입할 수 있도록 
+Setter 메서드나 생성자를 구현해야 할까?</p>
+
+<p><code class="language-plaintext highlighter-rouge">mockito에서는 이런 경우등을 위해 @InjectMocks 어노테이션을 제공한다. @InjectMocks 
+어노테이션은 @Mock이나 @Spy 어노테이션이 붙은 목 객체를 자신의 멤버 클래스와 
+일치하면 주입시킨다.</code></p>
+
+<p>예를 들어 다음과 같은 클래스들이 있다고 가정해보자.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AuthService</span><span class="o">{</span>
+    <span class="kd">private</span> <span class="nc">AuthDao</span> <span class="n">dao</span><span class="o">;</span>
+    <span class="c1">// some code...</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isLogin</span><span class="o">(</span><span class="nc">String</span> <span class="n">id</span><span class="o">){</span>
+        <span class="kt">boolean</span> <span class="n">isLogin</span> <span class="o">=</span> <span class="n">dao</span><span class="o">.</span><span class="na">isLogin</span><span class="o">(</span><span class="n">id</span><span class="o">);</span>
+        <span class="k">if</span><span class="o">(</span> <span class="n">isLogin</span> <span class="o">){</span>
+            <span class="c1">// some code...</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">isLogin</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">AuthDao</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isLogin</span><span class="o">(</span><span class="nc">String</span> <span class="n">id</span><span class="o">){</span> <span class="c1">//some code ... }</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>테스트 해보고 싶은 것은 AuthService의 isLogin() 메서드이다. <br />
+AuthDao.isLogin() 반환값에 따라서 추가 작업을 더 하고 있다. 따라서 이 메서드를 테스트 
+    해보고 싶다면 AuthDao의 값도 조작해야 하는 상황이다. <br />
+    다음 코드는 해당 상황을 mockito로 처리한 것이다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Mock</span>
+<span class="nc">AuthDao</span> <span class="n">dao</span><span class="o">;</span>
+
+<span class="nd">@InjectMocks</span>
+<span class="nc">AuthService</span> <span class="n">service</span><span class="o">;</span>
+
+<span class="nd">@Test</span>
+<span class="kt">void</span> <span class="nf">example</span><span class="o">(){</span>
+    <span class="nc">MockitoAnnotations</span><span class="o">.</span><span class="na">initMocks</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+    <span class="n">when</span><span class="o">(</span><span class="n">dao</span><span class="o">.</span><span class="na">isLogin</span><span class="o">(</span><span class="n">eq</span><span class="o">(</span><span class="s">"JDM"</span><span class="o">))).</span><span class="na">thenReturn</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+    <span class="n">assertTrue</span><span class="o">(</span><span class="n">service</span><span class="o">.</span><span class="na">isLogin</span><span class="o">(</span><span class="s">"JDM"</span><span class="o">)</span> <span class="o">==</span> <span class="kc">true</span><span class="o">);</span>
+    <span class="n">assertTrue</span><span class="o">(</span><span class="n">service</span><span class="o">.</span><span class="na">isLogin</span><span class="o">(</span><span class="s">"ETC"</span><span class="o">)</span> <span class="o">==</span> <span class="kc">false</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="9-spy">9. @Spy</h2>
+
+<p><code class="language-plaintext highlighter-rouge">위에서 잠시 언급했지만 @Spy로 선언된 목 객체는 목 메서드(stub)를 별도로 
+만들지 않는다면 실제 메서드가 호출된다. 또한 spy()로도 같은 효과를 낸다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">즉, Spy를 통해 실제 객체를 생성하고 필요한 부분에만 mock 처리하여 검증을 진행할 수 있다.</code></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">spy</span><span class="o">(</span><span class="nc">Person</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="n">or</span>
+<span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">spy</span><span class="o">(</span><span class="k">new</span> <span class="nc">Person</span><span class="o">());</span>
+<span class="n">or</span>
+<span class="nd">@Spy</span> <span class="nc">Person</span> <span class="n">p</span><span class="o">;</span>
+
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="10-bddbehavior-driven-development">10. BDD(Behavior-Driven Development)</h2>
+
+<p><code class="language-plaintext highlighter-rouge">BDD는 Behavior-Driven Development의 약자로 행위 주도 개발을 말한다. 테스트 대상의 
+상태의 변화를 테스트하는 것이고, 시나리오를 기반으로 테스트하는 패턴을 권장한다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">여기서 권장하는 기본 패턴은 Given, When, Then 구조를 가진다.</code></p>
+
+<p>이는 테스트 대상이 A 상태에서 출발하여(Given) 어떤 상태 변화를 가했을 때(When) 기대하는 
+상태로 완료(Then)되어야 한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">example</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mock</span><span class="o">(</span><span class="nc">Person</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+        <span class="c1">// given</span>
+        <span class="n">when</span><span class="o">(</span><span class="n">p</span><span class="o">.</span><span class="na">getName</span><span class="o">()).</span><span class="na">thenReturn</span><span class="o">(</span><span class="s">"mike"</span><span class="o">);</span>
+
+        <span class="c1">// when</span>
+        <span class="nc">String</span> <span class="n">name</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
+
+        <span class="c1">// then</span>
+        <span class="n">verify</span><span class="o">(</span><span class="n">p</span><span class="o">,</span> <span class="n">times</span><span class="o">(</span><span class="mi">1</span><span class="o">)).</span><span class="na">getName</span><span class="o">();</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<p>위의 코드를 보면 given에 위치할 코드에 Mockito.when() 메서드가 사용된다. 
+이를 해결 하기 위해 BDDMockito가 등장했다.</p>
+
+<h4 id="bddmockito">BDDMockito</h4>
+
+<p>BDDMockito의 코드를 살펴보면 Mockito를 상속한 클래스임을 알 수 있다. 그리고 
+동작이나 사용하는 방법 또한 Mockito와 거의 차이가 없다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="o">*</span> <span class="nc">One</span> <span class="n">of</span> <span class="n">the</span> <span class="n">purposes</span> <span class="n">of</span> <span class="nc">BDDMockito</span> <span class="n">is</span> <span class="n">also</span> <span class="n">to</span> <span class="n">show</span> <span class="n">how</span> <span class="n">to</span> <span class="n">tailor</span> <span class="n">the</span> <span class="n">mocking</span> <span class="n">syntax</span> <span class="n">to</span> <span class="n">a</span> <span class="n">different</span> <span class="n">programming</span> <span class="n">style</span><span class="o">.</span>
+ <span class="o">*</span>
+ <span class="o">*</span> <span class="nd">@since</span> <span class="mf">1.8</span><span class="o">.</span><span class="mi">0</span>
+ <span class="o">*/</span>
+<span class="nd">@SuppressWarnings</span><span class="o">(</span><span class="s">"unchecked"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">BDDMockito</span> <span class="kd">extends</span> <span class="nc">Mockito</span> <span class="o">{</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">BDDMockito는 BDD를 사용하여 테스트코드를 작성할 때, 시나리오에 맞게 테스트 코드가 
+읽힐 수 있도록 도와주는(이름을 변경한) 프레임워크이다.</code></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">example</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">Person</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mock</span><span class="o">(</span><span class="nc">Person</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+        <span class="c1">// given</span>
+        <span class="n">given</span><span class="o">(</span><span class="n">p</span><span class="o">.</span><span class="na">getName</span><span class="o">()).</span><span class="na">willReturn</span><span class="o">(</span><span class="s">"mike"</span><span class="o">);</span>
+
+        <span class="c1">// when</span>
+        <span class="nc">String</span> <span class="n">name</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
+
+        <span class="c1">// then</span>
+        <span class="n">then</span><span class="o">(</span><span class="n">p</span><span class="o">).</span><span class="na">should</span><span class="o">(</span><span class="n">times</span><span class="o">(</span><span class="mi">1</span><span class="o">)).</span><span class="na">getName</span><span class="o">();</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<p>다시 한번 정리해보면 BDDMockito가 제공하는 기능과 Mockito가 제공하는 기능은 
+별반 다르지 않다. 단지 BDD라는 것을 테스트 코드에 도입할 때 기존의 Mockito가 
+가독성을 해치기 때문에 이를 해결하기 위한 기능은 같지만 이름만 다른 클래스라고 
+생각해도 될 것 같다.</p>
+
+<hr />
+<p>Referrence</p>
+
+<p><a href="https://velog.io/@lxxjn0/Mockito%EC%99%80-BDDMockito%EB%8A%94-%EB%AD%90%EA%B0%80-%EB%8B%A4%EB%A5%BC%EA%B9%8C">https://velog.io/@lxxjn0/Mockito%EC%99%80-BDDMockito%EB%8A%94-%EB%AD%90%EA%B0%80-%EB%8B%A4%EB%A5%BC%EA%B9%8C</a><br />
+<a href="https://jdm.kr/blog/222">https://jdm.kr/blog/222</a><br />
+<a href="https://www.crocus.co.kr/1556">https://www.crocus.co.kr/1556</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

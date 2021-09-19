@@ -1,0 +1,221 @@
+I"�6<h1 id="gc">GC</h1>
+
+<p><code class="language-plaintext highlighter-rouge">프로그래머는 힙을 사용할 수 있는 만큼 자유롭게 사용하고, 더 이상
+사용되지 않는 오브젝트들은 가비지 컬렉션을 담당하는 프로세스가 자동으로
+메모리에서 제거하도록 하는 것이 가비지 컬렉션의 기본 개념이다.</code></p>
+
+<p>Heap 영역의 오브젝트 중 stack 에서 도달 불가능한(Unreachable) 오브젝트들은
+가비지 컬렉션의 대상이 된다.(더이상 참조하지 않는 오브젝트)</p>
+
+<p><img width="770" alt="스크린샷 2020-03-14 오후 6 53 28" src="https://user-images.githubusercontent.com/26623547/76679593-2c395780-6625-11ea-8496-33e6f8df0574.png" /></p>
+
+<h2 id="garbage-collection-과정">Garbage Collection 과정</h2>
+
+<p><strong>Mark and Sweep</strong> 이라고도 한다 ( GC가 스택의 모든 변수를 스캔하면서 각각 어떤
+오브젝트를 레퍼런스 하고 있는지 찾는 과정이 Mark 다. Reachable 오브젝트가
+레퍼런스하고 있는 오브젝트 또한 marking 한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">여기서 주의할 점은 첫번째 단계인 marking 작업을 위해 모든 스레드는 중단
+되는데 이를 stop the world 라고 부른다.(System.gc() 를 생각 없이 호출하면 안되는 이유!!)</code></p>
+
+<p>stop the world가 발생하면 GC를 실행하는 쓰레드를 제외한 나머지 쓰레드는 모두 작업을 멈춘다. <br />
+어떤 GC 알고리즘을 사용하더라도 stop the world는 발생한다. 대개의 경우 
+GC 튜닝이란 이 stop the world 시간을 줄이는 것이다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">그리고 나서 mark 되어있지 않은 모든 오브젝트들을 힙에서 제거하는 과정이 Sweep 이다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">즉, GC 는 garbase를 수집하는 것이 아니라 garbase 가 아닌 것을 따로 mark 하고 있고
+그 외의 것은 모두 지우는 것!</code></p>
+
+<p>Java는 프로그램 코드에서 메모리를 명시적으로 지정하여 해제하지 않는다. 가끔 
+명시적으로 해당 객체를 null로 지정하거나 System.gc() 메서드를 호출하는 개발자가 
+있다. null로 지정하는 것은 큰 문제가 안 되지만, System.gc() 메서드를 
+호출하는 것은 시스템의 성능에 매우 큰 영향을 끼치므로 System.gc() 메서드는 
+절대로 사용하면 안된다.</p>
+
+<blockquote>
+  <p>GC가 역할을 하는 시간은 정확히 언제인지를 알수 없음( 참조가 없어지자마자 해제되는 것을 보장하지 않음)</p>
+</blockquote>
+
+<p>특히 Full GC가 일어나서 수 초간 모든 쓰레드가 정지한다면 장애로 이어지는 치명적인 문제가 생길 수 있다.</p>
+
+<hr />
+
+<h2 id="gc-의-구조">GC 의 구조</h2>
+
+<h4 id="reachability">Reachability</h4>
+
+<p>Java의 GC는 가비지 객체를 판별하기 위해 reachability 라는 개념을 사용한다.   <br />
+어떤 객체에 유효한 참조가 있으면 reachable, 없으면 unreachable 로 구분하고 가비지로 간주한다.</p>
+
+<p>바꿔 말하면 객체에 대한 reachability를 제어 할수 있다면 코드를 통해 GC에 일부 관여하는 것이 가능하다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">java는 이를 위해서 SoftReference, WeakReference 등 제공한다.</code></p>
+
+<p>또한, 캐시 등을 만들 때 메모리 누수 조심해야 한다.
+캐시의 키가 원래 데이터에서 삭제 된다면 캐시 내부의 키와 값은 더이상 의미 없는
+데이터 이지만 GC는 삭제된 캐시의 키를 가비지로 인식 못한다. 캐시에 Weak Reference를 넣어준다면
+이러한 문제 방지 가능하다 (WeakHashMap)</p>
+
+<p><img width="900" alt="스크린샷 2020-02-02 오후 10 37 38" src="https://user-images.githubusercontent.com/26623547/76682457-bdb5c300-663f-11ea-98f9-5a20bb657a26.png" /> <br />
+<img width="700" alt="스크린샷 2020-03-14 오후 9 59 15" src="https://user-images.githubusercontent.com/26623547/76682398-408a4e00-663f-11ea-96ad-eba3f3110aaf.png" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">JVM의 Heap내에서 객체의 수명을 관리하기 위해 Young, Old 구역으로 나뉜다.</code></p>
+
+<ul>
+  <li>
+    <p>Young 영역 : 새롭게 생성한 객체의 대부분이 여기에 위치한다. 대부분의 
+객체가 금방 접근 불가능 상태가 되기 때문에 매우 많은 객체가 Young 영역에 
+생성되었다가 사라진다. 이 영역에서 객체가 사라질 때 Minor GC가 발생한다고 말한다.</p>
+  </li>
+  <li>
+    <p>Old 영역(Old Generation 영역) : 접근 불가능 상태로 되지 않아 
+                                Young 영역에서 살아 남은 객체가 여기로 복사된다. 대부분의 
+                                    Young 영역보다 크게 할당하며, 크기가 큰 만큼 Young 영역보다 
+                                    GC는 적게 발생한다. 이 영역에서 객체가 사라질 때 Major GC(혹은 Full GC)가 
+                                    발생한다고 말한다.</p>
+  </li>
+</ul>
+
+<h3 id="young-영역의-구성">Young 영역의 구성</h3>
+
+<p><code class="language-plaintext highlighter-rouge">Young 영역은 다시 Eden 영역과 Survivor 영역으로 나뉜다.</code></p>
+
+<p>각 영역의 처리 절치를 순서에 따라서 기술하면 다음과 같다.</p>
+
+<ul>
+  <li>새로 생성한 대부분의 객체는 Eden 영역에 위치한다.</li>
+  <li>Eden 영역에서 GC가 한 번 발생한 후 살아남은 객체는 Survivor 영역 중 하나로 이동된다.</li>
+  <li>Eden 영역에서 GC가 발생하면 이미 살아남은 객체가 존재하는 Survivor 영역으로 객체가 계속 쌓인다.</li>
+  <li>하나의 Survivor 영역이 가득 차게 되면 그 중에서 살아 남은 객체를 다른 Survivor 영역으로 이동한다. 그리고 
+가득찬 Survivor 영역은 아무 데이터도 없는 상태로 된다.</li>
+  <li>이 과정을 반복하다가 계속해서 살아 남아 있는 객체는 Old 영역으로 이동하게 된다.</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">이 절차를 확인해 보면 알겠지만 Survivor 영역 중 하나는 반드시 비어 있는 
+상태로 남아 있어야 한다. 만약 두 Survivor 영역에 모두 데이터가 존재하거나, 
+    두 영역 모두 사용량이 0이라면 여러분의 시스템은 정상적인 상황이 
+    아니라고 생각하면 된다.</code></p>
+
+<p><img width="500" alt="스크린샷 2021-06-26 오후 8 45 11" src="https://user-images.githubusercontent.com/26623547/123511983-be049100-d6bf-11eb-9ffb-0cda35f2e59f.png" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">Eden 영역에 최초로 객체가 만들어지고, Survivor 영역을 통해서 Old 영역으로 
+오래 살아남은 객체가 이동한다는 사실은 꼭 기억하자.</code></p>
+
+<h4 id="1-eden-영역">1. Eden 영역</h4>
+
+<p><code class="language-plaintext highlighter-rouge">Object가 최초로 Heap에 할당되는 장소이다.</code> 만일 Eden 영역이 가득 찼다면, 
+    Minor GC가 발생하게 되고 그러면 Object의
+참조 여부를 파악하고 Reachable 오브젝트는 Survivor 영역으로 넘긴다.  <br />
+그리고 참조가 사라진 Garbage 오브젝트이면 남겨 놓는다.  <br />
+모든 Reachable 오브젝트가Survivor 영역으로 넘어간다면 Eden 영역을 모두 청소한다.</p>
+
+<p>Survior 영역은 Survivor0, 1 두 개의 영역이 있고 Eden 영역에서 
+살아남은 Object는 두 영역 중 한 군데로 이동하게 된다.</p>
+
+<h4 id="2-survivor-영역2개">2. Survivor 영역(2개)</h4>
+
+<p><code class="language-plaintext highlighter-rouge">Survivor0 과 Survivor1 로 구성되며 Eden 영역에 살아 남은 Object들이 잠시 머무르는
+곳</code>이며 Reachable 오브젝트들은 하나의 Survivor 영역만 사용하게 되며 이러한
+전반적인 과정을 <strong>Minor GC</strong> 라고 한다.</p>
+
+<p>Minor GC는 매우 빠르고 효율적이다. 소요시간은 Young Generation의 크기에 따라 
+다르지만 1초 미만이다. 또한 JVM Thread Processing을 멈추게 하는 등의 
+부작용도 발생하지 않는다.</p>
+
+<blockquote>
+  <p>Minor GC 가 발동할 때마다, Survivor 영역에 있던 객체들은 다른 Survivor 영역으로 이동한다. <br />
+즉, 최초에 Survivor 0 영역에 있던 객체는, Minor GC가 발동하면 Survivor 1 영역으로 이동하게 된다.</p>
+</blockquote>
+
+<h3 id="old-generation-영역">Old Generation 영역</h3>
+
+<p>새로 Heap에 할당된 Object가 들어오는 것이 아닌, Survivor 영역에서 살아남아
+오랫동안 참조 되었고 앞으로도 사용될 확률이 높은 Object들을 저장하는 영역이다.
+<code class="language-plaintext highlighter-rouge">이러한 과정 중 Old Generation의 메모리가 충분하지 않으면 해당 영역에서 GC가 발생하는데
+이을 Major GC라고 한다.</code></p>
+
+<p>Major GC는 Thread를 잠시 멈추게 되고 Mark and Sweep 작업을 위해 CPU에 
+부하를 가하게 되며 이러한 작업은 보통 Minor GC에 비해 10배 이상의 시간을 
+사용하기 때문에 성능에 악영향을 주게 된다.</p>
+
+<p>위에서 살펴봤듯이 Young 영역이 꽉차면, 이 메모리 영역에서 살아 남은 Object를 
+Old 영역으로 옴기게 되는데 그 이유에 대해서 생각을 해보자.</p>
+
+<p><code class="language-plaintext highlighter-rouge">보통 새로 할당된 영역에서는 대부분의 객체들이 빠르게 해제되고 오래된 
+영역에서는 객체들이 변하지 않을 확률이 높으므로, 이 기법은 메모리의 
+일부 영역만을 주기적으로 수집하게 되는 장점이 있다.</code></p>
+
+<p>즉 생명 주기가 짧은 젊은 객체는 Old Generation으로 올라가기 전에 Young Generation에서 
+제거되게끔 하고 오래된 객체의 경우 Old Generation에 상주시켜 상대적으로 아주 저렴한 
+Minor Garbage Collection만으로 heap의 유지가 가능하게 유도하는 것이 좋다.</p>
+
+<p>이를 위해서는 JVM의 Memory 구성이 중요한데 Young Generation은 전체 
+Heap의 1/2보다 약간 적게 설정하는 것이 좋고, Survivor Space는 
+Young Generation의 1/8정도의 크기가 적당하다.</p>
+
+<blockquote>
+  <p>JVM의 Default의 경우 Young Generation이 작게 잡혀 있기 때문에 Default를 사용하는 것은 
+권장하지 않는다. 다시 얘기하지만 Young Generation이 작으면 젋은 객체가 Old Generation으로 
+넘어갈 확률이 커지고 이는 결국 Major GC가 발생확률이 높아지는 것이다.</p>
+</blockquote>
+
+<h3 id="perm-영역">Perm 영역</h3>
+
+<p>보통 class Meta 정보나 Method의 Meta정보, static 변수와 상수 정보들이 저장되는 공간으로
+흔히 <b>메타데이터 저장 영역이라고 한다.</b> Java8 부터 Native Memory 영역으로 이동하였다.</p>
+
+<hr />
+
+<h2 id="garbage-collection-이-중요한-이유">Garbage Collection 이 중요한 이유</h2>
+
+<p><code class="language-plaintext highlighter-rouge">Garbage Collection이 시스템에 큰 영향을 끼치는 이유는 위에 설명 했듯이 
+GC를 수행하기 위한 Thread 이외의 모든 Thread 작업이 멈추기 때문이다.</code></p>
+
+<p>실시간으로 통신이 필요한 어플리케이션의 경우 Full GC가 일어난 수 초 동안 
+어플리케이션이 멈춘다면 장애로 이어지게 될 것이다. 웹 어플리케이션의 
+경우도 같은 상황이 일어난다면 GC가 완료된 이후 Thread가 복구 된다 하더라도 
+이미 대기하고 있던 수많은 요청으로 인해 시스템에 큰 영향을 끼칠 수 있다.</p>
+
+<p>결국 원활한 서비스를 위해서는 GC를 어떻게 관리하느냐가 시스템의 
+안정성에 큰 변수로 작용하게 될 것이다. 하지만 마지막으로 주의해야 할 점은 
+어떤 서비스에서 A라는 GC 옵션을 적용해서 잘 동작한다고 그 GC 옵션이 
+다른 서비스에서도 훌륭하게 적용되어 최적의 효과를 볼 수 있다고 
+생각하지 말라는 것이다.</p>
+
+<p>각 서비스의 WAS에서 생성하는 객체의 크기와 생존 주기가 모두 다르고, 장비의 종류도 
+다양하다. WAS의 스레드 개수와 장비당 WAS 인스턴스 개수, GC 옵션 등은 
+지속적인 튜닝과 모니터링을 통해서 해당 서비스에 가장 적합한 값을 
+찾아야 한다.</p>
+
+<hr />
+
+<p>Reference</p>
+
+<p><a href="https://www.holaxprogramming.com/2013/07/20/java-jvm-gc/">https://www.holaxprogramming.com/2013/07/20/java-jvm-gc/</a><br />
+<a href="https://d2.naver.com/helloworld/1329">https://d2.naver.com/helloworld/1329</a><br />
+<a href="https://yaboong.github.io/java/2018/05/26/java-memory-management/">https://yaboong.github.io/java/2018/05/26/java-memory-management/</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

@@ -1,0 +1,148 @@
+I"� <h2 id="autowired란">Autowired란?</h2>
+
+<p><code class="language-plaintext highlighter-rouge">어노테이션을 부여하면 IoC컨테이너 안에 존재하는 Bean을 자동으로 주입해주게 된다.</code></p>
+
+<hr />
+
+<h3 id="xml설정파일--autowired-어노테이션-변경">XML설정파일-&gt; Autowired 어노테이션 변경</h3>
+
+<p><strong>XML설정파일에서 Property로 설정했던 Bean 제거</strong> <br />
+<a href="https://wonyong-jang.github.io/spring/2020/05/18/Spring-Dependency-Injection.html">예제소스 링크</a></p>
+
+<p><img width="400" alt="스크린샷 2020-05-30 오후 10 21 25" src="https://user-images.githubusercontent.com/26623547/83329348-f28ef900-a2c3-11ea-80d6-70636173a74f.png" /></p>
+
+<blockquote>
+  <p>setter를 이용하여 exam 객체를 주입했던 부분 주석처리 
+<img width="466" alt="스크린샷 2020-05-25 오후 11 42 03" src="https://user-images.githubusercontent.com/26623547/82823109-eda40100-9ee1-11ea-9900-62d886ee34ff.png" /></p>
+</blockquote>
+
+<blockquote>
+  <p>GridExamConsole.java 에서 setter에 Autowired 삽입 <br />
+<img width="287" alt="스크린샷 2020-05-25 오후 11 49 21" src="https://user-images.githubusercontent.com/26623547/82823434-85a1ea80-9ee2-11ea-931a-bb7d210028da.png" /></p>
+</blockquote>
+
+<blockquote>
+  <p>반드시 아래 XML 설정에 추가</p>
+</blockquote>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;context:annotation-config/&gt;   &lt;!-- context 네임스페이스 추가 후 사용 할 것 --&gt;
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">annotation-config 설정은 Application Context안에 이미 등록된 빈들의 어노테이션을 활성화를 위해 사용된다. (그것들이 XML로 등록되었는지 
+         패키지스캐닝을 통해 등록되었는지는 중요하지 않다.)</code>  <br />
+<strong>Application Context에의해 생성되어 저장된 Bean의 내부를 살펴보면서 @Autowired, @Qualifier 등의 어노테이션을 해석할 거라는 뜻</strong></p>
+
+<hr />
+
+<h3 id="autowired-어노테이션-모호성">Autowired 어노테이션 모호성</h3>
+
+<p><code class="language-plaintext highlighter-rouge">Autowired는 타입을 찾아 DI하는데 만약 동일한 타입을 가진 빈 객체가
+ 존재 한다면 어떤 빈 객체를 주입해야 할지 알 수 없어서 IoC 컨테이너를 초기화하는 
+ 과정에서 익셉션을 발생 시킨다.</code></p>
+
+<blockquote>
+  <p>동일한 타입의 bean 존재 
+<img width="613" alt="스크린샷 2020-05-26 오후 10 11 02" src="https://user-images.githubusercontent.com/26623547/82904724-d1659a00-9f9d-11ea-9ab8-8b46ef619fec.png" /></p>
+</blockquote>
+
+<blockquote>
+  <p>변수명과 id를 맵핑시켜서 해결할 수 있지만 변수명을 자꾸 변경하는 것보다 Qualifier 권장 <br />
+<img width="292" alt="스크린샷 2020-05-26 오후 9 46 10" src="https://user-images.githubusercontent.com/26623547/82902378-55b61e00-9f9a-11ea-81af-292a8dc9a645.png" /></p>
+</blockquote>
+
+<blockquote>
+  <p>Qualifier 어노테이션을 이용하여 동일한 타입에 대해 bean의 id 와 맵핑하여 연결  <br />
+<img width="282" alt="스크린샷 2020-05-26 오후 9 26 15" src="https://user-images.githubusercontent.com/26623547/82900829-0ff85600-9f98-11ea-9df1-2e0818dd06ef.png" /></p>
+</blockquote>
+
+<blockquote>
+  <p>Bean 등록시 id를 따로 지정하지 않았으면 클래스 이름과 비교하여 DI <br />
+이런경우 첫글자는 반드시 소문자로 탐색해야 한다. ex) computer <br />
+<img width="605" alt="스크린샷 2020-05-29 오후 9 02 16" src="https://user-images.githubusercontent.com/26623547/83258405-2e0cc300-a1f1-11ea-91b8-a55195bdfb42.png" /></p>
+</blockquote>
+
+<h4 id="autowired-의존-객체-찾는-순서">Autowired 의존 객체 찾는 순서!!</h4>
+
+<p><code class="language-plaintext highlighter-rouge">1. 처음은 무조건 타입이 같은 빈 객체를 검색한다. 한개면 그 빈 객체를 사용한다. Qualifier가 명시되어 있을 경우, 
+    Qualifier와 같은 값을 갖는 빈 객체여야 한다.</code> <br />
+<code class="language-plaintext highlighter-rouge">2. 타입이 같은 빈 객체가 두 개 이상 존재하면, Qualifier로 지정한 빈 객체를 찾는다. 존재하면, 그 객체를 사용한다.</code> <br />
+<code class="language-plaintext highlighter-rouge">3. 타입이 같은 빈 객체가 두 개 이상 존재하고 Qualifier가 없을 경우, 이름이 같은 빈 객체를 찾는다. 존재하면, 그 
+객체를 사용한다.</code></p>
+
+<blockquote>
+  <p>스프링 버전 3.2.3 까지는 동일 타입의 빈 2개 이상 있을 경우는 무조건 에러 발생!</p>
+</blockquote>
+
+<hr />
+
+<h3 id="autowired-di-3가지-방법">Autowired DI 3가지 방법</h3>
+
+<p>Autowired 어노테이션은 의존하는 객체를 자동으로 삽입해주며 필드, 생성자, 메서드 세 곳에 
+적용이 가능하다.</p>
+
+<h5 id="1-field-injection">1. Field Injection</h5>
+
+<p>기본생성자를 생성하면서 Injection이 된다. <br />
+<code class="language-plaintext highlighter-rouge">주의할 점은 기본생성자를 통해서 Injection되기 때문에 기본생성자가 없고 
+오버로딩 생성자만 존재한다면 에러가 발생한다!</code></p>
+
+<p><img width="330" alt="스크린샷 2020-05-26 오후 10 46 17" src="https://user-images.githubusercontent.com/26623547/82911017-53f25780-9fa6-11ea-9034-548286b0530d.png" /></p>
+
+<h5 id="2-construction-injection">2. Construction Injection</h5>
+
+<p>오버로딩 생성자를 생성하면서 Injection이 된다. <br />
+<code class="language-plaintext highlighter-rouge">Qualifier를 파라미터에 써주는 이유는 파라미터가 여러개가 나올수 있기 때문에 
+생성자 위에 선언해주면 에러가 발생한다.</code></p>
+
+<p><img width="450" alt="스크린샷 2020-05-26 오후 11 09 23" src="https://user-images.githubusercontent.com/26623547/82911033-5a80cf00-9fa6-11ea-8ee8-e5ad99c47f20.png" /></p>
+
+<h5 id="3-setter-injection">3. Setter Injection</h5>
+
+<p>Setter 메소드를 통해서 Injection이 된다.</p>
+
+<p><img width="295" alt="스크린샷 2020-05-26 오후 11 11 24" src="https://user-images.githubusercontent.com/26623547/82911325-b64b5800-9fa6-11ea-8122-39681169078d.png" /></p>
+
+<hr />
+
+<h5 id="option">Option</h5>
+
+<p><strong>주의 : Autowired에 일치하는 타입이 없거나 Qualifier에 지정한 값이 IoC 컨테이너에 존재하지 않으면 컨테이너 생성 익셉션 에러 발생한다. 이를 위해 옵션이 존재하며, 
+required 값을 true나 false 로 줄 수 있다.(default 는 true)</strong></p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// DI에 필요한 객체가 무조건 bean에 등록되어있어야 한다.
+@Autowired(required = true)
+
+// bean등록이 안되어 있어도 오류가 나지않고 인스턴스를 만들어준다.
+@Autowired(required = false)
+</code></pre></div></div>
+
+<hr />
+
+<p>Reference</p>
+
+<p><a href="http://www.newlecture.com">http://www.newlecture.com</a> <br />
+<a href="https://galid1.tistory.com/494">https://galid1.tistory.com/494</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

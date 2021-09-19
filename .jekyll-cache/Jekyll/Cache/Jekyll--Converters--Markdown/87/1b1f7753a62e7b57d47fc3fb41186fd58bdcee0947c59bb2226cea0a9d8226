@@ -1,0 +1,122 @@
+I"s<h2 class="section-heading">객체 지향 프로그래밍(Object Oriented Programming)</h2>
+
+<p><u>객체 지향 프로그래밍은 컴퓨터 프로그래밍 패러다임중 하나로, 프로그래밍에서 
+필요한 데이터를 추상화시켜 상태와 행위를 가진 객체를 만들고 그 객체들 간의 
+유기적인 상호작용을 통해 로직을 구성하는 프로그래밍 방법이다.</u></p>
+
+<h3>객체 지향 프로그래밍의 장, 단점</h3>
+
+<p><b>장점</b></p>
+<pre>
+- 코드 재사용이 용이
+남이 만든 클래스를 가져와서 이용할 수 있고 상속을 통해 확장해서 사용할수 있다.
+- 유지보수가 쉬움
+절지 지향 프로그래밍에서는 코드를 수정해야할 때 일일이 찾아 수정해야하는 반면
+객체 지향 프로그래밍에서는 수정해야 할 부분이 클래스 내부에 멤버 변수 혹은
+메서드로 있기 때문에 해당 부분만 수정하면 된다.
+- 대형 프로젝트에 적합
+클래스 단위로 모듈화시켜서 개발할 수 있으므로 대형 프로젝트처럼 여러명, 여러 회사에서
+개발이 필요할 시 업무 분담하기 쉽다.
+</pre>
+
+<p><b>단점</b></p>
+<pre>
+-처리속도가 상대적으로 느림
+-객체가 많으면 용량이 커질 수 있음
+-설계시 많은 시간과 노력이 필요
+</pre>
+
+<h2 class="section-heading">객체 지향 프로그래밍 키워드 5가지</h2>
+<pre>
+1) 클래스 + 인스턴스(객체)
+2) 추상화
+3) 캡슐화
+4) 상속
+5) 다형성
+</pre>
+
+<h3>클래스와 인스턴스(객체)</h3>
+<p><b>클래스</b></p>
+<p>어떤 문제를 해결하기 위한 데이터를 만들기 위해 추상화를 거쳐 집단에 속하는
+속성(attribute)와 행위(behavior)를 변수와 메서드로 정의한 것!</p>
+
+<p><b>인스턴스(객체)</b></p>
+<p>클래스에서 정의한 것을 토대로 실제 메모리상에 할당된 것으로 실제 프로그램에서
+사용되는 데이터</p>
+
+<h3>객체지향프로그래밍에서 추상화(자료의 추상화)</h3>
+
+<p><code class="language-plaintext highlighter-rouge">객체들의 공통적인 특징(속성과 기능)을 뽑아 내는 것</code></p>
+
+<p>불필요한 정보는 숨기고 중요한 정보만을 표현함으로써 공통의 속성이나 기능을 묶어 이름을 붙이는 것이다.</p>
+<p>(= 객체지향 관점에서 클래스를 정의하는 것) </p>
+<p>(!= abstract 클래스, abstract 메서드와는 다른 이야기임)</p>
+
+<h3>캡슐화</h3>
+
+<p><code class="language-plaintext highlighter-rouge">데이터와 코드의 형태를 외부로부터 알 수 없게 하고, 데이터의 구조와 역할, 기능을 하나의 캡슐 형태로 만드는 방법</code></p>
+
+<p><u>캡슐화의 목적 : 코드를 재수정 없이 재활용하는 것!</u></p>
+<p>프로그램 코드에서 변수와 함수를 재활용하기에는 분산되어 있기 때문에 재활용이 어려웠으나 
+캡슐화를 통해 관련된 기능과 특성을 한곳에 모으고 분류하기 때문에 재활용이 원활해졌다.</p>
+
+<p><u>객체 지향 프로그래밍에서 기능과 특성의 모음을"클래스" 라는"캡슐" 에 분류해서 넣는 것이 캡슐화이다.</u></p>
+<p>즉 객체가 맡은 역할을 수행하기 위한 하나의 목적을 한데 묶는다.</p>
+
+<h3>상속</h3>
+<p>절차 지향 프로그래밍에서도 "라이브러리"를 통해서 남이 짜놓은 소스 코드를 가져와 
+사용할 수 있었다. 하지만 내 의도에 맞게 수정하게 되면 다른 라이브러리가 되어 버전에 따라 
+동작하지 않을 수도 있고 불필요한 코드의 수정작업을 해야 한다. 이런 문제를 객체 지향프로그래밍에서는
+상속이라는 개념이 해결할수 있다.</p>
+
+<p><u>상속은 부모클래스의 속성과 기능을 그대로 이어받아 사용할 수 있게 하고 기능의
+일부분만 변경해야 할 경우 상속받은 자식클래스에서 해당 기능만 다시 수정(정의)하여 사용할 수 있게
+하는 것이다.</u></p>
+
+<p>단, 다중상속은 불가하다.(클래스의 상속 관계에서 혼란을 줄 수 있기 때문에 상속은
+ 반드시 하나만 가능하고 필요에 따라 인터페이스를 사용할수 있게 했다.</p>
+
+<h3>다형성</h3>
+
+<p>하나의 변수명, 함수명 등이 상황에 따라 다른 의미로 해석 될수 있다는 것이다!</p>
+<p>즉, 오버라이딩, 오버로딩이 가능하다는 얘기이다.</p>
+<p><b>Overriding : 부모 클래스의 메서드와 같은 이름, 매개변수를 재정의 하는 것</b></p>
+<p><b>Overloading : 같은 이름의 함수를 여러개 정의하고, 매개변수의 타입과 개수를 다르게 하여 매개변수에 따라 다르게 호출할 수 있게 하는 것!</b></p>
+
+<h3>getter, setter 를 사용하는 이유? </h3>
+
+<p>멤버변수에 직접접근하지 못하게 private로 접근지정자를 설정하고 public으로 
+getter, setter 메서드를 만드는 것을 많이 해왔다. 그러면서 이럴꺼면 어차피 아무나
+접근가능한데 왜 private로 할까? </p>
+
+<p><u>결론부터 말하면 getter, setter를 사용하면 메서드를 통해서 접근하기 때문에  
+메서드 안에서 매개변수</u></p>
+
+<hr />
+
+<p>Reference</p>
+<p><a href="https://jeong-pro.tistory.com/95">https://jeong-pro.tistory.com/95</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

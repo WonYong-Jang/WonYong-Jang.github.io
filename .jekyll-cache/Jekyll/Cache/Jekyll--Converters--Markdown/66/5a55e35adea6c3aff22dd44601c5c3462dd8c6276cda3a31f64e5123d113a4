@@ -1,0 +1,451 @@
+I"x�<h2 id="순수-자바코드로-aop-구현">순수 자바코드로 AOP 구현</h2>
+
+<p><a href="https://wonyong-jang.github.io/spring/2020/03/08/Spring-AOP.html">AOP 개념 링크</a></p>
+
+<p>기존 개발자들은 total이라는 메소드 속도가 느리다고 전달받았을 때 아래와 같이 
+핵심로직 사이에 코드를 추가하여 시간을 확인하는 식으로 구현하였다.</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">total</span><span class="o">()</span> <span class="o">{</span>
+        <span class="kt">long</span> <span class="n">start</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+
+        <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">kor</span><span class="o">+</span><span class="n">eng</span><span class="o">+</span><span class="n">math</span><span class="o">+</span><span class="n">com</span><span class="o">;</span> <span class="c1">// 핵심 로직!!!</span>
+
+        <span class="k">try</span> <span class="o">{</span> <span class="c1">// 테스트를 위한 시간 sleep</span>
+            <span class="nc">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">200</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+        <span class="o">}</span>
+        <span class="kt">long</span> <span class="n">end</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+
+        <span class="kt">long</span> <span class="n">message</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="o">;</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"실행시간 : "</span> <span class="o">+</span> <span class="n">message</span><span class="o">);</span>
+
+        <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+<p>`
+자바에서 AOP를 구현하기 위한 방법은 proxy를 사용하는 방법이다. <br />
+즉, Core concern(핵심로직)과 Cross cutting concern
+(부가적인 로직)을 분리한다. <br />
+`</p>
+
+<h5 id="proxynewproxyinstance">Proxy.newProxyInstance</h5>
+
+<ul>
+  <li>loader : Proxy가 동일한 기능을 사용하기 위해 로드할 객체</li>
+  <li>interfaces : 복수니까 배열형태로 인터페이스를 넘긴다.</li>
+  <li>h : 부가적인 로직을 끼워 넣기 위한 부분</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// proxy는 Exam 클래스와 동일한 기능을 사용한다. proxy에 부가적인 로직(로깅, </span>
+<span class="c1">// 에러처리 등)을 추가해서 사용 가능!   </span>
+<span class="nc">Exam</span> <span class="n">proxy</span> <span class="o">=</span> <span class="n">newProxyInstance</span><span class="o">(</span><span class="nc">ClassLoader</span> <span class="n">loader</span><span class="o">,</span>
+                <span class="nc">Class</span><span class="o">&lt;?&gt;[]</span> <span class="n">interfaces</span><span class="o">,</span>
+               <span class="nc">InvocationHandler</span> <span class="n">h</span><span class="o">)</span>
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Program</span> <span class="o">{</span>
+    
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+     
+        <span class="nc">Exam</span> <span class="n">exam</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">NewLecExam</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span><span class="mi">1</span><span class="o">,</span><span class="mi">1</span><span class="o">,</span><span class="mi">1</span><span class="o">);</span> <span class="c1">// 실제 업무 로직 </span>
+        
+        <span class="nc">Exam</span> <span class="n">proxy</span> <span class="o">=</span> <span class="o">(</span><span class="nc">Exam</span><span class="o">)</span> <span class="nc">Proxy</span><span class="o">.</span><span class="na">newProxyInstance</span><span class="o">(</span><span class="nc">NewLecExam</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">(),</span> 
+                <span class="k">new</span> <span class="nc">Class</span><span class="o">[]</span> <span class="o">{</span><span class="nc">Exam</span><span class="o">.</span><span class="na">class</span><span class="o">},</span>
+                <span class="k">new</span> <span class="nf">InvocationHandler</span><span class="o">()</span> <span class="o">{</span>
+                    
+                    <span class="nd">@Override</span>
+                    <span class="kd">public</span> <span class="nc">Object</span> <span class="nf">invoke</span><span class="o">(</span><span class="nc">Object</span> <span class="n">proxy</span><span class="o">,</span> <span class="nc">Method</span> <span class="n">method</span><span class="o">,</span> <span class="nc">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Throwable</span> <span class="o">{</span>
+                        
+                        <span class="kt">long</span> <span class="n">start</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+                        
+                        <span class="c1">// method.invoke 실제 메소드 호출할수 있는 기능</span>
+                        <span class="c1">// invoke(실제 업무객체, 호출 메소드 파라미터)</span>
+                        <span class="nc">Object</span> <span class="n">result</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">exam</span><span class="o">,</span> <span class="n">args</span><span class="o">);</span>
+                        <span class="c1">// result: 실제 업무가 반환하는 값</span>
+
+                        <span class="kt">long</span> <span class="n">end</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+                      
+                        <span class="kt">long</span> <span class="n">message</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="o">;</span>
+                        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"실행시간 : "</span> <span class="o">+</span> <span class="n">message</span><span class="o">);</span>
+                        
+                        <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+                <span class="o">);</span>
+        
+        <span class="c1">//System.out.printf("total is " + exam.avg());</span>
+       
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"total is %d\n"</span><span class="o">,</span>  <span class="n">proxy</span><span class="o">.</span><span class="na">total</span><span class="o">());</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"avg is %f\n"</span><span class="o">,</span>  <span class="n">proxy</span><span class="o">.</span><span class="na">avg</span><span class="o">());</span>
+        <span class="c1">// 실제 업무로직이 아닌 Proxy를 이용하여 </span>
+        <span class="c1">// 실제 업무로직 위 아래로 부가적인 로직을 끼워 넣었다! </span>
+
+        <span class="cm">/*
+            실행시간 : 201
+            total is 4
+            실행시간 : 204
+            avg is 1.000000
+        */</span>
+    <span class="o">}</span>
+
+</code></pre></div></div>
+<hr />
+
+<h2 id="스프링으로-aop-구현하기">스프링으로 AOP 구현하기</h2>
+
+<p><strong>Advice 종류</strong></p>
+
+<ul>
+  <li>Before : 업무 로직 전에 실행</li>
+  <li>After returnning : 업무 로직 후에 실행</li>
+  <li>After throwing : 예외 처리</li>
+  <li>Around : 업무 로직 앞 뒤 모두 실행</li>
+</ul>
+
+<blockquote>
+  <p>패키지 리스트  <br />
+<img width="180" alt="스크린샷 2020-06-03 오후 11 43 37" src="https://user-images.githubusercontent.com/26623547/83651157-25066200-a5f4-11ea-92f5-1b0eb3df26f1.png" /></p>
+</blockquote>
+
+<hr />
+<h3 id="aroundadvice">AroundAdvice</h3>
+
+<blockquote>
+  <p>Prgram.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Program</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+
+        <span class="nc">ApplicationContext</span> <span class="n">context</span> <span class="o">=</span>
+                <span class="k">new</span> <span class="nf">ClassPathXmlApplicationContext</span><span class="o">(</span><span class="s">"spring/aop/setting.xml"</span><span class="o">);</span>
+
+        <span class="c1">// xml에 설정한 proxy 가져오기 ! </span>
+        <span class="nc">Exam</span> <span class="n">proxy</span> <span class="o">=</span> <span class="o">(</span><span class="nc">Exam</span><span class="o">)</span> <span class="n">context</span><span class="o">.</span><span class="na">getBean</span><span class="o">(</span><span class="s">"proxy"</span><span class="o">);</span>
+
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"total is %d\n"</span><span class="o">,</span>  <span class="n">proxy</span><span class="o">.</span><span class="na">total</span><span class="o">());</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"avg is %f\n"</span><span class="o">,</span>  <span class="n">proxy</span><span class="o">.</span><span class="na">avg</span><span class="o">());</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>AroundAdvice를 구현한 LogAroundAdvice.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">LogAroundAdvice</span> <span class="kd">implements</span> <span class="nc">MethodInterceptor</span> <span class="o">{</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">Object</span> <span class="nf">invoke</span><span class="o">(</span><span class="nc">MethodInvocation</span> <span class="n">invocation</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Throwable</span> <span class="o">{</span>
+        <span class="kt">long</span> <span class="n">start</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+
+        <span class="c1">// java 에서 했을때 method.invoke 와 동일한 기능 !</span>
+        <span class="nc">Object</span> <span class="n">result</span> <span class="o">=</span> <span class="n">invocation</span><span class="o">.</span><span class="na">proceed</span><span class="o">();</span>
+
+        <span class="kt">long</span> <span class="n">end</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+
+        <span class="kt">long</span> <span class="n">message</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="o">;</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"실행시간 : "</span> <span class="o">+</span> <span class="n">message</span><span class="o">);</span>
+
+        <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>setting.xml</p>
+</blockquote>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+    <span class="nt">&lt;bean</span> <span class="na">id =</span><span class="s">"LogAroundAdvice"</span> <span class="na">class =</span><span class="s">"spring.aop.advice.LogAroundAdvice"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">"target"</span> <span class="na">class =</span><span class="s">"spring.aop.entity.NewLecExam"</span> <span class="na">p:kor =</span> <span class="s">"1"</span> <span class="na">p:eng=</span><span class="s">"1"</span> <span class="na">p:math=</span><span class="s">"1"</span> <span class="na">p:com=</span><span class="s">"1"</span><span class="nt">/&gt;</span>
+
+    <span class="c">&lt;!-- Spring 에서 제공하는 Proxy 사용  --&gt;</span>
+    <span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">"proxy"</span> <span class="na">class=</span> <span class="s">"org.springframework.aop.framework.ProxyFactoryBean"</span><span class="nt">&gt;</span>
+        <span class="c">&lt;!-- 실제 로드할 객체  --&gt;</span>
+        <span class="nt">&lt;property</span> <span class="na">name =</span> <span class="s">"target"</span> <span class="na">ref =</span> <span class="s">"target"</span> <span class="nt">/&gt;</span>
+
+        <span class="c">&lt;!-- 부가적인 로직을 넣을 Handler   --&gt;</span>
+        <span class="nt">&lt;property</span> <span class="na">name =</span> <span class="s">"interceptorNames"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;list&gt;</span>
+                <span class="nt">&lt;value&gt;</span>LogAroundAdvice<span class="nt">&lt;/value&gt;</span>
+            <span class="nt">&lt;/list&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+
+        <span class="c">&lt;!-- 자바로 직접 구현했을 때 인터페이스를 넣어줘야 했는데
+        스프링을 이용한 AOP는 직접 알아서 맵핑  --&gt;</span>
+    <span class="nt">&lt;/bean&gt;</span>
+
+</code></pre></div></div>
+<hr />
+
+<h3 id="beforeadvice">BeforeAdvice</h3>
+
+<blockquote>
+  <p>LogBeforeAdvice.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">LogBeforeAdvice</span> <span class="kd">implements</span> <span class="nc">MethodBeforeAdvice</span><span class="o">{</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">before</span><span class="o">(</span><span class="nc">Method</span> <span class="n">method</span><span class="o">,</span> <span class="nc">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">,</span> <span class="nc">Object</span> <span class="n">target</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Throwable</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"앞에서 실행될 로직입니다. "</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>setting.xml 에 추가</p>
+</blockquote>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;bean</span> <span class="na">id =</span><span class="s">"LogAroundAdvice"</span> <span class="na">class =</span><span class="s">"spring.aop.advice.LogAroundAdvice"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;bean</span> <span class="na">id =</span><span class="s">"LogBeforeAdvice"</span> <span class="na">class =</span><span class="s">"spring.aop.advice.LogBeforeAdvice"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;bean</span> <span class="na">id =</span><span class="s">"LogAfterReturningAdvice"</span> <span class="na">class =</span><span class="s">"spring.aop.advice.LogAfterReturningAdvice"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;bean</span> <span class="na">id =</span><span class="s">"LogAfterThrowingAdvice"</span> <span class="na">class =</span><span class="s">"spring.aop.advice.LogAfterThrowingAdvice"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">"target"</span> <span class="na">class =</span><span class="s">"spring.aop.entity.NewLecExam"</span> <span class="na">p:kor =</span> <span class="s">"1"</span> <span class="na">p:eng=</span><span class="s">"1"</span> <span class="na">p:math=</span><span class="s">"1"</span> <span class="na">p:com=</span><span class="s">"1"</span><span class="nt">/&gt;</span>
+    
+    <span class="c">&lt;!-- Spring 에서 제공하는 Proxy 사용  --&gt;</span>
+    <span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">"proxy"</span> <span class="na">class=</span> <span class="s">"org.springframework.aop.framework.ProxyFactoryBean"</span><span class="nt">&gt;</span>
+        <span class="c">&lt;!-- 실제 로드할 객체  --&gt;</span>
+        <span class="nt">&lt;property</span> <span class="na">name =</span> <span class="s">"target"</span> <span class="na">ref =</span> <span class="s">"target"</span> <span class="nt">/&gt;</span>
+        
+        <span class="c">&lt;!-- 부가적인 로직을 넣을 Handler   --&gt;</span>
+        <span class="nt">&lt;property</span> <span class="na">name =</span> <span class="s">"interceptorNames"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;list&gt;</span>
+                <span class="nt">&lt;value&gt;</span>LogAroundAdvice<span class="nt">&lt;/value&gt;</span> 
+                <span class="nt">&lt;value&gt;</span>LogBeforeAdvice<span class="nt">&lt;/value&gt;</span> <span class="c">&lt;!-- 배열 형태로 추가 가능 --&gt;</span>
+                <span class="nt">&lt;value&gt;</span>LogAfterReturningAdvice<span class="nt">&lt;/value&gt;</span>
+                <span class="nt">&lt;value&gt;</span>LogAfterThrowingAdvice<span class="nt">&lt;/value&gt;</span>
+            <span class="nt">&lt;/list&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        
+        <span class="c">&lt;!-- 자바로 직접 구현했을 때 인터페이스를 넣어줘야 했는데 
+        스프링이 직접 알아서 맵핑  --&gt;</span>
+    <span class="nt">&lt;/bean&gt;</span>
+
+</code></pre></div></div>
+<hr />
+<h3 id="after-returning-advice">After Returning Advice</h3>
+
+<blockquote>
+  <p>LogAfterReturningAdvice.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">LogAfterReturningAdvice</span> <span class="kd">implements</span> <span class="nc">AfterReturningAdvice</span><span class="o">{</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">afterReturning</span><span class="o">(</span><span class="nc">Object</span> <span class="n">returnValue</span><span class="o">,</span> <span class="nc">Method</span> <span class="n">method</span><span class="o">,</span> <span class="nc">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">,</span> <span class="nc">Object</span> <span class="n">arg</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Throwable</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"returnValue:"</span><span class="o">+</span> <span class="n">returnValue</span><span class="o">+</span><span class="s">", "</span>
+                <span class="o">+</span> <span class="s">"method: "</span><span class="o">+</span> <span class="n">method</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+    <span class="o">}</span>
+    <span class="cm">/*
+       returnValue:4, method: total
+       returnValue:1.0, method: avg
+    */</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+<hr />
+
+<h3 id="after-throwing-advice">After Throwing Advice</h3>
+
+<ul>
+  <li>예외를 발생키기 위해서 국어 점수가 100점이 넘을 경우 IllegalArgumentException 발생시켜보기</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">Core concern 실행 중 예외가 발생했을 경우는 After Advice로 가지 않고 After Throwing Advice로 
+바로 넘어가서 예외를 처리한다.</code></p>
+
+<blockquote>
+  <p>NewLecExam.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">if</span><span class="o">(</span><span class="n">kor</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="o">)</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">IllegalArgumentException</span><span class="o">(</span><span class="s">"유효하지 않는 국어점수 "</span><span class="o">);</span>
+
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1">// ThrowsAdvice 구현 해야할 구현체가 정해져 있지 않다!</span>
+<span class="c1">// 다른 Advice는 전달할 인자와 전달 받을 인자가 정해져 있지만</span>
+<span class="c1">// ThrowsAdvice는 어떤 예외가 발생하느냐에 따라서 함수 인지가 달라지기 때문에</span>
+<span class="c1">// 구현할 것을 직접 선택해서 구현해야 함</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">LogAfterThrowingAdvice</span> <span class="kd">implements</span> <span class="nc">ThrowsAdvice</span><span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">afterThrowing</span><span class="o">(</span><span class="nc">IllegalArgumentException</span> <span class="n">e</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Throwable</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"예외가 발생하였습니다. :"</span> <span class="o">+</span> <span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>앞에서 실행될 로직입니다.
+Exception in thread "main" 예외가 발생하였습니다. :유효하지 않는 국어점수
+java.lang.IllegalArgumentException: 유효하지 않는 국어점수
+</code></pre></div></div>
+<hr />
+<h2 id="어노테이션을-이용하여-aop-구현">어노테이션을 이용하여 AOP 구현</h2>
+
+<ul>
+  <li>AOP 설정과 관련해서 가장 중요한 라이브러리는 AspectJ와 AspectJ Weaver라는 라이브러리이다. 메이븐 또는 그래들에 추가하기</li>
+  <li>Advice 클래스에 @Aspect 어노테이션을 추가함으로써 Aspect를 구현한 것을 나타낸다.</li>
+  <li>스프링 컨테이너에 추가하기 위해 Component 어노테이션을 추가한다.</li>
+  <li>@Before, @After, @AfterReturnining, @AfterThrowing, @Around</li>
+</ul>
+
+<h4 id="pointcut">@Pointcut</h4>
+
+<p><code class="language-plaintext highlighter-rouge">@Pointcut은 Cross cutting concern(부가기능)이 적용될 JoinPoint 들을 정의한 것이다. 
+@Annotaion의 경우 조금 복잡한 표현식을 가지고 있다.</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>execution(접근제어자 반환형 /  패키지를 포함한 클래스 경로 / 메소드파라미터)  
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">public의 반환형이 없는 (public void) 형태의 메소드 중 get으로 시작하는 모든 메소드 중 
+파라미터가 존재하지 않는 (()) 메소드들에게 적용한다는 의미</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Pointcut(execution(* *(..))")
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">첫번째 *기호는 접근제어자 반환형 모두를 상관하지 않고 적용하겠다는 의미이다. 두번째 *기호는 
+어떠한 경로에 존재하는 클래스도 상관하지 않고 적용하겠다는 의미이다.    
+마지막으로 (..)은 메소드의 파라미터가 몇개가 존재하던지 상관없이 실행하는 경우</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Pointcut("execution(* com.java.ex.Car.accelerate())")  
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">첫번째 *기호는 역시 접근제어자 반환형을 상관하지 않는다는 의미이며, com.java.ex.Car.accelerate()는 해당 
+class의 accelerate() (파라미터가 없는)메소드가 호출될 때 실행하는 경우를 의미한다.</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Point("execution(* com.java..*.*())")    
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">위와 거의 비슷하지만 com.java.. 부분은 해당 패키지를 포함한 모든 하위패키지에 적용한다는 의미이다. 
+com.java 패키지를 포함한 모든 하위디렉토리의 모든 Class의 모든 파라미터가 존재하지 않는 메소드에 적용한다는 의미이다.</code></p>
+
+<h4 id="어노테이션-예제">어노테이션 예제</h4>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">&lt;!-- 아래와 같이 추가 또는 자바 config를 이용하여 추가 --&gt;</span>
+<span class="nt">&lt;context:component-scan</span> <span class="na">base-package=</span><span class="s">"org.zerock.service"</span><span class="nt">&gt;&lt;/context:component-scan&gt;</span>	
+<span class="nt">&lt;context:component-scan</span> <span class="na">base-package=</span><span class="s">"org.zerock.aop"</span><span class="nt">&gt;&lt;/context:component-scan&gt;</span>
+
+<span class="c">&lt;!-- 스프링 2버전 이후에는 자동으로 proxy 객체를 만들어주는 설정 추가  --&gt;</span>
+<span class="nt">&lt;aop:aspectj-autoproxy&gt;&lt;/aop:aspectj-autoproxy&gt;</span>
+
+<span class="c">&lt;!-- Spring boot 사용시 아래와 같이 추가  --&gt;</span>
+implementation 'org.springframework.boot:spring-boot-starter-aop'
+</code></pre></div></div>
+
+<blockquote>
+  <p>LogAdvice.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nd">@Aspect</span>  <span class="c1">// 해당 객체가 Aspect를 구현한 것임으로 나타내기 위함!</span>
+<span class="nd">@Log4j</span>
+<span class="nd">@Component</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">LogAdvice</span> <span class="o">{</span>
+
+    <span class="nd">@Before</span><span class="o">(</span> <span class="s">"execution(* org.zerock.service.SampleService*.*(..))"</span><span class="o">)</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">logBeforeWithParam</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"advice"</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="nd">@AfterThrowing</span><span class="o">(</span><span class="n">pointcut</span> <span class="o">=</span> <span class="s">"execution( * org.zerock.service.SampleService*.*(..))"</span><span class="o">,</span> <span class="n">throwing</span> <span class="o">=</span> <span class="s">"exception"</span><span class="o">)</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">logException</span><span class="o">(</span><span class="nc">Exception</span> <span class="n">exception</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Exception...!!!!"</span><span class="o">);</span>
+        <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"exception: "</span> <span class="o">+</span> <span class="n">exception</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Around</span><span class="o">(</span><span class="s">"execution(* org.zerock.service.SampleService*.*(..))"</span><span class="o">)</span>
+    <span class="kd">public</span> <span class="nc">Object</span> <span class="nf">logTime</span><span class="o">(</span> <span class="nc">ProceedingJoinPoint</span> <span class="n">pjp</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Throwable</span> <span class="o">{</span>
+
+        <span class="kt">long</span> <span class="n">start</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Target: "</span> <span class="o">+</span> <span class="n">pjp</span><span class="o">.</span><span class="na">getTarget</span><span class="o">());</span>
+        <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Param: "</span> <span class="o">+</span> <span class="nc">Arrays</span><span class="o">.</span><span class="na">toString</span><span class="o">(</span><span class="n">pjp</span><span class="o">.</span><span class="na">getArgs</span><span class="o">()));</span>
+
+        <span class="nc">Object</span> <span class="n">result</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">pjp</span><span class="o">.</span><span class="na">proceed</span><span class="o">();</span>
+        <span class="o">}</span><span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+        <span class="o">}</span>
+
+        <span class="kt">long</span> <span class="n">end</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"TIME: "</span> <span class="o">+</span> <span class="o">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="o">));</span>
+
+        <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+
+</code></pre></div></div>
+
+<blockquote>
+  <p>SampleServiceTests.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nd">@RunWith</span><span class="o">(</span><span class="nc">SpringJUnit4ClassRunner</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="nd">@Log4j</span>
+<span class="nd">@ContextConfiguration</span><span class="o">({</span><span class="s">"file:src/main/webapp/WEB-INF/spring/root-context.xml"</span><span class="o">})</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">SampleServiceTests</span> <span class="o">{</span>
+
+    <span class="nd">@Autowired</span>
+    <span class="kd">private</span> <span class="nc">SampleService</span> <span class="n">service</span><span class="o">;</span>
+
+    <span class="nd">@Test</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">testClass</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="n">service</span><span class="o">);</span>
+        <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="n">service</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getName</span><span class="o">());</span>
+        <span class="c1">// getClass()를 이용하여 JDK의 다이나믹 프록시 확인 가능</span>
+        <span class="c1">// INFO : org.zerock.service.SampleServiceTests - com.sun.proxy.$Proxy23</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Test</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">testAdd</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="n">service</span><span class="o">.</span><span class="na">doAdd</span><span class="o">(</span><span class="s">"123"</span><span class="o">,</span> <span class="s">"456"</span><span class="o">));</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<hr />
+
+<p><code class="language-plaintext highlighter-rouge">스프링으로 AOP를 구현했을 때는 proxy와의 설정 관계를 자바코드와 분리했다는 것이 
+가장 큰 장점이고 proxy 설정이 간단해 졌다.</code></p>
+
+<hr />
+<p>Referrence</p>
+
+<p><a href="http://www.newlecture.com">http://www.newlecture.com</a> <br />
+<a href="https://galid1.tistory.com/498">https://galid1.tistory.com/498</a></p>
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

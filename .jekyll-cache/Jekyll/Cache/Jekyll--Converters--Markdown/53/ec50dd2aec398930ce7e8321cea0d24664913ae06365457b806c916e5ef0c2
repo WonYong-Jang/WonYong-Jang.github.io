@@ -1,0 +1,200 @@
+I"�9<h1 id="더티-체킹dirty-checking이란">더티 체킹(Dirty Checking)이란?</h1>
+
+<p>Spring Data Jpa와 같은 ORM 구현체를 사용하다보면 더티 체킹이란 단어를 종종 듣게 된다.</p>
+
+<p>예를들어 다음과 같은 코드가 있다.<br />
+(Spring Data Jap가 익숙하겠지만, 네이티브한 코드 먼저 보면 아래와 같다.)</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Slf4j</span>
+<span class="nd">@RequiredArgsConstructor</span>
+<span class="nd">@Service</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">PayService</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateNative</span><span class="o">(</span><span class="nc">Long</span> <span class="n">id</span><span class="o">,</span> <span class="nc">String</span> <span class="n">tradeNo</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">EntityManager</span> <span class="n">em</span> <span class="o">=</span> <span class="n">entityManagerFactory</span><span class="o">.</span><span class="na">createEntityManager</span><span class="o">();</span>
+        <span class="nc">EntityTransaction</span> <span class="n">tx</span> <span class="o">=</span> <span class="n">em</span><span class="o">.</span><span class="na">getTransaction</span><span class="o">();</span>
+        <span class="n">tx</span><span class="o">.</span><span class="na">begin</span><span class="o">();</span> <span class="c1">//트랜잭션 시작</span>
+        <span class="nc">Pay</span> <span class="n">pay</span> <span class="o">=</span> <span class="n">em</span><span class="o">.</span><span class="na">find</span><span class="o">(</span><span class="nc">Pay</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">id</span><span class="o">);</span>
+        <span class="n">pay</span><span class="o">.</span><span class="na">changeTradeNo</span><span class="o">(</span><span class="n">tradeNo</span><span class="o">);</span> <span class="c1">// 엔티티만 변경</span>
+        <span class="n">tx</span><span class="o">.</span><span class="na">commit</span><span class="o">();</span> <span class="c1">//트랜잭션 커밋</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>코드를 보면 별도로 데이터베이스에 save 하지 않는다.</p>
+
+<ol>
+  <li>트랜잭션이 시작되고</li>
+  <li>엔티티를 조회하고</li>
+  <li>엔티티의 값을 변경하고</li>
+  <li>트랜잭션을 커밋한다.</li>
+</ol>
+
+<p><code class="language-plaintext highlighter-rouge">여기서 데이터베이스에 update 쿼리에 관한 코드는 어디에도 없다!</code></p>
+
+<p>그럼 아래와 같이 코드가 어떻게 작동하는지 테스트 코드를 작성해본다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RunWith</span><span class="o">(</span><span class="nc">SpringRunner</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="nd">@SpringBootTest</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">PayServiceTest</span> <span class="o">{</span>
+
+    <span class="nd">@Autowired</span>
+    <span class="nc">PayRepository</span> <span class="n">payRepository</span><span class="o">;</span>
+
+    <span class="nd">@Autowired</span>
+    <span class="nc">PayService</span> <span class="n">payService</span><span class="o">;</span>
+
+    <span class="nd">@After</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">tearDown</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="n">payRepository</span><span class="o">.</span><span class="na">deleteAll</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Test</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="n">엔티티매니저로_확인</span><span class="o">()</span> <span class="o">{</span>
+        <span class="c1">//given</span>
+        <span class="nc">Pay</span> <span class="n">pay</span> <span class="o">=</span> <span class="n">payRepository</span><span class="o">.</span><span class="na">save</span><span class="o">(</span><span class="k">new</span> <span class="nc">Pay</span><span class="o">(</span><span class="s">"test1"</span><span class="o">,</span>  <span class="mi">100</span><span class="o">));</span>
+
+        <span class="c1">//when</span>
+        <span class="nc">String</span> <span class="n">updateTradeNo</span> <span class="o">=</span> <span class="s">"test2"</span><span class="o">;</span>
+        <span class="n">payService</span><span class="o">.</span><span class="na">updateNative</span><span class="o">(</span><span class="n">pay</span><span class="o">.</span><span class="na">getId</span><span class="o">(),</span> <span class="n">updateTradeNo</span><span class="o">);</span> <span class="c1">// update</span>
+
+        <span class="c1">//then</span>
+        <span class="nc">Pay</span> <span class="n">saved</span> <span class="o">=</span> <span class="n">payRepository</span><span class="o">.</span><span class="na">findAll</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+        <span class="n">assertThat</span><span class="o">(</span><span class="n">saved</span><span class="o">.</span><span class="na">getTradeNo</span><span class="o">()).</span><span class="na">isEqualTo</span><span class="o">(</span><span class="n">updateTradeNo</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><img width="333" alt="스크린샷 2020-06-20 오후 6 06 52" src="https://user-images.githubusercontent.com/26623547/85198132-1f618980-b321-11ea-8cc7-f394b9340ff0.png" /></p>
+
+<p>테스트 코드를 수행해보면, 위와 같은 로그를 볼수 있다. <br />
+<code class="language-plaintext highlighter-rouge">Pay 엔티티만 변경하였을 뿐인데 update 쿼리가 실행된 것을 알수 있다. 
+이유는 Dirty Checking 덕분이다!</code></p>
+
+<blockquote>
+  <p>여기에서 Dirty란 상태의 변화가 생긴 정도로 이해하면 된다. <br />
+즉, Dirty Checking이란 상태 변경 검사이다.</p>
+</blockquote>
+
+<p><code class="language-plaintext highlighter-rouge">JPA에서는 트랜잭션이 끝나는 시점에 변화가 있는 모든 엔티티 객체를 데이터 
+베이스에 자동으로 반영해준다.</code></p>
+
+<p>이때 변화가 있다의 기준은 <strong>최초 조회 상태</strong>이다.</p>
+
+<p>JPA에서는 엔티티를 조회하면 해당 엔티티의 조회 상태 그대로를 스냅샷을 만들어 놓는다. <br />
+그리고 트랜잭션이 끝나는 시점에는 이 스냅샷과 비교해서 다른점이 있다면 update query를 데이터베이스로 전달한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">당연히 이런 상태 변경 검사의 대상은 영속성 컨텍스트가 관리하는 엔티티에만 적용된다.</code></p>
+
+<ul>
+  <li>detach된 엔티티(준영속)</li>
+  <li>DB에 반영되기 전 처음 생성된 엔티티(비영속)</li>
+</ul>
+
+<p>위 경우는 준영속/비영속 상태의 엔티티는 Dirty Checking 대상에 포함되지 않는다. <br />
+<code class="language-plaintext highlighter-rouge">즉, 값을 변경해도 데이터베이스에 반영되지 않는다는 것이다! </code></p>
+
+<p>Spring Data Jpa와 @Transactional이 함께 할 경우엔 아래와 같다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Slf4j</span>
+<span class="nd">@RequiredArgsConstructor</span>
+<span class="nd">@Service</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">PayService</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">PayRepository</span> <span class="n">payRepository</span><span class="o">;</span>
+
+    <span class="nd">@Transactional</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">update</span><span class="o">(</span><span class="nc">Long</span> <span class="n">id</span><span class="o">,</span> <span class="nc">String</span> <span class="n">tradeNo</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">Pay</span> <span class="n">pay</span> <span class="o">=</span> <span class="n">payRepository</span><span class="o">.</span><span class="na">getOne</span><span class="o">(</span><span class="n">id</span><span class="o">);</span>
+        <span class="n">pay</span><span class="o">.</span><span class="na">changeTradeNo</span><span class="o">(</span><span class="n">tradeNo</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>테스트 코드는 아래와 같다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Test</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="n">SpringDataJpa로_확인</span><span class="o">()</span> <span class="o">{</span>
+    <span class="c1">//given</span>
+    <span class="nc">Pay</span> <span class="n">pay</span> <span class="o">=</span> <span class="n">payRepository</span><span class="o">.</span><span class="na">save</span><span class="o">(</span><span class="k">new</span> <span class="nc">Pay</span><span class="o">(</span><span class="s">"test1"</span><span class="o">,</span>  <span class="mi">100</span><span class="o">));</span>
+
+    <span class="c1">//when</span>
+    <span class="nc">String</span> <span class="n">updateTradeNo</span> <span class="o">=</span> <span class="s">"test2"</span><span class="o">;</span>
+    <span class="n">payService</span><span class="o">.</span><span class="na">update</span><span class="o">(</span><span class="n">pay</span><span class="o">.</span><span class="na">getId</span><span class="o">(),</span> <span class="n">updateTradeNo</span><span class="o">);</span>
+
+    <span class="c1">//then</span>
+    <span class="nc">Pay</span> <span class="n">saved</span> <span class="o">=</span> <span class="n">payRepository</span><span class="o">.</span><span class="na">findAll</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+    <span class="n">assertThat</span><span class="o">(</span><span class="n">saved</span><span class="o">.</span><span class="na">getTradeNo</span><span class="o">()).</span><span class="na">isEqualTo</span><span class="o">(</span><span class="n">updateTradeNo</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>첫번째와 동일하게 update 쿼리를 확인할 수 있다!</p>
+</blockquote>
+
+<hr />
+
+<h2 id="변경-부분만-update-하고-싶을-땐">변경 부분만 update 하고 싶을 땐?</h2>
+
+<p>Dirty Checking으로 생성되는 update 쿼리는 기본적으로 모든 필드를 업데이트 한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">JPA에서는 전체 필드를 업데이트하는 방식을 기본값으로 사용한다.</code> <br />
+전체 필드를 업데이트하는 방식의 장점은 다음과 같다.</p>
+
+<ul>
+  <li>생성되는 쿼리가 같아 부트 실행시점에 미리 만들어서 재사용가능하다.</li>
+  <li>데이터베이스 입장에서 쿼리 재사용이 가능하다.( 동일한 쿼리를 받으면 이전에 파싱된 쿼리를 재사용한다.)</li>
+</ul>
+
+<p>다만 필드가 20~30개 이상인 경우엔 이런 전체 필드 Update 쿼리가 부담스러울 수 있다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">이런 경우엔 @DynamicUpdate로 변경 필드만 반영되도록 할수 있다.</code></p>
+
+<p>엔티티 최상단에 아래와 같이 @DynamicUpdate 를 선언한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Getter</span>
+<span class="nd">@NoArgsConstructor</span>
+<span class="nd">@Entity</span>
+<span class="nd">@DynamicUpdate</span> <span class="c1">// 변경한 필드만 대응</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Pay</span> <span class="o">{</span>
+
+    <span class="nd">@Id</span>
+    <span class="nd">@GeneratedValue</span><span class="o">(</span><span class="n">strategy</span> <span class="o">=</span> <span class="nc">GenerationType</span><span class="o">.</span><span class="na">IDENTITY</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="nc">Long</span> <span class="n">id</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">tradeNo</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">long</span> <span class="n">amount</span><span class="o">;</span>
+</code></pre></div></div>
+
+<p><img width="190" alt="스크린샷 2020-06-20 오후 6 24 49" src="https://user-images.githubusercontent.com/26623547/85198415-84b67a00-b323-11ea-8dad-19d5e8bf6c5d.png" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">변경분 trade_no 만 update 쿼리에 반영된 것을 확인 가능하다!</code></p>
+
+<hr />
+<p>Referrence</p>
+
+<p><a href="https://jojoldu.tistory.com/415">https://jojoldu.tistory.com/415</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

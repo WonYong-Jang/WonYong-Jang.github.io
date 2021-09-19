@@ -1,0 +1,510 @@
+I"�<h2 id="테스트-코드-소개">테스트 코드 소개</h2>
+
+<p>시작 전에 TDD와 단위 테스트는 다른 이야기 이다. TDD는 테스트가 주도하는 개발을 이야기하며 
+테스트 코드를 먼저 작성하는 것부터 시작한다.</p>
+
+<p>반면 <code class="language-plaintext highlighter-rouge">단위 테스트는 TDD의 첫 번째 단계인 기능 단위의 테스트 코드를 작성</code> 하는 것을 이야기 한다. <br />
+단위 테스트는 TDD와 달리 테스트 코드를 꼭 먼저 작성해야 하는 것도 아니고, 리팩토링도 포함되지 않는다.</p>
+
+<h3 id="테스트-코드-작성-장점">테스트 코드 작성 장점</h3>
+
+<ul>
+  <li>단위 테스트는 개발단계 초기에 문제 발견에 도움을 준다.</li>
+  <li>단위 테스트는 기능에 대한 불확실성을 감소시킬 수 있으며, 단위 테스트 자체가 문서로 
+사용 될수 있다.</li>
+  <li>테스트 코드를 작성하지 않고 개발한다면 아래와 같은 작업을 반복하게 된다.</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">코드 작성 후 Tomcat 실행 -&gt; Postman 같은 테스트 도구로 http 요청 확인 -&gt; 결과를 sysout으로 확인</code></p>
+
+<ul>
+  <li>개발자가 만든 기능을 안전하게 보호해 준다.</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">B라는 기능을 새로 추가 하여 오픈했더니 기존에 잘되던 A기능이 문제가 생기는 경우가 많다. A B 기능 모두 테스트 코드를 작성 
+했다면 오픈 전에 문제를 확인 가능하다.</code></p>
+
+<hr />
+
+<h2 id="junit-5">JUnit 5</h2>
+
+<p>2.2 이상 버전의 스프링 부트 프로젝트를 만든다면 기본적으로 JUnit5 의존성 추가 된다.</p>
+
+<h4 id="1-생명-주기">1. 생명 주기</h4>
+
+<p><code class="language-plaintext highlighter-rouge">개별 테스트의 독립성을 보장하고, 테스트 사이의 상호관계에서 발생하는 부작용을 방지하기 위해, 
+ JUnit는 테스트 메스드의 실행 전 각각 새로운 인스턴스를 생성한다.</code> <br />
+이를 통해 개별 테스트 메서드는 완전히 독립적인 객체 환경에서 동작하며, 이를 메서드 단위 생명주기라 한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">만약 모든 테스트 메서드를 동일한 인스턴스 환경에서 동작시키고 싶다면, @TestInstance를 
+사용하면 된다.</code></p>
+
+<ul>
+  <li>@TestInstance(Lifecycle.PER_CLASS) 를 선언한 클래스를 클래스 단위 생명주기를 가진다.</li>
+</ul>
+
+<hr />
+
+<h4 id="2-기본-어노테이션">2. 기본 어노테이션</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- @Test
+- @BeforeAll / @AfterAll
+- @BeforeEach / @AfterEach
+- @Disabled : 해당 테스트코드 무시하고 전체 실행 할때 
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">StudyTest</span> <span class="o">{</span>
+
+    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">create</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">Study</span> <span class="n">study</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Study</span><span class="o">();</span>
+        <span class="n">assertNotNull</span><span class="o">(</span><span class="n">study</span><span class="o">);</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"create"</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">create1</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"create1"</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 모든 테스트 메소드 실행 전 한번만 작동 하는 어노테이션</span>
+    <span class="c1">// 반드시 static 을 붙여야 하며 리턴 타입은 void</span>
+    <span class="nd">@BeforeAll</span>
+    <span class="kd">static</span> <span class="kt">void</span> <span class="nf">beforeAll</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"before all"</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 모든 테스트 메소드 실행 전 한번만 작동 하는 어노테이션</span>
+    <span class="nd">@AfterAll</span>
+    <span class="kd">static</span> <span class="kt">void</span> <span class="nf">afterAll</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"after all"</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 각각 테스트 메소드를 실행하기 전에 작동하는 어노테이션</span>
+    <span class="nd">@BeforeEach</span>
+    <span class="kt">void</span> <span class="nf">beforeEach</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"before Each"</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 각각 테스트 메소드를 실행한 후에 작동하는 어노테이션</span>
+    <span class="nd">@AfterEach</span>
+    <span class="kt">void</span> <span class="nf">afterEach</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"after Each"</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>결과값은 아래와 같다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>before all
+
+before Each
+create
+after Each
+
+
+before Each
+create1
+after Each
+
+after all
+</code></pre></div></div>
+
+<hr />
+
+<h4 id="3-테스트-이름-표기하기">3. 테스트 이름 표기하기</h4>
+
+<ul>
+  <li>
+    <p>@DisplayNameGeneration</p>
+
+    <ul>
+      <li>Method와 Class 래퍼런스를 사용해서 테스트 이름을 표기하는 설정</li>
+      <li>기본 구현체로 ReplaceUnderscores 제공</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@DisplayNameGeneration</span><span class="o">(</span><span class="nc">DisplayNameGenerator</span><span class="o">.</span><span class="na">ReplaceUnderscores</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="kd">class</span> <span class="nc">StudyTest</span> <span class="o">{</span>
+
+    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">create_new_study</span><span class="o">()</span> <span class="o">{</span>
+    <span class="o">}</span>
+
+<span class="c1">// 실행 결과에 create new study 로 표기됨 ( 언더바 제거된 이름) </span>
+</code></pre></div></div>
+
+<ul>
+  <li>
+    <p>@DisplayName</p>
+
+    <ul>
+      <li>어떤 테스트인지 테스트 이름을 보다 쉽게 표현할 수 있는 방법을 제공하는 어노테이션</li>
+      <li>위의 방법보다 우선순위가 높고 한글, 영어, 이모티콘등도 사용 가능하다.</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nd">@Test</span>
+    <span class="nd">@DisplayName</span><span class="o">(</span><span class="s">"스터디 만들기"</span><span class="o">)</span>
+    <span class="kt">void</span> <span class="nf">create_new_study</span><span class="o">()</span> <span class="o">{</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h4 id="4-assertion">4. Assertion</h4>
+
+<p>org.junit.jupiter.api.Assertion</p>
+
+<ul>
+  <li>assertEquals(expected, actual)
+    <ul>
+      <li>실제 값이 기대한 값과 같은지 확인</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1">// study 오브젝트 처음 상태가 DFAFT인지 확인 하고 있고</span>
+<span class="c1">// 아래와 같이 같지 않다면 메세지를 출력해 줄 수도 있다. </span>
+
+<span class="nc">Study</span> <span class="n">study</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Study</span><span class="o">();</span>
+<span class="n">assertEquals</span><span class="o">(</span><span class="nc">StudyStatus</span><span class="o">.</span><span class="na">DRAFT</span><span class="o">,</span> <span class="n">study</span><span class="o">.</span><span class="na">getStudyStatus</span><span class="o">(),</span>
+                <span class="o">()</span> <span class="o">-&gt;</span> <span class="s">"스터디를 처음 만들면 상태가 DRAFT 여야 함"</span> <span class="o">);</span>   
+</code></pre></div></div>
+
+<ul>
+  <li>assertNotNull(actual)
+    <ul>
+      <li>값이 null이 아닌지 확인</li>
+    </ul>
+  </li>
+  <li>assertTrue(boolean)
+    <ul>
+      <li>다음 조건이 참(true)인지 확인</li>
+    </ul>
+  </li>
+  <li>assertAll
+    <ul>
+      <li>모든 확인 구문 확인</li>
+      <li>다수의 assertion이 false일 경우 맨 위의 assertion만 실패 했다고 console에 표기됨</li>
+      <li>assertAll로 묶어 주게 되면 실패한 assertion 모두 확인 가능</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">assertAll</span><span class="o">(</span>
+        <span class="o">()</span> <span class="o">-&gt;</span> <span class="n">assertEquals</span><span class="o">(</span><span class="nc">StudyStatus</span><span class="o">.</span><span class="na">START</span><span class="o">,</span> <span class="n">study</span><span class="o">.</span><span class="na">getStudyStatus</span><span class="o">(),</span>
+                    <span class="o">()</span> <span class="o">-&gt;</span> <span class="s">"스터디를 처음 만들면 상태가 DRAFT 여야 함"</span> <span class="o">),</span>
+
+        <span class="o">()</span> <span class="o">-&gt;</span> <span class="n">assertEquals</span><span class="o">(</span><span class="nc">StudyStatus</span><span class="o">.</span><span class="na">END</span><span class="o">,</span> <span class="n">study</span><span class="o">.</span><span class="na">getStudyStatus</span><span class="o">(),</span>
+                    <span class="o">()</span> <span class="o">-&gt;</span><span class="s">"스터디를 처음 만들면 상태가 DRAFT 여야 함"</span><span class="o">)</span>
+        <span class="o">);</span>
+</code></pre></div></div>
+
+<ul>
+  <li>assertThrows(expectedType, executable)
+    <ul>
+      <li>원하는 예외가 정상적으로 발생하는지 확인</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">IllegalArgumentException</span> <span class="n">exception</span> <span class="o">=</span>
+        <span class="n">assertThrows</span><span class="o">(</span><span class="nc">IllegalArgumentException</span><span class="o">.</span><span class="na">class</span> <span class="o">,</span> <span class="o">()</span> <span class="o">-&gt;</span> <span class="k">new</span> <span class="nc">Study</span><span class="o">(-</span><span class="mi">10</span><span class="o">));</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">exception</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+</code></pre></div></div>
+
+<ul>
+  <li>assertTimeout(duration, executable)
+    <ul>
+      <li>특정 시간 안에 실행이 완료되는지 확인</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 100 mills 안에 들어오는지 확인</span>
+<span class="n">assertTimeout</span><span class="o">(</span><span class="nc">Duration</span><span class="o">.</span><span class="na">ofMillis</span><span class="o">(</span><span class="mi">100</span><span class="o">),</span> <span class="o">()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+            <span class="nc">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">300</span><span class="o">);</span> <span class="c1">// 100 mills 보다 크기때문에 false</span>
+        <span class="o">});</span>
+</code></pre></div></div>
+
+<hr />
+
+<h4 id="5-order-메소드-별로-순서-지정">5. @Order 메소드 별로 순서 지정</h4>
+
+<p><code class="language-plaintext highlighter-rouge">Junit5에는 테스트 코드 실행 순서는 명확하게 정해져 있지 않다.(정확히는 순서는 있지만 
+        그것이 명시적으로 정해져 있지 않다.)</code></p>
+
+<p>아래와 같이 테스트 별로 순서가 정해져야 하는 경우는 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)를 사용하고 @Order를 이용하여 
+순서를 명시적으로 지정할 수 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 메소드 마다 개별적으로 테스트 하여 테스트 별로 의존성을 줄이는게 좋은 테스트 방법 이지만</span>
+<span class="c1">// 메소드 마다 각각 인스턴스를 생성해야 하므로 하나의 인스턴스를 이용하여 테스트해야 하는 경우에는 </span>
+<span class="c1">// 테스트 생명주기를 클래스 단위로 설정 할 수 있다.</span>
+<span class="nd">@TestInstance</span><span class="o">(</span><span class="nc">TestInstance</span><span class="o">.</span><span class="na">Lifecycle</span><span class="o">.</span><span class="na">PER_CLASS</span><span class="o">)</span> <span class="c1">// 테스트 생명 주기를 클래스 단위로 설정</span>
+<span class="nd">@TestMethodOrder</span><span class="o">(</span><span class="nc">MethodOrderer</span><span class="o">.</span><span class="na">OrderAnnotation</span><span class="o">.</span><span class="na">class</span><span class="o">)</span> <span class="c1">// 메소드 마다 순서를 정할 수 있음</span>
+<span class="nd">@DisplayName</span><span class="o">(</span><span class="s">"Github API 테스트"</span><span class="o">)</span>
+<span class="kd">class</span> <span class="nc">GithubApiTest</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="nc">GithubApi</span> <span class="n">api</span><span class="o">;</span>
+
+
+    <span class="nd">@Test</span>
+    <span class="nd">@Order</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span> <span class="c1">// 숫자가 적을 수록 우선순위가 높다</span>
+    <span class="nd">@DisplayName</span><span class="o">(</span><span class="s">"Github API 객체 생성 테스트"</span><span class="o">)</span>
+    <span class="kt">void</span> <span class="nf">createInstance</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">IOException</span> <span class="o">{</span>
+
+        <span class="n">api</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">GithubApi</span><span class="o">();</span>
+        <span class="n">assertNotNull</span><span class="o">(</span><span class="n">api</span><span class="o">);</span>
+
+    <span class="o">}</span>
+
+    <span class="nd">@Test</span>
+    <span class="nd">@Order</span><span class="o">(</span><span class="mi">2</span><span class="o">)</span>
+    <span class="nd">@DisplayName</span><span class="o">(</span><span class="s">"ISSUE객체를 받아온다."</span><span class="o">)</span>
+    <span class="kt">void</span> <span class="nf">setIssue</span><span class="o">()</span> <span class="o">{</span>
+
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">GHIssue</span><span class="o">&gt;</span> <span class="n">issues</span> <span class="o">=</span> <span class="n">api</span><span class="o">.</span><span class="na">getIssues</span><span class="o">();</span>
+
+        <span class="n">assertThat</span><span class="o">(</span><span class="n">issues</span><span class="o">.</span><span class="na">size</span><span class="o">()).</span><span class="na">isGreaterThan</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h4 id="6-nested를-이용한-중첩-구성">6. @Nested를 이용한 중첩 구성</h4>
+
+<p>@Nested를 사용하면 중첩된 구조로 테스트를 구성할 수 있다. 기존에는 JUnit과 다른 도구를 
+함께 사용해야 중첩 구조를 가진 테스트를 구성할 수 있었는데 이제 Jupiter API 만으로 
+중첩 구조 테스트를 작성할 수 있다.</p>
+
+<hr />
+
+<h4 id="7-조건에-따라-테스트-실행">7. 조건에 따라 테스트 실행</h4>
+
+<p>특정한 자바 버전, 환경변수에 따라 실행 하거나 실행하지 않아야 하는 경우가 
+있다면 아래와 같이 해결 가능하다.</p>
+
+<hr />
+
+<h4 id="8-assertthat">8. assertThat</h4>
+
+<p><code class="language-plaintext highlighter-rouge">assertj라는 테스트 검증 라이브러리의 검증 메소드이다. 검증하고 싶은 대상을 메소드 인자로 받는다.</code> <br />
+isEqualTo와 같이 메소드를 이어서 사용 가능</p>
+
+<p>Junit의 기본 assertThat이 아닌 assertj의 assertThat을 사용한다. assertj 역시 Junit에서 자동으로 
+라이브러리 등록을 해주며, Junit과 비교하여 assertj의 장점은 다음과 같다.</p>
+
+<blockquote>
+  <p>Junit의 assertThat을 쓰게 되면 is()와 같이 CoreMatchers 라이브러리가 추가로 필요하다. <br />
+자동완성이 좀 더 확실하게 지원된다.</p>
+</blockquote>
+
+<hr />
+<hr />
+
+<h2 id="mockito">Mockito</h2>
+
+<p><code class="language-plaintext highlighter-rouge">mockito는 실제 객체와 비슷하게 동작하도록 하여 검증할 수 있는 방법을 제공해주는 라이브러리이다.</code></p>
+
+<p>spring-boot-starter-test 모듈에 기본적으로 포함되어 있으며, 이 모듈을 사용하지 
+않을 경우 mockito-core, mockito-junit-jupiter 모듈을 추가하면 된다.</p>
+
+<p>Mock 객체를 만드는 이유는 크게 <code class="language-plaintext highlighter-rouge">1) 협업하는 클래스의 완성 여부에 상관없이 
+내가 만든 클래스를 테스트 할 수 있고 2) 내가 만든 클래스가 연관된 클래스와 
+올바르게 협업하는 지 확인할 수 있기 때문에 사용한다. 또한, 연관된 
+클래스가 인터페이스만 정의되어 있고 구현체가 아직 없는 경우 테스트를 할 때 
+가짜로 구현한 Mock 객체를 전달하여 테스트가 가능하다.</code></p>
+
+<h3 id="1-mock-객체-만들기">1. Mock 객체 만들기</h3>
+
+<p>Mock 객체를 만드는 방법은 아래 2가지 방법으로 테스트 진행할 수 있다.</p>
+
+<h5 id="1-1-mockitomock-메소드">1-1) Mockito.mock() 메소드</h5>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Test</span>
+  <span class="kt">void</span> <span class="nf">createStudyService</span><span class="o">()</span> <span class="o">{</span>
+
+     <span class="nc">MemberService</span> <span class="n">memberService</span> <span class="o">=</span> <span class="nc">Mockito</span><span class="o">.</span><span class="na">mock</span><span class="o">(</span><span class="nc">MemberService</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+     <span class="n">assertNotNull</span><span class="o">(</span><span class="n">memberService</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h5 id="1-2-mock-어노테이션">1-2) Mock 어노테이션</h5>
+
+<p><code class="language-plaintext highlighter-rouge">@Mock 어노테이션을 달기만 하면 되는데 @ExtendWith(MockitoExtension.class) 확장팩을 
+추가한다.</code></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@ExtendWith</span><span class="o">(</span><span class="nc">MockitoExtension</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="kd">class</span> <span class="nc">StudyServiceTest</span> <span class="o">{</span>
+    <span class="nd">@Mock</span>
+    <span class="nc">MemberService</span> <span class="n">memberService</span><span class="o">;</span>
+    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">createStudyService</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">assertNotNull</span><span class="o">(</span><span class="n">memberService</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>또는 파라미터로 정의하는 것은 아래 방법으로 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@ExtendWith</span><span class="o">(</span><span class="nc">MockitoExtension</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="kd">class</span> <span class="nc">StudyServiceTest</span> <span class="o">{</span>
+
+    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">createStudyService</span><span class="o">(</span><span class="nd">@Mock</span> <span class="nc">MemberService</span> <span class="n">memberService</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">assertNotNull</span><span class="o">(</span><span class="n">memberService</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="2-mock-객체-stubbing">2. Mock 객체 Stubbing</h3>
+
+<p>위에서 생성한 Mock의 메소드를 호출하면 아무런 행동도 하지 않는다. 
+stub은 메소드의 행동을 원하는대로 미리 정해두는 것을 말한다. <br />
+<code class="language-plaintext highlighter-rouge">Mock 객체를 when(), thenReturn(), thenThrow(), doThrow() 등으로 조작해서 특정 매개변수를 받는 경우 특정한 값을 리턴하거나 예외를 
+던지도록 만들 수 있다.</code></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@ExtendWith</span><span class="o">(</span><span class="nc">MockitoExtension</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="kd">class</span> <span class="nc">StudyServiceTest</span> <span class="o">{</span>
+
+    <span class="nd">@Mock</span> <span class="nc">MemberService</span> <span class="n">memberService</span><span class="o">;</span>
+
+    <span class="nd">@Test</span>
+    <span class="kt">void</span> <span class="nf">createStudyService</span><span class="o">()</span> <span class="o">{</span>
+
+        <span class="nc">Member</span> <span class="n">member</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Member</span><span class="o">();</span>
+        <span class="n">member</span><span class="o">.</span><span class="na">setId</span><span class="o">(</span><span class="mi">1L</span><span class="o">);</span>
+        <span class="n">member</span><span class="o">.</span><span class="na">setEmail</span><span class="o">(</span><span class="s">"wonyong@naver.com"</span><span class="o">);</span>
+
+        <span class="c1">// Stubbing</span>
+        <span class="c1">// 매개변수 1로 받았을때 member 객체를 리턴 시켜 주는 걸로 정의한다.</span>
+        <span class="n">when</span><span class="o">(</span><span class="n">memberService</span><span class="o">.</span><span class="na">findById</span><span class="o">(</span><span class="mi">1L</span><span class="o">)).</span><span class="na">thenReturn</span><span class="o">(</span><span class="nc">Optional</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">member</span><span class="o">));</span>
+
+        <span class="c1">// 매개변수 2로 받았을 때는 예외를 발생 시킨다.   </span>
+        <span class="n">when</span><span class="o">(</span><span class="n">memberService</span><span class="o">.</span><span class="na">findById</span><span class="o">(</span><span class="mi">2L</span><span class="o">)).</span><span class="na">thenThrow</span><span class="o">(</span><span class="k">new</span> <span class="nc">RuntimeException</span><span class="o">());</span>
+
+        <span class="c1">// 위에서 Stubbing 했기 때문에 매개변수 1을 검색해보면 member 객체를 리턴받는 것을 확인 할 수 있다.  </span>
+        <span class="nc">Optional</span><span class="o">&lt;</span><span class="nc">Member</span><span class="o">&gt;</span> <span class="n">member1</span> <span class="o">=</span> <span class="n">memberService</span><span class="o">.</span><span class="na">findById</span><span class="o">(</span><span class="mi">1L</span><span class="o">);</span>
+
+        <span class="n">assertEquals</span><span class="o">(</span><span class="s">"wonyong@naver.com"</span><span class="o">,</span> <span class="n">member1</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">getEmail</span><span class="o">());</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>위에서 처럼 when(memberService.findById(1L)).thenReturn(Optional.of(member)); 로 
+Stubbing을 해놓았기 때문에 구현체가 없더라도 매개변수로 1L이 들어왔을 때 
+member객체를 찾아서 리턴하는 것처럼 테스트가 가능하다.</p>
+
+<p>매개변수로 1L이 아닌 다른 값으로 테스트 하는경우 에러를 발생시키고 
+ArgumentMatchers.any를 이용하여 어떤 값이 들어오던지 간에 member 객체를 
+리턴 시킬 수도 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Argument matchers 검색해 볼 것 </span>
+<span class="n">when</span><span class="o">(</span><span class="n">memberService</span><span class="o">.</span><span class="na">findById</span><span class="o">(</span><span class="n">any</span><span class="o">())).</span><span class="na">thenReturn</span><span class="o">(</span><span class="nc">Optional</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">member</span><span class="o">));</span>
+</code></pre></div></div>
+
+<p>아래는 void 메소드를 doThrow()로 테스트 하는 방법이다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// memberService의 void 메소드인 validate에 2값이 들어왔을때는 예외를 발생시킨다.   </span>
+<span class="n">doThrow</span><span class="o">(</span><span class="k">new</span> <span class="nc">IllegalArgumentException</span><span class="o">()).</span><span class="na">when</span><span class="o">(</span><span class="n">memberService</span><span class="o">).</span><span class="na">validate</span><span class="o">(</span><span class="mi">2L</span><span class="o">);</span>
+
+<span class="n">assertThrows</span><span class="o">(</span><span class="nc">IllegalArgumentException</span><span class="o">.</span><span class="na">class</span><span class="o">,()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+           <span class="n">memberService</span><span class="o">.</span><span class="na">validate</span><span class="o">(</span><span class="mi">2L</span><span class="o">);</span>
+        <span class="o">});</span>
+</code></pre></div></div>
+
+<p>또한, 메소드가 동일한 매개변수로 여러번 호출될 때 각기 다르게 행동하도록 
+조작할 수도 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">when</span><span class="o">(</span><span class="n">memberService</span><span class="o">.</span><span class="na">findById</span><span class="o">(</span><span class="mi">1L</span><span class="o">))</span>
+                <span class="o">.</span><span class="na">thenReturn</span><span class="o">(</span><span class="nc">Optional</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">member</span><span class="o">))</span>   <span class="c1">// 첫번째 실행 결과 </span>
+                <span class="o">.</span><span class="na">thenThrow</span><span class="o">(</span><span class="nc">IllegalArgumentException</span><span class="o">.</span><span class="na">class</span><span class="o">)</span> <span class="c1">//두번째 실행 결과 </span>
+                <span class="o">.</span><span class="na">thenReturn</span><span class="o">(</span><span class="nc">Optional</span><span class="o">.</span><span class="na">empty</span><span class="o">());</span> <span class="c1">// 세번째 실행 결과   </span>
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="3-mock-객체-확인-verify-">3. Mock 객체 확인( verify )</h3>
+
+<p>만든 Mock 객체가 어떤일이 일어나는지 
+어떻게 사용이 됐는지 확인할 수 있다.</p>
+
+<h5 id="3-1-verifying-exact-number-of-invocations">3-1) Verifying exact number of invocations</h5>
+
+<p>특정 메소드가 특정 매개변수로 몇번 호출되었는지, 최소 한번은 호출 됐는지 
+전혀 호출되지 않았는지 확인이 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// memberSerivce 라는 Mock 객체에서 notify 라는 함수가 1번이 호출되는지 확인</span>
+<span class="n">verify</span><span class="o">(</span><span class="n">memberService</span><span class="o">,</span><span class="n">times</span><span class="o">(</span><span class="mi">1</span><span class="o">)).</span><span class="na">notify</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+
+<span class="c1">// validate라는 메소드는 어떤 값이 오더라도 한번도 안쓰고 있어야 참</span>
+<span class="n">verify</span><span class="o">(</span><span class="n">memberService</span><span class="o">,</span> <span class="n">never</span><span class="o">()).</span><span class="na">validate</span><span class="o">(</span><span class="n">any</span><span class="o">());</span>
+</code></pre></div></div>
+
+<h5 id="3-2-verification-in-order">3-2) Verification in order</h5>
+
+<p>어떤 순서대로 호출했는지 확인 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 순서를 확인할 Mock 객체</span>
+<span class="nc">InOrder</span> <span class="n">inOrder</span> <span class="o">=</span> <span class="n">inOrder</span><span class="o">(</span><span class="n">memberService</span><span class="o">);</span>
+
+<span class="n">inOrder</span><span class="o">.</span><span class="na">verify</span><span class="o">(</span><span class="n">memberService</span><span class="o">).</span><span class="na">notify</span><span class="o">(</span><span class="n">result</span><span class="o">);</span> <span class="c1">// 첫번째로 발생 해야함   </span>
+<span class="n">inOrder</span><span class="o">.</span><span class="na">verify</span><span class="o">(</span><span class="n">memberService</span><span class="o">).</span><span class="na">notify</span><span class="o">(</span><span class="n">member</span><span class="o">);</span> <span class="c1">// 두번째로 발생 해야함  </span>
+</code></pre></div></div>
+
+<h5 id="3-3-verification-with-timeout">3-3) Verification with timeout</h5>
+
+<p>특정 시간 이내에 호출됐는지 확인 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 100 ms</span>
+<span class="n">verify</span><span class="o">(</span><span class="n">mock</span><span class="o">,</span> <span class="n">timeout</span><span class="o">(</span><span class="mi">100</span><span class="o">)).</span><span class="na">someMethod</span><span class="o">();</span>
+
+<span class="c1">// 100ms 안에 1번 메소드 호출되야 한다.   </span>
+<span class="n">verify</span><span class="o">(</span><span class="n">memberService</span><span class="o">,</span><span class="n">timeout</span><span class="o">(</span><span class="mi">100</span><span class="o">).</span><span class="na">times</span><span class="o">(</span><span class="mi">1</span><span class="o">)).</span><span class="na">notify</span><span class="o">(</span><span class="n">member</span><span class="o">);</span>
+</code></pre></div></div>
+
+<h5 id="3-4-finding-redundant-invocations">3-4) Finding redundant invocations</h5>
+
+<p>특정 시험 이후에 아무 일도 벌어지지 않았는지 확인이 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// memberSerivce 라는 Mock 객체에서 notify 라는 함수가 1번이 호출되는지 확인   </span>
+<span class="n">verify</span><span class="o">(</span><span class="n">memberService</span><span class="o">,</span><span class="n">times</span><span class="o">(</span><span class="mi">1</span><span class="o">)).</span><span class="na">notify</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>   
+<span class="n">verifyNoInteractions</span><span class="o">(</span><span class="n">memberService</span><span class="o">);</span> <span class="c1">// 위에 메소드 이후에 호출 되면 안된다.    </span>
+</code></pre></div></div>
+
+<hr />
+<p>Referrence</p>
+
+<p><a href="https://www.inflearn.com/course/the-java-application-test/">https://www.inflearn.com/course/the-java-application-test/</a>    <br />
+<a href="https://awayday.github.io/2017-11-12/junit5-05/">https://awayday.github.io/2017-11-12/junit5-05/</a>   <br />
+<a href="https://www.inflearn.com/course/the-java-application-test">https://www.inflearn.com/course/the-java-application-test</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

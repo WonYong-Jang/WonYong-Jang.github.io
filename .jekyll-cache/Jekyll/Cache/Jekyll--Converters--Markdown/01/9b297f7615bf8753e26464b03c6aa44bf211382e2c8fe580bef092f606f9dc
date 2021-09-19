@@ -1,0 +1,121 @@
+I"<h1 id="목표">목표</h1>
+
+<p>자바의 Input과 Output에 대해 학습하세요.</p>
+
+<h2 id="학습할-것">학습할 것</h2>
+
+<ul>
+  <li>스트림(Stream) / 버퍼(Buffer) / 채널(Channel) 기반의 I/O</li>
+  <li>InputStream과 OutputStream</li>
+  <li>Byte와 Character 스트림</li>
+  <li>표준 스트림 (System.in, System.out, System.err)</li>
+  <li>파일 읽고 쓰기</li>
+</ul>
+
+<hr />
+
+<p>I/O는 입력과 출력을 뜻하는 용어로, 입출력은 컴퓨터 내부 또는 외부의 장치와 
+프로그램간의 데이터를 주고 받는 것을 말한다.</p>
+
+<h2 id="1-stream--buffer--channel-기반의-io">1. Stream / Buffer / Channel 기반의 I/O</h2>
+
+<h4 id="stream">Stream</h4>
+
+<p>Stream은 흐름이라는 뜻을 가지고 있다. ( 람다의 스트림과 의미는 같을지도 모르겠지만 
+        전혀 다른 용어이다.)</p>
+
+<p>간단하게 말하면 입력에서 출력으로 흐르는 흐름을 뜻한다. 입력에서 출력으로 
+가기 때문에 단방향으로 데이터가 전송된다.</p>
+
+<p>데이터를 어떤 방식으로 전달하느냐에 따라서 Byte Stream과 Character Stream으로 나뉜다.</p>
+
+<p>만약에 한개가 아니라 여러개가 동시에 보낸다고 하면 어떻게 될까?</p>
+
+<p><code class="language-plaintext highlighter-rouge">FIFO(First In First Out) 단방향이기 때문에 먼저 입력된 것이 먼저 출력 된다.</code></p>
+
+<p>연속된 데이터의 흐름으로 입출력 진행되기 때문에 다른 작업을 
+할 수 없는 블로킹(Blocking) 상태가 된다.</p>
+
+<h4 id="nionew-io">NIO(New I/O)</h4>
+
+<p>자바 1.4 버전부터 추가된 API로 Non-blocking 처리가 가능하며, 스트림이 아닌 
+채널(Channel)을 사용한다.</p>
+
+<h4 id="buffer">Buffer</h4>
+
+<p>I/O 입출력 호출은 시스템 콜 횟수를 줄일 수 있다.
+이렇게 버퍼를 사용하면, 운영체제의 API 호출 횟수를 줄여서 입출력 성능을 
+개선할 수 있다.</p>
+
+<h4 id="channel">Channel</h4>
+
+<p>채널은 서버와 클라이언트간의 통신 수단을 나타낸다.</p>
+
+<p>데이터가 통과하는 쌍방향 통로이며, 채널에서 데이터를 주고 받을 때 사용 되는 것이 버퍼이다.</p>
+
+<h4 id="io-vs-nio">IO vs NIO</h4>
+
+<p><code class="language-plaintext highlighter-rouge">IO</code> 의 방식으로는 각각의 스트림에서 read() 와 write()가 호출이 되면 데이터가 입력 되고, 데이터가 
+출력되기 전까지 스레드는 Blocking(멈춤) 상태가 된다. 이렇게 작업이 끝날때까지 기다려야 하며, 
+    그 이전에는 해당 IO 스레드는 사용할 수 없게 되고, 인터럽트도 할 수 없다. Blocking을 빠져 나오려면 
+    스트림을 닫는 방법 밖에 없다.</p>
+
+<hr />
+
+<h2 id="2-inputstream-과-outputstream">2. InputStream 과 OutputStream</h2>
+
+<h4 id="inputstream">InputStream</h4>
+
+<p>바이트 기반 입력 스트림의 최상위 추상 클래스이다.  <br />
+모든 바이트 기반 입력 스트림은 이 클래스를 상속 받아서 만들어 진다. 버퍼, 파일 
+네트워크 단에서 입력되는 데이터를 읽어오는 기능을 수행한다.</p>
+
+<h4 id="outputstream">OutputStream</h4>
+
+<p>바이트 기반 출력 스트림의 최상위 추상 클래스이다. <br />
+모든 바이트 기반 출력 스트림은 이 클래스를 상속 받아서 만들어진다. 버퍼, 파일, 네트워크 
+단으로 데이터를 내보내는 기능을 수행한다.</p>
+
+<hr />
+
+<h2 id="3-byte와-character-스트림">3. Byte와 Character 스트림</h2>
+
+<h4 id="byte-stream">Byte Stream</h4>
+
+<p>binary 데이터를 입출력하는 스트림이며 데이터는 1바이트 단위로 처리한다. <br />
+이미지, 동영상 등 송수신 할 때 주로 사용한다.</p>
+
+<h4 id="character-stream">Character Stream</h4>
+
+<p>text 데이터를 입출력하는 스트림이며, 데이터는 2바이트 단위로 처리한다.  <br />
+일반적인 텍스트 및 JSON, HTML 등을 송수신할 때 주로 사용한다.</p>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="https://bingbingpa.github.io/java/whiteship-live-study-week13/">https://bingbingpa.github.io/java/whiteship-live-study-week13/</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

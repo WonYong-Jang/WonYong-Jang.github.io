@@ -1,0 +1,93 @@
+I"!<p>스칼라에서 Empty values는 Null, null, Nil, Nothing, None, Unit 이 있다. 
+<code class="language-plaintext highlighter-rouge">이 모든 키워드가 값이 없음을 나타내는데 사용되는 것처럼 보일 수 있지만 
+각 키워드에는 고유한 목적이 있다.</code>  <br />
+각각 차이점과 특징에 대해 확인 해보자.</p>
+
+<h2 id="null">null</h2>
+
+<p>String과 Object과 같이 레퍼런스 타입(AnyRef)이 null이 될 수 있고 Int, Double, Long, 등의 
+value 타입(AnyVal)은 null이 될 수 없다.  <br />
+스칼라에서 null은 Null의 인스턴스이고 자바의 null과 비슷하다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">num</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="kc">null</span> <span class="c1">// error </span>
+</code></pre></div></div>
+
+<p>아래와 같이 null 레퍼런스를 가진 클래스 예제를 보자.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">case</span> <span class="k">class</span> <span class="nc">Car</span><span class="o">(</span><span class="n">make</span><span class="k">:</span><span class="kt">String</span><span class="o">)</span>
+
+<span class="c1">//Initializes an instance of Car with null reference</span>
+<span class="k">val</span> <span class="nv">nullRefCar</span><span class="k">:</span><span class="kt">Car</span> <span class="o">=</span> <span class="kc">null</span>
+<span class="k">try</span><span class="o">{</span>
+  <span class="nf">println</span><span class="o">(</span><span class="nv">nullRefCar</span><span class="o">.</span><span class="py">make</span><span class="o">)</span>
+<span class="o">}</span><span class="k">catch</span><span class="o">{</span>
+  <span class="k">case</span> <span class="n">npe</span><span class="k">:</span><span class="kt">NullPointerException</span> <span class="o">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="s">"Null Pointer Error occurred: %s"</span><span class="o">.</span><span class="py">format</span><span class="o">(</span><span class="n">npe</span><span class="o">))</span>
+<span class="o">}</span>
+
+<span class="c1">//Initializes an instance of Car type with argument as null</span>
+<span class="k">val</span> <span class="nv">nullMakeCar</span> <span class="k">=</span> <span class="nc">Car</span><span class="o">(</span><span class="kc">null</span><span class="o">)</span>
+<span class="nf">println</span><span class="o">(</span><span class="nv">nullMakeCar</span><span class="o">.</span><span class="py">make</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>Output</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Null Pointer Error occurred: java.lang.NullPointerException
+null
+</code></pre></div></div>
+
+<p>위의 결과처럼 NullPointException 에러를 피히가 위해 <a href="https://www.baeldung.com/scala/option-type">Option</a> 을 
+사용하는 것을 추천한다.</p>
+
+<h2 id="null-1">Null</h2>
+
+<p>Trait 이고 모든 레퍼런스 타입(AnyRef를 상속한 모든 클래스)의 서브클래스이다. 값 타입과는 호완성이 없다.</p>
+
+<h2 id="nothing">Nothing</h2>
+
+<p>Trait이며 모든 클래스를 상속받을 수 있다. 즉, 바닥 타입(bottom type)이라 한다.</p>
+
+<h2 id="nil">Nil</h2>
+
+<p>아무것도 없는 List를 나타낸다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>println(Nil == List())  // true 
+</code></pre></div></div>
+
+<h2 id="none">None</h2>
+
+<p>아무것도 없다는 리턴 값을 표현하기 위해 사용한다. null 포인트 예외를 회피 하기 
+위해 Option[T]의 자식클래스로 사용된다.</p>
+
+<h2 id="unit">Unit</h2>
+
+<p>아무것도 리턴 하지 않는 메서드의 리턴타입으로 사용한다.</p>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="https://www.geeksforgeeks.org/scala-null-null-nil-nothing-none-and-unit/">https://www.geeksforgeeks.org/scala-null-null-nil-nothing-none-and-unit/</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

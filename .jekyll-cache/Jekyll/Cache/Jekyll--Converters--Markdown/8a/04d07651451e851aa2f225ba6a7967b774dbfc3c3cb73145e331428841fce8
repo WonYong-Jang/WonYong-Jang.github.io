@@ -1,0 +1,578 @@
+I"��<h2 id="목표">목표</h2>
+
+<p>자바의 어노테이션에 대해 학습하세요.</p>
+
+<h2 id="학습할-것">학습할 것</h2>
+
+<ul>
+  <li>어노테이션 정의하는 방법</li>
+  <li>@retention</li>
+  <li>@target</li>
+  <li>@documented</li>
+  <li>어노테이션 프로세서</li>
+</ul>
+
+<hr />
+
+<h2 id="1-어노테이션">1. 어노테이션</h2>
+
+<p>클래스나 메소드 등의 선언시에 @를 사용하는 것을 말한다. 자바 5 부터 새롭게 추가된 요소이며, 
+    어노테이션의 용도는 다양한 목적이 있지만 메타 데이터의 비중이 가장 크다.</p>
+
+<blockquote>
+  <p>메타 데이터(meta-data) : 데이터를 위한 데이터를 의미하며, 풀어 이야기 하면 한 데이터에 
+                           대한 설명을 의미하는 데이터( 자신의 정보를 담고 있는 데이터 )</p>
+</blockquote>
+
+<p>또한, 어노테이션은 주석이라는 뜻을 가지고 있다.  <br />
+기본적으로 우리가 아는 주석은 // 또는 /* */ 이렇게 생겼는데, 
+어노테이션과 일반적인 주석은 뭐가 다른걸까?</p>
+
+<p><code class="language-plaintext highlighter-rouge">단어의 의미인 주석과는 비슷하지만 다른 역할로써 사용되는데 메서드, 클래스 등에 의미를 
+단순히 컴파일러에게 알려주기 위한 표식이 아닌 컴파일타임 이나 런타임에 해석될 수 있다.</code></p>
+
+<h4 id="커스텀-어노테이션">커스텀 어노테이션</h4>
+
+<p>기본적으로 제공해주는 어노테이션이 아닌 커스텀한 어노테이션을 작성하고 
+싶다면, 다음과 같이 선언해서 사용할 수 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Inherited</span>
+<span class="kd">public</span> <span class="nd">@interface</span> <span class="nc">Hello</span> <span class="o">{</span>
+    <span class="nc">String</span> <span class="nf">name</span><span class="o">();</span>
+    <span class="kt">int</span> <span class="nf">age</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>위의 Hello라는 커스텀 어노테이션이며, String 타입과 int 타입의 멤버를 가진다. 이렇게 
+선언한 어노테이션은 아래와 같이 적용해서 사용 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Hello</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"mike"</span><span class="o">,</span> <span class="n">age</span> <span class="o">=</span> <span class="mi">20</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Animal</span> <span class="o">{</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>위의 예제는 name과 age 값을 반드시 지정해줘야 한다. 아래와 같이 
+기본값이 설정되어 있다면, 어노테이션을 적용할 때 굳이 어떤 값인지 
+작성하지 않아도 된다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="nd">@interface</span> <span class="nc">Hello</span> <span class="o">{</span>
+    <span class="nc">String</span> <span class="nf">name</span><span class="o">()</span> <span class="k">default</span> <span class="s">"mike"</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="nf">age</span><span class="o">()</span> <span class="k">default</span> <span class="mi">20</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">다음으로 어노테이션은 value라는 기본 값을 가질 수 있다.</code>     <br />
+value라는 element는 어노테이션을 적용할 때 굳이 element의 이름을 명시해주지 
+않아도 된다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Hello</span><span class="o">(</span><span class="s">"mike"</span><span class="o">)</span> <span class="c1">// 보통은 name = "mike" 라고 해주는데</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Animal</span> <span class="o">{</span> <span class="c1">// value는 이름 없이 가능하다.</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="nd">@interface</span> <span class="nc">Hello</span> <span class="o">{</span>
+    <span class="nc">String</span> <span class="nf">value</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>String value() 예시로 String 타입을 사용했지만, 굳이 String 타입이 아니어도 가능하다. <br />
+하지만 한 번에 두 개 이상의 값을 할당해야 하는 경우 value라고 하더라도 value를 명시 해야 한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Hello</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="s">"mike"</span><span class="o">,</span> <span class="n">num</span> <span class="o">=</span> <span class="mi">20</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Animal</span> <span class="o">{</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="nd">@interface</span> <span class="nc">Hello</span> <span class="o">{</span>
+    <span class="nc">String</span> <span class="nf">value</span><span class="o">();</span>
+    <span class="kt">int</span> <span class="nf">num</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="2-자바-어노테이션-종류">2. 자바 어노테이션 종류</h2>
+
+<p><code class="language-plaintext highlighter-rouge">자바에서 기본적으로 제공하는 어노테이션(빌트 인 어노테이션)</code> 종류를 알아보자.</p>
+
+<h4 id="2-1-override">2-1) @Override</h4>
+
+<p>선언한 메서드가 오버라이드 되었다는 것을 나타낸다. 만약 부모 클래스 또는 인터페이스에서 
+해당 메서드를 찾을 수 없다면 컴파일 에러를 발생 시킨다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">해당 어노테이션을 생략할수는 있지만, 권장하지 않는다.</code>    <br />
+부모 클래스가 수정되었을때 자식클래스에서 오버라이딩 해서 사용하고 있는 메서드에도 
+컴파일러가 에러를 보여주기 때문에 실수를 방지할 수 있다. 
+그렇기 때문에 오버라이딩 어노테이션을 생략했을 경우 위험한 코드가 될 수 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Target</span><span class="o">(</span><span class="nc">ElementType</span><span class="o">.</span><span class="na">METHOD</span><span class="o">)</span>
+<span class="nd">@Retention</span><span class="o">(</span><span class="nc">RetentionPolicy</span><span class="o">.</span><span class="na">SOURCE</span><span class="o">)</span>
+<span class="kd">public</span> <span class="nd">@interface</span> <span class="nc">Override</span> <span class="o">{</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h4 id="2-2-deprecated">2-2) @Deprecated</h4>
+
+<p>해당 메서드가 더 이상 사용되지 않음을 표시한다. 만약 사용할 경우 컴파일 경고를 발생 시킨다.</p>
+
+<p>예를들어, Date클래스가 있는데,</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="cm">/**
+     *  ...
+     * @param   year    the year minus 1900.
+     * @param   month   the month between 0-11.
+     * @param   date    the day of the month between 1-31.
+     * @see     java.util.Calendar
+     * @deprecated As of JDK version 1.1,
+     * replaced by &lt;code&gt;Calendar.set(year + 1900, month, date)&lt;/code&gt;
+     * or &lt;code&gt;GregorianCalendar(year + 1900, month, date)&lt;/code&gt;.
+     */</span>
+    <span class="nd">@Deprecated</span>
+    <span class="kd">public</span> <span class="nf">Date</span><span class="o">(</span><span class="kt">int</span> <span class="n">year</span><span class="o">,</span> <span class="kt">int</span> <span class="n">month</span><span class="o">,</span> <span class="kt">int</span> <span class="n">date</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">(</span><span class="n">year</span><span class="o">,</span> <span class="n">month</span><span class="o">,</span> <span class="n">date</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<p>Date클래스를 살펴보면 생성자가 deprecated가 존재한다는 것을 확인 할 수 있다. 
+읽어보면 이 클래스는 더 이상 사용하지 말고, Calender클래스를 사용을 권장하고 있다.</p>
+
+<p>그렇다면 이 클래스를 자바 자체에서 삭제하면 되지 않을까? <br />
+그렇게 될 경우 기존에 Date클래스가 작성된 프로그램은 동작하지 않게 될 것이다. 
+그러면 개발자가 모두 찾아다니면서 수정해야된다는 뜻이다.
+<code class="language-plaintext highlighter-rouge">결국 호환성 때문에 존재하는 어노테이션이라는 것을 알 수 있다.</code></p>
+
+<h4 id="2-3-suppresswarnings">2-3) @SuppressWarnings</h4>
+
+<p>선언한 곳의 컴파일 경고를 무시하도록 한다.</p>
+
+<h4 id="2-4-safevarargs">2-4) @SafeVarargs</h4>
+
+<p>자바 7부터 지원하며, 제너릭 같은 가변인자의 매개변수를 사용할 때의 경고를 
+무시한다.</p>
+
+<h4 id="2-5-funcionalinterface">2-5) @FuncionalInterface</h4>
+
+<p>자바8부터 지원하며, 함수형 인터페이스를 지정하는 어노테이션이다. <br />
+만약 메서드가 존재하지 않거나, 1개 이상의 메서드(default 메서드 제외)가 존재할 경우 
+컴파일 오류를 발생 시킨다.</p>
+
+<hr />
+
+<h2 id="3-메타-어노테이션의-종류">3. 메타 어노테이션의 종류</h2>
+
+<p>메타 어노테이션의 종류를 알아보자</p>
+
+<h4 id="3-1-retention">3-1) @Retention</h4>
+
+<p>얼마나 오랫동안 어노테이션 정보가 유지되는지 설정할 수 있다.</p>
+
+<p>아래와 같은 단계로 이루어지며 단 단계별 설정이 가능하다.</p>
+
+<blockquote>
+  <p>SOURCE -&gt; CLASS -&gt; RUNTIME</p>
+</blockquote>
+
+<h5 id="retentionpolicysource">RetentionPolicy.SOURCE</h5>
+
+<p><code class="language-plaintext highlighter-rouge">어노테이션 정보가 컴파일시 사라진다. 바이트코드에서도 존재하지 않는다.
+즉, 소스 코드에만 유지하겠다는 것이고 컴파일 할때만 사용하고 어노테이션 정보를 
+지우겠다는 뜻이다.</code></p>
+
+<p>아래 예시 중 Override는 오버라이딩 되었다는 것을 나타내며, 컴파일 할때 
+진짜로 오버라이딩 되었는지만 체크한다.</p>
+
+<blockquote>
+  <p>ex) @Override, @SuppressWarnings</p>
+</blockquote>
+
+<h5 id="retentionpolicyclass">RetentionPolicy.CLASS</h5>
+
+<p><code class="language-plaintext highlighter-rouge">클래스 파일에 존재하고 컴파일러에 의해 사용가능하다. 가상머신(런타임)에서는 사라진다.   
+바이트코드에는 남겨놓겠다는 것이다.</code></p>
+
+<p>JVM 클래스 로더에 의해서 바이트 코드를 읽어 들이고 메모리에 적재 할때 
+해당 어노테이션 정보를 제외한다.</p>
+
+<p>리플렉션은 클래스 로더가 메모리에 적재한 정보를 읽어오는 것이기 때문에 
+RetentionPolicy.CLASS일 경우는 리플렉션이 불가능하다.</p>
+
+<p>아래와 같이 커스텀한 어노테이션을 만들고 실제로 바이트코드를 확인하여 
+컴파일 되었을 때 어노테이션 정보가 남아있는지 확인 해보자.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Target</span><span class="o">(</span><span class="nc">ElementType</span><span class="o">.</span><span class="na">METHOD</span><span class="o">)</span>
+<span class="nd">@Retention</span><span class="o">(</span><span class="nc">RetentionPolicy</span><span class="o">.</span><span class="na">CLASS</span><span class="o">)</span>
+<span class="kd">public</span> <span class="nd">@interface</span> <span class="nc">Hello</span> <span class="o">{</span>
+<span class="o">}</span>
+
+<span class="nd">@Hello</span>
+<span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">method</span><span class="o">(){}</span>
+</code></pre></div></div>
+
+<p>Output</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="kd">public</span> <span class="kd">static</span> <span class="nf">method</span><span class="o">()</span><span class="no">V</span>
+  <span class="nd">@Lcom</span><span class="o">/</span><span class="n">example</span><span class="o">/</span><span class="n">demo</span><span class="o">/</span><span class="nc">Hello</span><span class="o">;()</span> <span class="c1">// invisible</span>
+   <span class="no">L0</span>
+    <span class="no">LINENUMBER</span> <span class="mi">6</span> <span class="no">L0</span>
+    <span class="no">RETURN</span>
+    <span class="no">MAXSTACK</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="no">MAXLOCALS</span> <span class="o">=</span> <span class="mi">0</span>
+</code></pre></div></div>
+
+<p>위와 같이 바이트코드를 확인해 보면, 커스텀 어노테이션인 hello에 
+invisible이라는 주석이 있는 것을 확인 할 수 있다.  <br />
+해당 주석이 붙은 정보는 런타임시 사라진다.</p>
+
+<h5 id="retentionpolicyruntime">RetentionPolicy.RUNTIME</h5>
+
+<p><code class="language-plaintext highlighter-rouge">런타임까지 해당 어노테이션 정보를 유지 하겠다는 것이다.   
+바이트 코드에 존재 하다가  
+실행시 어노테이션 정보가 JVM에 의해서 참조 가능해진다. 
+즉, 자바 리플렉션이 사용 가능하다.</code></p>
+
+<p>커스텀하게 만든 어노테이션의 RetentionPolicy.RUNTIME일 경우 
+유지 정보가 런타임까지 모두 포함되므로 편하게 사용할 수 있지만 
+런타임까지 가지고 있을 필요가 없는 정보라면 CLASS 또는 SOURCE로 
+설정 변경을 한번 쯤 생각해보는 것을 권장한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="kd">public</span> <span class="kd">static</span> <span class="nf">method</span><span class="o">()</span><span class="no">V</span>
+  <span class="nd">@Lcom</span><span class="o">/</span><span class="n">example</span><span class="o">/</span><span class="n">demo</span><span class="o">/</span><span class="nc">Hello</span><span class="o">;()</span>
+   <span class="no">L0</span>
+    <span class="no">LINENUMBER</span> <span class="mi">6</span> <span class="no">L0</span>
+    <span class="no">RETURN</span>
+    <span class="no">MAXSTACK</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="no">MAXLOCALS</span> <span class="o">=</span> <span class="mi">0</span>
+</code></pre></div></div>
+
+<p>위의 바이트 코드를 확인해보면 커스텀 어노테이션인 hello 옆에 invisible이라는 
+주석이 없다. 이는 클래스 로더에 의해 메모리까지 올라간다는 의미 이다.</p>
+
+<p>아래는 같이 어노테이션과 리플렉션을 활용하여 연습한 예제이다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Loop</span> <span class="o">{</span>
+
+    <span class="nd">@AnnotationLoop</span><span class="o">(</span><span class="n">loopCnt</span> <span class="o">=</span> <span class="mi">10</span><span class="o">)</span> 
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">method</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="s">"*"</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="nd">@Target</span><span class="o">({</span><span class="nc">ElementType</span><span class="o">.</span><span class="na">METHOD</span><span class="o">})</span>
+<span class="nd">@Retention</span><span class="o">(</span><span class="nc">RetentionPolicy</span><span class="o">.</span><span class="na">RUNTIME</span><span class="o">)</span>
+<span class="kd">public</span> <span class="nd">@interface</span> <span class="nc">AnnotationLoop</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="nf">loopCnt</span><span class="o">()</span> <span class="k">default</span> <span class="mi">1</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">HelloController</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">InvocationTargetException</span><span class="o">,</span> <span class="nc">IllegalAccessException</span> <span class="o">{</span>
+        <span class="c1">// Loop 클래스에 선언된 public Method 가져온다</span>
+        <span class="c1">// 단, 슈퍼 클래스에 선언된 public Method도 가져온다.</span>
+        <span class="c1">// Loop 클래스에 선언된 모든 method를 가져오려면(private도 포함)</span>
+        <span class="c1">// getDeclaredMethods()를 이용한다.</span>
+        <span class="nc">Method</span><span class="o">[]</span> <span class="n">methods</span> <span class="o">=</span> <span class="nc">Loop</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getMethods</span><span class="o">();</span>
+        <span class="k">for</span> <span class="o">(</span><span class="nc">Method</span> <span class="n">method</span> <span class="o">:</span> <span class="n">methods</span><span class="o">)</span> <span class="o">{</span>
+
+            <span class="k">if</span><span class="o">(</span><span class="n">method</span><span class="o">.</span><span class="na">isAnnotationPresent</span><span class="o">(</span><span class="nc">AnnotationLoop</span><span class="o">.</span><span class="na">class</span><span class="o">))</span> <span class="o">{</span>
+                <span class="nc">AnnotationLoop</span> <span class="n">annotation</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="na">getAnnotation</span><span class="o">(</span><span class="nc">AnnotationLoop</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+                <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span> <span class="n">i</span><span class="o">&lt;</span> <span class="n">annotation</span><span class="o">.</span><span class="na">loopCnt</span><span class="o">();</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+                    <span class="n">method</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="k">new</span> <span class="nc">Loop</span><span class="o">());</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="c1">// Output </span>
+<span class="c1">// **********</span>
+</code></pre></div></div>
+
+<h4 id="3-2-target">3-2) @Target</h4>
+
+<p>어노테이션이 적용할 위치를 선택한다. 명시하지 않는다면 
+어디든 적용이 가능해 진다.</p>
+
+<p>종류는 다음과 같다.</p>
+
+<ul>
+  <li>ElementType.PACKAGE : package</li>
+  <li>ElementType.TYPE : class, interface, enum</li>
+  <li>ElementType.ANNOTATION_TYPE : annotation</li>
+  <li>ElementType.CONSTRUCTOR : constructor</li>
+  <li>ElementType.FIELD : field</li>
+  <li>ElementType.LOCAL_VARIABLE : local variable</li>
+  <li>ElementType.METHOD : mehotd</li>
+</ul>
+
+<p>여러 곳에 적용하려면 아래와 같이 배열 형태로 적용 가능하다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Target({ElementType.FIELD, ElementType.METHOD})
+</code></pre></div></div>
+
+<h4 id="3-3-documented">3-3) @Documented</h4>
+
+<p><code class="language-plaintext highlighter-rouge">어노테이션 정보가 javadoc으로 작성된 문서에 포함되도록 하는 메타 에노테이션이다.</code></p>
+
+<p>직접 javadoc을 만들 수 있다는 뜻이며, Tools -&gt; Generate JavaDoc 으로 
+만들 수 있다.</p>
+
+<p>Output Directory에 저장할 폴더를 선택하고 
+Other Command line arguments에 -encoding UTF-8 -charset UTF-8 -docencoding UTF-8 까지 
+지정해줘야 한글이 깨지지 않고 javadoc을 성공적으로 만들 수 있다.</p>
+
+<h4 id="3-4-inherited">3-4) @Inherited</h4>
+
+<p><code class="language-plaintext highlighter-rouge">상속받은 클래스에도 어노테이션이 유지된다는 뜻이다.</code></p>
+
+<p>아래 예제를 보면 Hello라는 커스텀한 어노테이션을 만들었고 @Inherited를 
+추가하였다.</p>
+
+<p>그리고 Animal 클래스에만 Hello라는 어노테이션을 붙이고 
+컨트롤러에서 Aminal을 상속받은 Dog클래스를 리플렉션을 이용하여 
+어노테이션을 확인하였다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Target</span><span class="o">(</span><span class="nc">ElementType</span><span class="o">.</span><span class="na">METHOD</span><span class="o">)</span>
+<span class="nd">@Retention</span><span class="o">(</span><span class="nc">RetentionPolicy</span><span class="o">.</span><span class="na">RUNTIME</span><span class="o">)</span>
+<span class="nd">@Inherited</span>
+<span class="kd">public</span> <span class="nd">@interface</span> <span class="nc">Hello</span> <span class="o">{</span>
+<span class="o">}</span>
+
+<span class="nd">@Hello</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Animal</span> <span class="o">{</span>   
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Dog</span> <span class="kd">extends</span> <span class="nc">Animal</span> <span class="o">{</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">HelloController</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">InvocationTargetException</span><span class="o">,</span> <span class="nc">IllegalAccessException</span> <span class="o">{</span>
+
+        <span class="nc">Annotation</span><span class="o">[]</span> <span class="n">annotations</span> <span class="o">=</span> <span class="nc">Dog</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getAnnotations</span><span class="o">();</span> <span class="c1">// 리플렉션</span>
+
+        <span class="k">for</span> <span class="o">(</span><span class="nc">Annotation</span> <span class="n">annotation</span> <span class="o">:</span> <span class="n">annotations</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">annotation</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="c1">// Output </span>
+
+<span class="c1">// 출력 :  @com.example.demo.Hello()</span>
+</code></pre></div></div>
+
+<p>결과는 위와 같이 상속받은 클래스의 어노테이션이 유지가 된 것을 확인 할 수 있다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">참고로 Dog클래스에 선언되어 있는 어노테이션만 가지고 오고 싶다면 getDeclaredAnnotations() 을 사용하여 
+가져올 수 있다.    
+이것을 getDeclaredMethods() 등으로 응용하여 사용하면 해당 클래스에 선언 되어 
+있는 모든 메소드들(private 포함)을 모두 가져올 수 있다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">getMethods()을 사용할 경우 슈퍼 클래스의 메소드들 까지 모두 가져오지만 public 한 메소드들만 
+가져올 수 있다.</code></p>
+
+<h4 id="3-5-repeatable">3-5) @Repeatable</h4>
+
+<p>자바8 부터 지원하며, 연속적으로 어노테이션을 선언할 수 있게 해준다.</p>
+
+<p>위에서 살펴본 어노테이션들은 메타 어노테이션이라고 한다. 위의 어노테이션의 
+공통점을 살펴보면 모두 @Target(ElementType.ANNOTATION_TYPE)로 되어 있다는 점이다.  <br />
+결국, 타겟이 어노테이션 타입으로 지정 되어있으면 메타 어노테이션이라고 생각해도 될 것 같다.</p>
+
+<hr />
+
+<h2 id="4-어노테이션-프로세서">4. 어노테이션 프로세서</h2>
+
+<p><code class="language-plaintext highlighter-rouge">런타임시에 리플렉션을 사용하는 어노테이션과는 달리 컴파일 타임에 
+이루어지며, 어노테이션 정보를 참고하여 코드를 분석하고 생성하는 등의 작업을 
+할 수 있는 기능이다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">어노테이션 프로세서의 장점이라고 한다면, 이러한 동작이 컴파일 타임에
+이루어지기 때문에 런타임에 비용이 추가되지 않는다는 것이다.
+하지만, 단점으로는 잘 알고 쓰지 않는다면 의도하지 않는 동작을 할 수도 있기 때문&gt;
+정확히 알고 써야 한다.</code></p>
+
+<p>대표적인 기술로는 롬북(lombok)이 있으며 컴파일 타임에 바이트 코드를 생성해주는 
+라이브러리이다.  <br />
+아래는 롬북 사용 예시 중 하나이다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Data</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Test</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">num</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>위 코드를 컴파일 하여 확인해보면 아래 코드로 
+변경 된 것을 확인 할 수 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Test</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">num</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">Test</span><span class="o">()</span> <span class="o">{</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getNum</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="k">this</span><span class="o">.</span><span class="na">num</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setNum</span><span class="o">(</span><span class="kd">final</span> <span class="kt">int</span> <span class="n">num</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">num</span> <span class="o">=</span> <span class="n">num</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">equals</span><span class="o">(</span><span class="kd">final</span> <span class="nc">Object</span> <span class="n">o</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">o</span> <span class="o">==</span> <span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(!(</span><span class="n">o</span> <span class="k">instanceof</span> <span class="nc">Test</span><span class="o">))</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="nc">Test</span> <span class="n">other</span> <span class="o">=</span> <span class="o">(</span><span class="nc">Test</span><span class="o">)</span><span class="n">o</span><span class="o">;</span>
+            <span class="k">if</span> <span class="o">(!</span><span class="n">other</span><span class="o">.</span><span class="na">canEqual</span><span class="o">(</span><span class="k">this</span><span class="o">))</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="k">this</span><span class="o">.</span><span class="na">getNum</span><span class="o">()</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="na">getNum</span><span class="o">();</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">canEqual</span><span class="o">(</span><span class="kd">final</span> <span class="nc">Object</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">other</span> <span class="k">instanceof</span> <span class="nc">Test</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">hashCode</span><span class="o">()</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="no">PRIME</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">result</span> <span class="o">*</span> <span class="mi">59</span> <span class="o">+</span> <span class="k">this</span><span class="o">.</span><span class="na">getNum</span><span class="o">();</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">toString</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="s">"Test(num="</span> <span class="o">+</span> <span class="k">this</span><span class="o">.</span><span class="na">getNum</span><span class="o">()</span> <span class="o">+</span> <span class="s">")"</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>위를 설명하면 @Data라는 어노테이션이 붙으면 자바는 이 어노테이션이 
+붙은 곳을 찾아 컴파일 할때 생성 해 준다. 그렇기 때문에 
+setter, getter등 직접 만들지 않고도 자동으로 생성 해 준다.</p>
+
+<p>그렇다면 컴파일러는 어노테이션 프로세서가 있는것을 어떻게 알고 
+어노테이션에 대해 전처리를 할 수 있을까?</p>
+
+<p>lombok 라이브러리를 좀 더 자세히 들여다 보자.</p>
+
+<p><img width="941" alt="스크린샷 2021-02-11 오후 10 08 13" src="https://user-images.githubusercontent.com/26623547/107640535-c67ea100-6cb5-11eb-892d-5260b6cbe8e3.png" /></p>
+
+<p>위를 보면 lombok 라이브러리의 META-INF 디렉토리 하위에 
+services라는 폴더가 있다.  <br />
+그 폴더에는 javax.annotaion.processing.Processor 라는 파일이 있고 
+컴파일러는 해당 내용을 참고하게 된다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>lombok.launch.AnnotationProcessorHider$AnnotationProcessor
+lombok.launch.AnnotationProcessorHider$ClaimingProcessor
+</code></pre></div></div>
+
+<p>위의 내용은 <code class="language-plaintext highlighter-rouge">ServiceLoader</code>라는 개념인데 
+<a href="https://riptutorial.com/java/example/19523/simple-serviceloader-example">링크</a> 를 참고하자.</p>
+
+<h4 id="serviceloader">ServiceLoader</h4>
+
+<p><code class="language-plaintext highlighter-rouge">ServiceLoader는 인터페이스 구현체들을 dynamic loading을 할 수 있도록 해준다. 즉, 
+ ServiceLoader 클래스를 이용하면 공통 인터페이스를 준수하는 서비스 구현체를 손쉽게 
+ 로드할 수 있다.</code></p>
+
+<p>간단한 예시로 이해를 해보자.  <br />
+HelloService라는 인터페이스를 정의하여 jar파일로 패키징한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">package</span> <span class="nn">me.kaven</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">HelloService</span> <span class="o">{</span>
+    <span class="nc">String</span> <span class="nf">method</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><img width="900" alt="스크린샷 2021-02-11 오후 11 28 20" src="https://user-images.githubusercontent.com/26623547/107649579-f3848100-6cc0-11eb-8bd3-48ab5984b228.png" /></p>
+
+<p>위와 같이 install을 클릭하여 jar파일을 생성해준다.</p>
+
+<p>그 후 새 프로젝트를 생성하여 아래와 같이 HelloServiceImpl 구현체를 만든다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">package</span> <span class="nn">com.example</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">me.kaven.HelloService</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">HelloServiceImpl</span> <span class="kd">implements</span> <span class="nc">HelloService</span> <span class="o">{</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">method</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="s">"success"</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">jar파일로 패키징 하기전에 이 jar파일이 HelloService의 구현체를 제공하는 jar 라는것이 
+선언된 file을 선언해야 한다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">META-INF/services 디렉토리를 만들고 그 안에 파일 이름을 인터페이스의
+fully-qualified name로 생성한다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">파일 안의 내용은 구현체의 fully-qualified name을 작성한다.</code></p>
+
+<p>완성된 내용은 아래와 같다.</p>
+
+<p><img width="895" alt="스크린샷 2021-02-11 오후 11 50 21" src="https://user-images.githubusercontent.com/26623547/107653243-c0dc8780-6cc4-11eb-9fc1-6d805e306665.png" /></p>
+
+<p>이제 jar 파일로 패키징 후 Test라는 새 프로젝트에서 확인해보자.<br />
+방금 패키징한 jar를 메이븐에 추가한 후 아래와 같이 사용이 가능하다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Test</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">ServiceLoader</span><span class="o">&lt;</span><span class="nc">HelloService</span><span class="o">&gt;</span> <span class="n">loader</span> <span class="o">=</span> <span class="nc">ServiceLoader</span><span class="o">.</span><span class="na">load</span><span class="o">(</span><span class="nc">HelloService</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+        <span class="k">for</span> <span class="o">(</span><span class="nc">HelloService</span> <span class="n">helloService</span> <span class="o">:</span> <span class="n">loader</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">helloService</span><span class="o">.</span><span class="na">method</span><span class="o">());</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<pre><code class="language-maven">&lt;dependencies&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;com.example&lt;/groupId&gt;
+            &lt;artifactId&gt;demo-service-impl&lt;/artifactId&gt;
+            &lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+        &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+</code></pre>
+
+<p>우리는 HelloService라는 인터페이스만 가지고 이를 구현한 구현체들을 
+동적으로 가져올 수 있는 것을 확인 하였다!</p>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="https://b-programmer.tistory.com/264">https://b-programmer.tistory.com/264</a><br />
+<a href="https://blog.naver.com/hsm622/222226824623">https://blog.naver.com/hsm622/222226824623</a><br />
+<a href="https://blog.naver.com/hsm622/222218251749">https://blog.naver.com/hsm622/222218251749</a><br />
+<a href="https://wisdom-and-record.tistory.com/52">https://wisdom-and-record.tistory.com/52</a><br />
+<a href="https://github.com/whiteship/live-study/issues/12">https://github.com/whiteship/live-study/issues/12</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET

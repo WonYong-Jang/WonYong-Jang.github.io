@@ -1,0 +1,210 @@
+I"?<h1 id="스칼라-type">스칼라 Type</h1>
+
+<p>스칼라는 정적타이핑이지만 타입추론을 제공하고 있기 때문에 
+타입에 대해서 많은 정보를 명시하지 않아도 된다.</p>
+
+<blockquote>
+  <p>타입 추론은 컴파일타임때 일어 난다.</p>
+</blockquote>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="n">num</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="mi">10</span> <span class="c1">// 타입 명시함</span>
+<span class="c1">// num: Int = 10</span>
+<span class="k">var</span> <span class="n">num2</span> <span class="k">=</span> <span class="mi">10</span> <span class="c1">// 타입 추론 사용</span>
+<span class="c1">// num2: Int = 10</span>
+<span class="k">var</span> <span class="n">str</span> <span class="k">=</span> <span class="s">"Ousider"</span> <span class="c1">// 타입 추론함</span>
+<span class="c1">// str: java.lang.String = "Outsider"</span>
+</code></pre></div></div>
+
+<p><img width="730" alt="스크린샷 2021-03-16 오후 5 39 10" src="https://user-images.githubusercontent.com/26623547/111280026-b07e4a80-867e-11eb-9630-c982abecfdcb.png" /></p>
+
+<p>스칼라에서 타입의 구조는 위와 같으며 <code class="language-plaintext highlighter-rouge">Any, Nothing, Option이라는 특별한 타입을 
+제공하고 있다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">Any 타입은 모든 타입의 superclass이기 때문에 어떤 타입의 오브젝트도 참조할 수 
+있는 추상클래스이다.</code></p>
+
+<p>Any가 모든 값의 조상이기 때문에 모든 값을 List에 담을 수 있게 되는데 
+아래 예제를 살펴보자.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">list</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Any</span><span class="o">]</span>  <span class="k">=</span> <span class="nc">List</span> <span class="o">(</span>
+    <span class="s">"a String"</span><span class="o">,</span> <span class="c1">// string</span>
+    <span class="mi">455</span><span class="o">,</span>
+    <span class="sc">'c'</span><span class="o">,</span>        <span class="c1">// a Character</span>
+    <span class="kc">true</span><span class="o">,</span>
+    <span class="o">()</span> <span class="k">=&gt;</span> <span class="s">"an anonymous function returning a string"</span>
+  <span class="o">)</span>
+<span class="nv">list</span><span class="o">.</span><span class="py">foreach</span><span class="o">(</span><span class="n">e</span> <span class="k">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="n">e</span><span class="o">))</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">AnyVal, AnyRef는 Any의 자식으로 AnyVal은 Int, Double 같은 Java의 primitive타입과 
+매핑되는 타입들의 기본이 되고 AnyRef는 모든 레퍼런스 타입의 기본이 된다.</code></p>
+
+<p>AnyRef는 바로 자바의 Object에 매핑되며, 모든 user-defined type은 AnyRef의 자손이다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">Nothing 타입은 모든 타입의 최하위 타입이다.</code> <br />
+정해진 타입외에 exception을 리턴하게 되면 Nothing타입으로 추론한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">Null은 모든 AnyRef의 서브 타입이고, 다른 JVM 언어들과 호환하기 위해서 제공하는 것이다. 
+스칼라에서는 보통 사용하지 않는다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">Unit</code>은 아무 의미 없는 값 타입이며, 문법적으로 ‘()’로 표현한다. 모든 함수는 
+항상 리턴타입이 있어야 하는데 아무 리턴값이 없는 경우 Unit을 사용한다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">Option[T]타입은 결과가 정해지지 않은 경우를 위해서 지원한다. 상황에 따라 
+Option[T]를 상속받는 Some[T]나 None을 리턴할 수 있으며 이는 NullPointException을 
+줄일 수 있게 해준다.</code></p>
+
+<hr />
+
+<h2 id="메서드-리턴타입-추론">메서드 리턴타입 추론</h2>
+
+<p>메서드의 리턴타입에 대한 추론은 메서드를 정의하는 방법에 따라 달라지는데 
+<code class="language-plaintext highlighter-rouge">메서드를 등호(=)로 정의한다면 스칼라는 리턴타입을 추론하고 없다면 void가 된다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">method1</span><span class="o">()</span> <span class="o">{</span> <span class="mi">6</span> <span class="o">}</span> <span class="c1">// 리턴타입 void</span>
+<span class="k">def</span> <span class="nf">method2</span><span class="o">()</span> <span class="k">=</span> <span class="o">{</span> <span class="mi">6</span> <span class="o">}</span> <span class="c1">// 리턴타입 Int</span>
+<span class="k">def</span> <span class="nf">method3</span><span class="o">()</span> <span class="k">=</span> <span class="mi">6</span> <span class="c1">// 리턴타입 Int</span>
+<span class="k">def</span> <span class="nf">method4</span> <span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="mi">6</span> <span class="c1">// 리턴타입 Double</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>메서드를 정의할 때 body가 한 문장이면 {} 를 생략 가능하다.</p>
+</blockquote>
+
+<hr />
+
+<h2 id="타입-바운드">타입 바운드</h2>
+
+<p><code class="language-plaintext highlighter-rouge">스칼라에서 타입 바운드(type bounds)는 타입 매개변수와 타입 변수에 제약을 
+거는 행위이다.</code>  <br />
+이를 통해 타입에 안전하게(type safety) 코딩을 할 수 있도록 한다.  <br />
+아래와 같은 3개의 타입 바운드가 존재한다.</p>
+
+<ul>
+  <li>Upper Bound ( 자바에서는 extends )</li>
+  <li>Lower Bound ( 자바에서는 super )</li>
+  <li>Context Bound</li>
+</ul>
+
+<blockquote>
+  <p>View Bound를 사용하다가 scala 2.10 부터 deprecated되고 Context Bound로 전환되었다.</p>
+</blockquote>
+
+<h4 id="upper-type-bounds">Upper Type Bounds</h4>
+
+<p>먼저 <code class="language-plaintext highlighter-rouge">Upper Bound</code> (한국 말로 상위 타입 경계라 한다)</p>
+
+<p>[T &lt;: S] 이렇게 표현할 수 있다. T는 타입 매개변수이고 S는 타입이다.</p>
+
+<p>아래 예시를 살펴보자.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">abstract</span> <span class="k">class</span> <span class="nc">Animal</span> <span class="o">{</span> <span class="k">def</span> <span class="nf">name</span><span class="k">:</span> <span class="kt">String</span> <span class="o">}</span>
+
+<span class="k">abstract</span> <span class="k">class</span> <span class="nc">Pet</span> <span class="k">extends</span> <span class="nc">Animal</span> <span class="o">{</span> <span class="k">def</span> <span class="nf">owner</span><span class="k">:</span> <span class="kt">String</span> <span class="o">}</span>  <span class="c1">// Pet 에서만 사용할 메서드   </span>
+
+<span class="k">class</span> <span class="nc">Cat</span> <span class="k">extends</span> <span class="nc">Pet</span> <span class="o">{</span>
+  <span class="k">override</span> <span class="k">def</span> <span class="nf">name</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">"Cat"</span>
+  <span class="k">override</span> <span class="k">def</span> <span class="nf">owner</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">"mike"</span>
+<span class="o">}</span>
+
+<span class="k">class</span> <span class="nc">Dog</span> <span class="k">extends</span> <span class="nc">Pet</span> <span class="o">{</span>
+  <span class="k">override</span> <span class="k">def</span> <span class="nf">name</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">"Dog"</span>
+  <span class="k">override</span> <span class="k">def</span> <span class="nf">owner</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">"kaven"</span>
+<span class="o">}</span>
+
+<span class="k">class</span> <span class="nc">Lion</span> <span class="k">extends</span> <span class="nc">Animal</span> <span class="o">{</span>
+  <span class="k">override</span> <span class="k">def</span> <span class="nf">name</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">"Lion"</span>
+<span class="o">}</span>
+
+<span class="k">class</span> <span class="nc">PetContainer</span><span class="o">[</span><span class="kt">T</span> <span class="k">&lt;:</span> <span class="kt">Pet</span><span class="o">](</span><span class="n">t</span><span class="k">:</span> <span class="kt">T</span><span class="o">)</span> <span class="o">{</span>  <span class="c1">// Upper bound    </span>
+  <span class="k">def</span> <span class="nf">pet</span><span class="k">:</span> <span class="kt">T</span> <span class="o">=</span> <span class="n">t</span>
+<span class="o">}</span>
+
+<span class="k">object</span> <span class="nc">Main</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+
+  <span class="k">val</span> <span class="nv">dogContainer</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">PetContainer</span><span class="o">[</span><span class="kt">Dog</span><span class="o">](</span><span class="k">new</span> <span class="nc">Dog</span><span class="o">)</span>
+  <span class="k">val</span> <span class="nv">catContainer</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">PetContainer</span><span class="o">[</span><span class="kt">Cat</span><span class="o">](</span><span class="k">new</span> <span class="nc">Cat</span><span class="o">)</span>
+
+  <span class="nf">println</span><span class="o">(</span><span class="nv">dogContainer</span><span class="o">.</span><span class="py">pet</span><span class="o">.</span><span class="py">name</span><span class="o">)</span> <span class="c1">// 출력 : Dog</span>
+  <span class="nf">println</span><span class="o">(</span><span class="nv">catContainer</span><span class="o">.</span><span class="py">pet</span><span class="o">.</span><span class="py">name</span><span class="o">)</span> <span class="c1">// 출력 : Cat</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>PetContainer 클래스를 살펴보면, upper bound(&lt;:)를 사용했다.</p>
+
+<p><code class="language-plaintext highlighter-rouge">따라서 Pet의 자식 클래스를 사용할 수 있도록 제한을 걸었다.</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">upper bound(&lt;:)의 제약을 넘어서면, 타입 파라미터 바운드와 타입이 안 맞는다는 에러가 발생한다.</code></p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">lionContainer</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">PetContainer</span><span class="o">[</span><span class="kt">Lion</span><span class="o">](</span><span class="k">new</span> <span class="nc">Lion</span><span class="o">)</span>  <span class="c1">// ths would not compile   </span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>inferred type arguments [Member] do not conform to method print's type parameter bounds [T &lt;: SchoolMember]
+type mismatch;
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">Upper Bound를 사용하는 이유는 제너릭 파라미터에 있는 메서드나 속성만 사용하고자 할때 
+제한을 건다.</code>  <br />
+위의 경우는 Animal에는 없고 Pet에만 있는 owner 라는 메서드를 사용해야 할때 
+이러한 제한을 걸게 된다.</p>
+
+<h4 id="lower-bounds">Lower Bounds</h4>
+
+<p>다음은 <code class="language-plaintext highlighter-rouge">Lower Bound</code> 이다.( 한국 말로 하위 타입 경계라 한다.)  <br />
+자바의 super 개념과 동일하다.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LowerBounds</span><span class="o">[</span><span class="kt">Parent</span><span class="o">]</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="nf">print</span><span class="o">[</span><span class="kt">T</span> <span class="k">&gt;:</span> <span class="kt">Parent</span><span class="o">](</span><span class="n">t</span><span class="k">:</span> <span class="kt">T</span><span class="o">)</span> <span class="o">{</span>
+      <span class="nf">println</span><span class="o">(</span><span class="n">t</span><span class="o">)</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">class</span> <span class="nc">Parent</span>
+<span class="k">class</span> <span class="nc">Child</span> <span class="k">extends</span> <span class="nc">Parent</span>
+
+<span class="k">val</span> <span class="nv">parent</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Parent</span>
+<span class="k">val</span> <span class="nv">child</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Child</span>
+
+<span class="k">val</span> <span class="nv">instance</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">LowerBounds</span><span class="o">[</span><span class="kt">Parent</span><span class="o">]</span> 
+<span class="nv">instance</span><span class="o">.</span><span class="py">print</span><span class="o">(</span><span class="n">parent</span><span class="o">)</span> <span class="c1">// 출력 : Main$Parent@3a03464   </span>
+<span class="nv">instance</span><span class="o">.</span><span class="py">print</span><span class="o">(</span><span class="n">child</span><span class="o">)</span>  <span class="c1">// 출력 : Main$Child@2d3fcdbd   </span>
+</code></pre></div></div>
+
+<p>위의 예제는 Parent 보다 큰 타입만 받도록 하는 예제이다.  <br />
+LowerBounds 클래스에 [T &gt;: Parent] 라는 제약이 있는 print 메서드를 정의했다.</p>
+
+<p>결과를 실행해보면, Upper Bounds의 예시처럼 에러를 기대하겠지만, 실제로 
+테스트해보면 잘 출력된다.</p>
+
+<p>단순한 Lower bounds만으로 스칼라가 에러를 출력하지 않는다.</p>
+
+<hr />
+
+<p><strong>Reference</strong></p>
+
+<p><a href="https://blog.outsider.ne.kr/478">https://blog.outsider.ne.kr/478</a><br />
+<a href="https://knight76.tistory.com/entry/scala-class-4-%EC%98%88%EC%8B%9C">https://knight76.tistory.com/entry/scala-class-4-%EC%98%88%EC%8B%9C</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://zcx6263.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+:ET
