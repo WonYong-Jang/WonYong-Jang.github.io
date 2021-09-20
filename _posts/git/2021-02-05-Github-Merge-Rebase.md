@@ -8,7 +8,9 @@ date: 2021-02-05
 background: '/img/posts/mac.png'
 ---
 
-Git에서 한 브랜치에서 다른 브랜치로 합치는 방법으로는 크게 두 가지가 있다.     
+다른 형상관리툴들과는 달리 git은 branch를 생성할 때 파일을 복사하는 것이 아니라 파일의 스냅샷만 가지고 
+생성하기 때문에 자원의 부담없이 branch를 만들어 사용할 수 있다. 이러한 장점 때문에 git으로 작업을 할 때에는 다양한 
+용도의 branch를 만들어 사용하는데, Git에서 한 브랜치에서 다른 브랜치로 합치는 방법으로는 크게 두 가지가 있다.       
 하나는 Merge이고 다른 하나는 Rebase이며 
 다른 사람과 협업을 할 때 git을 이용하여 형상관리를 함에 있어서 branch 간의 merge 또는 rebase의 
 사용법과 차이점을 알고있는 것이 협업을 할 때 매우 도움이 된다.   
@@ -29,7 +31,7 @@ $ git checkout my-branch
 
 위 처럼 my-branch 에서 작업을 다 끝내고 master 브랜치에 merge를 하려고 했는데, 내가 merge하기 전에 
 누군가가 master 브랜치에 다른 작업을 한 후 commit하고 push했다. 그렇다면 
-이런 모양이 될 것이다.   
+다음과 같은 모양이 될 것이다.   
 
 <img width="649" alt="스크린샷 2021-09-19 오후 7 39 35" src="https://user-images.githubusercontent.com/26623547/133924477-e1247a69-2936-4ee1-afb2-3ca2f9943fee.png">   
 
@@ -39,6 +41,17 @@ $ git checkout my-branch
 - - -    
 
 # 1. Merge     
+
+위에서 my-branch 브랜치를 생성하고 작업이 끝난 다음 master에 merge를 진행할 때까지, 
+    master에 어떠한 변경도 없다면 fast-forward merge가 진행되어 커밋 로그에 깔끔한 그래프를 그려줄 것이다.   
+
+`서로 다른 상태를 병합하는 것이 아니고 master를 my-branch 위치로 이동만 해도 되는 상태이기 때문에 
+별도의 merge를 위한 커밋이 발생하지 않는다.`       
+
+하지만 협업을 하다보면 다른 동료가 먼저 master에 merge를 진행하여 변경이 일어난 경우는 
+fast-forward로 merge 될 수 없다.   
+
+그럼 master 브랜치에서도 몇개의 commit이 더 발생한 경우의 merge 전략은 다음과 같다.   
 
 `Merge 브랜치에서 사용하는 전략은 각 브랜치의 마지막 커밋 두 개와 공통 조상의 
 총 3개의 커밋을 이용하는 3-way merge를 수행하여 새로운 커밋을 만들어내는 것이다.`   
@@ -171,7 +184,8 @@ feature를 master 브랜치로 rebase하는 명령어를 살펴보면 일련의 
 
 ```
 $ git checkout feature   
-$ git rebase master   
+$ git rebase master  
+$ git checkout master   
 $ git merge feature   
 ```   
 
@@ -220,13 +234,18 @@ $ git rebase master
 
 #### Step 6    
 
-`feature를 master로 fast-forward merge하여 완료 한다.`    
+`마지막으로 master 브랜치를 새로 새로 리베이스된 커밋 앞으로 fast-forward merge하여 완료 한다.`   
 
 <img width="600" alt="스크린샷 2021-09-19 오후 9 25 56" src="https://user-images.githubusercontent.com/26623547/133972188-80db7737-2aa4-4595-b034-6113df045703.png">   
 
 ```
-$ git merge feature
+$ git checkout master   
+$ git merge feature   //  master에 병합할 브랜치    
+
+// merge 취소할 경우   
+$ git merge --abort   
 ```
+
 
 - - - 
 
@@ -327,7 +346,15 @@ pick e57d956 git rebase test fifth commit
 해당 커밋이 변경되는 것을 확인 할 수 있다.   
 
 다만 수정한 커밋 히스토리가 서로 의존성을 갖고 있는 경우 충돌이 발생할 수 
-있기 때문에, 이를 위한 별도의 처리가 필요하다는 점 주의하자.   
+있기 때문에, 이를 위한 별도의 처리가 필요하다는 점 주의하자.  
+
+`rebase의 경우 충돌 부분을 수정 한 후에는 commit이 아니라 rebase 명령에 --continue 옵션을 지정하여 
+실행해야 한다.`    
+
+```
+$ git add {수정파일}
+$ git rebase --continue
+```
 
 `rebase 충돌이 발생했을 때, 충돌이 발생하기 전 상태로 돌리고 싶다면 
 아래와 같이 가능하다.`       
@@ -437,7 +464,21 @@ $ git commit --amend
 
 네 번째 커밋과 4와 1/2번째 커밋의 메시지를 확인 할 수 있고 필요에 따라 커밋 메시지를 
 수정할 수도 있다.   
-저장을 하게되면 두 커밋이 합쳐진 것을 확인 할 수 있다.   
+저장을 하게되면 두 커밋이 합쳐진 것을 확인 할 수 있다.    
+
+fixup은 squash와 동일하게 해당 커밋을 이전 커밋과 합치는 명령이지만 
+커밋 메시지는 합치지 않는다. 결과적으로 이전 커밋의 메시지만 남게 된다.    
+그 점만 빼면 squash와 동일하므로 예제는 생략하도록 한다.   
+
+#### 3-6) drop, exec   
+
+drop 명령어는 커밋 히스토리에서 커밋을 삭제한다. drop으로 변경 후 저장하면, 
+     해당 커밋이 drop되는 것을 확인 가능하다.   
+
+exec 명령어를 이용하면, 각각의 커밋이 적용된 후 실행할 shell 명령어를 지정할 수 있다.   
+
+현업에서 사용하는 경우는 많지 않을 것 같아 예시는 생략한다.     
+
 
 - - - 
 
