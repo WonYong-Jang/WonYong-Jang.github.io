@@ -203,7 +203,7 @@ brew install kafkacat
 사용방법은 아래와 같다.   
 
 ```
-kafkacat -b localhost:9092 -t new_topic -G [group_name] -p [partition_num] [-P|-C]   
+kcat -b localhost:9092 -t new_topic -G [group_name] -p [partition_num] [-P|-C]   
 ```
 
 - -b : 카프카 브로커 주소 목록   
@@ -216,13 +216,13 @@ kafkacat -b localhost:9092 -t new_topic -G [group_name] -p [partition_num] [-P|-
 먼저 kafka의 정보를 확인해 보자. -L 을 이용하면 메타데이터 정보를 확인 할 수 있다.   
 
 ```
-kafkacat -L -b localhost:9092      
+kcat -L -b localhost:9092      
 ```
 
 Output
 
 ```
-$ kafkacat -L -b localhost:9092
+$ kcat -L -b localhost:9092
 Metadata for all topics (from broker 0: localhost:9092/0):
  1 brokers:
   broker 0 at localhost:9092 (controller)
@@ -238,7 +238,7 @@ Metadata for all topics (from broker 0: localhost:9092/0):
 `파티션을 명시하지 않으면 모든 파티션으로 부터 메시지를 읽는다.`   
 
 ```
-kafkacat -b localhost:9092 -t quickstart-events -C       
+kcat -b localhost:9092 -t quickstart-events -C       
 ```
 
 Output   
@@ -247,7 +247,7 @@ Output
 각 파티션에서의 offset을 확인 할 수 있다.`      
 
 ```
-# kafkacat -b localhost:9092 -t quickstart-events -C
+$ kcat -b localhost:9092 -t quickstart-events -C
 hi
 % Reached end of topic new_topic [0] at offset 4
 success
@@ -256,13 +256,13 @@ success
 토픽에 대한 메타정보도 아래와 같이 확인 해보자.   
 
 ```
-kafkacat -b localhost:9092 -L -t quickstart-events   
+kcat -b localhost:9092 -L -t quickstart-events   
 ```
 
 다음은 메시지를 전송하는 예시이다. text.txt파일에 데이터를 저장하고 이 데이터를 토픽으로 전송한다.   
 
 ```
-kafkacat -b $BROKERS -t $TOPIC -P -l ~/dev/text.txt   
+kcat -b $BROKERS -t $TOPIC -P -l ~/dev/text.txt   
 ```
 
 #### 카프카 인증    
@@ -304,7 +304,7 @@ ssl 방식을 적용할 경우 클라이언트에서 메시지가 암호화되�
 `sasl 인증을 해야 하는 경우` 아래와 같이 인증방식과 id, pw를 추가로 입력하면 된다.     
 
 ```
-kafkacat -b $BROKERS -C -X security.protocol=SASL_PLAINTEXT -X sasl.mechanisms=SCRAM-SHA-256 -X sasl.username=$USERNAME -X sasl.password=$PASSWORD -t $TOPIC   
+kcat -b $BROKERS -C -X security.protocol=SASL_PLAINTEXT -X sasl.mechanisms=SCRAM-SHA-256 -X sasl.username=$USERNAME -X sasl.password=$PASSWORD -t $TOPIC   
 ```
 
 - - - 
