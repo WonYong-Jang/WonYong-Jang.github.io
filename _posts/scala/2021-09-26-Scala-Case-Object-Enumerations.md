@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Scala] Case Object vs Enumerations"
-subtitle: "스칼라에서 열거형을 사용하는 2가지 방법 / Scala 2, 3"    
+subtitle: "스칼라에서 열거형을 사용하는 방법 / Scala 2, 3"    
 comments: true
 categories : Scala
 date: 2021-09-26
@@ -19,8 +19,11 @@ enumerated type은 지정한 값들만을 포함하는 데이터 타입이며, �
 
 ## 1. Scala Enumerations   
 
-스칼라에서 열거형을 사용할 수 있는 첫번째 방법은 Enumeration을 
-상속 받는 방법이다.   
+스칼라에서 열거형을 사용할 수 있는 첫번째 방법은 
+스칼라에서 제공하는 Enumeration 추상 클래스를 상속 받는 방법이다.     
+
+Enumeration 은 열거 값들을 각각 나타내기 위해 Value라고 부르는 타입을 
+제공한다.   
 
 ```scala  
 object CurrencyEnum extends Enumeration {
@@ -80,14 +83,30 @@ println("CurrencyEnum.Value: " + CurrencyEnum(1))
 
 `하지만 enumeration은 몇가지 큰 단점이 있다!`       
 
-- 아래와 같이 열거형의 타입을 구분하지 못하여 오버로딩에 문제가 생긴다.     
+`1. 모든 열거형을 동일한 타입으로 보기 때문에 오버로딩과 패턴매칭 하는데 문제가 생긴다.`            
 
 <img width="674" alt="스크린샷 2021-09-26 오후 11 29 58" src="https://user-images.githubusercontent.com/26623547/134812164-2f84edf7-48ef-4c95-8884-066a2c512d84.png">   
 
-- 또 다른 문제점은 더 많은 데이터를 가진 타입으로 확장하기가 어렵다는 것이다.    
+다음과 같이 패턴 매칭을 할 때 컴파일 에러는 없지만 
+실행시킬 때 scala.MatchError를 발생시킨다.      
 
-- withName 메서드를 제공해 줘서 사용하기 쉽지만 지정되지 않은 name이 들어올 경우 
-NoSuchElementException가 발생하기 때문에 안전하지 않다.     
+```scala   
+def checkIfEUR(currency: Currency) = {
+    currency match {
+      case EUR => true
+    }
+  }
+```
+
+`2. 또 다른 문제점은 더 많은 데이터를 가진 타입으로 확장하기가 어렵다는 것이다.`   
+
+확장이 완전 불가능한 것은 아니지만 복잡하다. 다음 
+[링크](https://www.baeldung.com/scala/enumerations)를 참조해보면 
+필드를 추가할 수 있는 방법이 있다.    
+
+
+`3. withName 메서드를 제공해 줘서 사용하기 쉽지만 지정되지 않은 name이 들어올 경우 
+NoSuchElementException가 발생하기 때문에 안전하지 않다.`         
 
 - - - 
 
@@ -152,7 +171,8 @@ object CurrencyADT(name: String, iso: String) extends java.lang.Enum {
 <https://www.baeldung.com/scala/enumerations>   
 <https://www.baeldung.com/scala/case-objects-vs-enumerations>    
 <https://www.baeldung.com/scala/algebraic-data-types>    
-<https://pedrorijo.com/blog/scala-enums/>   
+<https://pedrorijo.com/blog/scala-enums/>  
+<https://www.baeldung.com/scala/case-object-vs-object>   
 
 {% highlight ruby linenos %}
 
