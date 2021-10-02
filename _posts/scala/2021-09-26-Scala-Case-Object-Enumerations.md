@@ -13,17 +13,16 @@ enumerated type은 지정한 값들만을 포함하는 데이터 타입이며, �
 즉, 열거형에 사용될 수 있는 특정한 값들을 정의해서 해당 값들만 
 사용할 수 있게 한다.   
 
-`스칼라에서는 enumerated type을 사용할 수 있는 방법은 2가지가 있으며, 
-    이 글에서는 2가지 방법을 살펴보고 어떤 방법을 사용하는 것이 
-    Best Practice인지 살펴보자.`         
+`스칼라에서는 enumerated type을 사용할 수 있는 방법은 여러가지가 있으며, 
+    각각 어떤 장단점이 있는지 살펴보자.`               
 
 ## 1. Scala Enumerations   
 
-스칼라에서 열거형을 사용할 수 있는 첫번째 방법은 
-스칼라에서 제공하는 Enumeration 추상 클래스를 상속 받는 방법이다.     
+`스칼라에서 열거형을 사용할 수 있는 첫번째 방법은 
+스칼라에서 제공하는 Enumeration 추상 클래스를 상속 받는 방법이다.`          
 
-Enumeration 은 열거 값들을 각각 나타내기 위해 Value라고 부르는 타입을 
-제공한다.   
+`Enumeration 은 열거 값들을 각각 나타내기 위해 Value라고 부르는 타입을 
+제공한다.`        
 
 ```scala  
 object CurrencyEnum extends Enumeration {
@@ -110,7 +109,7 @@ NoSuchElementException가 발생하기 때문에 안전하지 않다.`
 
 - - - 
 
-## 2. A type-Saaf Alternative    
+## 2. A type-Safe Alternative    
 
 `위의 문제점을 해결하기 위해 sealed traits or abstract classes and case objects를 사용할 수 있다.    
 이 방법은 Type-safe하며, 열거형 값에 더 많은 필드를 가질 수 있다.`      
@@ -118,7 +117,7 @@ NoSuchElementException가 발생하기 때문에 안전하지 않다.`
 > Enumeration을 상속받는 방법은 id와 name 값만 필드로 가질 수 있다.   
 
 ```scala    
-sealed abstract class CurrencyADT(name: String, iso: String)
+abstract class CurrencyADT(val name: String, val iso: String)
 
 object CurrencyADT {
   case object EUR extends CurrencyADT("Euro", "EUR")
@@ -147,7 +146,12 @@ val isoToCurrency: Map[String, CurrencyADT] = values.map(c => c.iso -> c).toMap
 
 // 안전한 withName 메서드    
 def fromIso(iso: String): Option[CurrencyADT] = isoToCurrency.get(iso.toUpperCase)
-```
+```     
+
+
+
+- - - 
+
 
 ## 3. A Look Towards the Future   
 
