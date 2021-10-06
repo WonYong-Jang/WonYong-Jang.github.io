@@ -8,6 +8,13 @@ date: 2021-02-05
 background: '/img/posts/mac.png'
 ---
 
+[이전글](https://wonyong-jang.github.io/git/2021/02/05/Github-Merge.html)에서는 
+브랜치를 합치는 방법 중 Merge(3-way merge) 방법에 대해서 살펴보았다.   
+
+이번 글에서는 Rebase를 이용하여 브랜치를 병합하고 충돌시 해결 방법에 대해서 살펴보자.   
+또한, rebase interactive를 이용하여 여러가지 상황에서 커밋을 조작하는 방법에 대해서도 
+살펴볼 예정이다.   
+
 
 # 1. Rebase    
 

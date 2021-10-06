@@ -153,6 +153,9 @@ $ git commit -m "message"
 <img width="600" alt="스크린샷 2021-09-19 오후 7 17 34" src="https://user-images.githubusercontent.com/26623547/133923887-dda62e49-7038-4b4c-8855-0b9daea8fa0b.png">     
 
 
+[다음 글](https://wonyong-jang.github.io/git/2021/02/05/Github-Rebase.html)에서는 
+브랜치 병합 방법 중 하나인 Rebase에 대해서 살펴볼 예정이다.      
+
 
 - - - 
 
