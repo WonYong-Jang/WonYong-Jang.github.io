@@ -9,14 +9,15 @@ background: '/img/posts/mac.png'
 ---
 
 [이전글](https://wonyong-jang.github.io/git/2021/02/05/Github-Merge.html)에서는 
-브랜치를 합치는 방법 중 Merge(3-way merge) 방법에 대해서 살펴보았다.   
+브랜치를 합치는 방법 중 Merge와 Squash Merge 방법에 대해서 살펴보았다.      
 
 이번 글에서는 Rebase를 이용하여 브랜치를 병합하고 충돌시 해결 방법에 대해서 살펴보자.   
 또한, rebase interactive를 이용하여 여러가지 상황에서 커밋을 조작하는 방법에 대해서도 
 살펴볼 예정이다.   
 
+- - -     
 
-# 1. Rebase    
+# 1. Rebase 동작방식   
 
 `두 브랜치를 합치는 두 번째 방법인 Rebase는 Merge와는 다르게 이름 그대로 브랜치의 
 공통 조상이 되는 base를 다른 브랜치의 커밋 지점으로 바꾸는 것이다.`    
@@ -40,7 +41,7 @@ feature의 master에 대한 공통 조상인 base를 master로 변경한다.
 Rebase의 기본 전략은 다음과 같다.    
 
 `먼저 Rebase 하려는 브랜치 커밋들의 변경사항을 Patch라는 것으로 만든 다음에 
-어딘가에 저장해 둔다. 그리고 이를 master 브랜치에 하나씩 적용시켜 
+임시저장소에 저장해 둔다. 그리고 이를 master 브랜치에 하나씩 적용시켜 
 새로운 커밋을 만드는 것이다.`        
 
 feature를 master 브랜치로 rebase하는 명령어를 살펴보면 일련의 단계를 
@@ -98,7 +99,7 @@ $ git rebase master
 
 #### Step 6    
 
-`마지막으로 master 브랜치를 새로 새로 리베이스된 커밋 앞으로 fast-forward merge하여 완료 한다.`   
+`마지막으로 master 브랜치를 새로 리베이스된 커밋 앞으로 fast-forward merge하여 완료 한다.`   
 
 <img width="641" alt="스크린샷 2021-10-06 오후 10 43 45" src="https://user-images.githubusercontent.com/26623547/136214803-1082f14d-c638-474b-83b2-4453ff5b39cf.png">    
 
@@ -110,8 +111,85 @@ $ git merge feature   //  master에 병합할 브랜치
 $ git merge --abort   
 ```
 
+- - - 
+
+# 2 Rebase 실습    
+
+위에서 Rebase의 동작 방법에 대해서 살펴보았고 실제로 Rebase를 
+이용하여 브랜치 병합을 실습해보자.    
+
+실습을 위해 아래와 같이 커밋을 진행하였다.   
+master 브랜치와 rb 브랜치가 f7dae54 커밋(base)을 기준으로 
+각각 커밋이 이어져있다   
+
+```shell
+* 86b7c45 (master) R2
+* cf20c3d R1
+| * 45196ef (HEAD -> rb) R2
+| * 1cd73ab R1
+|/
+* f7dae54 base
+```
+
+git log는 아래 명령어를 이용하여 확인했다.   
+
+```shell
+git log --all --oneline --graph
+```
+
+`현재 HEAD가 rb 브랜치이고, rb브랜치를 master에 rebase 해보자.`       
+
+```shell   
+$ git rebase master   
+```
+
+rebase 후에는 아래와 같이 커밋 히스토리가 보기 좋게 나열된 것을 
+확인할 수 있다.   
+
+```shell   
+* e51a8db (HEAD -> rb) R2
+* 72ceec0 R1
+* 86b7c45 (master) R2
+* cf20c3d R1
+* f7dae54 base
+```
+
+마지막으로 master는 rb 브랜치의 포함 관계 이기 때문에 fast-forward를 한다.   
+
+```shell
+$ git checkout master
+$ git merge rb 
+
+Updating 86b7c45..e51a8db
+Fast-forward
+ rb.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+ create mode 100644 rb.txt
+```
+
+Output    
+
+```shell
+* e51a8db (HEAD -> master, rb) R2
+* 72ceec0 R1
+* 86b7c45 R2
+* cf20c3d R1
+* f7dae54 base
+```
+
+- - -    
+
+
+# 3 Rebase Conflict 실습  
+
+rebase를 이용하여 브랜치를 병합하는 과정 중 colflict가 발생했을 때 
+해결방법에 대해서 살펴보자.    
+
+
 
 - - - 
+
+# 4 Rebase interactive 
 
 `또한 rebase를 이용하면 작업 도중 커밋 히스토리를 수정해야 하는 상황에서 
 유용하게 사용할 수 있다.`       
@@ -125,7 +203,7 @@ $ git merge --abort
 git rebase --interactive(또는 -i)를 이용하여 위의 상황에 대해 커밋 히스토리를 
 수정해보자.   
 
-### 1-1) 준비 사항   
+## 4-1) 준비 사항   
 
 rebase에 대해서 실습을 해보기 전에 미리 다섯 개의 커밋을 아래와 같이 만들었다.   
 
@@ -186,7 +264,7 @@ pick e57d956 git rebase test fifth commit
 그럼 지금부터 각 명령어들이 어떤 역할을 하고 어떻게 사용하는지에 
 대해 살펴보자.     
 
-### 1-2) pick    
+### 4-2) pick    
 
 `pick 또는 p는 해당 커밋을 수정하지 않고 그냥 사용하겠다 라는 명령어이다. 
 디폴트로 실행되는 명령어이므로 vim에서 내용을 편집하지 않고 종료한다면 아무런 변경 사항 없이 
@@ -227,7 +305,7 @@ $ git rebase --continue
 $ git rebase --abort 
 ```   
 
-### 1-3) reword   
+### 4-3) reword   
 
 `reword 또는 r는 커밋 메시지를 수정하기 위한 명령어이다.`   
 
@@ -269,7 +347,7 @@ d656552 git rebase test fourth commit(reword로 인한 수정)
 c31962c git rebase test first commit
 ```
 
-#### 1-4) edit      
+#### 4-4) edit      
 
 `edit 또는 e는 커밋의 명령어 뿐만 아니라 작업 내용도 수정할 수 있게 하는 
 명령어이다. 아래 예제에서는 커밋 메시지와 작업 내용을 수정하고, 그와 
@@ -310,7 +388,7 @@ $ git commit --amend
 <img width="500" alt="스크린샷 2021-09-16 오후 11 30 10" src="https://user-images.githubusercontent.com/26623547/133630768-e0d048d5-fc33-4958-ac0d-70be4dc10359.png">    
 
 
-#### 1-5) squash, fixup    
+#### 4-5) squash, fixup    
 
 `squash 와 s, fixup과 f는 해당 커밋을 이전 커밋과 합치는 명령어이다.`   
 `두 명령어의 차이점은 squash는 각 커밋들의 메시지가 합쳐지는 
@@ -334,7 +412,7 @@ fixup은 squash와 동일하게 해당 커밋을 이전 커밋과 합치는 명�
 커밋 메시지는 합치지 않는다. 결과적으로 이전 커밋의 메시지만 남게 된다.    
 그 점만 빼면 squash와 동일하므로 예제는 생략하도록 한다.   
 
-#### 1-6) drop, exec   
+#### 4-6) drop, exec   
 
 drop 명령어는 커밋 히스토리에서 커밋을 삭제한다. drop으로 변경 후 저장하면, 
      해당 커밋이 drop되는 것을 확인 가능하다.   
@@ -381,15 +459,11 @@ master의 커밋 히스토리에 불필요한 커밋을 남기지 않고
 하자.   
 
 
-
-
-
-
-
 - - - 
 
 Refererence  
 
+<https://opentutorials.org/course/2708/15553>    
 <https://velog.io/@godori/Git-Rebase>   
 <https://flyingsquirrel.medium.com/git-rebase-%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95-ce6816fa859d>    
 <https://im-developer.tistory.com/182>     

@@ -1,26 +1,27 @@
 ---
 layout: post
 title: "[Git] Git 상태 확인 하기 ( git status )"
-subtitle: "Git 세가지 영역 및 상태 (Committed, Modified, Staged)"
+subtitle: "Git 영역(staging area, local, remote repository) 및 상태 (Committed, Modified, Staged)"
 comments: true
 categories : Git
 date: 2020-03-21
 background: '/img/posts/mac.png'   
 ---    
 
-Git은 파일들의 버전을 관리하는 버전 관리 도구인 만큼 각각의 파일들이 
+Git은 파일들의 버전을 관리하는 분산 버전 관리 도구인 만큼 각각의 파일들이 
 어떤 상태인지를 여러가지로 분류한다. 처음 Git을 사용하게 되면 
-이러한 상태들을 이해하는 것은 어렵고, 세 가지 영역과 추적 여부, 수정 여부에 
+이러한 상태들을 이해하는 것은 어렵고, Git의 여러 영역과 추적 여부, 수정 여부에 
 따라 복합적으로 여러가지 상태를 가지기 때문에 각각을 확실히 이해하는 것이 
 중요하다.    
 
 - - -   
 
-## 1. Git에서 세 가지 영역    
+## 1. Git에서 다섯가지 영역       
 
 Git 프로젝트 디렉터리에는 .git(이하 git 디렉터리)를 포함하여 프로젝트를 구성하는
-수많은 파일들이 존재한다. Git 디렉터리는 Git 프로젝트에서 작업한 수많은 정보들과
-여러 버전들에 대한 실제 데이터들을 저장하는 데이터베이스이며, 그외 데이터들은
+수많은 파일들이 존재한다.   
+`Git 디렉터리(.git)는 Git 프로젝트에서 작업한 수많은 정보들과
+여러 버전들에 대한 실제 데이터들을 저장하는 데이터베이스`이며, 그외 데이터들은
 Git 디렉터리에서 특정 버전(특정 시점)의 데이터들을 Checkout한 것이다.    
 
 이때 우리는 Checkout하여 가져온 버전의 파일들로 프로젝트 작업을 수행하며,
@@ -28,16 +29,20 @@ Git 디렉터리에서 특정 버전(특정 시점)의 데이터들을 Checkout�
 물리적으로는 Git 디렉터리나 워킹트리 모두 Git 프로젝트 디렉터리 안에 존재하지만
 개념적으로 영역(단계)를 나눈 것이다.
 
-<img width="735" alt="스크린샷 2020-03-21 오후 4 43 52" src="https://user-images.githubusercontent.com/26623547/77222129-d4a26b00-6b93-11ea-82d2-c41e719230a0.png">
+<img width="963" alt="스크린샷 2021-10-07 오후 10 35 21" src="https://user-images.githubusercontent.com/26623547/136396204-20ee8047-7ba7-40d4-8a39-b5d460644e2d.png">   
 
 `1. 워킹 디렉터리 : 프로젝트를 진행하는 실제 작업공간으로 개발한 소스 및 
 자원이 존재하며 이곳에서 파일을 수정 및 추가 한다.`      
 
-`2. Staging Area : 워킹 디렉터리에서 작업한 내역을 Git 디렉터리로 커밋하기 위해
+`2. Staging Area : index라고도 부르며, 워킹 디렉터리에서 작업한 내역을 Git 디렉터리로 커밋하기 위해
 커밋 대상 목록으로 담아두는 장바구니 목록 같은 영역이다.`    
 
-`3. Git 디렉터리 : 실제로는 .git 이라는 이름의 디렉터리이며, 여러가지 버전의
-커밋 데이터들과 Git 프로젝트에 대한모든 정보를 담고 있는 핵심 데이터베이스 디렉터리이다.`    
+`3. Local Repository : 내 PC에 파일이 저장되는 개인 전용 저장소이다.`        
+
+`4. Remote repository : 파일이 원격 저장소 전용 서버에서 관리되며 여러 사람이 함께 공유하기 위한 저장소이다.`   
+
+`5. Stash : 아직 마무리하지 않은 작업을 잠시 저장할 수 있는 스택과 유사한 공간이다. 이를 통해 
+아직 완료 하지 않은 작업을 commit 하지 않고 나중에 다시 꺼내와 마무리할 수 있다.`          
 
 - - -   
 
@@ -122,6 +127,7 @@ modified라고 되어 있다. 즉, Staged 상태이면서 Modified 상태라는 
 
 Reference     
 
+<https://querix.com/go/beginner/Content/05_workbench/01_ls/04_how_to/10_repo/git/00_intro.htm>   
 <https://dololak.tistory.com/304>    
 
 {% highlight ruby linenos %}
