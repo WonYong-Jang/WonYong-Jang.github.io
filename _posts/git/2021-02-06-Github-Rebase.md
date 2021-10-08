@@ -182,10 +182,82 @@ Output
 
 # 3 Rebase Conflict 실습  
 
-rebase를 이용하여 브랜치를 병합하는 과정 중 colflict가 발생했을 때 
+rebase를 이용하여 브랜치를 병합하는 과정 중 conflict가 발생했을 때 
 해결방법에 대해서 살펴보자.    
 
+실습을 위해 아래와 같은 커밋 히스토리를 만들고 master, rb 브랜치에 
+동일한 파일의 동일한 라인을 수정하여 병합을 할때 충돌이 
+발생하도록 하였다.    
 
+```shell
+$ git log --all --graph --oneline   
+
+* 1434603 (HEAD -> rb) R3
+* 2b7a179 R2
+* 86ebb13 R1
+| * a958a8f (master) M1
+|/
+* 48641e5 base
+```    
+
+rb 브랜치를 master 브랜치에 rebase 해보자.   
+위에서 설명한 것처럼 공통 조상 base를 기준으로 해서 
+R1, R2, R3 까지의 변경사항을 각각 patch로 만들고 
+임시저장한다.    
+그 후에 순차적으로 patch를 master와 병합을 진행하게 되는데 
+아래를 보면 R1을 병합하는데 충돌이 발생한 것을 볼 수 있다.    
+
+```shell
+Auto-merging common.xml
+CONFLICT (content): Merge conflict in common.xml
+error: could not apply 86ebb13... R1
+Resolve all conflicts manually, mark them as resolved with
+"git add/rm <conflicted_files>", then run "git rebase --continue".
+You can instead skip this commit: run "git rebase --skip".
+To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 86ebb13... R1
+```
+
+`conflict 해결방법은 위 언급된 것처럼 충돌 파일을 수정하고 git add 후에 
+git rebase --continue를 진행하면 된다.`   
+`만약 rebase 전으로 되돌리고 싶다면 git rebase --abort 를 사용하면 된다.`    
+
+conflict를 해결하고 git log를 확인하면 R1이 master의 최신 커밋뒤에 
+병합된 것을 확인할 수 있다.    
+
+```shell
+* 15a6c70 (HEAD) R1
+* a958a8f (master) M1
+| * 1434603 (rb) R3
+| * 2b7a179 R2
+| * 86ebb13 R1
+|/
+* 48641e5 base
+```   
+
+그 이후도 conflict가 있다면 위의 과정을 동일하게 
+진행하면 된다. 아래와 같이 R2를 병합하는 과정에서도 
+conflict가 발생했기 때문에 동일하게 해결한다.    
+
+```shell
+CONFLICT (content): Merge conflict in common.xml
+error: could not apply 2b7a179... R2
+Resolve all conflicts manually, mark them as resolved with
+"git add/rm <conflicted_files>", then run "git rebase --continue".
+You can instead skip this commit: run "git rebase --skip".
+To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 2b7a179... R2
+```
+
+Output   
+
+```shell
+* cf26ae4 (HEAD -> rb) R3
+* b9f04c0 R2
+* 15a6c70 R1
+* a958a8f (master) M1
+* 48641e5 base
+```
 
 - - - 
 
