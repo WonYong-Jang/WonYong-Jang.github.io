@@ -9,7 +9,7 @@ background: '/img/posts/mac.png'
 ---
 
 [이전글](https://wonyong-jang.github.io/git/2021/02/05/Github-Merge.html)에서는 
-브랜치를 합치는 방법 중 Merge와 Squash Merge 방법에 대해서 살펴보았다.      
+브랜치를 병합하는 방법 중 Merge와 Squash Merge 방법에 대해서 살펴보았다.      
 
 이번 글에서는 Rebase를 이용하여 브랜치를 병합하고 충돌시 해결 방법에 대해서 살펴보자.   
 또한, rebase interactive를 이용하여 여러가지 상황에서 커밋을 조작하는 방법에 대해서도 
@@ -263,7 +263,9 @@ Output
 
 # 4 Rebase interactive 
 
-`또한 rebase를 이용하면 작업 도중 커밋 히스토리를 수정해야 하는 상황에서 
+Rebase를 위처럼 두 브랜치를 병합하는데 사용할 수도 있지만, 
+    `단일 브랜치 내에서 rebase를 사용하여 커밋 히스토리를 정리할 수도 있다.`      
+`즉, rebase를 이용하면 작업 도중 커밋 히스토리를 수정해야 하는 상황에서 
 유용하게 사용할 수 있다.`       
 구체적으로 예를 들자면 아래와 같은 경우가 있을 수 있다.   
 
@@ -272,14 +274,21 @@ Output
 - 성격이 비슷한 커밋이 두 개로 분리되어 있는데, 이걸 합칠 수는 없을까?   
 
 이런 상황에서 사용할 수 있는 것이 바로 git rebase 명령어이다.   
-git rebase --interactive(또는 -i)를 이용하여 위의 상황에 대해 커밋 히스토리를 
+`git rebase --interactive(또는 -i)`를 이용하여 위의 상황에 대해 커밋 히스토리를 
 수정해보자.   
 
 ## 4-1) 준비 사항   
 
 rebase에 대해서 실습을 해보기 전에 미리 다섯 개의 커밋을 아래와 같이 만들었다.   
 
-<img width="400" alt="스크린샷 2021-09-12 오후 6 45 26" src="https://user-images.githubusercontent.com/26623547/132983593-7b4c5be7-58bf-4c1c-abd3-21d9f20e824d.png">      
+
+```shell
+f954bfd (HEAD -> master) git rebase test fifth commit
+e05da57 git rebase test fourth commit
+adafa47 git rebase test third commit
+96220ce git rebase test second commit
+75ac2c6 git rebase test first commit
+```
 
 우선 git rebase -i의 사용법은 터미널에서 다음과 같이 입력하는 것으로부터 시작한다.   
 
@@ -287,23 +296,23 @@ rebase에 대해서 실습을 해보기 전에 미리 다섯 개의 커밋을 �
 $ git rebase -i ${수정할 커밋의 직전 커밋}    
 
 # 커밋 해시를 이용한 방법
-$ git rebase -i 9d9cde8
+$ git rebase -i 96220ce
 
 # HEAD를 이용한 방법
 $ git rebase -i HEAD~3
 ```
 
-`위와 같이 세 번째 커밋을 수정하고 싶다면 두 번째 커밋을 넣으면 된다. 이 때 
+`위와 같이 세 번째 커밋을 수정하고 싶다면 두 번째(96220ce) 커밋을 넣으면 된다. 이 때 
 커밋 해시를 넣는 방법도 가능하고, HEAD를 기준으로 입력할 수도 있다.`   
 
 이렇게 입력하게 되면, 터미널에서 아래와 같이 출력되는 vim 에디터를 볼 수 있다.   
 
 ```shell
-pick 4d9fafb git rebase test third commit
-pick cd15e35 git rebase test fourth commit
-pick e57d956 git rebase test fifth commit
+pick adafa47 git rebase test third commit
+pick e05da57 git rebase test fourth commit
+pick f954bfd git rebase test fifth commit
 
-# Rebase 9e34411..e57d956 onto 9e34411 (3 commands)
+# Rebase 96220ce..f954bfd onto 96220ce (3 commands)
 #
 # Commands:
 # p, pick <commit> = use commit
@@ -346,11 +355,11 @@ pick e57d956 git rebase test fifth commit
 삭제하는 용도로 사용할 수 있다.`    
 
 ```shell
-pick cd15e35 git rebase test fourth commit
-pick 4d9fafb git rebase test third commit
-pick e57d956 git rebase test fifth commit
+pick e05da57 git rebase test fourth commit
+pick adafa47 git rebase test third commit
+pick f954bfd git rebase test fifth commit
 
-# Rebase 9e34411..e57d956 onto 9e34411 (3 commands)
+# Rebase 96220ce..f954bfd onto 96220ce (3 commands)
 #
 # Commands:
 ```
@@ -385,17 +394,17 @@ $ git rebase --abort
 종료해보자.    
 
 ```shell
-pick 4d9fafb git rebase test third commit
-reword 8d0e9c0 git rebase test fourth commit
-pick 4f89861 git rebase test fifth commit
+pick 60d9ce3 git rebase test third commit
+reword a879658 git rebase test fourth commit
+pick 81cbb19 git rebase test fifth commit
 
-# Rebase 9e34411..4f89861 onto 9e34411 (3 commands)
+# Rebase 96220ce..81cbb19 onto 96220ce (3 commands)
 #
 # Commands:
 ```   
 
 그럼 아래와 같이 커밋 메시지를 vim에서 수정할 수 있게 된다. 
-reword로 인한 수정 이라는 문구를 추가후 저장한다.   
+reword로 인한 수정 이라는 문구를 추가 후 저장한다.   
 
 ```shell
 git rebase test fourth commit(reword로 인한 수정)
@@ -424,30 +433,41 @@ c31962c git rebase test first commit
 `edit 또는 e는 커밋의 명령어 뿐만 아니라 작업 내용도 수정할 수 있게 하는 
 명령어이다. 아래 예제에서는 커밋 메시지와 작업 내용을 수정하고, 그와 
 동시에 하나의 커밋을 두개로 분리하거나 커밋을 끼워넣는 과정도 
-실습해보자.`        
+실습해보자.`       
 
-<img width="500" alt="스크린샷 2021-09-14 오후 11 23 36" src="https://user-images.githubusercontent.com/26623547/133276637-91a8ed9f-dd9e-4585-87b0-01fbc1756b33.png">   
+```shell
+pick 60d9ce3 git rebase test third commit
+edit 9ed604e git rebase test fourth commit(reword로 인한 수정)
+pick 8fced6f git rebase test fifth commit
 
-이전 예시에서 사용한 커밋을 수정해보도록 하자. 명령어 edit을 이용해보면 
-아래와 같다.   
+# Rebase 96220ce..8fced6f onto 96220ce (3 commands)
+#
+# Commands:
+```
 
-<img width="500" alt="스크린샷 2021-09-14 오후 11 24 41" src="https://user-images.githubusercontent.com/26623547/133276655-0937e9e2-5cd3-4fa7-9db3-cfa96254d682.png">   
- 
+이전 예시에서 사용한 커밋을 예시로 수정해보도록 하자.    
+명령어 edit을 이용해보면 아래와 같다.      
 
-해당 커밋으로 HEAD가 옮겨진 것을 확인할 수 있다.    
+<img width="738" alt="스크린샷 2021-10-09 오후 9 53 36" src="https://user-images.githubusercontent.com/26623547/136658634-1ec4cdd1-db3a-495f-bbab-595b75337280.png">   
+   
+
+`수정하고자 하는 커밋에 edit으로 변경 후 vim을  
+저장하게 되면 해당 커밋으로 HEAD가 옮겨진 것을 확인할 수 있다.`    
+위의 예시에는 fourth commit으로 이동하였고, 파일을 변경하거나 
+커밋 메시지 수정이 가능하다.   
 커밋 메시지를 변경하기 위해 아래와 같이 입력한다.   
 
 ```
 $ git commit --amend   
 ```
 
-<img width="500" alt="스크린샷 2021-09-16 오후 11 17 42" src="https://user-images.githubusercontent.com/26623547/133630097-c94d312a-3186-42b8-9bc3-016085ab7446.png">   
+<img width="700" alt="스크린샷 2021-10-09 오후 9 55 55" src="https://user-images.githubusercontent.com/26623547/136658688-94e55571-9a0d-448d-9c68-22bbf5bb3dc6.png">   
 
 위에서 실습했던 reword 명령어와 마찬가지로, 커밋 메시지를 
 수정할 수 있는 창이 뜬다. 동일한 방식으로 커밋 메시지를 수정하면 된다.   
 
-현재 네 번째 커밋에서 작업중인데, 현재 커밋과 
-다섯번째 커밋 사이에 추가적인 작업을 해 보도록 하자.    
+또한, 현재 네 번째 커밋에서 작업중인데, 현재 커밋과 
+다섯번째 커밋 사이에 추가적인 작업을 하여 커밋을 추가할 수도 있다.       
 다른 파일을 수정 후 git add 와 git commit -m message 명령어를 이용해 
 새로운 커밋을 추가하면 새 작업이 네 번째 
 커밋 뒤에 추가된 것을 확인 할 수 있다.   
@@ -457,8 +477,7 @@ $ git commit --amend
 네 번째 커밋과 다섯 번째 커밋 사이에 새로운 커밋이 
 추가된 것을 확인 할 수 있다.   
 
-<img width="500" alt="스크린샷 2021-09-16 오후 11 30 10" src="https://user-images.githubusercontent.com/26623547/133630768-e0d048d5-fc33-4958-ac0d-70be4dc10359.png">    
-
+<img width="600" alt="스크린샷 2021-10-09 오후 10 00 58" src="https://user-images.githubusercontent.com/26623547/136658832-dc27de21-93a0-4bfe-ac46-9aefb586bf0d.png">   
 
 #### 4-5) squash, fixup    
 
@@ -468,13 +487,13 @@ $ git commit --amend
 
 아래는 squash를 이용해 위에서 만들었던 두 커밋을 합쳐보도록 하자.   
 
-<img width="500" alt="스크린샷 2021-09-16 오후 11 42 15" src="https://user-images.githubusercontent.com/26623547/133633351-71717870-89b5-4b3b-8451-c2df1821b08d.png">     
+<img width="588" alt="스크린샷 2021-10-09 오후 10 02 24" src="https://user-images.githubusercontent.com/26623547/136658869-484d11c1-3864-49d0-b5a8-41fa75a9482e.png">   
 
 위와 같이 squash 명령어를 사용하게 되면 squash 명령어를 작성한 커밋은 
 위의 커밋(이전 커밋)으로 합쳐지게 된다.   
 위의 사진은 4와 1/2번째 커밋에 squash명령어를 적용하여 네번째 커밋에 머지했다.  
 
-<img width="500" alt="스크린샷 2021-09-16 오후 11 43 40" src="https://user-images.githubusercontent.com/26623547/133633369-995da9e0-d2da-4f21-be36-6197beb0477c.png">     
+<img width="700" alt="스크린샷 2021-10-09 오후 10 03 49" src="https://user-images.githubusercontent.com/26623547/136658899-4c7ac42b-13e2-4372-a025-cb71e7e9a8b8.png">   
 
 네 번째 커밋과 4와 1/2번째 커밋의 메시지를 확인 할 수 있고 필요에 따라 커밋 메시지를 
 수정할 수도 있다.   
@@ -498,7 +517,7 @@ exec 명령어를 이용하면, 각각의 커밋이 적용된 후 실행할 shel
 
 ## Merge vs Rebase   
 
-이제까지 두 가지 방법의 브랜치 병합 전략을 살펴보았다. Merge를 사용할 지, 
+이제까지 두 가지 방법의 브랜치 머지 전략을 살펴보았다. Merge를 사용할 지, 
     Rebase를 사용할 지는 프로젝트의 히스토리를 어떤 것으로 생각하냐에 따라 
     달라진다.   
 
@@ -508,6 +527,9 @@ Merge를 사용하면 브랜치가 생기고 병합되는 모든 작업 내용�
 
 `Rebase의 경우는 브랜치를 병합할 때 이런 Merge commit을 남기지 않으므로, 마치 
 다른 브랜치는 없었던 것처럼 프로젝트의 작업 내용이 하나의 흐름으로 유지된다.`       
+`즉, 해당 브랜치가 어느 시점에 머지되었는지는 알 수 없다.`     
+그래서 리베이스를 사용하는 경우 tag 기능을 사용하여 해당 
+브랜치가 머지된 시점에 태그를 달아주는 방법도 있다.   
 
 브랜치를 합칠 때 Merge를 써야 하는지 Rebase를 써야 하는지에 대해서는 정답이 없다. 
 프로젝트나 팀의 상황에 따라 다른 전략을 사용할 수 있다.   
