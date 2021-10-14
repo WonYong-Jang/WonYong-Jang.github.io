@@ -4,10 +4,15 @@ title: "[Git] Reset 명확히 알고 사용하기 "
 subtitle: "HEAD의 이해 / Reset vs Checkout / git reset --hard, --mixed, --soft "
 comments: true
 categories : Git
-date: 2021-09-21
+date: 2021-10-04
 background: '/img/posts/mac.png'
 ---
 
+Git을 사용하여 작업을 하다 보면 커밋한 내용을 되돌려야할 때가 있다. 
+혼자서 작업하거나 로컬에서 작업 중일 때는 reset 명령어로 브랜치를 특정 커밋으로 
+완전히 되돌려 버릴 수 있다.    
+또한, revert를 사용하여 커밋을 되돌리는 것도 가능하며, 이번 글에서는 
+reset 사용법과 여러 옵션을 사용했을 때 차이점에 대해서 알아볼 예정이다.   
 
 ## 1. git HEAD     
 
@@ -110,6 +115,9 @@ commit을 진행할 때 유용하다.
 soft 옵션은 staging area, working directory의 작업은 남겨두고 reset을 
 한다.    
 
+
+reset에 대해서 살펴봤고 다음 글에서는 revert를 살펴보고 
+둘의 차이점에 대해서 살펴보자.   
 
 - - - 
 
