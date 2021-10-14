@@ -8,7 +8,7 @@ date: 2021-10-05
 background: '/img/posts/mac.png'
 ---
 
-[이전글](https://wonyong-jang.github.io/git/2021/09/21/Github-reset.html) 에서 
+[이전글](https://wonyong-jang.github.io/git/2021/10/04/Github-reset.html) 에서 
 reset에 대해서 살펴보았다.   
 커밋을 되돌릴 때 reset을 사용할 수도 있지만 remote repository에 이미 
 push한 내용을 변경하려면 force push를 해야만 한다.   

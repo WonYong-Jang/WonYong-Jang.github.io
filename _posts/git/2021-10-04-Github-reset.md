@@ -116,7 +116,7 @@ soft 옵션은 staging area, working directory의 작업은 남겨두고 reset�
 한다.    
 
 
-reset에 대해서 살펴봤고 다음 글에서는 revert를 살펴보고 
+reset에 대해서 살펴봤고 [다음 글](https://wonyong-jang.github.io/git/2021/10/05/Github-revert.html)에서는 revert를 살펴보고 
 둘의 차이점에 대해서 살펴보자.   
 
 - - - 
