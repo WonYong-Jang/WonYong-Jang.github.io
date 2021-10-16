@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Git] Revert를 사용하여 커밋 되돌리기"
-subtitle: "reset과 revert비교 / 협업을 위해 revert 사용하기 "
+subtitle: "reset과 revert비교 / 협업을 위해 revert 사용하기 / Conflict 해결 "
 comments: true
 categories : Git
 date: 2021-10-05
@@ -46,6 +46,10 @@ working directory는 A의 스냅샷이 적용될 것이다.
 버그를 수정했다라는 커밋 히스토리도 유지할 수 있게 되었다.`   
 
 <img width="800" alt="스크린샷 2021-10-14 오후 10 42 47" src="https://user-images.githubusercontent.com/26623547/137329643-59cbe256-363e-43eb-ae5a-c5221d9018ec.png">   
+
+- - - 
+
+## revert 충돌 해결   
 
 
 
