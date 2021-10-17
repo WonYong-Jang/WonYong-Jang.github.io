@@ -116,8 +116,13 @@ soft 옵션은 staging area, working directory의 작업은 남겨두고 reset�
 한다.    
 
 
-reset에 대해서 살펴봤고 [다음 글](https://wonyong-jang.github.io/git/2021/10/05/Github-revert.html)에서는 revert를 살펴보고 
-둘의 차이점에 대해서 살펴보자.   
+지금까지 reset에 대해서 살펴보았다. 
+reset의 경우 혼자 작업하거나 local repository에서 
+작업한 내용을 되돌릴 경우 사용하기에 적절하고, 이미 remote repository에 
+push 된 커밋을 되돌리게 되면 많은 부작용이 발생할 수 있다. 협업을 위해서는 
+revert가 유용하게 사용될 수 있는데, 
+[다음 글](https://wonyong-jang.github.io/git/2021/10/05/Github-revert.html)에서는 revert를 살펴보고 
+둘의 차이점에 대해서 살펴보자.     
 
 - - - 
 
