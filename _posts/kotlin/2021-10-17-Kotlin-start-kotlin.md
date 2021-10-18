@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kotlin] 빠르게 배워보는 코틀린"     
-subtitle: "val, var / fun / array / if, when, for, while / class / Null을 처리하는 방법 "    
+subtitle: "val, var / fun / array / if, when, for, while / class "    
 comments: true
 categories : Kotlin
 date: 2021-10-17
