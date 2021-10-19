@@ -102,7 +102,39 @@ class Person {
     참고로 위에서 get()과 set()을 정해준 것은 커스텀 접근자이다.   
     `기본적으로는 코틀린 클래스를 만들 때 생성자에 넣어준 데이터들에 대하여 
     get()과 set()이 숨겨져 있으나, 위의 코드처럼 명시적으로 적어줄 수 있다. 
-    그 말은 getter와 setter를 커스텀 할 수도 있다는 뜻이다.`       
+    그 말은 getter와 setter를 커스텀 할 수도 있다는 뜻이다.`      
+
+아래와 같이 커스텀하게 구현이 가능하다.   
+
+```kotlin
+class Person {
+    var name: String = "Not Assigned"
+        set(value) {
+            field = "Dev." + value
+        }
+}
+
+fun main(args: Array<String>) {
+    val person = Person()
+    person.name = "Ready"
+
+    println(person.name) // Dev.Ready   
+}
+```   
+
+위 예제를 보면 setter를 커스텀하게 만든 소스에서 낯선 내용이 등장한다.   
+`그건 바로 Backing Field라고 불리는 field이다.`   
+코틀린에서는 클래스 내에서 직접적으로 Fields에 대해 선언할 수 없으나 
+프로퍼티가 Backing Field를 필요로 할 때 자동으로 Accessor 메서드 안에서 
+참조할 수 있도록 field라는 식별자를 제공해준다.   
+
+위 코드에서 사용된 field 역시 이러한 Backing Field를 의미하며, field가 
+가르키는 것이 곧 name이라 보면 된다.   
+조금 더 설명하자면, 위 main 함수에서 person.name = "Ready"가 실행 될 때 
+person 객체의 name 프로퍼티를 직접 접근하는 것이 아니라 setter 함수를 
+호출 하는 것이고, 그에 따라 set(value)에서 value에 "Ready"라는 값이 
+전달되어 field(name)에 "Dev.Ready" 값이 할당되게 되어 출력되는 것이다.   
+
 
 #### 2-1) 생성자에 val, var의 유무 차이   
 
