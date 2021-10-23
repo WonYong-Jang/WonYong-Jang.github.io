@@ -115,7 +115,7 @@ G 컴포넌트는 스토어에 구독(subscribe)을 한다. 구독을 하는 과
 
 `리액트에서 리덕스를 사용하게 될 때 보통 이 함수를 직접 사용하는 
 일은 별로 없다. 그 대신 react-redux라는 라이브러리에서 제공하는 
-connect 함수 또는 useSelect Hook을 사용하여 리덕스 스토어의 상태를 
+connect 함수 또는 useSelector Hook을 사용하여 리덕스 스토어의 상태를 
 구독한다.`    
 
 
