@@ -3,7 +3,7 @@ layout: post
 title: "[Redux] 리덕스 모듈로 만들고 구현하기"        
 subtitle: "카운터 구현하기 / 할일 목록 구현하기 / 리덕스 개발자도구 이용하기"    
 comments: true
-categories : React
+categories : React-Redux
 date: 2021-10-23
 background: '/img/posts/mac.png'
 ---
@@ -378,27 +378,25 @@ const rootReducer = combineReducers({
 export default rootReducer;
 ```
 
-### 3. 프리젠테이셔널 컴포넌트 구현하기   
+### 3. 프리젠테이셔널 컴포넌트 구현하기     
 
-먼저 Todos 라는 프리젠테이셔널 컴포넌트를 구현해보자.    
+먼저 Todos 라는 프리젠테이셔널 컴포넌트를 구현해보자.     
 
 Todos.js 파일을 생성하고, 파일에 TodoItem, TodoList, Todos 3가지의 컴포넌트를 
-작성할 것이다. 이렇게 여러개의 컴포넌트를 만드는 이유는 컴포넌트의 
-리렌더링 성능을 최적화하기 위함이다. 지금은 편의상 한 파일에 모두 작성할건데, 
-    취향에 따라 각각 다른 파일에 분리 해도 된다.   
+작성할 것이다. 이렇게 여러개의 컴포넌트를 만드는 이유는 컴포넌트의
+리렌더링 성능을 최적화하기 위함이다. 지금은 편의상 한 파일에 모두 작성할건데
+    취향에 따라 각각 다른 파일에 분리 해도 된다.    
 
 ##### componets/Todos.js   
 
-```react
+```react    
 import React, { useState } from 'react';
 
 // 컴포넌트 최적화를 위하여 React.memo를 사용합니다
 const TodoItem = React.memo(function TodoItem({ todo, onToggle }) {
   return (
-    <li
-      style={{ textDecoration: todo.done ? 'line-through' : 'none' }}
-      onClick={() => onToggle(todo.id)}
-    >
+    <li style= { { textDecoration: todo.done ? 'line-through': 'none' } }
+    onClick={() => onToggle(todo.id)} >
       {todo.text}
     </li>
   );

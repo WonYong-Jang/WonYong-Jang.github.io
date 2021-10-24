@@ -3,7 +3,7 @@ layout: post
 title: "[Redux] 리덕스 왜 쓸까?"        
 subtitle: "리액트와 리덕스의 상태 관리 차이 / Action, Reducer, Store, Dispatch, Subscribe"    
 comments: true
-categories : React
+categories : React-Redux
 date: 2021-10-21
 background: '/img/posts/mac.png'
 ---
