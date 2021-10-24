@@ -292,7 +292,263 @@ function App() {
 }
 
 export default App;
+```  
+
++, - 버튼을 클릭했을 때 정상적으로 잘 동작하는지 확인해보자.   
+
+<img width="212" alt="스크린샷 2021-10-23 오후 2 56 57" src="https://user-images.githubusercontent.com/26623547/138544452-33cb7c07-3c55-4623-ab27-be58acce7f52.png">   
+
+- - - 
+
+## 할 일 목록 구현하기   
+
+이번에는 할 일 목록을 구현해보도록 하자.  
+
+### 1. todos 모듈 만들기    
+
+todos 모듈을 만들어보자.    
+
+##### modules/todos.js    
+
+```react   
+/* 액션 타입 선언 */
+const ADD_TODO = 'todos/ADD_TODO';
+const TOGGLE_TODO = 'todos/TOGGLE_TODO';
+
+/* 액션 생성함수 선언 */
+let nextId = 1; // todo 데이터에서 사용 할 고유 id
+export const addTodo = text => ({
+  type: ADD_TODO,
+  todo: {
+    id: nextId++, // 새 항목을 추가하고 nextId 값에 1을 더해줍니다.
+    text
+  }
+});
+export const toggleTodo = id => ({
+  type: TOGGLE_TODO,
+  id
+});
+
+/* 초기 상태 선언 */
+// 리듀서의 초기 상태는 꼭 객체타입일 필요 없습니다.
+// 배열이여도 되고, 원시 타입 (숫자, 문자열, 불리언 이여도 상관 없습니다.
+const initialState = [
+  /* 우리는 다음과 같이 구성된 객체를 이 배열 안에 넣을 것입니다.
+  {
+    id: 1,
+    text: '예시',
+    done: false
+  } 
+  */
+];
+
+export default function todos(state = initialState, action) {
+  switch (action.type) {
+    case ADD_TODO:
+      return state.concat(action.todo);
+    case TOGGLE_TODO:
+      return state.map(
+        todo =>
+          todo.id === action.id // id 가 일치하면
+            ? { ...todo, done: !todo.done } // done 값을 반전시키고
+            : todo // 아니라면 그대로 둠
+      );
+    default:
+      return state;
+  }
+}
 ```   
+
+### 2. 루트 리듀서에 리듀서 추가하기    
+
+이전에 만들어놓은 루트 리듀서에 todos 리듀서를 추가해보자.   
+
+##### modules/index.js   
+
+```react
+import { combineReducers } from 'redux';
+import counter from './counter';
+import todos from './todos';
+
+const rootReducer = combineReducers({
+  counter,
+  todos
+});
+
+export default rootReducer;
+```
+
+### 3. 프리젠테이셔널 컴포넌트 구현하기   
+
+먼저 Todos 라는 프리젠테이셔널 컴포넌트를 구현해보자.    
+
+Todos.js 파일을 생성하고, 파일에 TodoItem, TodoList, Todos 3가지의 컴포넌트를 
+작성할 것이다. 이렇게 여러개의 컴포넌트를 만드는 이유는 컴포넌트의 
+리렌더링 성능을 최적화하기 위함이다. 지금은 편의상 한 파일에 모두 작성할건데, 
+    취향에 따라 각각 다른 파일에 분리 해도 된다.   
+
+##### componets/Todos.js   
+
+```react
+import React, { useState } from 'react';
+
+// 컴포넌트 최적화를 위하여 React.memo를 사용합니다
+const TodoItem = React.memo(function TodoItem({ todo, onToggle }) {
+  return (
+    <li
+      style={{ textDecoration: todo.done ? 'line-through' : 'none' }}
+      onClick={() => onToggle(todo.id)}
+    >
+      {todo.text}
+    </li>
+  );
+});
+
+// 컴포넌트 최적화를 위하여 React.memo를 사용합니다
+const TodoList = React.memo(function TodoList({ todos, onToggle }) {
+  return (
+    <ul>
+      {todos.map(todo => (
+        <TodoItem key={todo.id} todo={todo} onToggle={onToggle} />
+      ))}
+    </ul>
+  );
+});
+
+function Todos({ todos, onCreate, onToggle }) {
+  // 리덕스를 사용한다고 해서 모든 상태를 리덕스에서 관리해야하는 것은 아닙니다.
+  const [text, setText] = useState('');
+  const onChange = e => setText(e.target.value);
+  const onSubmit = e => {
+    e.preventDefault(); // Submit 이벤트 발생했을 때 새로고침 방지
+    onCreate(text);
+    setText(''); // 인풋 초기화
+  };
+
+  return (
+    <div>
+      <form onSubmit={onSubmit}>
+        <input
+          value={text}
+          placeholder="할 일을 입력하세요.."
+          onChange={onChange}
+        />
+        <button type="submit">등록</button>
+      </form>
+      <TodoList todos={todos} onToggle={onToggle} />
+    </div>
+  );
+}
+
+export default Todos;
+```
+
+
+### 4. 컨테이너 컴포넌트 만들기   
+
+이제 컨테이너 컴포넌트도 만들어보자.    
+
+##### containers/TodosContainer.js   
+
+```react  
+import React, { useCallback } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import Todos from '../components/Todos';
+import { addTodo, toggleTodo } from '../modules/todos';
+
+function TodosContainer() {
+  // useSelector 에서 꼭 객체를 반환 할 필요는 없습니다.
+  // 한 종류의 값만 조회하고 싶으면 그냥 원하는 값만 바로 반환하면 됩니다.
+  const todos = useSelector(state => state.todos);
+  const dispatch = useDispatch();
+
+  const onCreate = text => dispatch(addTodo(text));
+  const onToggle = useCallback(id => dispatch(toggleTodo(id)), [dispatch]); // 최적화를 위해 useCallback 사용
+
+  return <Todos todos={todos} onCreate={onCreate} onToggle={onToggle} />;
+}
+
+export default TodosContainer;
+```   
+
+마지막으로 이 컴포넌트를 App에 렌더링 하면 완료된다.   
+
+##### App.js   
+
+```react   
+import React from 'react';
+import CounterContainer from './containers/CounterContainer';
+import TodosContainer from './containers/TodosContainer';
+
+function App() {
+  return (
+    <div>
+      <CounterContainer />
+      <hr />
+      <TodosContainer />
+    </div>
+  );
+}
+
+export default App;
+```    
+
+새 항목이 잘 등록되는지, 그리고 항목을 클릭했을 때 토글이 잘되는지 
+확인하면 된다.   
+
+<img width="224" alt="스크린샷 2021-10-24 오후 2 01 04" src="https://user-images.githubusercontent.com/26623547/138581499-39542776-473f-4fff-ba9c-6c36d0ee94b2.png">    
+
+
+- - - 
+
+## 리덕스 개발자도구 적용하기    
+
+이번에는 리덕스 개발자 도구를 사용하는 방법에 대해서 알아보자.   
+`리덕스 개발자 도구를 사용하면 현재 스토어의 상태를 개발자 도구에서 조회 할 수 
+있고 지금까지 어떤 액션들이 디스패치 되었는지, 그리고 액션에 따라 상태가 어떻게 
+변화했는지 확인 할 수 있다.`    
+`추가적으로 액션을 직접 디스패치 할 수도 있다.`    
+
+우선 [크롬 웹 스토어](https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd)에서 확장 프로그램을 
+설치 후 다음 프로젝트에 redux-devtools-extension을 설치하자.   
+
+```shell   
+$ npm install redux-devtools-extension    
+```
+
+그 다음에는 index.js를 다음과 같이 수정하면 적용이 끝난다.   
+
+##### index.js   
+
+```react
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import * as serviceWorker from './serviceWorker';
+import { createStore } from 'redux';
+import { Provider } from 'react-redux';
+import rootReducer from './modules';
+import { composeWithDevTools } from 'redux-devtools-extension'; // 리덕스 개발자 도구
+
+const store = createStore(rootReducer, composeWithDevTools()); // 스토어를 만듭니다.
+// composeWithDevTools 를 사용하여 리덕스 개발자 도구 활성화
+
+ReactDOM.render(
+  <Provider store={store}>
+    <App />
+  </Provider>,
+  document.getElementById('root')
+);
+
+
+serviceWorker.unregister();
+```      
+
+이제 크롬 개발자 도구를 열어서 Redux 탭을 열어보면, 현재 상태와 액션 
+기록들을 볼 수 있다.   
+
+<img width="717" alt="스크린샷 2021-10-24 오후 1 23 33" src="https://user-images.githubusercontent.com/26623547/138580683-3face866-4bfb-4721-960f-a018a4823ffc.png">   
 
 - - - 
 
