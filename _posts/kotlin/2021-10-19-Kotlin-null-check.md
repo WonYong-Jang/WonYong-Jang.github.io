@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kotlin] 코틀린 Null 처리"     
-subtitle: ""    
+subtitle: "nullable, non-nullable / safe call / safe cast / Elvis Operation / !! 연산자 "    
 comments: true
 categories : Kotlin
 date: 2021-10-19
@@ -11,12 +11,12 @@ background: '/img/posts/mac.png'
 코틀린에서는 자바보다 null 처리를 좀 더 명확하게 한다.   
 따라서 NPE(Null Pointer Exception)가 발생하는 빈도를 현저히 낮출 수 있다.   
 이 글에서는 자바와 비교하여 코틀린에서 null을 처리하는 다양한 방법에 
-대해서 살펴 볼 예정이다.     
+대해서 살펴볼 예정이다.     
 
 - - - 
 
 
-## 1. Null을 처리하는 방법   
+## 1. 코틀린에서 Null을 처리하는 방법   
 
 자바의 경우 int, boolean과 같은 primitive type을 제외한 객체들은 항상 
 null이 될 수 있다.   
@@ -57,23 +57,21 @@ fun parseInt2(str: String): Int? {
         return null
     }
 }
-```    
+```   
 
-- - - 
-
-## 2. 코틀린에서 NPE가 발생하는 경우   
-
-코틀린은 nullable과 non-nullable 개념을 만들어, null에 안전한 프로그램을 
-만들 수 있게 도와준다. 그래서 코틀린만 
-사용한다면 Null Pointer Exception 같은 예외가 발생하지 않을 수도 있다.   
-`하지만, 코틀린에서는 NPE가 발생하지 않을 것 같지만 자바의 라이브러리를 쓰는 
-경우 NPE가 발생할 수 있다.` 자바에서는 non-nullable 타입이 없기 때문에 
-자바 라이브러리를 사용할 때 nullable 타입으로 리턴 된다.   
+위의 방법 외에도 null을 처리하는 다양한 방법에 대해서 더 자세히 알아보자.     
 
 - - - 
 
 
-## 3. nullable 타입을 non-nullable 타입으로 변경하기    
+## 2. nullable 타입을 non-nullable 타입으로 변경    
+
+코틀린은 nullable과 non-nullable 개념을 만들어, null에 안전한 프로그램을
+만들 수 있게 도와준다. 그래서 코틀린만
+사용한다면 Null Pointer Exception 같은 예외가 발생하지 않을 수도 있다.
+`하지만, 코틀린에서는 NPE가 발생하지 않을 것 같지만 자바의 라이브러리를 쓰는
+경우 NPE가 발생할 수 있다.` 자바에서는 non-nullable 타입이 없기 때문에
+자바 라이브러리를 사용할 때 nullable 타입으로 리턴 된다.
 
 코틀린에서 아래와 같은 자바 라이브러리를 사용한다고 가정해보자. 
 `이 함수는 String을 리턴하며, 코틀린에서는 이 타입을 nullable인 
@@ -110,12 +108,12 @@ var nonNullString2: String = getString()!!   // 컴파일 성공
 
 - - - 
 
-## 4. 안전하게 nullable 프로퍼티 접근하기   
+## 3. 안전하게 nullable 프로퍼티 접근하기   
 
 코틀린에서 nullable 프로퍼티를 사용할 때 안전하게 사용하는 
 다양한 방법들에 대해서 알아보자.    
 
-#### 4-1) 조건문으로 nullable 접근   
+### 3-1) 조건문으로 nullable 접근   
 
 가장 쉬운 방법은 if-else를 이용하는 것이다. 자바에서는 흔히 
 사용하는 방식이다.    
@@ -132,7 +130,7 @@ val b: String? = "Kotlin"
 
 단점은 if-else 루프가 반복되는 경우 가독성을 해칠 수 있다.   
 
-#### 4-2) Safe call 연산자로 nullable 접근   
+### 3-2) Safe call 연산자로 nullable 접근 ( ?. )
 
 `Safa call은 객체를 접근 할 때 ?. 로 접근하는 방법을 말한다.`   
 예를 들어 아래 코드에서 b?.length를 수행 할 때 b가 null이라면 length를 
@@ -157,7 +155,7 @@ a는 non-nullalble이기 때문이다.
 println(a?.b?.c?.d?.length)
 ```
 
-#### 4-3) 안전하게 nullable 프로퍼티 할당   
+### 3-3) 안전하게 nullable 프로퍼티 할당   
 
 어떤 프로퍼티를 다른 프로퍼티에 할당할 때, 객체가 null인 경우 
 default 값을 할당하고 싶을 수 있다. 자바에서는 삼항연산자를 
@@ -166,7 +164,7 @@ default 값을 할당하고 싶을 수 있다. 자바에서는 삼항연산자�
 
 ```java
 String b = null;
-int l =  b != null ? b.length() : -1;
+int l = (b != null) ? b.length() : -1;
 ```
 
 `하지만 코틀린은 삼항연산자를 지원하지 않는다. 삼항 연산자를 대체할 수 있는 
@@ -197,7 +195,7 @@ int l =  b != null ? b.length() : -1;
     ```
     - 실행 결과를 보면 safeInt는 캐스팅이 실패하여 null이 할당되었다.   
 
-#### 4-4) Collection의 Null 객체를 모두 제거   
+#### 3-4) Collection의 Null 객체를 모두 제거   
 
 Collection에 있는 null 객체를 미리 제거할 수 있는 함수도 제공한다.    
 다음은 List에 있는 null 객체를 filterNotNull 메서드를 이용하여 삭제하는 
