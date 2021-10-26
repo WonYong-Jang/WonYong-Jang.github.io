@@ -155,10 +155,11 @@ serviceWorker.unregister();
 
 ### 3. 리액트 프로젝트에 리덕스 적용하기     
 
-리액트 프로젝트에 리덕스를 적용할 때에는 react-redux라는 라이브러리를 사용해야 한다.   
+리액트 프로젝트에 리덕스를 적용할 때에는 다음 라이브러리를 사용해야 한다.   
 해당 라이브러리를 설치해 주자.   
 
 ```shell
+$ npm install redux   
 $ npm install react-redux   
 ```
 

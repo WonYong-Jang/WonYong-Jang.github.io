@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Redux] useSelector최적화와 connect함수"        
-subtitle: ""    
+subtitle: "mapStateToProps, mapDispatchToProps, bindActionCreators"    
 comments: true
 categories : React-Redux
 date: 2021-10-24
