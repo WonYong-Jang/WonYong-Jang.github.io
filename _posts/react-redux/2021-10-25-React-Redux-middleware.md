@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Redux] 미들웨어 만들어보고 이해하기"        
-subtitle: "객체와 상태를 로깅하는 미들웨어 구현"    
+subtitle: "객체와 상태를 로깅하는 미들웨어 구현 / redux-logger"    
 comments: true
 categories : React-Redux
 date: 2021-10-25
@@ -109,21 +109,21 @@ export default rootReducer;
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
-import * as serviceWorker from './serviceWorker';
-import { createStore } from 'redux';
-import { Provider } from 'react-redux';
+import reportWebVitals from './reportWebVitals';
+import {createStore} from 'redux';
+import {Provider} from 'react-redux';
 import rootReducer from './modules';
 
 const store = createStore(rootReducer);
 
 ReactDOM.render(
-  <Provider store={store}>
-    <App />
-  </Provider>,
-  document.getElementById('root')
+    <Provider store={store}>
+        <App />
+    </Provider>,
+    document.getElementById('root')
 );
 
-serviceWorker.unregister();
+reportWebVitals();
 ```
 
 ### 2-3) 프리젠테이셔널 컴포넌트 준비    
@@ -285,24 +285,23 @@ export default myLogger;
 ```react
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
 import App from './App';
-import * as serviceWorker from './serviceWorker';
-import { createStore, applyMiddleware } from 'redux';
-import { Provider } from 'react-redux';
+import reportWebVitals from './reportWebVitals';
+import {applyMiddleware, createStore} from 'redux';
+import {Provider} from 'react-redux';
 import rootReducer from './modules';
 import myLogger from './middlewares/myLogger';
 
 const store = createStore(rootReducer, applyMiddleware(myLogger));
 
 ReactDOM.render(
-  <Provider store={store}>
-    <App />
-  </Provider>,
-  document.getElementById('root')
+    <Provider store={store}>
+        <App />
+    </Provider>,
+    document.getElementById('root')
 );
 
-serviceWorker.unregister();
+reportWebVitals();
 ```   
 
 이제 카운터에서 버튼을 눌러보자. 액션이 잘 출력되는지를 
@@ -364,7 +363,103 @@ dispatch(myThunk());
 직접 만드는 것보단 [redux-logger](https://github.com/LogRocket/redux-logger) 미들웨어를 
 사용하는게 더욱 좋다.   
 
-다음 글에서는 redux-logger와 redux-thunk에 대해서 살펴보자.   
+- - - 
+
+## 4. redux-logger 사용   
+
+이번에는 redux-logger를 설치해서 적용을 해보고, 또 Redux DevTools와 
+리덕스 미들웨어를 함께 사용해야 할 때에는 어떻게 해야하는지 
+살펴보자.         
+
+### 4-1) redux-logger 사용하기   
+
+우선 redux-logger를 설치하자.      
+
+```shell
+$ npm install redux-logger  
+```
+
+`그 후 index.js에서 불러와서 적용을 해보자. 리덕스에 미들웨어를 
+적용 할 때에는 다음과 같이 여러개의 미들웨어를 등록 할 수 있다.`   
+
+##### index.js   
+
+```react
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import {applyMiddleware, createStore} from 'redux';
+import { Provider } from 'react-redux';
+import rootReducer from './modules';
+import myLogger from './middlewares/myLogger';
+import logger from 'redux-logger';
+
+const store = createStore(rootReducer, applyMiddleware(myLogger, logger));
+
+ReactDOM.render(
+    <Provider store={store}>
+        <App />
+    </Provider>,
+  document.getElementById('root')
+);
+
+reportWebVitals();
+```
+
+이제 myLogger는 사용할 일이 없으니 비활성화 해주자.   
+그 후 결과를 확인해보면 redux-logger쪽에서만 출력이 된다.   
+
+<img width="500" alt="스크린샷 2021-10-26 오후 11 30 50" src="https://user-images.githubusercontent.com/26623547/138900640-0b60a2d8-039d-42b0-b1ab-7e946fce5d89.png">   
+
+
+### 4-2) Redux DevTools 사용하기   
+
+Redux DevTools를 미들웨어와 함께 사용해야 한다면 어떻게 코드를 
+작성해야 하는지 알아보자.    
+
+[매뉴얼 상의 사용법](https://www.npmjs.com/package/redux-devtools-extension#usage)은 다음과 같다.   
+우선 redux-devtools-extension을 설치하자.   
+
+```shell
+$ npm install redux-devtools-extension
+```    
+
+다음, index.js를 수정하자.   
+
+##### index.js   
+
+```react
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import {applyMiddleware, createStore} from 'redux';
+import { Provider } from 'react-redux';
+import rootReducer from './modules';
+import logger from 'redux-logger';
+import { composeWithDevTools } from 'redux-devtools-extension';
+
+
+const store = createStore(
+    rootReducer,
+    composeWithDevTools(applyMiddleware(logger))
+);
+
+ReactDOM.render(
+    <Provider store={store}>
+        <App />
+    </Provider>,
+  document.getElementById('root')
+);
+
+reportWebVitals();
+```
+
+이제 Redux DevTool이 잘 작동하는지 확인해보자.   
+
+
+다음 글에서는 redux-thunk에 대해서 살펴보자.   
 
 - - - 
 
@@ -372,6 +467,7 @@ dispatch(myThunk());
 
 <https://react.vlpt.us/redux-middleware/02-make-middleware.html>   
 <https://velog.io/@youthfulhps/%EB%A6%AC%EB%8D%95%EC%8A%A4-%EB%AF%B8%EB%93%A4%EC%9B%A8%EC%96%B4%EB%8A%94-%EB%AC%B4%EC%97%87%EC%9D%B8%EA%B0%80>   
+<https://www.npmjs.com/package/redux-devtools-extension#usage>   
 
 {% highlight ruby linenos %}
 
