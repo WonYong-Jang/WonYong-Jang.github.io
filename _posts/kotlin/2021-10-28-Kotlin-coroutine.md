@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kotlin] 코루틴(coroutine) 개념 익히기"     
-subtitle: "협력형 멀티 태스킹, 동시성 프로그래밍, 비동기 처리"    
+subtitle: "협력형 멀티 태스킹, 동시성 프로그래밍, 비동기 처리 / 코루틴과 쓰레드 차이"    
 comments: true
 categories : Kotlin
 date: 2021-10-28
@@ -267,7 +267,29 @@ takeShower() 함수가 끝나야만 실행된다.
 실행함과 동시에(여기서는 백그라운드 스레드에서 동시에 실행될 것이다) 잠시 
 goCompany를 빠져나간다. 그러다가 wakeUp이 자신의 일을 끝마치면 다시 
 goCompany로 돌아올 수 있기 때문이다. 이게 코루틴으로 
-비동기 처리를 할 때 생기는 장점이다.   
+비동기 처리를 할 때 생기는 장점이다.     
+
+- - - 
+
+## 코루틴과 쓰레드의 차이   
+
+코루틴에 대해서 살펴보다보면, 개념적으로 쓰레드와 동일하다라는 
+착각을 할 수 있다.    
+[Difference between thread and coroutine in Kotlin](https://stackoverflow.com/questions/43021816/difference-between-thread-and-coroutine-in-kotlin)를 
+참고해보자.      
+
+`코루틴은 그저 하나의 쓰레드(혹은 스케줄러)위에서 실행이 시작될 수 있다. 
+하나의 쓰레드에 코루틴이 여러개 존재할 수가 있는데, 실행중이던 하나의 
+코루틴이 suspend(멈춤)되면, 현재 쓰레드에서 resume(재개)할 다른 코루틴을 
+찾는다.`   
+다른 쓰레드에서 찾는게 아니라 같은 쓰레드에서 찾는것이다(물론 다른 쓰레드에서 
+        resume할 수 있는 방법도 있다.)   
+따라서, 쓰레드를 switch(컨텍스트 스위치)하는데 드는 overhead가 없다.    
+
+또 하나, 위에서 말한 suspend, resume 등등을 모두 개발자가 직접 컨트롤 할 수 있다. 
+여러 작업을 가지고 동시성 프로그래밍을 할 때 모두 OS가 컨트롤 했던 
+쓰레드 방식과는 다르다.   
+
 
 - - - 
 
