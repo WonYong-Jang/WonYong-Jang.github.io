@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Redux] redux-saga 다루기 "        
-subtitle: "비동기 처리 / Generator / promise"    
+subtitle: "비동기 처리 / put, takeEvery, takeLatest/ createSagaMiddleware / Generator "    
 comments: true
 categories : React-Redux
 date: 2021-10-31
@@ -28,7 +28,7 @@ redux-saga는 redux-thunk로 못하는 다양한 작업들을 처리 할 수 있
 코드 관리를 할 수 있다. [링크](https://medium.com/@pierremaoui/using-websockets-with-redux-sagas-a2bf26467cab)를 참고하자.   
 - API 요청이 실패했을 때 재요청하는 작업을 할 수 있다.   
 
-이 외에도 다양한 까다로운 비동기 작업들을 redux-saga를 사용하여 처리할수 있다.     
+이 외에도 다양하고 까다로운 비동기 작업들을 redux-saga를 사용하여 처리할수 있다.     
 
 redux-saga는 다양한 상황에 쓸 수 있는 만큼, 제공되는 기능도 많고, 
     사용방법도 진입장벽이 꽤나 크다. 자바스크립트 초심자라면 생소할만한 
