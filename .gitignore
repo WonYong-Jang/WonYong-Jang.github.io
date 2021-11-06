@@ -6,6 +6,7 @@ _site
 node_modules
 package.json
 *.gem
+.idea
 
 ## Jekyll stuff
 _site/

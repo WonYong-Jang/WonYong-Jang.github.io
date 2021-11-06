@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Redux] Thunk로 프로미스 다루기 "        
+title: "[Redux] redux-Thunk 사용해보기"        
 subtitle: "리덕스에서 비동기 작업을 처리할수 있는 미들웨어"    
 comments: true
 categories : React-Redux
@@ -8,7 +8,7 @@ date: 2021-10-26
 background: '/img/posts/mac.png'
 ---
 
-## redux-thunk   
+## 1. redux-thunk   
 
 `redux-thunk는 리덕스에서 비동기 작업을 처리 할 때 가장 많이 사용하는 
 미들웨어이다. 이 미들웨어를 사용하면 액션 객체가 아닌 함수를 
@@ -72,7 +72,7 @@ const getComments = () => async (dispatch, getState) => {
 
 - - - 
 
-## redux-thunk 설치 및 적용하기   
+## 2. redux-thunk 설치 및 적용하기   
 
 redux-thunk를 설치하고 적용해보자.   
 
@@ -183,7 +183,8 @@ export default CounterContainer;
 ```
 
 이제 카운터 버튼을 클릭하여 결과를 확인해보면, 액션 디스패치가 
-딜레이 된 것을 확인해 볼 수 있다.   
+딜레이 된 것을 확인해 볼 수 있다.      
+
 
 - - - 
 
