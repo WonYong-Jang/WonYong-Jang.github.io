@@ -204,8 +204,8 @@ suspend로 정의된 함수가 없다면 그냥 마지막 괄호를 만날 때 �
 ### 3. 비동기 처리가 이렇게 편해지다니   
 
 위에서 설명한 코틀린의 능력으로 비동기 처리가 굉장히 쉬워진다. 심지어 
-이게 비동기 처리인가? 싶을 정도로 읽기 쉽게 짜기도 쉬운 코드를 
-볼 수 있다.   
+이게 비동기 처리인가? 싶을 정도로 읽기 쉽고 짜기도 쉬운 코드를 
+볼 수 있다.     
 
 한가지 예시를 들어보자. 아침 기상으로부터 회사에 도착하기 까지의 과정이다.   
 
@@ -302,7 +302,8 @@ goCompany로 돌아올 수 있기 때문이다. 이게 코루틴으로
 있었는데, [CPS(Continuation-passing style)](http://dogfeet.github.io/articles/2012/by-example-continuation-passing-style-in-javascript.html)을 
 참고해보자.       
 
-
+[다음글](https://wonyong-jang.github.io/kotlin/2021/10/31/Kotlin-coroutine2.html)에서 
+코루틴을 직접 사용해보면서 이해해보자.   
 
 - - - 
 

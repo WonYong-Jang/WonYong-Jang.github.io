@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kotlin] 코루틴(coroutine) 사용해보기"     
-subtitle: "suspend, resume, globalScope, launch, dispatcher coroutineScope, coroutineContext, async"    
+subtitle: "suspend, resume, globalScope, launch, dispatcher coroutineScope, runBlocking, coroutineContext, async"    
 comments: true
 categories : Kotlin
 date: 2021-10-31
@@ -191,7 +191,17 @@ job이 끝나지 않으면 runBlocking()으로 생성한 코루틴은 끝나지 
 위 코드에서는 runBlocking의 블록 안에서 GlobalScope로 코루틴을 만들어 
 launch했지만, GlobalScope를 사용하지 않고, runBlocking이 만든 CoroutineScope와 
 같은 스코프로 코루틴을 만들 수 있다.    
-아래 코드처럼 그냥 launch를 호출하여 더 깔끔한 코드를 만들 수 있다.   
+아래 코드처럼 그냥 launch를 호출하여 더 깔끔한 코드를 만들 수 있다.    
+
+```kotlin
+fun main() = runBlocking { // this: CoroutineScope
+    launch { // launch a new coroutine in the scope of runBlocking
+        delay(1000L)
+        println("World!")
+    }
+    println("Hello,")
+}
+```    
 
 ### 1-3) suspend 와 resume   
 
@@ -346,6 +356,7 @@ Job의 객체의 cancel()메서드는 자신이 해당하는 CoroutineScope의 �
 
 **Reference**     
 
+<https://thdev.tech/kotlin/2020/12/07/Coroutines-Flow-Callback/>   
 <https://medium.com/@limgyumin/%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%BD%94%EB%A3%A8%ED%8B%B4%EC%9D%98-%EA%B8%B0%EC%B4%88-cac60d4d621b>   
 <https://wooooooak.github.io/kotlin/2019/06/18/coroutineStudy/>   
 <https://wooooooak.github.io/kotlin/2019/06/28/coroutineStudy2/>   
