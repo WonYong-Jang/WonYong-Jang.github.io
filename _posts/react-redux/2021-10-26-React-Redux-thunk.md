@@ -8,7 +8,7 @@ date: 2021-10-26
 background: '/img/posts/mac.png'
 ---
 
-## 1. redux-thunk   
+# 1. redux-thunk   
 
 `redux-thunk는 리덕스에서 비동기 작업을 처리 할 때 가장 많이 사용하는 
 미들웨어이다. 이 미들웨어를 사용하면 액션 객체가 아닌 함수를 
@@ -72,7 +72,7 @@ const getComments = () => async (dispatch, getState) => {
 
 - - - 
 
-## 2. redux-thunk 설치 및 적용하기   
+# 2. redux-thunk 설치 및 적용하기   
 
 redux-thunk를 설치하고 적용해보자.   
 
@@ -188,7 +188,7 @@ export default CounterContainer;
 
 - - - 
 
-## 3. redux-thunk로 프로미스 다루기   
+# 3. redux-thunk로 프로미스 다루기   
 
 이번에는 redux-thunk를 사용하여 프로미스(Promise)를 다루는 방법을 알아보자.     
 프로미스에 대해서는 아래 링크를 참고하자.   
@@ -760,8 +760,10 @@ $ npm install react-router
 버전 6 이후 부터 기존과 사용 방법이 조금 다르기 때문에 
 이전 버전의 소스를 그대로 사용할 경우 에러가 발생한다.   
 
-주요 변경사항은 [https://reacttraining.com/blog/react-router-v6-pre/](https://reacttraining.com/blog/react-router-v6-pre/)을 
-참고하자.   
+주요 변경사항은 [참고링크1](https://reacttraining.com/blog/react-router-v6-pre/) 또는 
+[참고링크2](https://blog.woolta.com/categories/1/posts/211) 을 
+참고하자.    
+
 
 `여러 변경사항이 있지만 Router를 Routers로 감싸서 사용해야 한다는 점이 
 가장 큰 변경사항이다.`       
@@ -949,7 +951,142 @@ export default PostList;
 특정 포스트를 읽고 뒤로 갔을 때, 포스트 목록을 또 다시 불러오게 되면서 
 로딩중..이 나타나게 된다.   
 
-위의 문제점을 개선하는 방법에 대해서 다음 글에서 살펴보자.   
+사용자에게 나쁜 경험을 제공할 수 있는 API 재로딩
+문제를 해결해보도록 하자.    
+
+### 포스트 목록 재로딩 문제 해결하기
+
+포스트 목록이 재로딩 되는 문제를 해결하는 방법은 두가지가 있다.
+`첫번째는 만약 데이터가 이미 존재한다면 요청을 하지 않도록 하는
+방법이다.`
+PostListContainer를 다음과 같이 수정해보자.
+
+##### containers/PostListContainer.js
+
+```react
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import PostList from '../components/PostList';
+import { getPosts } from '../modules/posts';
+
+function PostListContainer() {
+    const { data, loading, error } = useSelector(state => state.posts.posts);
+    const dispatch = useDispatch();
+
+    // 컴포넌트 마운트 후 포스트 목록 요청
+    useEffect(() => {
+        if(data) return;
+        dispatch(getPosts());
+    }, [dispatch]);
+
+    if (loading) return <div>로딩중...</div>;
+    if (error) return <div>에러 발생!</div>;
+    if (!data) return null;
+
+    return <PostList posts={data} />;
+}
+
+export default PostListContainer;
+```
+
+이렇게 하고 나면 포스트 목록이 이미 있는데 재로딩 하는 이슈를 수정할 수 있다.
+즉, 포스트를 열고 뒤로가기를 눌렀을 때 로딩중..이라는 문구를
+띄우지 않는다.
+
+`두번째 방법은 로딩을 새로하긴 하는데, 로딩중...을 띄우지 않는 것이다.`
+`두번째 방법의 장점은 사용자에게 좋은 경험을 제공하면서도
+뒤로가기를 통해 다시 포스트 목록을 조회 할 때 최신 데이터를
+보여줄 수 있다는 것이다.`
+
+우선, asyncUtils.js의 handleAsyncActions 함수를 다음과 같이
+수정하자.
+
+##### lib/asyncUtils.js -handleAsyncActions.js
+
+```react
+export const handleAsyncActions = (type, key, keepData = false) => {
+  const [SUCCESS, ERROR] = [`${type}_SUCCESS`, `${type}_ERROR`];
+  return (state, action) => {
+    switch (action.type) {
+      case type:
+        return {
+          ...state,
+          [key]: reducerUtils.loading(keepData ? state[key].data : null)
+        };
+      case SUCCESS:
+        return {
+          ...state,
+          [key]: reducerUtils.success(action.payload)
+        };
+      case ERROR:
+        return {
+          ...state,
+          [key]: reducerUtils.error(action.error)
+        };
+      default:
+        return state;
+    }
+  };
+};
+```
+
+keepData 라는 파라미터를 추가하여 만약 이 값이 true로 주어지면
+로딩을 할 때에도 데이터를 유지하도록 수정을 해주었다.
+
+이제 posts 리덕스 모듈의 리듀서 부분도 다음과 같이 수정해보자.
+
+##### modules/posts.js - posts 리듀서
+
+```react
+export default function posts(state = initialState, action) {
+  switch (action.type) {
+    case GET_POSTS:
+    case GET_POSTS_SUCCESS:
+    case GET_POSTS_ERROR:
+      return handleAsyncActions(GET_POSTS, 'posts', true)(state, action);
+    case GET_POST:
+    case GET_POST_SUCCESS:
+    case GET_POST_ERROR:
+      return handleAsyncActions(GET_POST, 'post')(state, action);
+    default:
+      return state;
+  }
+}
+```
+
+그리고 나서 PostListContainer를 다음과 같이 수정해보자.
+
+##### containers/PostListContainer.js
+
+```react
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import PostList from '../components/PostList';
+import { getPosts } from '../modules/posts';
+
+function PostListContainer() {
+  const { data, loading, error } = useSelector(state => state.posts.posts);
+  const dispatch = useDispatch();
+
+  // 컴포넌트 마운트 후 포스트 목록 요청
+  useEffect(() => {
+    dispatch(getPosts());
+  }, [dispatch]);
+
+  if (loading && !data) return <div>로딩중...</div>; // 로딩중이면서, 데이터가 없을 때에만 로딩중... 표시
+  if (error) return <div>에러 발생!</div>;
+  if (!data) return null;
+
+  return <PostList posts={data} />;
+}
+
+export default PostListContainer;
+```
+
+이렇게 구현을 해주고 나면 뒤로가기를 눌렀을 때 데이터를 요청하긴 하지만,
+    로딩중...이라는 문구를 보여주지 않게된다.
+
+이 외에 더 자세한 내용은 [링크](https://react.vlpt.us/redux-middleware/06-fix-reloading.html)를 참고하자. 
 
 
 - - - 
@@ -958,7 +1095,8 @@ export default PostList;
 
 <https://react.vlpt.us/redux-middleware/04-redux-thunk.html>   
 <https://reacttraining.com/blog/react-router-v6-pre/>  
-<https://reactrouter.com/docs/en/v6/getting-started/concepts>   
+<https://reactrouter.com/docs/en/v6/getting-started/concepts>  
+<https://blog.woolta.com/categories/1/posts/211>   
 
 {% highlight ruby linenos %}
 
