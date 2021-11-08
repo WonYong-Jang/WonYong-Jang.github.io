@@ -338,6 +338,7 @@ export default App;
     볼수 있다.   
 
 
+다음글에서 redux-saga로 프로미스 다루고 라우터에 연동해보자.   
 
 - - - 
 
