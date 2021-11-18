@@ -65,42 +65,83 @@ useState가 반환하는 첫 번째 인자인 state와 두번째 인자인 setSt
 
 `useEffect는 컴포넌트의 상태값 변화에 따라 컴포넌트 내부에서 변경이 
 이루어져야 되는것들을 처리할 수 있다.`   
+useEffect는 컴포넌트가 mount 됐을 때, 컴포넌트가 unmount 됐을 때, 
+    컴포넌트가 update 됐을 때, 특정 작업을 처리할 수 있다.  
+
+> 컴포넌트가 처음 실행될 때 Mount라고 표현을 한다. 반대로 컴포넌트가 제거 되는 것은 Unmount라고
+표현한다.   
+
+즉, 클래스형 컴포넌트에서 사용할 수 있었던 생명주기 메서드를 
+함수형 컴포넌트에서도 사용할 수 있게 된 것이다.   
 클래스 컴포넌트에서 사용되는 Component Lifecycle 관련된 함수들(componentDidMount, 
         shouldComponentUpdate, componentWillMount 등)의 역할을 
 그대로 맡아 처리할 수 있다.   
 
+<img width="900" alt="스크린샷 2021-11-18 오후 11 39 55" src="https://user-images.githubusercontent.com/26623547/142436369-b1ee8850-82f2-4c36-a4fd-8c96d4c57c81.png">   
+
 기본 형태는 다음과 같다.  
 
 ```react
-const Counter = () => {
-    useEffect(() => {
-    	데이터_가져오는_함수();
-    }, [ ]);
-}
+import React, { useEffect } from 'react';   
+
+// useEffect( function, deps )
+// function : 수행하고자 하는 작업   
+// deps : 배열 형태이며, 배열 안에서 검사하고자 하는 특정 값 or 빈 배열   
+
+useEffect(() => {
+        console.log('마운트 될 때만 실행된다.');   
+}, []);
 ```   
 
 `첫번째 인자값으로 함수를 필요로 하고 두번째 인자값으로 배열형태의 값을 
 필요로 한다.`   
-`두번째 인자값에는 보통 컴포넌트 state 값이 들어가는데 배열에 포함된 
-값이 변경되었을때 해당 useEffect 내부 로직이 실행된다.`   
 
-사용예제는 다음과 같다.   
+`두번째 인자값에는 보통 컴포넌트 state 값이 들어가는데 배열에 포함된 
+값이 변경되었을때 해당 useEffect 내부 로직이 실행된다.`      
+`두번째 인자값으로 빈 배열을 넣는 경우 컴포넌트가 
+처음 렌더링 될때(mount 될 때)만 실행된다.`    
+
+
+`만약 두번째 인자의 배열을 생략한다면 리렌더링 될 때 마다 실행된다.`   
 
 ```react
-import React, { useState, useEffect } from 'react'
+useEffect(() => {
+    console.log('렌더링 될 때 마다 실행된다.');
+});
+```
 
-export default function MyComponent() {
-    const [count, setCount] = useState(0);
-    useEffect(()=>{
-        document.title = `업데이트 횟수 : ${count}`
-    })
-    return <button onClick={()=>setCount(count+1)}>increase</button>
-}
+그렇다면 특정값이 업데이트 될 때 실행하고 싶을 때는 deps 배열 안에 
+검사하고 싶은 값을 넣어준다.   
+
+> 의존값이 들어있는 배열 deps(dependency를 의미) 이라고도 한다.   
+
+`주의할 점은 업데이트 될 때만 실행하는 것이 아니라 마운트 될 때도 실행된다.`   
+
+```react
+useEffect(() => {
+    console.log(name);
+    console.log('업데이트 될 때 실행된다.');
+}, [name]);
+```
+
+`마지막으로 useEffect의 return 값이 있는 경우 hook의 cleanup 함수로 인식하고 
+다음 effect가 실행되기 전에 실행을 해준다.`   
+
+언마운트 될 때만 cleanup 함수를 실행하고 싶을 때 
+두 번째 파라미터로 빈 배열을 넣는다.    
+또한, 특정값이 업데이트 되기 직전에 cleanup 함수를 실행하고 
+싶을 때 deps 배열 안에 검사하고 싶은 값을 넣어준다.   
+
+```react
+useEffect(() => {
+    console.log('effect');
+    console.log(name);
+    return () => {
+        console.log('cleanup');
+        console.log(name);
+    };
+}, []);
 ```   
-
-버튼을 클릭시에 상태값을 증가시키는 간단한 코드이다.   
-`버튼을 클릭하면 다시 렌더링되고, useEffect훅에 입력된 함수가 호출된다.`   
-
 
 - - - 
 
@@ -122,6 +163,8 @@ Hooks는 기존의 HOC나 reder-props같은 패턴이 가져오는 Component Tre
 
 **Reference**     
 
+<https://ko-de-dev-green.tistory.com/18>   
+<https://xiubindev.tistory.com/100>   
 <https://medium.com/humanscape-tech/hooks-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B8%B0-usestate-useeffect-811636d1035e>   
 <https://velog.io/@kwonh/ReactHook-useState-%EC%99%80-useEffect-%EB%A1%9C-%EC%83%81%ED%83%AF%EA%B0%92%EA%B3%BC-%EC%83%9D%EB%AA%85%EC%A3%BC%EA%B8%B0-%EC%82%AC%EC%9A%A9%ED%95%98%EA%B8%B0>   
 <https://antdev.tistory.com/79>   
