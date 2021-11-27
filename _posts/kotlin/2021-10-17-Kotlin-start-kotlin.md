@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kotlin] 코틀린의 주요 특성과 기초 배우기"     
-subtitle: "property / val, var / fun / array / if, when, for, while / class "    
+subtitle: "property, backing field, class / val, var / fun / array / if, when, for, while / enum"    
 comments: true
 categories : Kotlin
 date: 2021-10-17
@@ -25,7 +25,8 @@ background: '/img/posts/mac.png'
 또한, 자바뿐 아니라 자바스크립트도 코틀린을 컴파일 할 수 있다. 따라서 코틀린 코드를 
 브라우저나 노드에서 실행할 수 있다.   
 
-코틀린을 사용해야 하는 이유와 주요 특성에 대해서 살펴보자.   
+다음으로는 코틀린의 주요 특성을 살펴보고 코틀린을 사용해야 하는 
+이유를 확인해보자.   
 
 ## 1-1) 코틀린의 주요 특성   
 
@@ -50,6 +51,11 @@ background: '/img/posts/mac.png'
 코틀린 컴파일러가 문맥으로 변수 타입을 자동으로 유추할 수 있기 때문에 
 생략 가능하다. (타입 추론)     
 
+여기서 반환 타입을 생략할 수 있는 이유는 무엇일까?   
+`코틀린은 사용자가 반환 타입을 적지 않아도 컴파일러가 함수 본문 식을 
+분석해서 식의 결과 타입을 함수 반환 타입으로 정해주기 때문에 생략이 
+가능하다.`   
+
 #### 1-1-2) 함수형 프로그래밍과 객체지향 프로그래밍   
 
 코틀린은 함수형 스타일로 프로그램을 짤 수 있게 지원한다. 하지만 이를 강제하지는 
@@ -71,7 +77,7 @@ background: '/img/posts/mac.png'
 
 - - - 
 
-# 2. 코틀린 프로퍼티(property)    
+# 2. 코틀린 프로퍼티(property)와 클래스    
 
 코틀린에서는 기존의 프로그래밍 언어에서의 사고방식을 어느 정도는 
 지우고 새롭게 처음부터 공식문서를 본다는 마음으로 이해해야 이해가 
@@ -164,7 +170,7 @@ class Person {
 }
 
 fun main(args: Array<String>) {
-    val person = Person()
+    val person = Person()   // new 키워드를 사용하지 않고 생성자를 호출한다.   
     person.name = "Ready"
 
     println(person.name) // Dev.Ready   
@@ -174,8 +180,8 @@ fun main(args: Array<String>) {
 위 예제를 보면 setter를 커스텀하게 만든 소스에서 낯선 내용이 등장한다.   
 `그건 바로 Backing Field라고 불리는 field이다.`   
 코틀린에서는 클래스 내에서 직접적으로 Fields에 대해 선언할 수 없으나 
-프로퍼티가 Backing Field를 필요로 할 때 자동으로 Accessor 메서드 안에서 
-참조할 수 있도록 field라는 식별자를 제공해준다.   
+`프로퍼티가 Backing Field를 필요로 할 때 자동으로 Accessor 메서드 안에서 
+참조할 수 있도록 field라는 식별자를 제공해준다.`       
 
 위 코드에서 사용된 field 역시 이러한 Backing Field를 의미하며, field가 
 가르키는 것이 곧 name이라 보면 된다.   
@@ -300,15 +306,20 @@ public final class Property {
 
 - - - 
 
-# 3. 변수와 상수   
+# 3. 코틀린의 변수   
 
-- var   
-    - var 는 변수를 선언할 때 사용되는 키워드이다.   
-    - var 로 선언한 변수는 값을 변경할 수 있다.   
+변수 선언시 사용하는 키워드는 다음과 같은 2가지가 있다.   
 
-- val     
-    - val 는 상수를 선언할 때 사용되는 키워드이다.   
-    - val 로 선언한 상수는 값을 변경 불가하다.   
+- val(값을 뜻하는 value에서 따옴) : 변경 불가능한(immutable) 참조를 저장하는 
+                                    변수다. val로 선언된 변수는 일단 
+                                          초기화하고 나면 변경 불가능하다. 
+                                            자바로 말하자면 final 변수에 
+                                            해당한다.   
+
+- var(변수를 뜻하는 variable에서 따옴) : 변경 가능한(mutable) 참조다. 이런 
+                                         변수 값은 바뀔 수 있다. 자바의 
+                                                일반 변수에 해당한다.   
+
 
 ```kotlin
 val a: Int = 1
@@ -324,7 +335,7 @@ x = 1
 //String
 var v =1
 var s1 = "a string"
-var s2 = "$s1 and $v"     
+var s2 = "$s1 and $v"     // 문자열 템플릿 사용
 
 var s3 = """   // 문자열 여러줄로 표현하기    
 abc
@@ -333,6 +344,43 @@ efg
 ###           // 줄바꿈이나 특수문자까지 그대로 문자열로 사용 가능하다.   
 """
 ```
+
+`기본적으로 모든 변수를 val 키워드를 사용해 불변 변수로 선언하고, 나중에
+꼭 필요할 때에만 var로 변경하는 것을 권장한다.`
+
+`val 변수는 블록을 실행할 때 정확히 한 번만 초기화 돼야 한다. 하지만
+어떤 블록이 실행될 때 오직 한 초기화 문장만 실행됨을 컴파일러가
+확인할 수 있다면 조건에 따라 val 값을 다른 여러 값으로 초기화 할 수도 있다.`    
+
+```kotlin
+val message: String   // 타입을 명시하면 초기화 없이 선언 가능 
+    if(a == "Kotlin"){
+        message = "hello"
+    }
+    else message ="world"
+```   
+
+`즉, val 참조 자체는 불변일지라도 그 참조가 가르키는 객체의 내부 값은 
+변경될 수 있다는 사실을 꼭 기억해야 한다.`   
+아래와 같은 코드는 완전히 올바른 코틀린 코드이다.   
+
+```kotlin
+val languages = arrayListOf("Java") // 불변 참조를 선언한다.
+languages.add("Kotlin")          // 참조가 가르키는 객체 내부를 변경한다.   
+```
+
+`또한, var 키워드에 대해서 오해할 수 있는 부분을 살펴보면, 변수의 값을 
+변경할 수 있지만, 변수의 타입은 고정돼 바뀌지 않는다.`       
+예를 들어 다음코드는 컴파일 할 수 없다.   
+
+```kotlin
+var answer = 42
+answer = "no answer" // 컴파일 오류 발생 Error: type mismatch  
+```   
+
+컴파일러는 변수 선언 시점의 초기화 식으로부터 변수의 타입을 추론하며, 
+    변수 선언 이후 변수 재대입이 이뤄질 때는 이미 추론한 변수의 
+    타입을 염두에 두고 대입문의 타입을 검사한다.   
 
 - - -   
 
@@ -381,7 +429,7 @@ a.forEach (::println)    // 0 1 2
 
 - - - 
 
-# 6. if, when, for, while   
+# 6. if, when, for, while, enum      
 
 ### 6-1) if   
 
@@ -394,10 +442,45 @@ val b = 2
 val bigger = if (a > b) a else b     
 ```   
 
+### 6-2) enum   
 
-### 6-2) when   
+자바에서 마찬가지로 코틀린도 enum을 아래와 같이 정의가 가능하다.   
 
-`코틀린에서 switch ~ case 구문의 경우 when 키워드를 이용하여 사용할 수 있다.`   
+```kotlin
+enum class Color {
+    RED, ORANGE, YELLOW
+}
+```
+
+자바와 마찬가지로 enum은 단순히 값만 열거하는 존재가 아니다. `enum 클래스 안에서도 
+프로퍼티나 메소드를 정의할 수 있다.` 다음은 프로퍼티와 메소드를 enum안에서 
+선언하는 방법을 보여준다.   
+
+```kotlin
+enum class Color(
+    val r: Int, val g: Int, val b: Int // 상수의 프로퍼티를 정의한다.
+) {
+    RED(255, 0, 0), ORANGE(255, 165, 0), // 각 상수를 생성할 때 그에 대한 프로퍼티 값을 지정한다.
+    YELLOW(255, 255, 0);  // 반드시 세미콜론을 사용해야 한다.   
+
+    fun rgb() = (r * 256 + g) * 256 + b // enum 클래스 안에서 메소드를 정의한다.
+}
+
+println(Color.RED.rgb())
+```
+
+enum에서도 일반적인 클래스와 마찬가지로 생성자와 프로퍼티를 선언한다. 
+각 enum 상수를 정의할 때는 그 상수에 해당하는 프로퍼티 값을 
+지정해야만 한다. 이 예제에서는 코틀린에서 유일하게 세미콜론(;)이 
+필수인 부분을 볼 수 있다.   
+`enum 클래스 안에서 메소드를 정의하는 경우 반드시 enum 상수 목록과 
+메소드 정의 사이에 세미콜론을 넣어야 한다.`      
+
+
+### 6-3) when   
+
+`when은 자바의 switch를 대치하되 훨씬 더 강력하며, 앞으로 더 자주 사용할 
+프로그래밍 요소라고 생각할 수 있다.`    
 
 ```kotlin   
 fun printNumber (num : Int)  = when (num){
@@ -424,9 +507,37 @@ fun cases(obj: Any) {
         else -> println("Unknown")
     }
 }
+```   
+
+`자바에서는 break를 빼먹어서 오류가 생기는 경우가 자주 있었지만 코틀린의 
+        when을 사용할 경우 분기의 끝에 break를 넣지 않아도 된다.`   
+또한, 한 분기 안에 여러 값을 매치 패턴으로 사용하려면 콤마(,)로 분리하면 된다.   
+
+```kotlin
+fun getWarmth(color: Color) = when(color) {
+    Color.RED, Color.ORANGE -> "warn"
+    Color.BLUE -> "cold"
+}
+```   
+
+`코틀린의 when이 자바의 switch 보다 훨씬 강력한 이유는 분기 조건에 
+enum이나 리터럴값만 사용할 수 있는 자바와 달리 코틀린의 when은 
+임의의 객체를 허용한다.`   
+
+다음 코드를 살펴보자.   
+
+```kotlin
+fun mix(c1: Color, c2: Color) =
+    when(setOf(c1, c2)) {              // when 식의 인자로 아무 객체나 사용할 수 있다.   
+        setOf(RED, YELLOW) -> ORANGE
+        setOf(BLUE, YELLOW) -> GREEN
+        else -> throw Exception("error")  // 매치되는 분기 조건이 없으면 이 문장 실행 
+    }
+// println(mix(BLUE, YELLOW))
 ```
 
-### 6-3) for  
+
+### 6-4) for  
 
 `일반적인 프로그래밍 언어에서 제공해주는 키워드인 for 언어와 사용법이 
 비슷할 수도 있지만, step을 지정하는 부분이 조금 다르다.`   
@@ -466,7 +577,7 @@ for(index in items.indices) {
 // 2 is kiwi
 ```
 
-### 6-4) while   
+### 6-5) while   
 
 코틀린에서는 다른 언어에서 제공하는 while, do ~ while 문을 동일하게 제공한다.   
 
@@ -484,22 +595,7 @@ var i2 = 0
     }
 ```
 
-- - -   
 
-# 7. Class   
-
-### 7-1) 클래스 선언   
-
-클래스를 단순하게 선언하는 것은 어렵지 않다. 다만 new 키워드를 
-코틀린에서는 사용하지 않는다는 점이 어색하게 다가올수도 있을 것 같다.   
-
-```kotlin
-class Fruit {
-
-}
-
-val fruit = Fruit()
-```
 
 
 
