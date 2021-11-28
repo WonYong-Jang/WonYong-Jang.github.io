@@ -18,7 +18,7 @@ background: '/img/posts/mac.png'
 <img width="718" alt="스크린샷 2021-10-28 오후 11 10 53" src="https://user-images.githubusercontent.com/26623547/139273501-eff8c9db-007d-4e03-811a-1870bd17938e.png">   
 
 앱이든 웹이든 비동기 처리가 핵심인 클라이언트 프로그래밍에서 지금까지 
-가장 핫한 키워드는 [RX(ReactiveX) Programming](https://wooooooak.github.io/kotlin/2019/08/25/%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%BD%94%EB%A3%A8%ED%8B%B4-%EA%B0%9C%EB%85%90-%EC%9D%B5%ED%9E%88%EA%B8%B0/)일 것이다. 그러나 
+가장 핫한 키워드는 [RX(ReactiveX) Programming](http://reactivex.io/)일 것이다. 그러나 
 구글이 안드로이드 공식 언어를 자바에서 코틀린으로 변경한 이후, 최근 들어 
 대표적인 샘플 예제들의 비동기 처리 방식을 coroutine으로 바꾸었다.   
 이와 더불어 상당히 많은 외국 자료들이 올라오고 있다. 그 이유는 

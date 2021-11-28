@@ -78,8 +78,10 @@ delay라는 함수는 현재 실행중인 thread를 block시키진 않지만 코
 `CoroutineScope는 말 그대로 코루틴의 범위, 코루틴 블록을 묶음으로 제어할 수 있는
 단위이다.`    
 
-`위 코드에서 GlobalScope라는 것이 보인다. GlobalScope는 CoroutineScope의 한 종류이다. 미리 정의된 
-방식으로 프로그램 전반에 걸쳐 백그라운드에서 동작한다.`        
+`위 코드에서 GlobalScope라는 것이 보인다. GlobalScope는 CoroutineScope를 상속받아 구현되어 있다. 
+GlobalScope는 Dispatchers.Unconfinded에서 동작한다.`    
+
+> Dispatcher에 대해서는 아래에서 다시 설명할 예정이다.   
 
 `launch라는 코루틴 빌더는 늘 어떤 코루틴 스코프 안에서 코루틴을 launch한다. 
 아래 코드에서는 새로운 코루틴을 GlobalScope에서 launch하도록 했다.`         
@@ -207,7 +209,7 @@ fun main() = runBlocking { // this: CoroutineScope
 
 위에서 나온 용어 중에 suspend 와 resume에 대해서 정리해보자.   
 
-- suspend : 현재의 코루틴을 멈춘다.   
+- suspend : 현재의 코루틴을 멈춘다.     
 - resume : 멈춰있던 코루틴 부분을 다시 시작한다.   
 
 suspend와 resume은 콜백을 대체하기 위해 같이 쓰인다.   
@@ -223,6 +225,7 @@ class MyViewModel: ViewModel() {
 ```
 
 위 함수에서 콜백을 제거하기 위해 코루틴을 사용해보자.   
+`suspend 키워드를 사용하는 함수는 CoroutineScope에서만 사용할 수 있다.`   
 
 ```kotlin
 // Dispatchers.Main
@@ -350,7 +353,7 @@ Job의 객체의 cancel()메서드는 자신이 해당하는 CoroutineScope의 �
 
 `즉, 외부 코루틴 블록이 멈춰도, 내부 코루틴 블록은 끝까지 수행된다`    .   
 
-다음 글에서는 lauch, async, Job, Deferred의 자세한 내용을 살펴볼 예정이다.   
+[다음 글](https://wonyong-jang.github.io/kotlin/2021/11/01/Kotlin-coroutine3.html)에서는 lauch, async, Job, Deferred의 자세한 내용을 살펴볼 예정이다.   
 
 - - - 
 
