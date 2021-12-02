@@ -1,26 +1,32 @@
 ---
 layout: post
 title: "[Kotlin] Break and Continue, Return label"     
-subtitle: " "    
+subtitle: "람다식에서 return문 사용할 때 주의사항"    
 comments: true
 categories : Kotlin
 date: 2021-12-30
 background: '/img/posts/mac.png'
 ---
 
-코틀린의 모든 블록은 라벨 설정이 가능하다.   
-그래서 return할 때 반환할 블록을 임의로 설정하여 여러가지 효과를 
-나타낼 수 있다.   
+
+
+`코틀린은 모든 표현식에 label을 붙일 수 있다.`      
+`라벨은 식별자 뒤에 @를 붙이는 식으로 완성한다.`   
+예를 들어 abc@, fooBar@들은 유효한 라벨이다. 
 
 ## Break and Continue Labels   
 
 ## Return at Labels   
+
+- - - 
+
 
 
 - - - 
 
 **Reference**     
 
+<https://wooooooak.github.io/kotlin/2019/02/16/kotlin_label/>   
 <https://kotlinlang.org/docs/returns.html>   
 
 {% highlight ruby linenos %}
