@@ -71,14 +71,23 @@ delay라는 함수는 현재 실행중인 thread를 block시키진 않지만 코
 
 `문서에서는 blocking과 non-blocking이 자주 나오는데, 이것은 쓰레드 입장에서 
 봐야한다. 우선은 쓰레드를 멈춘다면 blocking이고, 쓰레드를 멈추지 
-않는다면 non-blocking이라고 이해하자.`   
+않는다면 non-blocking이라고 이해하자.`     
+
+> GlobalScope.launch {} 코드 블록은 코루틴을 생성하기 위한 코루틴 빌더이며, 
+    이렇게 생성되어 실행되는 코루틴은 호출(실행) 스레드를 블록하지 않기 
+    때문에 그대로 두면 메인 함수가 종료되고 메인 함수를 실행한 메인 스레드 
+    역시 종료되어 프로그램이 끝나게 된다. 이를 방지하기 위해 
+    임의의 시간을 지정하여 지연시킨 것이다.    
+> 이렇게 스레드를 멈추는 역할을 수행하는 함수를 중단 함수(Blocking function)이라고 한다. 
+우리는 이러한 중단 함수가 현재 스레드를 멈추게 할 수 있다는 것을 코드상에 보다 
+명시적으로 나타내기 위해 다음과 같이 runBlocking {} 블록을 사용할 수 있다.   
 
 ### 1-1) CoroutineScope, CoroutineConext      
 
 `CoroutineScope는 말 그대로 코루틴의 범위, 코루틴 블록을 묶음으로 제어할 수 있는
 단위이다.`    
 
-`위 코드에서 GlobalScope라는 것이 보인다. GlobalScope는 CoroutineScope를 상속받아 구현되어 있다. 
+`위 코드에서 GlobalScope는 CoroutineScope를 상속받아 구현되어 있다. 
 GlobalScope는 Dispatchers.Unconfinded에서 동작한다.`    
 
 > Dispatcher에 대해서는 아래에서 다시 설명할 예정이다.   
@@ -163,7 +172,7 @@ runBlocking을 메인스레드 전체에 걸어줌으로써 시작부터 메인 
 디비를 조회하는 시간이 3초가 넘어갈수도 있기 때문에 `우리는 디비를 조회해서 
 어떤 응답을 가져오면, 그 즉시 어떤 일을 처리하고 프로그램을 
 종료시킬 방법이 필요하다.`    
-Job을 통해 그런일이 가능하다.   
+`Job을 통해 그런일이 가능하다.`       
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -205,7 +214,50 @@ fun main() = runBlocking { // this: CoroutineScope
 }
 ```    
 
-### 1-3) suspend 와 resume   
+### 1-3) coroutineScope       
+
+만일 어떤 코루틴들을 위한 사용자 정의 스코프가 필요한 경우가 있다면 
+coroutineScope{ } 빌더를 이용할 수 있다. 이 빌더를 통해 
+생성 된 코루틴은 모든 자식 코루틴들이 끝날때까지 종료되지 않는 스코프를 정의하는 
+코루틴이다.    
+
+이 시점에 우리는 예제로 계속 사용하고 있는 runBlocking 빌더와 coroutineScope 빌더가 
+무슨 차이가 있는지 궁금할 수 있다.     
+
+`그 차이는 runBlocking과 달리 coroutineScope는 자식들의 종료를 기다리는 동안 
+현재 스레드를 블록하지 않는다는 점이다.`   
+
+```kotlin
+fun main(args: Array<String>) = runBlocking {
+    launch {
+        delay(200L)
+        println("Task from runBlocking")
+    }
+
+    coroutineScope {
+        launch {
+            delay(500L)
+            println("Task from nested launch")
+        }
+        delay(100L)
+        println("Task from coroutine scope")
+    }
+    println("Coroutine scope is over")
+}
+
+// Output   
+// Task from coroutine scope
+// Task from runBlocking
+// Task from nested launch
+// Coroutine scope is over
+```   
+
+만약 runBlocking과의 차이를 보기 위해 coroutineScope를 runBlocking으로 
+바꿔서 실행 해보면, Task from runBlocking이 가장 마지막에 출력된다.   
+launch 블록이 실행 기뢰를 얻지 못하였기 때문이다.   
+
+
+### 1-4) suspend 와 resume   
 
 위에서 나온 용어 중에 suspend 와 resume에 대해서 정리해보자.   
 
@@ -254,7 +306,7 @@ suspend fun get(url: String) = withContext(Dispatchers.IO){/*...*/}
 관리되도록 해야한다. 코루틴이 
 메인 스레드 위에서 실행되더라도 꼭 dispatcher에 의해서 동작해야만 한다.   
 
-### 1-4) dispatcher   
+### 1-5) dispatcher   
 
 dispatcher는 CoroutineContext의 주요 요소이다.   
 `CoroutineContext를 상속받아 어떤 쓰레드를 이용해서 어떻게 동작할 것인지를 

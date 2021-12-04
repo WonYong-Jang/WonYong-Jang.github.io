@@ -279,6 +279,8 @@ goCompany로 돌아올 수 있기 때문이다. 이게 코루틴으로
 [Difference between thread and coroutine in Kotlin](https://stackoverflow.com/questions/43021816/difference-between-thread-and-coroutine-in-kotlin)를 
 참고해보자.      
 
+<img width="900" alt="스크린샷 2021-12-04 오후 1 51 24" src="https://user-images.githubusercontent.com/26623547/144697562-ce342bc9-6337-4f95-9f66-3eed48ffac70.png">   
+
 `코루틴은 그저 하나의 쓰레드(혹은 스케줄러)위에서 실행이 시작될 수 있다. 
 하나의 쓰레드에 코루틴이 여러개 존재할 수가 있는데, 실행중이던 하나의 
 코루틴이 suspend(멈춤)되면, 현재 쓰레드에서 resume(재개)할 다른 코루틴을 
@@ -309,7 +311,9 @@ goCompany로 돌아올 수 있기 때문이다. 이게 코루틴으로
 
 **Reference**     
 
-<https://wooooooak.github.io/kotlin/2019/08/25/%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%BD%94%EB%A3%A8%ED%8B%B4-%EA%B0%9C%EB%85%90-%EC%9D%B5%ED%9E%88%EA%B8%B0/>     
+<https://jaejong.tistory.com/61>    
+<https://wooooooak.github.io/kotlin/2019/08/25/%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%BD%94%EB%A3%A8%ED%8B%B4-%EA%B0%9C%EB%85%90-%EC%9D%B5%ED%9E%88%EA%B8%B0/>    
+<https://myungpyo.medium.com/reading-coroutine-official-guide-thoroughly-part-0-20176d431e9d>   
 
 {% highlight ruby linenos %}
 
