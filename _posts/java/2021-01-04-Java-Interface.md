@@ -226,7 +226,7 @@ public class Smartphone implements Phone, Internet, Mp3 {
 Method Signature에 의해서 같은 메서드로 취급하지만 실제로는 리턴 타입이 다르기 때문에 
 컴파일 에러를 발생시키는 것 같다.( 잘못된 설명이라면 댓글 부탁드려요)  
 
-[Method Signature 설명](http://localhost:4000/java/2020/12/21/Java-Inheritance.html)
+[Method Signature 설명](https://wonyong-jang.github.io/java/2020/12/21/Java-Inheritance.html)
 
 - - - 
 
