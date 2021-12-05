@@ -95,7 +95,10 @@ GlobalScope는 Dispatchers.Unconfinded에서 동작한다.`
 `launch라는 코루틴 빌더는 늘 어떤 코루틴 스코프 안에서 코루틴을 launch한다. 
 아래 코드에서는 새로운 코루틴을 GlobalScope에서 launch하도록 했다.`         
 `이 말은 Global이 의미하는 것처럼, 새롭게 launch된 코루틴은 해당 
-어플리케이션 전체의 생명주기에 적용된다는 말이다.`   
+어플리케이션 전체의 생명주기에 적용된다는 말이다.`    
+
+> 즉, GlobalScope는 전역 scope이다. 실무에서는 잘 사용하지 않지만 
+간단한 예제를 위해서 사용하였다.   
 
 `CoroutineContext는 코루틴을 어떻게 처리 할것인지에 대한 여러가지 
 정보의 집합이다.`   
@@ -131,6 +134,10 @@ Blocking을 run(실행, 시작)한다는 뜻의 runBlocking은 이름만 보아�
 꽤 명시적이다.   
 `runBlocking은 이름이 내포하듯이 현재 쓰레드(여기선 main 쓰레드)를 블록킹 
 시키고 새로운 코루틴을 실행시킨다.`   
+
+runBlocking이 현재 쓰레드를 블락 시키지 않는다면, Hello만 출력하고 
+프로그램이 종료될 것이다. 하지만 실행해 보면 Hello, World를 
+정상적으로 출력하는 것을 확인할 수 있다.   
 
 언제까지 Blocking 시킬까?   
 `runBlocking 블록 안에 있는 코드가 모두 실행을 끝마칠 때 까지 블록된다.`   
@@ -197,11 +204,14 @@ fun main() = runBlocking {
 끝나기를 계속 기다리기 때문이다.`   
 job이 끝나지 않으면 runBlocking()으로 생성한 코루틴은 끝나지 않는다.   
 
-`모든 코루틴 빌더( runBlocking, launch 등등)는 빌더로 인해 생성되는 
-코드 블록 안에다가 CoroutineScope 객체를 추가한다.`   
+
 위 코드에서는 runBlocking의 블록 안에서 GlobalScope로 코루틴을 만들어 
 launch했지만, GlobalScope를 사용하지 않고, runBlocking이 만든 CoroutineScope와 
-같은 스코프로 코루틴을 만들 수 있다.    
+같은 스코프로 코루틴을 만들 수 있다.     
+이를 `Structed concurrency`라고 부르며, 위의 예시에서 runBlocking이 
+만든 coroutineScope안에 
+
+
 아래 코드처럼 그냥 launch를 호출하여 더 깔끔한 코드를 만들 수 있다.    
 
 ```kotlin
@@ -252,9 +262,6 @@ fun main(args: Array<String>) = runBlocking {
 // Coroutine scope is over
 ```   
 
-만약 runBlocking과의 차이를 보기 위해 coroutineScope를 runBlocking으로 
-바꿔서 실행 해보면, Task from runBlocking이 가장 마지막에 출력된다.   
-launch 블록이 실행 기뢰를 얻지 못하였기 때문이다.   
 
 
 ### 1-4) suspend 와 resume   
@@ -414,7 +421,8 @@ Job의 객체의 cancel()메서드는 자신이 해당하는 CoroutineScope의 �
 <https://thdev.tech/kotlin/2020/12/07/Coroutines-Flow-Callback/>   
 <https://medium.com/@limgyumin/%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%BD%94%EB%A3%A8%ED%8B%B4%EC%9D%98-%EA%B8%B0%EC%B4%88-cac60d4d621b>   
 <https://wooooooak.github.io/kotlin/2019/06/18/coroutineStudy/>   
-<https://wooooooak.github.io/kotlin/2019/06/28/coroutineStudy2/>   
+<https://wooooooak.github.io/kotlin/2019/06/28/coroutineStudy2/>    
+<https://www.inflearn.com/course/%EC%83%88%EC%B0%A8%EC%9B%90-%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%BD%94%EB%A3%A8%ED%8B%B4/lecture/48247?tab=curriculum>   
 
 {% highlight ruby linenos %}
 
