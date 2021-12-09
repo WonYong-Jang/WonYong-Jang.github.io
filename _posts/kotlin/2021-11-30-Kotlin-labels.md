@@ -8,8 +8,6 @@ date: 2021-11-30
 background: '/img/posts/mac.png'
 ---
 
-
-
 `코틀린은 모든 표현식에 label을 붙일 수 있다.`      
 `라벨은 식별자 뒤에 @를 붙이는 식으로 완성한다.`   
 예를 들어 abc@, fooBar@들은 유효한 라벨이다. 
