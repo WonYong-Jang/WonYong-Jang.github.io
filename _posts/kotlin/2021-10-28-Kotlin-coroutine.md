@@ -199,7 +199,40 @@ suspend로 정의된 함수가 없다면 그냥 마지막 괄호를 만날 때 �
 
 아래는 함수형 코틀린 이라는 책에나오는 구문이다.      
 
-<img width="747" alt="스크린샷 2021-10-28 오후 11 54 19" src="https://user-images.githubusercontent.com/26623547/139281697-04643e7c-fc5a-4ddb-8552-d118a9d674df.png">   
+<img width="747" alt="스크린샷 2021-10-28 오후 11 54 19" src="https://user-images.githubusercontent.com/26623547/139281697-04643e7c-fc5a-4ddb-8552-d118a9d674df.png">    
+
+쓰레드를 이용하는 경우와 코루틴을 이용하는 경우를 
+아래 코드로 직접 실행하여 비교해보자.   
+
+```kotlin
+fun main() = runBlocking {
+    repeat(100_000) { // launch a lot of coroutine  
+        launch {
+            delay(1000L)
+            print(".")
+        }
+    }
+}
+```   
+
+위는 코루틴을 이용한 코드이고, 아래는 쓰레드를 이용한 코드이다. 
+문법이나 사용방법은 [다음글](https://wonyong-jang.github.io/kotlin/2021/10/31/Kotlin-coroutine2.html)에서 다룰 예정이며, 지금은 
+직접 실행해보며, 속도 차이를 확인해보자.   
+쓰레드를 10만개 또는 그 이상으로 만들게 되면, 컴퓨터 성능에 따라서 
+많은 부하가 생기고, out of memory도 생길 수 있지만, 
+    코루틴은 그에 비해 훨씬 가볍다.   
+
+
+```kotlin
+fun main() = runBlocking {
+    repeat(100_000) { // launch a lot of coroutine
+        thread {
+            Thread.sleep(1000L)
+            print(".")
+        }
+    }
+}
+```
 
 ### 3. 비동기 처리가 이렇게 편해지다니   
 

@@ -98,7 +98,7 @@ GlobalScope는 Dispatchers.Unconfinded에서 동작한다.`
 어플리케이션 전체의 생명주기에 적용된다는 말이다.`    
 
 > 즉, GlobalScope는 전역 scope이다. 실무에서는 잘 사용하지 않지만 
-간단한 예제를 위해서 사용하였다.   
+간단한 예제를 위해서 사용하였다.     
 
 `CoroutineContext는 코루틴을 어떻게 처리 할것인지에 대한 여러가지 
 정보의 집합이다.`   
@@ -108,11 +108,11 @@ CoroutineContext의 주요 요소로는 job과 dispatcher가 있다.
 
 ### 1-2) runBlocking   
 
-위 코드는 쓰레드를 중단시키지 않는 non-blocking 함수(delay) 함수와 
+위 코드는 쓰레드를 중단시키지 않는 non-blocking 함수(delay)와  
 쓰레드를 잠시 멈추는 blocking 함수(Thread.sleep)를 같이 섞어 쓰고 있다.   
 이렇게 섞어 쓰게 되면 무엇이 blocking 함수이고 무엇이 non-blocking 함수인지 
 헷갈릴수 있다.    
-runBlocking 코루틴 빌더를 사용해서 blocking을 조금 더 명확하게 명시해보자.   
+runBlocking 코루틴 빌더를 사용해서 blocking을 조금 더 명확하게 명시해보자.     
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -129,7 +129,18 @@ fun main() {
 }
 ```
 
-위 코드에서 Thread.sleep(2000L) 이부분이 runBlocking 으로 바뀌었다.   
+위 코드에서 Thread.sleep(2000L) 이부분이 delay(2000L)으로 바뀌었다.   
+delay는 아래와 같이 suspend 함수이며, non-blocking 함수이다.   
+`suspend함수는 다른 suspend함수에서 사용되거나, 코루틴 스코프 안에서만 
+사용 가능하다.`   
+
+```kotlin
+public suspend fun delay(timeMillis: Long) {
+    //...
+}
+```
+
+즉, 아래와 같이 코루틴 빌더인 runBlocking 으로 감싸서 사용 가능하다.   
 Blocking을 run(실행, 시작)한다는 뜻의 runBlocking은 이름만 보아도 
 꽤 명시적이다.   
 `runBlocking은 이름이 내포하듯이 현재 쓰레드(여기선 main 쓰레드)를 블록킹 
@@ -166,6 +177,11 @@ fun main() = runBlocking<Unit> { // start main coroutine
 
 runBlocking을 메인스레드 전체에 걸어줌으로써 시작부터 메인 쓰레드를 
 블락시키고 top-level 코루틴을 시작한다.   
+즉, 우리는 메인스레드의 모든 작업이 종료된 후에 프로그램이 
+종료되길 원하기 때문에 runBlocking을 중간에 실행해서 쓰레드를 
+block 시키는것보다 top-level에 위치시켜서 사용하는 것이 
+좋은 방법이다.   
+
 위에서 설명했듯이 `runBlocking은 블록 안에 있는 모든 모루틴들이 완료될 때까지 
 자신이 속한 스레드를 종료시키지 않고 블락시킨다.`   
 따라서 runBlocking에서 가장 오래 걸리는 작업인 delay(2초)가 끝날 때까지 
@@ -178,7 +194,8 @@ runBlocking을 메인스레드 전체에 걸어줌으로써 시작부터 메인 
 죽이지 않는 건 좋지 못하다.    
 디비를 조회하는 시간이 3초가 넘어갈수도 있기 때문에 `우리는 디비를 조회해서 
 어떤 응답을 가져오면, 그 즉시 어떤 일을 처리하고 프로그램을 
-종료시킬 방법이 필요하다.`    
+종료시킬 방법이 필요하다.`   
+
 `Job을 통해 그런일이 가능하다.`       
 
 ```kotlin
@@ -204,13 +221,38 @@ fun main() = runBlocking {
 끝나기를 계속 기다리기 때문이다.`   
 job이 끝나지 않으면 runBlocking()으로 생성한 코루틴은 끝나지 않는다.   
 
-
 위 코드에서는 runBlocking의 블록 안에서 GlobalScope로 코루틴을 만들어 
 launch했지만, GlobalScope를 사용하지 않고, runBlocking이 만든 CoroutineScope와 
 같은 스코프로 코루틴을 만들 수 있다.     
 이를 `Structed concurrency`라고 부르며, 위의 예시에서 runBlocking이 
-만든 coroutineScope안에 
+만든 coroutineScope안에 GlobalScope를 이용하여 독립적인 
+coroutineScope를 또 만들어서 사용하기 때문에, top-level의 
+coroutineScope와 아무런 관계를 가지지 못한다.(구조적으로 관계가 없다.)   
 
+만약 아래와 같은 코드를 작성했다고 해보자.    
+GlobalScope를 이용하여 CoroutineScope를 만들어서 job을 반환했지만, 
+    job.join 호출을 누락했다고 해보자.   
+그렇다면, Hello만을 출력하게된다.   
+즉, top-level coroutineScope와 GlobalScope가 만든, coroutineScope가 
+구조적으로 관계가 없기 때문에, Hello를 출력하고 기다리지 않고 
+프로그램을 종료시킨다.   
+
+
+```kotlin
+fun main() = runBlocking {
+    val job = GlobalScope.launch { // launch a new coroutine and keep a referenc
+        delay(1000L)
+        println("World!")
+    }
+    println("Hello,")
+}
+// Hello,   
+```
+
+그렇다면, top-level 코루틴(runBlocing에서 만든)과 launch를 구조적으로 관계를 가지게 하려면?   
+`Structed concurrency를 이용하려면, launch를 GlobalScope에서 
+실행하게 하지말고, 아래와 같이 top-level에서 만든 coroutineScope에서 
+실행할 수 있도록 하면 된다.`       
 
 아래 코드처럼 그냥 launch를 호출하여 더 깔끔한 코드를 만들 수 있다.    
 
@@ -223,6 +265,7 @@ fun main() = runBlocking { // this: CoroutineScope
     println("Hello,")
 }
 ```    
+
 
 ### 1-3) coroutineScope       
 
