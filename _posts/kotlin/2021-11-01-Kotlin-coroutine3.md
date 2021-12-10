@@ -22,7 +22,6 @@ background: '/img/posts/mac.png'
 
 - launch, async   
 - Job, Deferred   
-- runBlocking   
 
 ### 1-1) launch() - Job   
 
@@ -163,12 +162,14 @@ println("$result1 , $result2") // result1 , result 2 출력
 
 ```kotlin
 awaitAll(deferred1, deferred2)
-```   
+```  
+
 
 - - - 
 
 **Reference**     
 
+<https://www.inflearn.com/course/%EC%83%88%EC%B0%A8%EC%9B%90-%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%BD%94%EB%A3%A8%ED%8B%B4/lecture/48248?tab=curriculum>   
 <https://medium.com/@limgyumin/%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%BD%94%EB%A3%A8%ED%8B%B4-%EC%A0%9C%EC%96%B4-5132380dad7f>     
 
 {% highlight ruby linenos %}

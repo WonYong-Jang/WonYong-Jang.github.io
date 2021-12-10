@@ -455,6 +455,138 @@ Job의 객체의 cancel()메서드는 자신이 해당하는 CoroutineScope의 �
 
 `즉, 외부 코루틴 블록이 멈춰도, 내부 코루틴 블록은 끝까지 수행된다`    .   
 
+- - -
+
+## 3. suspend와 resume 실습으로 이해해보기   
+
+suspend와 resume에 대한 개념을 이해해보자.   
+그전에 각각 어떤 쓰레드에서 실행되는지, 어느 코루틴이 
+실행되는지 확인을 위해서 아래와 같이 설정해보자.   
+
+println을 쓰레드를 확인할 수 있도록 오버라이드 후, VM 옵션을 설정한다.   
+
+```kotlin
+fun <T>println(msg: T) {
+    kotlin.io.println("$msg [${Thread.currentThread().name}]")
+}
+```
+
+VM 옵션을 추가한다.   
+
+```
+-Dkotlinx.coroutines.debug
+```
+
+
+```kotlin
+import kotlinx.coroutines.*
+
+fun main() = runBlocking  {
+    launch {
+        repeat(5) { i ->
+            println("Coroutine A, $i")
+        }
+    }
+
+    launch {
+        repeat(5) { i ->
+            println("Coroutine B, $i")
+        }
+    }
+    println("Coroutine Outer")
+}
+```
+
+Output  
+
+```
+Coroutine Outer [main @coroutine#1]
+Coroutine A, 0 [main @coroutine#2]
+Coroutine A, 1 [main @coroutine#2]
+Coroutine A, 2 [main @coroutine#2]
+Coroutine A, 3 [main @coroutine#2]
+Coroutine A, 4 [main @coroutine#2]
+Coroutine B, 0 [main @coroutine#3]
+Coroutine B, 1 [main @coroutine#3]
+Coroutine B, 2 [main @coroutine#3]
+Coroutine B, 3 [main @coroutine#3]
+Coroutine B, 4 [main @coroutine#3]
+``` 
+
+위처럼 코루틴을 3개를 만든 것을 확인할 수 있고, 모두 Main 쓰레드에서 
+실행된 것을 확인 할 수 있다.    
+첫번째 코루틴은 runBlocking에 의해 생성되었고, launch에 의해 각각 1개씩 
+생성되었다.   
+
+그럼 아래와 같이 수정하여 결과를 비교해보자.   
+
+<img width="600" alt="스크린샷 2021-12-10 오후 9 37 08" src="https://user-images.githubusercontent.com/26623547/145575290-1dad87fb-0ac6-425f-9f95-48feb1584e23.png">    
+
+`suspend 함수인 delay를 추가하였고, 빨간색 박스처럼 suspend function call 이라는 
+마크가 생겼다.`   
+즉 suspend함수를 만나게 되면, 코루틴이 중단되고 다른 코루틴에서 resume 된다.   
+
+결과는 아래와 같다.  
+
+Output   
+
+```kotlin
+Coroutine Outer [main @coroutine#1]
+Coroutine A, 0 [main @coroutine#2]
+Coroutine B, 0 [main @coroutine#3]
+Coroutine B, 1 [main @coroutine#3]
+Coroutine B, 2 [main @coroutine#3]
+Coroutine B, 3 [main @coroutine#3]
+Coroutine B, 4 [main @coroutine#3]
+Coroutine A, 1 [main @coroutine#2]
+Coroutine A, 2 [main @coroutine#2]
+Coroutine A, 3 [main @coroutine#2]
+Coroutine A, 4 [main @coroutine#2]
+```   
+
+마지막 으로 코루틴 각각 번갈아 가며, 실행되게 하려면 아래와 같이 수정하면 된다.   
+
+```kotlin
+fun main() = runBlocking  {
+    launch {
+        repeat(5) { i ->
+            println("Coroutine A, $i")
+            delay(10L)
+        }
+    }
+
+    launch {
+        repeat(5) { i ->
+            println("Coroutine B, $i")
+            delay(10L)
+        }
+    }
+    println("Coroutine Outer")
+}
+
+fun <T>println(msg: T) {
+    kotlin.io.println("$msg [${Thread.currentThread().name}]")
+}
+```   
+
+Output  
+
+```
+Coroutine Outer [main @coroutine#1]
+Coroutine A, 0 [main @coroutine#2]
+Coroutine B, 0 [main @coroutine#3]
+Coroutine A, 1 [main @coroutine#2]
+Coroutine B, 1 [main @coroutine#3]
+Coroutine A, 2 [main @coroutine#2]
+Coroutine B, 2 [main @coroutine#3]
+Coroutine A, 3 [main @coroutine#2]
+Coroutine B, 3 [main @coroutine#3]
+Coroutine A, 4 [main @coroutine#2]
+Coroutine B, 4 [main @coroutine#3]
+```   
+
+
+
 [다음 글](https://wonyong-jang.github.io/kotlin/2021/11/01/Kotlin-coroutine3.html)에서는 lauch, async, Job, Deferred의 자세한 내용을 살펴볼 예정이다.   
 
 - - - 
