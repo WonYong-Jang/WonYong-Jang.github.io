@@ -46,8 +46,8 @@ get 함수는 비록 메인 스레드에서 호출되었지만, 네트워크를 
 ## 1. 코루틴   
 
 코루틴을 공식문서 예제를 보면서 이해해보자.   
-아래에서 delay는 suspend 키워드가 붙은 함수라고 가정해보자. suspend는 
-잠시 중단 한다는 의미이고, 잠시 중단한다면 언젠가 다시 resume 된다는 뜻이다.   
+아래에서 delay가 구현되어 있는 부분을 보면 suspend 키워드가 붙은 함수이다.   
+suspend는 잠시 중단 한다는 의미이고, 잠시 중단한다면 언젠가 다시 resume 된다는 뜻이다.   
 코드에서는 delay라는 suspend 함수가 끝이 나면 그때 caller가 resume 시켜 아랫줄 
 코드를 실행시킨다.      
 
@@ -103,8 +103,6 @@ GlobalScope는 Dispatchers.Unconfinded에서 동작한다.`
 `CoroutineContext는 코루틴을 어떻게 처리 할것인지에 대한 여러가지 
 정보의 집합이다.`   
 CoroutineContext의 주요 요소로는 job과 dispatcher가 있다.   
-
-
 
 ### 1-2) runBlocking   
 
@@ -530,7 +528,7 @@ Coroutine B, 4 [main @coroutine#3]
 
 Output   
 
-```kotlin
+```
 Coroutine Outer [main @coroutine#1]
 Coroutine A, 0 [main @coroutine#2]
 Coroutine B, 0 [main @coroutine#3]
