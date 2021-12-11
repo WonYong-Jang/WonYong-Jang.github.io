@@ -138,7 +138,7 @@ public suspend fun delay(timeMillis: Long) {
 }
 ```
 
-즉, 아래와 같이 코루틴 빌더인 runBlocking 으로 감싸서 사용 가능하다.   
+즉, 위와 같이 코루틴 빌더인 runBlocking 으로 감싸서 사용 가능하다.   
 Blocking을 run(실행, 시작)한다는 뜻의 runBlocking은 이름만 보아도 
 꽤 명시적이다.   
 `runBlocking은 이름이 내포하듯이 현재 쓰레드(여기선 main 쓰레드)를 블록킹 
@@ -175,10 +175,10 @@ fun main() = runBlocking<Unit> { // start main coroutine
 
 runBlocking을 메인스레드 전체에 걸어줌으로써 시작부터 메인 쓰레드를 
 블락시키고 top-level 코루틴을 시작한다.   
-즉, 우리는 메인스레드의 모든 작업이 종료된 후에 프로그램이 
+`즉, 우리는 메인스레드의 모든 작업이 종료된 후에 프로그램이 
 종료되길 원하기 때문에 runBlocking을 중간에 실행해서 쓰레드를 
 block 시키는것보다 top-level에 위치시켜서 사용하는 것이 
-좋은 방법이다.   
+좋은 방법이다.`       
 
 위에서 설명했듯이 `runBlocking은 블록 안에 있는 모든 모루틴들이 완료될 때까지 
 자신이 속한 스레드를 종료시키지 않고 블락시킨다.`   
@@ -200,14 +200,12 @@ block 시키는것보다 top-level에 위치시켜서 사용하는 것이
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-//sampleStart
     val job = GlobalScope.launch { // launch a new coroutine and keep a reference to its Job
         delay(1000L)
         println("World!")
     }
     println("Hello,")
     job.join() // wait until child coroutine completes
-//sampleEnd
 }
 ```
 
@@ -256,6 +254,8 @@ fun main() = runBlocking {
 
 ```kotlin
 fun main() = runBlocking { // this: CoroutineScope
+
+    // this.launch 에서 아래와 같이 생략 가능하다!
     launch { // launch a new coroutine in the scope of runBlocking
         delay(1000L)
         println("World!")
