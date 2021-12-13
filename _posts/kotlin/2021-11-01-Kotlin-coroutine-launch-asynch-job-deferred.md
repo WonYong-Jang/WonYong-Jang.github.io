@@ -116,6 +116,14 @@ job1.join()
 
 `async()함수로 시작된 코루틴 블록은 Deferred 객체를 반환한다.`        
 
+Deferred 객체를 직접 살펴보면, Job을 상속한 것을 볼 수 있다.   
+
+```kotlin
+public interface Deferred<out T> : Job {
+```
+
+아래는 async 블록에서 Deferred 객체를 반환하는 예제이다.   
+
 ```kotlin
 val deferred : Deferred<T> = async {
     ...

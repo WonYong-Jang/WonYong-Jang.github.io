@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kotlin] 코루틴(coroutine) Cancellation and Timeouts" 
-subtitle: "코루틴 취소와 타임아웃"    
+subtitle: "코루틴 취소와 타임아웃 / isActive 상태값 / JobCancellationException"    
 comments: true
 categories : Kotlin
 date: 2021-11-02
@@ -368,6 +368,7 @@ suspend 함수를 주기적으로 호출해서 resume 될때 exception을 발생
 
 **Reference**     
 
+<https://kotlinlang.org/docs/cancellation-and-timeouts.html>    
 <https://www.inflearn.com/course/%EC%83%88%EC%B0%A8%EC%9B%90-%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%BD%94%EB%A3%A8%ED%8B%B4/lecture/48249?tab=curriculum>   
 
 {% highlight ruby linenos %}
