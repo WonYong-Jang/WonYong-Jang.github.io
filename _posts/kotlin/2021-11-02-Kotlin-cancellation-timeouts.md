@@ -23,8 +23,9 @@ background: '/img/posts/mac.png'
 
 ## 1. 코루틴 취소   
 
-아래 코드는 1000번을 반복하고, 0.5초를 딜레이하며 프린트를 한다.   
-그리고 1.3초가 지난 후에 코루틴을 취소하는 로직이다.   
+아래 코드는 1000번을 반복하고, 0.5초를 딜레이하며 프린트 하는 소스코드이다.   
+하지만 실행 중 1.3초가 지난 후에 코루틴을 취소하기 위해 job.cancel()을 
+추가 했다.   
 
 ```kotlin
 fun main() = runBlocking  {
@@ -234,7 +235,7 @@ main: Now I can quit. [main @coroutine#1]
 
 위에서 코루틴을 중간에 취소하기 위해서는 suspend 함수를 주기적으로 
 실행해야만 suspend 이후 resume하기 직전에 exception을 던져 취소 할 수 있었다.   
-이 방법외에 `코루틴을 취소할 수있는 두번째 방법은 isActive 상태값을 이용하는 방식이다.`   
+이 방법 외에 `코루틴을 취소할 수있는 두번째 방법은 isActive 상태값을 이용하는 방식이다.`   
 
 `isActive는 아래와 같이 코루틴 job의 상태를 확인 하는 확장 프로퍼티이다.`      
 
@@ -331,7 +332,7 @@ Caused by: kotlinx.coroutines.TimeoutCancellationException: Timed out waiting fo
 
 위의 결과를 확인해보면, 정해진 시간이 경과되서도 코루틴이 종료되지 
 않으면, exception을 발생시키면서 종료된다.   
-예외를 발생시키지 않고 null을 리턴해주는 방법은 아래와 같다.   
+예외를 발생시키지 않고 null을 리턴해주는 방법도 있는데, 아래와 같다.     
 
 ```kotlin
 fun main() = runBlocking  {
@@ -355,7 +356,7 @@ fun main() = runBlocking  {
 중요한 점은, 취소한다고 해서 코루틴이 종료되는 것은 아니다.   
 코루틴 코드 자체에서 협조적이여야 하며, 첫번째 방법은 
 suspend 함수를 주기적으로 호출해서 resume 될때 exception을 발생시켜서 종료 
-할수 있다.   
+할 수 있다.   
 
 두번째 방법은 isActive 상태값을 확인해서 취소가 가능하다.   
 
