@@ -8,7 +8,7 @@ date: 2021-11-02
 background: '/img/posts/mac.png'
 ---
 
-[이전글](https://wonyong-jang.github.io/kotlin/2021/11/01/Kotlin-coroutine3.html)에서는 
+[이전글](https://wonyong-jang.github.io/kotlin/2021/11/01/Kotlin-coroutine-launch-asynch-job-deferred.html)에서는 
 코루틴을 제어하기 위한 여러가지 방법을 살펴봤다.   
 그 중에서 코루틴을 취소하기 위한 방법으로 job.cancel()을 이용하였는데, 
     이에 대해 자세히 살펴보자.   
@@ -362,6 +362,9 @@ suspend 함수를 주기적으로 호출해서 resume 될때 exception을 발생
 
 세번째는 Timeout을 이용하여 코루틴을 실행시키면 정해둔 시간이 경과되면 
 종료된다.   
+
+[다음글](https://wonyong-jang.github.io/kotlin/2021/11/03/Kotlin-composing-suspending-functions.html)에서는 suspend 함수를 이해하고, 사용하는 best practice를 확인해보자.   
+
 
 
 - - - 

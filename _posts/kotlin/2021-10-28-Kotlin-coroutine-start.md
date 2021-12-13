@@ -216,7 +216,7 @@ fun main() = runBlocking {
 ```   
 
 위는 코루틴을 이용한 코드이고, 아래는 쓰레드를 이용한 코드이다. 
-문법이나 사용방법은 [다음글](https://wonyong-jang.github.io/kotlin/2021/10/31/Kotlin-coroutine2.html)에서 다룰 예정이며, 지금은 
+문법이나 사용방법은 [다음글](https://wonyong-jang.github.io/kotlin/2021/10/31/Kotlin-coroutine-basics.html)에서 다룰 예정이며, 지금은 
 직접 실행해보며, 속도 차이를 확인해보자.   
 쓰레드를 10만개 또는 그 이상으로 만들게 되면, 컴퓨터 성능에 따라서 
 많은 부하가 생기고, out of memory도 생길 수 있지만, 
@@ -337,7 +337,7 @@ goCompany로 돌아올 수 있기 때문이다. 이게 코루틴으로
 있었는데, [CPS(Continuation-passing style)](http://dogfeet.github.io/articles/2012/by-example-continuation-passing-style-in-javascript.html)을 
 참고해보자.       
 
-[다음글](https://wonyong-jang.github.io/kotlin/2021/10/31/Kotlin-coroutine2.html)에서 
+[다음글](https://wonyong-jang.github.io/kotlin/2021/10/31/Kotlin-coroutine-basics.html)에서 
 코루틴을 직접 사용해보면서 이해해보자.   
 
 - - - 

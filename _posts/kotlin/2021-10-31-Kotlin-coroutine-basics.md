@@ -8,7 +8,7 @@ date: 2021-10-31
 background: '/img/posts/mac.png'
 ---
 
-[이전글](https://wonyong-jang.github.io/kotlin/2021/10/28/Kotlin-coroutine.html)에서 
+[이전글](https://wonyong-jang.github.io/kotlin/2021/10/28/Kotlin-coroutine-start.html)에서 
 코루틴의 개념에 대해서 살펴봤다.   
 
 코루틴은 우리가 흔히 알고 있는 함수의 상위 개념이라고 볼 수 있다.     
@@ -585,7 +585,7 @@ Coroutine B, 4 [main @coroutine#3]
 
 
 
-[다음 글](https://wonyong-jang.github.io/kotlin/2021/11/01/Kotlin-coroutine3.html)에서는 lauch, async, Job, Deferred의 자세한 내용을 살펴볼 예정이다.   
+[다음 글](https://wonyong-jang.github.io/kotlin/2021/11/01/Kotlin-coroutine-launch-asynch-job-deferred.html)에서는 lauch, async, Job, Deferred의 자세한 내용을 살펴볼 예정이다.   
 
 - - - 
 

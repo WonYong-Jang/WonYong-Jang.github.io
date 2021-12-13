@@ -81,6 +81,7 @@ fun main() = runBlocking  {
     }
     println("Completed in $time ms")
 }
+// Output : 1초    
 ```   
 
 위처럼 async를 이용하여 각 suspend 함수를 감싸서 동시에 실행 시킬 수 있다.   
@@ -107,7 +108,58 @@ fun main() = runBlocking  {
     }
     println("Completed in $time ms")
 }
+// Output : 2초   
 ```
+
+- - - 
+
+## 3. Lazily started async   
+
+이번에는 async로 실행한 코루틴 빌더를 아래와 같이 실행을 늦출 수도 있다.   
+
+```kotlin
+fun main() = runBlocking  {
+    val time = measureTimeMillis {
+        val one = async(start = CoroutineStart.LAZY) { doSomethingUsefulOne() }
+        val two = async(start = CoroutineStart.LAZY) { doSomethingUsefulTwo() }
+        // some computation
+        one.start() // start the first one
+        two.start() // start the second one
+        println("The answer is ${one.await() + two.await()}")
+    }
+    println("Completed in $time ms")
+}
+// Output : 1초   
+```
+
+위에서 실행을 늦춘 async 블록을 start()를 이용하여 동시에 
+실행했고, 결과는 동일하게 1초가 걸린다.   
+하지만, start()를 주석처리하여 결과를 다시 확인해보면 2초가 걸리는데 
+왜 그럴까?   
+
+```kotlin
+fun main() = runBlocking  {
+    val time = measureTimeMillis {
+        val one = async(start = CoroutineStart.LAZY) { doSomethingUsefulOne() }
+        val two = async(start = CoroutineStart.LAZY) { doSomethingUsefulTwo() }
+        // some computation
+        // one.start() // start the first one
+        //two.start() // start the second one
+        println("The answer is ${one.await() + two.await()}")
+    }
+    println("Completed in $time ms")
+}
+// Output : 2초    
+```
+
+async 코루틴을 2개 만들었지만, 실행을 하지 않았고 start() 를 
+주석처리 했기 때문에 첫번째 코루틴이 one.await()를 만났을 때 
+1초동안 실행하고 그 후 two.await()를 순차적으로 실행하기 때문에 
+2초가 걸린다.    
+
+- - - 
+
+## 4. Async-style functions   
 
 
 
