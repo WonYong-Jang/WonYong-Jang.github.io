@@ -9,21 +9,21 @@ background: '/img/posts/mac.png'
 ---
 
 이번글에서는 코루틴을 공부하다가 보면, 여러가지 의문점이 생겼을 것이다.   
-어떻게 함수가 호출이 되었다가 중단(suspend)이 되고, 다시 resume이 되는지 이해하기 힘들 것이다.    
-내부동작을 이해하지 못하고 코루틴 라이브러리를 사용해도 잘 동작하긴 하지만, 
+어떻게 함수가 호출이 되었다가 중단(suspend)이 되고, 다시 재개(resume)이 되는지 이해하기 힘들 것이다.    
+내부동작을 이해하지 못하고 코루틴 라이브러리를 사용해도 무리없이 사용할수 있지만,  
     내부 동작을 이해하고 사용하면, 조금 더 깊이있게 
-    사용하 수 있을 것이다.   
+    사용할 수 있을 것이다.   
 
 [Deep Dive into Coroutines on JVM by Roman Elizarov](https://www.youtube.com/watch?v=YrrUCSi72E8)에 
-더 자세한 설명이 있다.   
+더 자세한 설명이 있고, 링크를 참고하여 작성하였다.   
 
 - - - 
 
 ## CPS Transforms
 
 위에 언급한 유투브 영상을 참고해서 설명해보면, 
-코루틴을 사용하다 보면 suspend 되고 resume되는 과정이 마법처럼 느껴지지만 
-`코루틴 코드가 컴파일 되면 내부적으로 CPS(Continuation Passing Style)로 변경된다.`        
+코루틴을 사용하다 보면 suspend 되고 resume되는 과정이 마법처럼 느껴지지만 마법이 아니고  
+`코루틴 코드가 컴파일 되면 내부적으로 CPS(Continuation Passing Style)로 변경된다고 한다.`        
 
 `Continuation Passing Style이란 것은 결국 콜백(Callback)이라고 생각하면 된다.`       
 아직까지는 이해하기 힘들지만, 아래 예제를 보면서 이해해보자.   
@@ -35,7 +35,7 @@ background: '/img/posts/mac.png'
 
 위 예제를 컴파일 후 바이트 코드를 살펴보면, 아래와 같이 몇가지 
 중요한 변화가 있다. (CPS Transformation)       
-`먼저, 아래와 같이 suspend function 함수인 createPost의 바이트 코드에서 
+`먼저, 아래와 같이 suspend function 함수인 createPost의 바이트 코드를 보면 
 마지막 파라미터에 Continuation 객체를 넘겨주게 변경 된다.`      
 
 <img width="800" alt="스크린샷 2021-12-18 오후 4 03 45" src="https://user-images.githubusercontent.com/26623547/146632699-f7bbefe9-c40a-4e00-852b-31bce817a15d.png">     
@@ -68,7 +68,7 @@ background: '/img/posts/mac.png'
 가져가게 되는 것이고, 현재 LABEL인 suspend function이 완료되면 
 resume을 호출한다.   
 
-resume은 결국 결국 자기 자신을 호출하는 것이다. 아래 예제의 경우는 
+resume은 결국 자기 자신을 호출하는 것이다. 아래 예제의 경우는 
 `현재 LABEL의 suspend function이 완료되면, 자기 자신인 postItem 함수를 
 호출하고, 현재 LABEL 값에 1을 더하여 다른 케이스를 불릴 수 있도록 한다.`      
 그럼 마치 내부적으로 함수가 호출될 때 마다 각 suspend function을 순차적으로 
