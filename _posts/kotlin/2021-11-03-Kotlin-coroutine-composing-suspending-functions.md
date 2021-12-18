@@ -8,7 +8,7 @@ date: 2021-11-03
 background: '/img/posts/mac.png'
 ---
 
-[이전글](https://wonyong-jang.github.io/kotlin/2021/11/02/Kotlin-cancellation-timeouts.html)에서는 
+[이전글](https://wonyong-jang.github.io/kotlin/2021/11/02/Kotlin-coroutine-cancellation-timeouts.html)에서는 
 코루틴을 취소할 수 있는 여러가지 방법에 대해서 살펴봤다.   
 
 이번글에서는 suspend function을 어떻게 조합해서 코루틴을 유용하게 
