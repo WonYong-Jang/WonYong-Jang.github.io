@@ -8,9 +8,6 @@ date: 2021-11-01
 background: '/img/posts/mac.png'
 ---
 
-[이전글](https://wonyong-jang.github.io/kotlin/2021/10/31/Kotlin-coroutine2.html)에서 
-코루틴을 사용하기 위한 기초 개념을 알아봤다.   
-
 이 글에서는 코루틴 블록 내에서 어떤 작업을 어떻게 처리하고 
 어떠한 결과로 반환 할 것인가 하는 제어에 다룰 예정이다.   
 
