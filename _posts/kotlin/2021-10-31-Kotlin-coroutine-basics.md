@@ -245,9 +245,10 @@ fun main() = runBlocking {
 // Hello,   
 ```
 
-그렇다면, top-level 코루틴(runBlocing에서 만든)과 launch를 구조적으로 관계를 가지게 하려면?   
-`Structed concurrency를 이용하려면, launch를 GlobalScope에서 
-실행하게 하지말고, 아래와 같이 top-level에서 만든 coroutineScope에서 
+그렇다면, top-level 코루틴(runBlocking에서 만든)과 launch를 구조적으로 관계를 가지게 하려면?   
+`Structed concurrency를 이용 하면 된다.`     
+`launch를 GlobalScope에서 실행하게 하지말고, 
+    아래와 같이 top-level에서 만든 coroutineScope에서 
 실행할 수 있도록 하면 된다.`       
 
 아래 코드처럼 그냥 launch를 호출하여 더 깔끔한 코드를 만들 수 있다.    
