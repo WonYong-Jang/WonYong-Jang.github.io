@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Kotlin] 컬렉션 및 함수 정의와 호출"     
+title: "[Kotlin] 클래스, 객체, 인터페이스"     
 subtitle: ""    
 comments: true
 categories : Kotlin
