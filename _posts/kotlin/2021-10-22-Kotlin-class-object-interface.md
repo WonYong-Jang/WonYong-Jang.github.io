@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kotlin] 클래스, 객체, 인터페이스"     
-subtitle: "abstract와 interface / visibilty modifier / inner / sealed / 클래스 위임 / companion object "    
+subtitle: "abstract와 interface / visibilty modifier / inner / sealed / 클래스 위임 / companion object / anonymous object"    
 comments: true
 categories : Kotlin
 date: 2021-10-22
@@ -526,10 +526,15 @@ data class Client(val name: String, val postalCode: Int)
 때문이다.      
 
 아래 예제를 보자.   
-equals은 오버라이드하여 이름과 나이가 같으면 true를 
-리턴했다고 가정하고 결과값을 확인해보면 false가 나온다.   
+equals은 오버라이드하여 이름과 나이가 같으면 true를 리턴하도록 
+오버라이드 했다고 가정하고 결과값을 확인해보면 false가 나온다.   
 
 ```kotlin
+override fun equals(other: Any?): Boolean {
+    // ...
+    return name == other.name && age == other.age   
+}
+
 val process = hashSetOf(Client("오현석",20))
 println(process.contains(Client("오현석",20))
 // false    
@@ -747,13 +752,13 @@ class Person(val name: String) {
 
 ```kotlin
 window.addMouseListener(
-		object : MouseAdapter() {
+		object: MouseAdapter() {
 				override fun mouseClicked(e: MouseEvent) { ... }
 				override fun mouseEntered(e: MouseEvent) { ... }
 		}
 )
 
-val listener = object : MouseAdapter() {
+val listener = object: MouseAdapter() {
 		override fun mouseClicked(e: MouseEvent) { ... }
 		override fun mouseEntered(e: MouseEvent) { ... }
 }
