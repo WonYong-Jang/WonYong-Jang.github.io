@@ -102,14 +102,24 @@ background: '/img/bg-about.jpg'
 
 #### Spark streaming 시행착오   
 
-- Spark에서 Not Serializable Exception 해결   
-    > [https://wonyong-jang.github.io/spark/2021/06/15/Spark-Serialization.html](https://wonyong-jang.github.io/spark/2021/06/15/Spark-Serialization.html)   
+- [Spark에서 Not Serializable Exception 해결](https://wonyong-jang.github.io/spark/2021/06/15/Spark-Serialization.html)      
 
-- AWS EMR에서 실행되는 Spark 라이브러리 버전 충돌 해결    
-    > [https://wonyong-jang.github.io/spark/2021/07/08/Spark-override-dependency.html](https://wonyong-jang.github.io/spark/2021/07/08/Spark-override-dependency.html)   
+- [AWS EMR에서 실행되는 Spark 라이브러리 버전 충돌 해결](https://wonyong-jang.github.io/spark/2021/07/08/Spark-override-dependency.html)       
 
-- Spark Streaming graceful shutdown      
-    > [https://wonyong-jang.github.io/spark/2021/06/29/Spark-graceful-shutdown.html](https://wonyong-jang.github.io/spark/2021/06/29/Spark-graceful-shutdown.html)   
+- [Spark Streaming graceful shutdown 적용](https://wonyong-jang.github.io/spark/2021/06/29/Spark-graceful-shutdown.html)          
+
+
+<br>      
+#### Apache Airflow execution_date 해결        
+
+- [Airflow에서 execution_date에 대한 오해와 한국시간에 대한 고려](https://wonyong-jang.github.io/bigdata/2021/03/08/BigData-Apache-Airflow.html)   
+
+
+<br>    
+#### Airflow를 이용한 Hive 성능 최적화     
+
+- [TEZ엔진과 파티셔닝 사용을 통해 Hive 쿼리 성능 개선](https://wonyong-jang.github.io/hadoop/2021/05/26/Hadoop-Apache-Hive.html)   
+
 
 <br>   
 - - -   
