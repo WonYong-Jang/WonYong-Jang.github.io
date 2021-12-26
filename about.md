@@ -6,7 +6,7 @@ background: '/img/bg-about.jpg'
 ---
 
 
-## 💁 Backend Engineer      
+## 👨‍💻 Backend Engineer      
 
 새로운 기술을 받아들이고 배우는 것을 좋아하여 Github와 블로그를 
 통해서 배운 내용을 꾸준히 포스팅을 하고 있습니다. 
@@ -30,9 +30,9 @@ background: '/img/bg-about.jpg'
 
 ##### DevOps   
 
-- MongoDB, Mysql, Oracle, AWS DynanoDB   
+- MongoDB(AWS DocumentDB), Mysql, Oracle   
 - Jenkins, Airflow   
-- Elastic Cache (Redis), RDS(Aurora), S3, EC2, Cloud Watch   
+- Elastic Cache (Redis), S3, EC2, Cloud Watch   
 - Spark, Hive, Kafka 
 - ELK Stack   
 - Nginx, Tomcat   
@@ -40,7 +40,8 @@ background: '/img/bg-about.jpg'
 
 ##### Frontend
 
-- React, Redux, Typescript   
+- React, Redux
+- Typescript, Javascript   
 - Npm, Webpack    
 
 ##### Collaboration   
@@ -77,7 +78,7 @@ background: '/img/bg-about.jpg'
 
 - SW Certificate 강사 활동        
 - Samsung SW certificate professional 취득     
-- DRM 서버를 이용한 사용자 로그인 인증 보안 설계 및 개발    
+- DRM(Digital Right Management) 서버를 이용한 사용자 로그인 인증 보안 설계 및 개발    
 - 자바, 스프링 기반의 Outsourcing Management System 개발 및 유지보수      
 - 삼성 SDS 대학생 it 멘토링 발표   
     > [https://www.youtube.com/watch?v=WW8luDK_pCk](https://www.youtube.com/watch?v=WW8luDK_pCk)   
@@ -87,10 +88,9 @@ background: '/img/bg-about.jpg'
 
 > 2018.01 ~ 2018.02 (총 2개월)     
 
-
 - 사용 기술 : Java, Spring MVC, Mybatis, Tomcat, Nginx, Mysql, Drools   
 - 한의학 분야와 전문가 시스템을 융합 및 웹서비스 제공 
-- Nginx를 이용한 로드밸런싱 구조 구축 및 성능 벤치마킹  
+- Nginx를 이용한 로드밸런싱 구조 구축 및 성능 벤치마킹   
     > [https://github.com/kookmin-sw/2018-cap1-4](https://github.com/kookmin-sw/2018-cap1-4)   
 
 
@@ -110,15 +110,17 @@ background: '/img/bg-about.jpg'
 
 
 <br>      
-#### Apache Airflow execution_date 해결        
+#### Apache Airflow execution date 해결        
 
-- [Airflow에서 execution_date에 대한 오해와 한국시간에 대한 고려](https://wonyong-jang.github.io/bigdata/2021/03/08/BigData-Apache-Airflow.html)   
+- [<u>Airflow에서 execution date에 대한 오해와 한국시간에 대한 고려</u>](https://wonyong-jang.github.io/bigdata/2021/03/08/BigData-Apache-Airflow.html)    
+
+
 
 
 <br>    
 #### Airflow를 이용한 Hive 성능 최적화     
 
-- [TEZ엔진과 파티셔닝 사용을 통해 Hive 쿼리 성능 개선](https://wonyong-jang.github.io/hadoop/2021/05/26/Hadoop-Apache-Hive.html)   
+- [<u>TEZ엔진과 파티셔닝 사용을 통해 Hive 쿼리 성능 개선</u>](https://wonyong-jang.github.io/hadoop/2021/05/26/Hadoop-Apache-Hive.html)   
 
 
 <br>   
