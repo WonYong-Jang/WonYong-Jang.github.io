@@ -22,8 +22,8 @@ background: '/img/bg-index.jpg'
 
 ##### Backend
 
-- Java, Kotlin, Scala, 
-- Spring MVC, Spring Boot   
+- Java, Kotlin, Scala   
+- Spring Boot/MVC 
 - JPA, Hibernate   
 - Junit4/5, Mockito   
 - Gradle, Maven   
@@ -33,16 +33,16 @@ background: '/img/bg-index.jpg'
 - MongoDB(AWS DocumentDB), Mysql, Oracle   
 - Jenkins, Airflow   
 - Elastic Cache (Redis), S3, EC2, Cloud Watch   
-- Spark, Hive, Kafka 
+- Spark, Kafka, Hive 
 - ELK Stack   
 - Nginx, Tomcat   
-- Git/Github
+- Grafana, Graylog   
+- Git/Github, Gerrit      
 
 ##### Frontend
 
 - React, Redux
 - Typescript, Javascript   
-- Npm, Webpack    
 
 ##### Collaboration   
 
@@ -65,7 +65,7 @@ background: '/img/bg-index.jpg'
         - As-Is : 250/sec   
         - To-Be : 15,000/sec      
     - Airflow를 통해 3rd party domain의 장애 발생 및 Event bridge로 데이터 전달 누락, 이벤트 처리 실패에 대한 retry 프로세스 적용     
-    - Spark Streming의 마이크로 배치(3초)를 통해 Data 저장 및 Kafka publishing 하여 타 도메인에서 사용할 수 있도록 제공     
+    - Spark Streming의 마이크로 배치(3초)를 통해 Data 수집 및 Kafka publishing 하여 타 도메인에서 사용할 수 있도록 제공     
     - Data 저장을 위한 AWS storage cost 절감     
         - As-Is : $12,264 / Month (AuroraDB r5.12xlarge)      
         - To-Be : $3,901 / Month (DocumentDB r5.4xlarge)     
