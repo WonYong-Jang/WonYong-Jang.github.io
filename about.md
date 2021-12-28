@@ -30,7 +30,7 @@ background: '/img/bg-index.jpg'
 
 ##### DevOps   
 
-- MongoDB(AWS DocumentDB), Mysql, Oracle   
+- DocumentDB(MongoDB), Mysql, Oracle   
 - Jenkins, Airflow   
 - Elastic Cache (Redis), S3, EC2, Cloud Watch   
 - Spark, Kafka, Hive 
@@ -79,7 +79,7 @@ background: '/img/bg-index.jpg'
 - SW Certificate 강사 활동        
 - Samsung SW certificate professional 취득     
 - DRM(Digital Right Management) 서버를 이용한 사용자 로그인 인증 보안 설계 및 개발    
-- 자바, 스프링 기반의 Outsourcing Management System 개발 및 유지보수      
+- 자바, 스프링 기반의 Outsourcing Management System 개발 및 운영    
 - 삼성 SDS 대학생 it 멘토링 발표   
     > [https://www.youtube.com/watch?v=WW8luDK_pCk](https://www.youtube.com/watch?v=WW8luDK_pCk)   
 
