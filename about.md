@@ -74,7 +74,7 @@ background: '/img/bg-index.jpg'
 <br>   
 #### 삼성SDS회사 IT혁신사업부 Software Engineer    
 
-> 2019.01 ~ 2021.01.29 (총 2년 1개월)    
+> 2019.01 ~ 2021.01 (총 2년 1개월)    
 
 - SW Certificate 강사 활동        
 - Samsung SW certificate professional 취득     
