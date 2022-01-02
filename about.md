@@ -65,7 +65,7 @@ background: '/img/bg-index.jpg'
         - As-Is : 250/sec   
         - To-Be : 15,000/sec      
     - Airflow를 통해 3rd party domain의 장애 발생 및 Event bridge로 데이터 전달 누락, 이벤트 처리 실패에 대한 retry 프로세스 적용     
-    - Spark Streming의 마이크로 배치(3초)를 통해 Data 수집 및 Kafka publishing 하여 타 도메인에서 사용할 수 있도록 제공     
+    - Spark Streaming의 마이크로 배치(3초)를 통해 Data 수집 및 Kafka publishing 하여 타 도메인에서 사용할 수 있도록 제공     
     - Data 저장을 위한 AWS storage cost 절감     
         - As-Is : $12,264 / Month (AuroraDB r5.12xlarge)      
         - To-Be : $3,901 / Month (DocumentDB r5.4xlarge)     
@@ -102,7 +102,7 @@ background: '/img/bg-index.jpg'
 
 #### Spark streaming 시행착오   
 
-- [Spark에서 Not Serializable Exception 해결](https://wonyong-jang.github.io/spark/2021/06/15/Spark-Serialization.html)      
+- [Spark에서 Not Serializable Exception 해결(Driver와 Executor간의 데이터 전송)](https://wonyong-jang.github.io/spark/2021/06/15/Spark-Serialization.html)      
 
 - [AWS EMR에서 실행되는 Spark 라이브러리 버전 충돌 해결](https://wonyong-jang.github.io/spark/2021/07/08/Spark-override-dependency.html)       
 
