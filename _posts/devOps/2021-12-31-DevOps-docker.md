@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Docker] 도커에 대한 이해"
-subtitle: "도커에 대한 개념과 기존 가상화 기술과의 차이 / dockerfile"    
+subtitle: "도커에 대한 개념과 기존 가상화 기술과의 차이 / 명령어 / dockerfile"    
 comments: true
 categories : DevOps
 date: 2021-12-31
@@ -36,7 +36,7 @@ AWS, Azure, Google cloud등 어디에서든 실행 가능하게 해준다.
 컨테이너 이미지는 런타임에 컨테이너가 되고 도커 컨테이너의 경우 
 도커 엔진에서 실행될 때 이미지가 컨테이너가 된다.   
 
-<img width="500" alt="스크린샷 2021-12-31 오후 11 00 31" src="https://user-images.githubusercontent.com/26623547/147827111-0dc2534f-11fe-45e5-aa99-54a91298dcb3.png">   
+<img width=600" alt="스크린샷 2021-12-31 오후 11 00 31" src="https://user-images.githubusercontent.com/26623547/147827111-0dc2534f-11fe-45e5-aa99-54a91298dcb3.png">   
 
 `정리해보면, 도커 이미지는 프로그램을 실행하는데 필요한 설정이나 
 종속성을 갖고 있으며 도커 이미지를 이용해서 컨테이너를 생성하며 
@@ -58,14 +58,14 @@ AWS, Azure, Google cloud등 어디에서든 실행 가능하게 해준다.
 즉, 논리적으로 공간을 분할하여 VM이라는 독립적인 가상 환경의 서버를 
 이용할 수 있다.   
 
-<img width="600" alt="스크린샷 2022-01-01 오후 6 38 50" src="https://user-images.githubusercontent.com/26623547/147847929-83720a28-0a84-4f9c-9603-8a6f3c23712f.png">   
+<img width="800" alt="스크린샷 2022-01-01 오후 6 38 50" src="https://user-images.githubusercontent.com/26623547/147847929-83720a28-0a84-4f9c-9603-8a6f3c23712f.png">   
 
 위 그림처럼 하드웨어의 각 Core마다 독립된 가상환경의 자원을 할당 받기 때문에 
 하나의 VM에서 오류가 발생해도 다른 가상환경으로 퍼지지 않는다.   
 
 도커는 하이퍼 바이저의 구조를 토대로 등장했다.   
 
-<img width="800" alt="스크린샷 2022-01-01 오후 6 43 13" src="https://user-images.githubusercontent.com/26623547/147847982-d174aff8-95d3-436d-91dd-29a6fc1e17cf.png">   
+<img width="900" alt="스크린샷 2022-01-01 오후 6 43 13" src="https://user-images.githubusercontent.com/26623547/147847982-d174aff8-95d3-436d-91dd-29a6fc1e17cf.png">   
 
 `도커와 VM의 공통점으로는 기본 하드웨어에서 격리된 환경 내에 
 어플리케이션을 배치하는 방법이다.`    
@@ -119,7 +119,9 @@ $ docker attach [컨테이너id 또는 name]
 
 
 // 컨테이너를 생성하는 동시에 실행
+// -d : detach 는 명령을 입력하고 다시 터미널로 복귀한다.   
 $ docker run [컨테이너 id 또는 name]
+
 
 
 // 실행중인 컨테이너에 명령어 전달   
@@ -153,13 +155,54 @@ $ docker images
 $ docker pull ubuntu:14.04
 
 // 이미지 삭제   
-$ docker rmi [이미지 id]   
+$ docker rmi [이미지 id]    
+
+// 이미지 빌드 
+$ docker build --tag node_server:0.0.1 [Dockerfile이 위치하는 경로]
+
 ```
 
+---
 
+## 도커 이미지 만들어보기   
 
+도커 이미지를 만들어서 사용할 수도 있고, 직접 만든 도커 이미지를 도커 허브에 
+올려서 공유할 수도 있다.   
 
+`도커 이미지를 만들기 위해서는 도커 파일(Docker file)을 
+만들어야 하며, 도커 파일은 이미지를 만들기 위한 설정 파일이고 어떻게 
+행동해야 하는지에 대한 설정들을 정의해 주는 곳이다.`    
 
+dockerfile의 전체적인 구조는 아래와 같다.   
+
+```  
+# 베이스 이미지를 명시해준다.   
+# 이미지 생성시 기반이 되는 이미지 레이어이다.   
+FROM baseImage   
+
+# 추가적으로 필요한 파일들을 다운로드 받는다.   
+# 도커 이미지가 생성되기 전에 수행할 쉘 명령어   
+RUN command   
+
+# 컨테이너 시작시 실행 될 명령어를 명시해준다.   
+# 해당 명령어는 dockerfile 내 1회만 쓸 수 있다.   
+CMD [ "executable" ]    
+```
+
+완성된 도커 파일로 어떻게 이미지를 생성할까?    
+
+<img width="600" alt="스크린샷 2022-01-02 오후 4 07 55" src="https://user-images.githubusercontent.com/26623547/147868821-751f7013-7a99-4f41-acc7-59013c856f5f.png">   
+
+도커 파일에 입력된 것들이 도커 클라이언트에 전달되어서 
+도커 서버가 인식하게 하여야 한다.   
+`그렇게 하기 위해서는 docker build 명령어를 이용한다.`          
+
+```
+$ docker build --tag node_server:0.0.1 [Dockerfile이 위치하는 경로]
+```   
+
+다음글에서는 실제로 dockerfile을 만들고,
+    도커를 이용하여 간단한 Node.js 어플을 만들어보자.     
 
 - - - 
 
