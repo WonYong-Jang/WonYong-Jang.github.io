@@ -20,7 +20,9 @@ background: '/img/posts/mac.png'
 ## 1. Node.js 앱 만들기   
 
 새로운 폴더를 생성하고, npm init 명령어를 이용하여 package.json을 생성해보자.  
-그 후 express 모듈을 추가해준다.   
+그 후 express 모듈을 추가해준다.  
+
+##### package.json   
 
 ```
 {
@@ -42,6 +44,8 @@ background: '/img/posts/mac.png'
 아래와 같이 express 모듈을 이용하여 Hello World를 출력하는 기본적인 로직을 
 작성한다.   
 
+##### server.js   
+
 ```javascript  
 const express = require('express');
 
@@ -62,6 +66,8 @@ console.log("Server is running");
 
 노드 파일을 작성한 디렉토리에 Dockerfile 이름으로 파일을 생성 후 
 아래와 같이 작성한다.     
+
+##### Dockerfile   
 
 ```
 FROM node:12
@@ -120,6 +126,8 @@ $ docker run -p 5000:8080 kaven/nodejs
 
 아래와 같이 WORKDIR을 이용하여 경로를 추가한다.
 
+##### Dockerfile   
+
 ```
 FROM node:12
 
@@ -154,6 +162,8 @@ package.json 파일이 변경되지 않았음에도 불구하고
 package.json을 먼저 COPY를 해주고, npm install을 하도록 변경하였다.   
 기존에 전체파일을 COPY를 먼저 했을 때는 소스코드가 조금만 변경되어도 
 전체 모듈를 다시 받게 되었지만 이를 분리시켜서 dockerfile을 생성하면 된다.   
+
+##### Dockerfile   
 
 ```
 FROM node:12
@@ -255,7 +265,7 @@ docker compose를 이용하면 된다.`
   },
   "dependencies": {
       "express": "4.16.1",
-      "redis":"4.0.1"
+      "redis":"3.0.2"
   },
   "author": "",
   "license": "ISC"
@@ -271,7 +281,7 @@ docker compose를 이용하면 된다.`
 
 ```javascript
 const express = require('express');
-const express = require('redis');
+const redis = require('redis');
 
 const app = express();
 
@@ -295,8 +305,6 @@ app.get('/', (req, res) => {
 
 app.listen(8080);
 console.log("Server is running");
-
-
 ```
 
 `레디스 클라이언트를 
@@ -327,16 +335,35 @@ docker-compose.yml은 띄어쓰기에 주의를 해야하며, version과
 
 ```
 version: "3"
-services: 
+services:
   redis-server:
     image: "redis"
   node-app:
     build: .
-    ports: 
+    ports:
       - "5000:8080"
 ```
 
+이제 docker-compose.yml파일이 있는 위치로 가서 실행을 해보자.   
 
+##### docker-compose 명령어   
+
+```
+// 이미지가 없을 때 이미지를 빌드하고 컨테이너를 실행한다.   
+$ docker-compose up
+
+
+// detached 모드로서 앱을 백그라운드에서 실행시킨다.
+// 그래서 앱에서 나오는 output을 표출하지 않는다.   
+$ docker-compose -d up   
+
+// 이미지가 있든 없든 이미지를 빌드하고 컨테이너를 실행한다.   
+// 이미지 수정된 부분이 반영이 필요하면 build 옵션을 추가한다.   
+$ docker-compose up -- build   
+
+// 중지 
+$ docker-compose down 
+```
 
 - - - 
 
