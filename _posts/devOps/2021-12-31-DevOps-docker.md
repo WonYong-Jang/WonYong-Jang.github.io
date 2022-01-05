@@ -201,7 +201,7 @@ CMD [ "executable" ]
 $ docker build --tag node_server:0.0.1 [Dockerfile이 위치하는 경로]
 ```   
 
-다음글에서는 실제로 dockerfile을 만들고,
+[다음글](https://wonyong-jang.github.io/devops/2022/01/02/DevOps-docker-node.html)에서는 실제로 dockerfile을 만들고,
     도커를 이용하여 간단한 Node.js 어플을 만들어보자.     
 
 - - - 

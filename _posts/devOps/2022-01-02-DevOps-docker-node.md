@@ -37,13 +37,12 @@ background: '/img/posts/mac.png'
   "author": "",
   "license": "ISC"
 }
-
 ```
 
 아래와 같이 express 모듈을 이용하여 Hello World를 출력하는 기본적인 로직을 
 작성한다.   
 
-```
+```javascript  
 const express = require('express');
 
 const PORT = 8080;
@@ -221,7 +220,14 @@ $ docker run -p 5000:8080 -v /usr/src/app/node_modules -v $(pwd):/usr/src/app <�
 하려고 한다.   
 
 이때 redis 서버 컨테이너와 노드 앱 컨테이너가 각각 필요하고 
-이를 쉽게 구성하기 위해 docker compose를 사용할 수 있다.  
+이를 쉽게 구성하기 위해 docker compose를 사용할 수 있다.    
+
+> 노드 앱 컨테이너에서 redis client 모듈을 추가하고, 이를 
+redis 서버 컨테이너와 통신을 해야 한다.     
+> 하지만, 각각 컨테이너를 아무 설정 없이 실행하게 되면 통신 에러가 발생하게 된다.     
+
+`멀티 컨테이너 상황에서 쉽게 네트워크를 연결 시켜주기 위해서 
+docker compose를 이용하면 된다.`      
 
 `docker compose란 여러개의 컨테이너로부터 이루어진 서비스를 구축, 실행하는 
 순서를 자동으로 관리하여 관리를 간단히 하는 기능이다.`    
@@ -229,6 +235,106 @@ $ docker run -p 5000:8080 -v /usr/src/app/node_modules -v $(pwd):/usr/src/app <�
 `즉, docker compose에서는 compose 파일을 준비하여 커맨드를 1회 실행하는 
 것으로, 그 파일로부터 설정을 읽어들여 모든 컨테이너 서비스를 
 실행시키는 것이 가능하다.`    
+
+이제 실습을 진행해보자.   
+
+먼저, dockerfile은 위에서 진행했던 것과 동일하게 사용하면 된다.   
+또한, redis와 express 모듈을 추가한 package.json은 아래와 같다.   
+
+##### package.json  
+
+```
+{
+  "name": "docker-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+      "express": "4.16.1",
+      "redis":"4.0.1"
+  },
+  "author": "",
+  "license": "ISC"
+}
+```   
+
+노드 앱의 소스코드는 아래와 같다.   
+노드 앱에서는 레디스 클라이언트를 생성하여, 
+    페이지를 refresh했을 때, 숫자 0부터 1씩 계속 올라가는 페이지를 
+    만들어본다.   
+
+##### server.js   
+
+```javascript
+const express = require('express');
+const express = require('redis');
+
+const app = express();
+
+// 레디스 클라이언트 생성  
+const client = redis.createClient({
+    // 도커 compose 사용한다면, host 옵션을 docker-compose.yml 파일에 명시한 컨테이너 이름을 넣는다!
+    host:"redis-server", 
+    port:6379
+})
+
+// 숫자는 0부터 시작  
+client.set("number", 0)
+
+app.get('/', (req, res) => {
+    client.get("number", (err, number) => {
+        // 현재 숫자를 레디스에서 가져온 후 1씩 증가 
+        client.set("number", number + 1)
+        res.send("숫자가 1씩 증가합니다. 숫자 : " + number)
+    })
+});
+
+app.listen(8080);
+console.log("Server is running");
+
+
+```
+
+`레디스 클라이언트를 
+생성할 때 host를 넣어줄 때 주의할 점은 
+도커 compose 사용한다면, host 옵션을 docker-compose.yml 
+파일에 명시한 컨테이너 이름을 넣는다`  
+
+마지막으로 docker compose 파일을 만들어보자.   
+
+> YAML 은 구성 파일 및 데이터가 저장되거나 전송되는 응용 프로그램에서 사용되며 
+원래는 XML이나 json 포맷으로 많이 쓰였지만, 좀 더 사람이 
+읽기 쉬운 포맷으로 나타난게 yaml이다.   
+
+<img width="700" alt="스크린샷 2022-01-05 오후 11 37 46" src="https://user-images.githubusercontent.com/26623547/148235594-85292640-8e20-4422-9973-d507868b3762.png">  
+
+우리가 만들 docker compose 구조는 위와 같다.   
+이제 docker-compose.yml 파일을 생성하고 작성해보자.   
+docker-compose.yml은 띄어쓰기에 주의를 해야하며, version과 
+컨테이너를 감싸는 부분인 services를 명시한다.   
+그 후 컨테이너 이름과 이미지를 작성하고, dockerfile 경로와 port 등을 
+작성하면 된다.   
+
+<img width="850" alt="스크린샷 2022-01-05 오후 11 42 37" src="https://user-images.githubusercontent.com/26623547/148236315-58486438-e217-414e-844b-2c9bd8cdebaa.png">   
+
+
+
+##### docker-compose.yml   
+
+```
+version: "3"
+services: 
+  redis-server:
+    image: "redis"
+  node-app:
+    build: .
+    ports: 
+      - "5000:8080"
+```
 
 
 
