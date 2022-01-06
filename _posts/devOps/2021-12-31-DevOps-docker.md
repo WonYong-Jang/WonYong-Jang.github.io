@@ -162,6 +162,25 @@ $ docker build --tag node_server:0.0.1 [Dockerfile이 위치하는 경로]
 
 ```
 
+#### Docker compose  
+
+```
+// 이미지가 없을 때 이미지를 빌드하고 컨테이너를 실행한다.   
+$ docker-compose up
+
+
+// detached 모드로서 앱을 백그라운드에서 실행시킨다.
+// 그래서 앱에서 나오는 output을 표출하지 않는다.   
+$ docker-compose -d up   
+
+// 이미지가 있든 없든 이미지를 빌드하고 컨테이너를 실행한다.   
+// 이미지 수정된 부분이 반영이 필요하면 build 옵션을 추가한다.   
+$ docker-compose up -- build   
+
+// 중지 
+$ docker-compose down 
+```
+
 ---
 
 ## 도커 이미지 만들어보기   
