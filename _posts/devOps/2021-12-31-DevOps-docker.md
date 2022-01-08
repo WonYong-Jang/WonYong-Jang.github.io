@@ -36,7 +36,7 @@ AWS, Azure, Google cloud등 어디에서든 실행 가능하게 해준다.
 컨테이너 이미지는 런타임에 컨테이너가 되고 도커 컨테이너의 경우 
 도커 엔진에서 실행될 때 이미지가 컨테이너가 된다.   
 
-<img width=600" alt="스크린샷 2021-12-31 오후 11 00 31" src="https://user-images.githubusercontent.com/26623547/147827111-0dc2534f-11fe-45e5-aa99-54a91298dcb3.png">   
+<img width="600" alt="스크린샷 2021-12-31 오후 11 00 31" src="https://user-images.githubusercontent.com/26623547/147827111-0dc2534f-11fe-45e5-aa99-54a91298dcb3.png">      
 
 `정리해보면, 도커 이미지는 프로그램을 실행하는데 필요한 설정이나 
 종속성을 갖고 있으며 도커 이미지를 이용해서 컨테이너를 생성하며 
