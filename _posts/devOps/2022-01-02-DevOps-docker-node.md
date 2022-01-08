@@ -210,10 +210,10 @@ COPY 한 후 이미지를 다시 빌드를 해주고 컨테이너를 다시
 `아래 node_modules는 호스트 디렉토리에 
 node_modules은 없기에 컨테이너에 맵핑을 하지 말라고 하는 것이다.`    
 
-즉, -v usr/app/node_modules 현재 컨테이너환경에 node_modules을 찾으라는 말이다.
+즉, -v usr/app/node_modules은 로컬과 매핑하지말고, 현재 컨테이너환경에 node_modules을 찾으라는 말이다.
 
 > node_modules은 npm install로 종속성들을 다운받으면 생기게 되는데, 
-    현재 실습을 한 소스 파일들중에는 node_modules 폴더가 없다. 이는 컨테이너 안에서 
+    현재 실습을 한 소스 파일들 중에는 node_modules 폴더가 없다. 이는 컨테이너 안에서 
     npm install을 해주기 때문에 컨테이너 안에 폴더가 생긴다.   
 
 

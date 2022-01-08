@@ -160,6 +160,9 @@ $ docker rmi [이미지 id]
 // 이미지 빌드 
 $ docker build --tag node_server:0.0.1 [Dockerfile이 위치하는 경로]
 
+// 이미지 빌드할때 쓰일 도커파일을 임의로 지정해 준다.   
+// Dockerfile 이름과 다른 이름을 사용할 경우 f 옵션 사용   
+$ docker build -f Dockerfile.dev [Dockerfile이 위치하는 경로]
 ```
 
 #### Docker compose  
