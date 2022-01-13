@@ -188,7 +188,8 @@ COPY ./ ./
 RUN npm run build
 
 
-FROM nginx 
+FROM nginx
+EXPOSE 80   
 COPY --from=builder /usr/src/app/build /usr/share/nginx/html
 ```
 
@@ -197,6 +198,8 @@ COPY --from=builder /usr/src/app/build /usr/share/nginx/html
 
 그 이후 nginx를 위한 베이스 이미지를 도커 허브에서 받아오고, builder 단계에 있는 
 파일을 복사한다.   
+
+> EXPOSE는 컨테이너에서 맵핑할 port 번호이다.    
 
 `즉, builder 단계에서 생성된 파일들은 /usr/src/app/build에 들어가게 되며 그곳에 
 저장된 파일들을 /usr/share/nginx/html로 복사시켜줘서 nginx가 웹 브라우저의 http 요청이 
