@@ -154,7 +154,8 @@ Secret, Access API Key 받는 순서는 아래와 같다.
 `즉 우리는 Elastic Beanstalk을 사용할수 있는 권한을 가진 IAM 사용자를 
 생성하면된다.`      
 
-IAM - 사용자 이름을 입력 - 엑세스 유형은 프로그래밍 방식 엑세스 선택 - 기존 정책 직접 연결 - elasticbeanstalk 권한 선택 후 생성하면 된다.  
+IAM - 사용자 이름을 입력 - 엑세스 유형은 프로그래밍 방식 엑세스 선택 - 기존 정책 직접 연결 - 
+AdministratorAccess-AWSElasticBeanstalk 권한 선택 후 생성하면 된다.    
 
 이렇게 얻은 access, scret key를 .travis.yml에 넣어주면 된다.   
 하지만, 직접 API키를 Travis yml 파일에 적어주면 노출이 되기 때문에 

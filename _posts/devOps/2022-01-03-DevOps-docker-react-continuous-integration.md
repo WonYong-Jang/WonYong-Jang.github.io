@@ -211,7 +211,7 @@ COPY --from=builder /usr/src/app/build /usr/share/nginx/html
 
 > 위 장소는 설정을 통해 변경 가능하다.  
 
-다음 글에서 지금까지 작성한 소스를 모두 github에 push를 하여 이를 
+[다음 글](https://wonyong-jang.github.io/devops/2022/01/04/DevOps-docker-react-continuous-integration2.html)에서 지금까지 작성한 소스를 모두 github에 push를 하여 이를 
 travis CI에서 소스를 가져가고 소스가 잘 돌아가는지 Test를 한 후에 
 성공하면 AWS에 보내서 배포까지 해보자.     
 
