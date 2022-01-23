@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kotlin] Break and Continue, Return label"     
-subtitle: "람다식에서 return문 사용할 때 주의사항"    
+subtitle: "고차함수 안에서 흐름 제어 / 람다식에서 return문 사용할 때 주의사항"    
 comments: true
 categories : Kotlin
 date: 2021-11-30
@@ -150,6 +150,7 @@ forEach를 감싸는 함수(run)를 선언하여, 조건에 맞을 경우 감싼
 
 **Reference**     
 
+<https://wooooooak.github.io/kotlin/2022/01/11/%EB%9E%8C%EB%8B%A4%EB%82%B4%EB%B6%80%EC%97%90%EC%84%9C%EC%9D%98return/>   
 <https://wooooooak.github.io/kotlin/2019/02/16/kotlin_label/>   
 <https://kotlinlang.org/docs/returns.html>   
 
