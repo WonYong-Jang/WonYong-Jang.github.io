@@ -1,12 +1,38 @@
 ---
 layout: post
 title: "[Kotlin] 인라인과 람다 내부의 return은 언제 불가능할까?"     
-subtitle: "람다와 인라인(inline) 이해 / noninline"    
+subtitle: "람다와 인라인(inline) 이해 / noninline / use"    
 comments: true
 categories : Kotlin
 date: 2021-12-01
 background: '/img/posts/mac.png'
 ---
+
+람다의 경우 컴파일 단계에서 파라미터 개수에 따라 FunctionN 형태의 
+인터페이스로 변환이 된다.   
+예를 들어 아래와 같이 파라미터가 두 개인 람다 식은 Function2의 인터페이스로 
+변환되는 것을 알 수 있다.   
+
+```kotlin
+fun calculator(x: Int, y: Int, operation: (Int, Int) -> Int) {
+   operation(x, y)
+}
+
+// 아래의 경우 Function2<P1, P2, R> 인터페이스로 변환 
+/* 컴파일 시, FunctionN 형태의 인터페이스 구현 객체로 변환 */
+public final void calculator(int x, int y, @NotNull Function2 operation) {
+   Intrinsics.checkNotNullParameter(operation, "operation");
+   operation.invoke(x, y);
+}
+```
+
+그렇기 때문에 람다 식을 사용하는 경우 일반 함수 구현에 비해 부가적인 
+비용이 들게 되기 때문에, 똑같은 작업을 하는 일반 함수보다 덜 효율적이게 된다.   
+
+이를 해결하기 위해, 코틀린은 inline 키워드를 제공하고 있고 
+이에 따른 람다 내부 return의 차이에 대해서도 살펴보자.   
+
+- - - 
 
 ## 1. 인라인 함수   
 
@@ -69,10 +95,9 @@ public static final void doSomething() {
 ```   
 
 이러한 문제점을 해결하기 위해서 인라인을 사용하는 것이다. `인라인을 
-어떤 함수에 붙이면 컴파일러는 그 함수를 호출하는 모든 문장을 함수 본문에 
-    해당하는 바이트코드로 바꿔치기 해준다.` `즉, 객체가 항상 새로 생성되는 
-    것이 아니라 해당 함수의 내용을 호출한 함수에 넣는 방식으로 컴파일 코드를 
-    작성하게 된다.`    
+어떤 함수에 붙이면 inline된 코드는 변환된 바이트 코드 자체가 그 부분으로 
+    쏙 들어가기 때문에 더 이상 람다를 인터페이스로 구현하는 FunctionN 객체는 
+    생기지 않고, 오버헤드가 발생하지 않는다.`      
 
 예제는 아래와 같다.   
 
@@ -94,9 +119,33 @@ fun doSomething() {
 public static final void doSomething() {
     System.out.println("do something");
 }
-```   
+```  
 
-#### 1-2) noninline   
+#### 1-2) 리소스 관리를 위해 inline 된 람다 사용   
+
+개발을 진행하면서 리소스를 획득하여 사용하고 필요 작업을 마친 후 해제해줘야 
+하는 리소스 관리가 필요할 때가 있다.   
+예를 들면 BufferedReader와 같은 I/O 클래스들을 사용하는 경우 사용 완료 후에는 
+close()와 같이 리소스를 해제해주곤 하는데, 이때 보통 사용하는 방법은 
+try/finally문을 사용하거나 try with resources문을 사용하는 것이다.    
+
+코틀린에서는 try with resources를 제공하는 대신 `작업을 아주 매끄럽게 처리할 수 있는 use 라는 함수를 제공해준다.`      
+
+```kotlin
+/* use 함수로 리소스 자동 관리하기 */
+fun readFirstLineFromFile(path: String): String {
+   BufferedReader(FileReader(path)).use { br ->
+      return br.readLine()  //람다에서 반환하는 것이 아닌 readFirstLineFromFile에서 반환한다.
+   }
+}
+```
+
+use를 쓰게 되면 finally에서 리소스 close를 강제로 해줘야 하는 번거로움이 없어지며, 
+    exception이 발생하여 비정상 종료가 되더라도 리소스 해제를 해주도록 구현되어 있다.   
+
+
+
+#### 1-3) noninline   
 
 둘 이상의 람다를 인자로 받는 함수에서 일부 람다만 인라이닝하고 싶을 때도 
 있을 수 있다.    
@@ -114,15 +163,20 @@ inline fun sample(inlined: () -> Unit, noinline noInlined: () -> Unit) {
 #### 1-3) 정리   
 
 위의 설명을 본다면 언제나 inline을 사용하는게 좋아보인다. 하지만 기본적으로 
-일반 함수 호출의 경우에는 JVM이 이미 강력하게 인라이닝을 지원하고 있다.   
-따라서 일반 함수에는 inline 키워드를 추가할 필요가 없다.   
+`일반 함수 호출의 경우에는 JVM이 이미 강력하게 인라이닝을 지원하고 있다.`       
+`따라서 일반 함수에는 inline 키워드를 추가할 필요가 없다.`     
+
 반면 위에서 설명했듯이 람다를 인자로 받는 함수를 인라이닝하면 여러 이점으로 
 인해 이익이 많다.   
+`즉, inline 키워드는 람다를 인자로 받는 함수만 성능이 좋아질 가능성이 높으며, 
+    그외 다른 코드의 경우는 주의 깊게 성능을 측정하고 분석해야 한다.`   
 
-하지만 inline 변경자를 함수에 붙일 때는 코드 크기에 주의해야 한다. 인라이닝하는 
-함수가 큰 경우 함수의 본문에 해당하는 바이트코드를 모두 호출지점에 
-복사해 넣고 나면 코드가 전체적으로 아주 커질 수 있다.   
+`단, inline 함수를 만들 때 코드 크기가 큰 함수의 경우는 모든 호출 지점에 
+바이트코드가 복사되기 때문에 오히려 더 성능을 악화시킬 수 있기 때문에 
+가급적이면 코드 크기가 작은 부분에만 inline 함수를 사용하길 권장한다.`      
 
+> 실제로, 코틀린 라이브러리가 제공하는 inline 함수(filter, foreach..)를 보면 
+모두 다 크기가 아주 작다는 사실을 알 수 있다.   
 
 - - - 
 
