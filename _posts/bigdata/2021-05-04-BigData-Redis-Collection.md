@@ -118,13 +118,57 @@ OK
 
 - - -
 
-### 3) Set    
+### 3) Hash   
+
+`Redis Hash를 이용해서 하나의 key에 대한 값으로 여러 개의 sub key & value를 
+저장할 수 있다.` RDBMS의 테이블과 매우 비슷하다.    
+아래와 같은 테이블로 실습을 해보자.   
+
+<img width="517" alt="스크린샷 2022-01-29 오후 9 28 06" src="https://user-images.githubusercontent.com/26623547/151661040-455ab405-e99c-4c09-86b0-ab8ba0876896.png">   
+
+Redis Hash에서 User id가 key가 되고, email, name, age, address는 sub key가 된다.   
+hmset을 이용해서 Hash 데이터를 저장할 수 있다. 위 테이블에 있는 데이터를 저장해보자.   
+
+```
+// HMSET : 여러 개의 subkey를 한번에 저장한다.
+172.17.0.2:6379> hmset yundream email "yundream@gmail.com" name "Yun.Dream" age 42  address "Seoul"
+OK
+172.17.0.2:6379> hmset foo email "foo@gmail.com" name "Lee.foo" age 34 address "Pusan"
+OK
+172.17.0.2:6379> hmset bar email "bar@gmail.com" name "Kim.bar" age 26 address "Seoul"
+OK
+```
+
+더 자세한 사용법은 아래와 같다.   
+
+```
+// HGET : Key로 Hash 값을 가져온다. subkey를 설정해야 한다.   
+> HGET yundream email
+"yundream@gmail.com"
+
+// HGETALL : Key로 Hash의 모든 subkey의 값을 가져온다.
+> HGETALL yundream
+1) "email"
+2) "yundream@gmail.com"
+3) "name"
+4) "Yun.Dream"
+5) "age"
+6) "42"
+7) "address"
+8) "Seoul"
+```
+
+
+
+- - - 
+
+### 4) Set    
 
 자세한 내용은 [공식문서](https://redis.io/topics/data-types)를 참고하자.
 
 - - - 
 
-### 4) Sorted Set   
+### 5) Sorted Set   
 
 일반적으로 Set 자료구조는 저장된 value들을 unique하게 관리하기 위해 사용된다.    
 이 때 저장된 value들 사이의 순서는 관리되지 않는다.   
@@ -403,6 +447,7 @@ $ redis-cli
 <https://jupiny.com/2020/03/28/redis-sorted-set/>    
 <https://meetup.toast.com/posts/224>    
 <https://blog.voidmainvoid.net/233>    
+<https://www.joinc.co.kr/w/man/12/REDIS/RedisWithJoinc/part05>   
 
 {% highlight ruby linenos %}
 
