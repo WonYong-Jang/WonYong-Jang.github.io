@@ -120,14 +120,14 @@ OK
 
 ### 3) Hash   
 
-`Redis Hash를 이용해서 하나의 key에 대한 값으로 여러 개의 sub key & value를 
+`Redis Hash를 이용해서 하나의 key에 대한 값으로 여러 개의 sub key(필드) & value(값)를 
 저장할 수 있다.` RDBMS의 테이블과 매우 비슷하다.    
 아래와 같은 테이블로 실습을 해보자.   
 
 <img width="517" alt="스크린샷 2022-01-29 오후 9 28 06" src="https://user-images.githubusercontent.com/26623547/151661040-455ab405-e99c-4c09-86b0-ab8ba0876896.png">   
 
-Redis Hash에서 User id가 key가 되고, email, name, age, address는 sub key가 된다.   
-hmset을 이용해서 Hash 데이터를 저장할 수 있다. 위 테이블에 있는 데이터를 저장해보자.   
+Redis Hash에서 User id가 key가 되고, email, name, age, address는 sub key(필드)가 된다.   
+hmset을 이용해서 Hash 데이터를 저장할 수 있다. 위 테이블에 있는 데이터를 저장해보자.    
 
 ```
 // HMSET : 여러 개의 subkey를 한번에 저장한다.
@@ -155,9 +155,42 @@ OK
 5) "age"
 6) "42"
 7) "address"
-8) "Seoul"
-```
+8) "Seoul"  
 
+// key 필드에 저장된 값을 여러개 불러온다.   
+> HMGET foo email name age address
+1) "foo@gmail.com"
+2) "Lee.foo"
+3) "34"
+4) "Pusan"
+
+// Hash에 key와 value를 저장한다. 이미 key가 존재할 경우 특정 subkey만 추가한다.   
+> HSET yundream age 44
+
+// Hash 특정 subkey를 삭제한다. Hash key를 지우고 싶다면 Del 명령을 사용해야 한다.
+> HDEL yundream email  
+
+// key 삭제 
+> DEL yundream
+
+// Subkey의 갯수를 출력한다.  
+> HLEN foo
+(integer) 4
+
+// key 필드에 저장된 value의 길이를 리턴한다.   
+
+// Subkey의 목록을 출력한다.   
+> HKEYS foo
+1) "email"
+2) "name"
+3) "age"
+4) "address"   
+
+// Key와 field값으로 필드의 존재 유무를 확인할 때는 hexists 명령어를 사용한다.  
+// 반환되는 값이 1이면 검색한 필드가 존재하며 0이면 존재하지 않는 필드이다.   
+> HEXISTS foo email
+(integer) 1
+```
 
 
 - - - 
