@@ -417,17 +417,8 @@ ZADD와 마찬가지로 한번에 복수개의 삭제도 가능하다.
 
 ### 6) Geospatial   
 
-`geospatial 이란 지도상의 object들의 위치인 지리데이터를 의미한다.`   
-
-> 우리가 자주 사용하는 배달의 민족이나 카카오 택시등의 서비스에서는 
-이러한 geospatial 데이터를 활용해 서비스를 제공한다.   
-
-일반적으로 geospatial object를 저장하기 위해서는 longitude와 latitude의 
-pair를 저장한다. 이러한 데이터의 저장은 다른 데이터 저장소에서도 가능하지만, 
-    redis를 사용하면 대규모 geospatial object 데이터의 저장 및 조회를 
-    very low latency로 구현할수 있다.   
-
-
+[링크](https://wonyong-jang.github.io/bigdata/2021/05/12/BigData-Redis-Geospatial.html)를 
+참고하자.   
 
 
 - - - 
