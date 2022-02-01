@@ -17,7 +17,7 @@ sorted set](https://wonyong-jang.github.io/bigdata/2021/05/04/BigData-Redis-Coll
 명령을 그대로 사용할 수 있다.    
 
 회사에서 위치 정보를 이용해서 현재 위치 기준으로 가장 가까운 정류장 
-5개를 추출해서 고객에게 제공하는 서비스를 하려고 한다.   
+5개를 추출해서 고객에게 길안내 정보를 제공하는 서비스를 하려고 한다.   
 처음에는 위도, 경도 정보를 가지고 있는 정류장 데이터를 레디스에 
 가지고 있다가 현재 위치를 기준으로 직선거리를 모두 계산 후 
 sort를 하려고 했다.    
@@ -70,7 +70,7 @@ pair를 저장한다.
 
 ## Geohash   
 
-`redis는 geospatial object의 데이터인 longitude와 latitude의 pari를 
+`redis는 geospatial object의 데이터인 longitude와 latitude의 pair를 
 저장할때 실제로는 geohash값을 저장한다.`    
 
 Geohash는 52bits 정수로 부터 encoding된 11자리 문자열이다. 
@@ -283,7 +283,17 @@ sorted set에 저장해두고, 현재 위치인 위, 경도 데이터가 들어�
 아래 명령을 통해서 가장 가까운 5개 정류장을 확인 할 수 있었다.   
 
 ```
-georadius geopoints 127 38 200 km withdist asc count 5
+127.0.0.1:6379> georadius geopoints 127 38 200 km withdist withcoord asc count 5
+
+1) 1) "CU"
+   2) "41.7218"
+   3) 1) "127.07614034414291382"
+      2) "37.62974666865508055"
+2) 1) "Union Coffee"
+   2) "41.7283"
+   3) 1) "127.0753893256187439"
+      2) "37.62959205066435686"
+...
 ```
 
 해당 자료구조를 이용하면 여러 지리 데이터를 직접 구현없이 
@@ -293,7 +303,10 @@ georadius geopoints 127 38 200 km withdist asc count 5
 [GEOSEARCH와 GEOSEARCHSTORE](http://redisgate.kr/redis/command/geosearch.php)도 
 있으니 참고해보자.    
 [https://www.memurai.com/blog/geospatial-queries-in-redis](https://www.memurai.com/blog/geospatial-queries-in-redis) 도 
-참고해보자.   
+참고해보자.  
+
+마지막으로 위의 내용을 자바로 작성하는 코드는 [링크](https://wonyong-jang.github.io/bigdata/2021/05/11/BigData-Redis-Spring-Data-Redis.html)를 
+참고하자.   
 
 - - - 
 

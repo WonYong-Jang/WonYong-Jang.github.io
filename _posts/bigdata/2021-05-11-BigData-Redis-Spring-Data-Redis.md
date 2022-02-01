@@ -181,7 +181,160 @@ public interface PersonRedisRepository extends CrudRepository<Person, String> {
 - - - 
 
 
-## 2. RedisTemplate   
+## 2. RedisTemplate  
+
+`redisTemplate에는 redis가 제공하는 list, set, sorted set, hash... 와 같은 
+다양한 command를 지원하기 위한 opsFor* method가 있다.`    
+사용하고자 하는 redis command에 대응되는 method를 호출하여 사용하면 된다.   
+해당 method를 호출하면 각 redis command에 대응된 operation 객체가 반환된다.   
+
+<img width="800" alt="스크린샷 2022-02-01 오후 8 00 05" src="https://user-images.githubusercontent.com/26623547/151956793-15f1ac95-7d66-47b0-bd3b-3ab6e23256a9.png">   
+
+
+##### config 설정 추가   
+
+```java
+@Configuration
+public class RedisConfig {
+    @Value("${spring.redis.host}")
+    private String host;
+
+    @Value("${spring.redis.port}")
+    private int port;
+
+    @Bean
+    public RedisConnectionFactory redisConnectionFactory() {
+        return new LettuceConnectionFactory(host, port);
+    }
+
+    @Bean
+    public RedisTemplate<?, ?> redisTemplate() {
+        RedisTemplate<?, ?> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory());
+        return redisTemplate;
+    }
+}
+```
+
+##### String 
+
+```java
+@SpringBootTest
+class RedisControllerTest {
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Test
+    void testHash() {
+        // given
+        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+        String key = "stringKey";
+
+        // when
+        valueOperations.set(key, "hello");
+
+        // then
+        String value = valueOperations.get(key);
+        assertThat(value).isEqualTo("hello");
+    }
+}
+```
+
+##### Set   
+
+```java
+@Test
+void testSet() {
+    // given
+    SetOperations<String, String> setOperations = redisTemplate.opsForSet();
+    String key = "setKey";
+
+    // when
+    setOperations.add(key, "h", "e", "l", "l", "o");
+
+    // then
+    Set<String> members = setOperations.members(key);
+    Long size = setOperations.size(key);
+
+    assertThat(members).containsOnly("h", "e", "l", "o");
+    assertThat(size).isEqualTo(4);
+}
+```
+
+##### Hash   
+
+```java
+@Test
+void testHash() {
+    // given
+    HashOperations<String, Object, Object> hashOperations = redisTemplate.opsForHash();
+    String key = "hashKey";
+
+    // when
+    hashOperations.put(key, "hello", "world");
+
+    // then
+    Object value = hashOperations.get(key, "hello");
+    assertThat(value).isEqualTo("world");
+
+    Map<Object, Object> entries = hashOperations.entries(key);
+    assertThat(entries.keySet()).containsExactly("hello");
+    assertThat(entries.values()).containsExactly("world");
+
+    Long size = hashOperations.size(key);
+    assertThat(size).isEqualTo(entries.size());
+}
+```  
+
+##### Geospatial   
+
+```java
+@Test
+void testGeo() {
+    GeoOperations<String, String> geoOperations = redisTemplate.opsForGeo();
+    String key = "geopoints";
+
+    Point point1 = new Point(127.0753893256187439, 37.62959205066435686);
+    Point point2 = new Point(127.07614034414291382, 37.62974666865508055);
+
+    geoOperations.add(key, point1, "Union Coffee");
+    geoOperations.add(key, point2, "CU");
+
+    Point point = new Point(127, 38);
+    Metric metric = RedisGeoCommands.DistanceUnit.KILOMETERS;
+    Distance distance = new Distance(200, metric);
+    Circle circle = new Circle(point, distance);
+
+    RedisGeoCommands.GeoRadiusCommandArgs args = RedisGeoCommands
+            .GeoRadiusCommandArgs
+            .newGeoRadiusArgs()
+            .includeDistance()
+            .includeCoordinates()
+            .sortAscending()
+            .limit(5);
+        
+    GeoResults<RedisGeoCommands.GeoLocation<String>> radius = geoOperations
+            .radius(key, circle, args);
+
+    if (radius != null) {
+        radius.forEach(geoLocationGeoResult -> {
+            RedisGeoCommands.GeoLocation<String> content = geoLocationGeoResult.getContent();
+            //member name such as tianjin
+            String name = content.getName();
+            // Corresponding latitude and longitude coordinates
+            Point pos = content.getPoint();
+            // Distance from the center point
+            Distance dis = geoLocationGeoResult.getDistance();
+
+            System.out.println(name);
+            System.out.println(pos);
+            System.out.println(dis);
+        });
+    }
+    //geoOperations.remove(key, "CU");
+}
+```
 
 - - - 
 
