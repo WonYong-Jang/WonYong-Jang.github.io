@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Redis] Java에서 Spring Data Redis 사용하기"
-subtitle: "RedisTemplate와 RedisRepository "       
+subtitle: "RedisTemplate와 RedisRepository / @Indexed "       
 comments: true
 categories : BigData
 date: 2021-05-11   
@@ -154,6 +154,29 @@ public class RedisRepositoryTest {
 - timeToLive를 설정했기 때문에 30초 뒤에 사라진다. ttl 명령어로 확인 가능하다.   
 
 
+##### @Indexed   
+
+`@Indexed 어노테이션을 사용해서 id값 외에 다른 필드로 조회할 수 있도록 SecondIndex를 지원한다.`         
+
+
+
+```java
+@Getter
+@RedisHash(value = "people", timeToLive = 30)
+public class Person {
+
+    @Id
+    private String id;
+    @Indexed // 필드 값으로 데이터 찾을 수 있게 하는 어노테이션 
+    private String name;
+...
+}
+
+
+public interface PersonRedisRepository extends CrudRepository<Person, String> {
+    Optional<Person> findByName(String name);
+}
+```
 
 - - - 
 

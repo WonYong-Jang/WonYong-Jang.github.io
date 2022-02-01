@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Redis] Redis(Remote Dictionary Server) Collection"
-subtitle: "Redis에서 제공하는 자료구조, sorted set, Collection 사용시 주의사항 "       
+subtitle: "Redis에서 제공하는 자료구조 및 사용시 주의사항 (string, hash, list, sorted set, geospatial) "       
 comments: true
 categories : BigData
 date: 2021-05-04
@@ -225,7 +225,7 @@ score를 가반으로 정렬이 된다.`
 score는 부동 소수점 수만 허용되고, 이 score값을 기준으로 ZSET 내의 
 각 원소들이 순서를 가지게 된다.   
 
-#### ZADD 
+##### ZADD 
 
 > ZADD key score member    
 
@@ -247,7 +247,7 @@ ZSET에 각 유저의 이름과 score를 지정해 추가해보자.
 (integer) 0
 ```    
 
-#### ZSCORE   
+##### ZSCORE   
 
 > ZSCORE key member    
 
@@ -258,7 +258,7 @@ score를 조회 할 수 있다.
 "5"  
 ```
 
-#### ZRANK   
+##### ZRANK   
 
 > ZRANK key member   
 
@@ -269,7 +269,7 @@ sorted set에서 member의 정렬 순서를 확인 할 수 있다.
 (integer) 0   // 0부터 시작 (가장 첫번째 순서)   
 ```
 
-#### ZRANGE   
+##### ZRANGE   
 
 > ZRANGE key start stop    
 
@@ -339,7 +339,7 @@ score 기준으로 오름차순 정렬되어 있을 때, 인덱스 2에서 3까�
 8) "2"
 ```
 
-#### ZRANGEBYSCORE   
+##### ZRANGEBYSCORE   
 
 > ZRANGEBYSCORE key min max    
 
@@ -389,7 +389,7 @@ score 상관없이 모든 member를 오름차순으로 출력한다.
 4) "4"
 ```
 
-#### ZREM    
+##### ZREM    
 
 > ZREM key member    
 
@@ -412,6 +412,23 @@ ZADD와 마찬가지로 한번에 복수개의 삭제도 가능하다.
 127.0.0.1:6379> zrange user:rank 0 -1
 1) "mike"
 ```
+
+- - - 
+
+### 6) Geospatial   
+
+`geospatial 이란 지도상의 object들의 위치인 지리데이터를 의미한다.`   
+
+> 우리가 자주 사용하는 배달의 민족이나 카카오 택시등의 서비스에서는 
+이러한 geospatial 데이터를 활용해 서비스를 제공한다.   
+
+일반적으로 geospatial object를 저장하기 위해서는 longitude와 latitude의 
+pair를 저장한다. 이러한 데이터의 저장은 다른 데이터 저장소에서도 가능하지만, 
+    redis를 사용하면 대규모 geospatial object 데이터의 저장 및 조회를 
+    very low latency로 구현할수 있다.   
+
+
+
 
 - - - 
 
