@@ -306,6 +306,9 @@ void testGeo() {
     Distance distance = new Distance(200, metric);
     Circle circle = new Circle(point, distance);
 
+    // 경도, 위도(127, 38) 기준으로 반경 200 km를 찾고, 
+    // 가장 가까운 순서로 5개 위치정보 추출하기 
+    // 거리와 좌표정보 같이 출력 
     RedisGeoCommands.GeoRadiusCommandArgs args = RedisGeoCommands
             .GeoRadiusCommandArgs
             .newGeoRadiusArgs()
@@ -332,9 +335,17 @@ void testGeo() {
             System.out.println(dis);
         });
     }
+
+    // CU에 대한 좌표 정보 삭제   
     //geoOperations.remove(key, "CU");
 }
-```
+```  
+
+`위의 코드를 살펴보면, opsForGeo()를 이용하여 Geospatial 자료구조를 만들었다.`      
+`해당 자료구조에 CU, Union Coffee의 좌표 정보를 추가했고, 
+    이제 좌표정보(127, 38)을 기준으로 반경 200 km 에 들어있는 가장 가까운 
+    좌표 정보를 5개 찾는다.`        
+    `또한, 찾은 데이터의 거리와 좌표정보도 같이 출력하게 된다.`       
 
 - - - 
 
