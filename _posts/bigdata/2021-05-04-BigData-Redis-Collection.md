@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Redis] Redis(Remote Dictionary Server) Collection"
+title: "[Redis] Remote Dictionary Server 에서 제공하는 Collections"
 subtitle: "Redis에서 제공하는 자료구조 및 사용시 주의사항 (string, hash, list, sorted set, geospatial) "       
 comments: true
 categories : BigData

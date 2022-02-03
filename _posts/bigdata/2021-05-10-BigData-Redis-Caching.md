@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Redis] Redis 캐싱 전략 "
-subtitle: "Look Aside(Lazy Loading), Write Through, 활용 사례 "       
+title: "[Redis] 캐싱 전략 "
+subtitle: "Look Aside(Lazy Loading), Write Through, Session Management, 여러가지 활용 사례 "       
 comments: true
 categories : BigData
 date: 2021-05-10   
