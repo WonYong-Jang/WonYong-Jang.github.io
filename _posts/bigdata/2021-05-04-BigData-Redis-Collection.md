@@ -109,7 +109,24 @@ OK
 (nil)
 > set mykey newval xx
 OK
+```   
+
+- key의 type과 expire time(seconds) 조회   
+
+
 ```
+127.0.0.1:6379> set key 3
+OK
+127.0.0.1:6379> expire key 300 # ttl 300초로 설정
+(integer) 1
+127.0.0.1:6379> ttl key    # ttl 확인 
+(integer) 297
+127.0.0.1:6379> ttl otherKey  # key가 없으면 -2 리턴
+(integer) -2
+127.0.0.1:6379> type key  # key 의 타입 확인 
+string
+```
+
 - - - 
 
 ### 2) List    
