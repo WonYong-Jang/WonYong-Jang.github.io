@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spring] Web Layer(웹 계층) 과 도메인 모델 패턴"
-subtitle: "Web, Service, Repository, Dtos, Domain / 비지니스 로직은 Service에서 처리해야할까?"
+subtitle: "Web, Service, Repository, Dtos, Domain / DTO와 Entity 사용 범위 / 비지니스 로직은 Service에서 처리해야할까?"
 comments: true
 categories : Spring
 date: 2020-06-14
@@ -26,6 +26,7 @@ background: '/img/posts/spring.png'
 ## 3. Repository Layer
 
 - Database와 같이 데이터 저장소에 접근하는 영역이다.   
+- Entity의 영속성을 관장하는 역할이다.   
 - Dao(Data Access Object) 영역이라고 생각하면 된다.   
 
 ## 4. Dtos
@@ -155,11 +156,75 @@ order, billing, delivery라는 각각의 도메인이 취소 이벤트를 처리
 둘다 장잠점이 있기 때문에, 상황에 맞는 적절한 방법을 선택하는 것이 
 중요하다.   
 
+- - - 
+
+## DTO와 Entity 사용 범위 및 변환 위치    
+
+프로젝트를 진행하다보면 DTO와 Entity의 사용 범위 및 변환 위치에 대해 
+의문점이 들 수 있다.     
+결론부터 말하자면 프로젝트 규모 및 상황에 따라 달라질 수 있기 때문에 
+반드시 정답이 있는 것은 아니다.   
+
+하지만 보통 많이 사용하는 구조는 
+DTO와 Entity의 사용범위를 나타낸 위의 그림에서 확인할 수 있다.     
+
+MVC 패턴으로 이해해 보자.   
+MVC 패턴은 어플리케이션을 개발할 때 그 구성 요소를 Model과 View 및 
+Controller 등 세가지 역할로 구분하는 디자인 패턴이다. 비즈니스 
+처리 로직(Model)과 UI 영역(View)은 서로의 존재를 인지하지 못하고, 
+    Controller가 중간에서 Model과 View의 연결을 담당합니다.   
+
+Controller는 View로부터 들어온 사용자 요청을 해석하여 Model을 
+업데이트하거나 Model로부터 데이터를 받아 View로 전달하는 작업 
+등을 수행한다.   
+`MVC 패턴의 장점은 Model과 View를 분리함으로써 서로의 의존성을 
+낮추고 독립적인 개발을 가능하게 한다.`       
+
+Controller는 View와 도메인 Model의 데이터를 주고 받을 때 
+별도의 DTO를 주로 사용한다. 도메인 객체를 View에 
+직접 전달할 수 있지만, 민감한 도메인 비즈니스 기능이 노출될 수 
+있으며 Model과 View 사이에 의존성이 생기기 때문이다.   
+
+`즉 Model과 View가 강하게 결합되면, View의 요구사항 변화가 Model에 영향을 
+끼치기 쉽다.`   
+`이것은 반대로 DB와 연결되어 있는 Model이 변경되면 View에도 영향을 
+끼치게 된다.`    
+
+
+`또한, Model 객체는 UI에서 사용하지 않을 불필요한 데이터까지 
+보유하고 있을 수 있기 때문에 개인정보등이 외부에 노출되는 
+보안 문제와도 직결된다.`    
+
+> 물론 소규모 프로젝트는 DTO 사용이 불필요한 경우도 있다.   
+
+그럼 DTO와 Entity의 변환 위치는 어디가 좋을까?   
+
+이 또한, 정답이 있는 것은 아니지만 Controller 또는 Service 레이어가 
+적당하다는 의견이 대부분이다.   
+
+`마틴 파울러는 Service 레이어란 어플리케이션의 경계를 정의하고 
+비즈니스 로직 등 도메인을 캡슐화하는 역할이라고 정의했다.`   
+
+이러한 관점에서 바라볼 때, 레이어간 데이터 전달 목적으로 DTO를 
+엄격하게 고수한다면 변환 로직이 Service 레이어에서 정의되어야 한다는 
+의견이 존재했다.
+
+DTO를 Entity로 변환하는게 간단하다면 
+Controller에서 변환해서 Service 레이어로 내려줘도 되지만, 
+    복잡한 어플리케이션의 경우 Controller가 View에서 전달 받은 DTO만으로 
+    Entity를 구성하기란 어렵다. Repository를 통해 여러 부수적인 
+    정보들을 조회하여 Entity를 구성할 경우도 존재하기 때문이다.   
+
+이런 경우 DTO를 Service에게 넘겨주어 Service가 Entity로 변환시키도록 
+하는 것이 더 좋은 방안으로 생각한다.   
+
+
 - - -
 Referrence 
 
 <https://blog.naver.com/PostView.nhn?blogId=good_ray&logNo=222267722516>   
 [https://jojoldu.tistory.com/](https://jojoldu.tistory.com/)         
+<https://xlffm3.github.io/spring%20&%20spring%20boot/DTOLayer/>    
 
 
 {% highlight ruby linenos %}
