@@ -33,11 +33,8 @@ background: '/img/posts/spring.png'
         return result;
     }
 ```
-`
-자바에서 AOP를 구현하기 위한 방법은 proxy를 사용하는 방법이다.   
-즉, Core concern(핵심로직)과 Cross cutting concern
-(부가적인 로직)을 분리한다.   
-`
+`자바에서 AOP를 구현하기 위한 방법은 proxy를 사용하는 방법이다.`    
+`즉, Core concern(핵심로직)과 Cross cutting concern (부가적인 로직)을 분리한다.`     
 
 ##### Proxy.newProxyInstance
 
@@ -46,8 +43,7 @@ background: '/img/posts/spring.png'
 - h : 부가적인 로직을 끼워 넣기 위한 부분 
 
 ```java
-// proxy는 Exam 클래스와 동일한 기능을 사용한다. proxy에 부가적인 로직(로깅, 
-// 에러처리 등)을 추가해서 사용 가능!   
+// proxy는 Exam 클래스와 동일한 기능을 사용한다. proxy에 부가적인 로직(로깅, 에러처리 등)을 추가해서 사용 가능!     
 Exam proxy = newProxyInstance(ClassLoader loader,
                 Class<?>[] interfaces,
                InvocationHandler h)

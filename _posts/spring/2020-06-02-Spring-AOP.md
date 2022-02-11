@@ -10,9 +10,9 @@ background: '/img/posts/spring.png'
 
 ## AOP(관점 지향 프로그래밍)   
 
-<p>관점(Aspect)라는 용어는 개발자들에게 관심사(concern)이라는 말로 용통된다.
-관심사는 개발 시 필요한 고민이나 염두에 두어야 하는 일이라고 생각할 수 있는데,
-코드를 작성하면서 염두에 두어야 하는 일들은 주로 아래와 같다.</p>
+관점(Aspect)라는 용어는 개발자들에게 관심사(concern)이라는 말로 용통된다.   
+관심사는 개발 시 필요한 고민이나 염두에 두어야 하는 일이라고 생각할 수 있는데, 
+코드를 작성하면서 염두에 두어야 하는 일들은 주로 아래와 같다.    
 
 - 파라미터가 올바르게 들어왔을까?   
 - 로그는 적절하게 남기고 있는가?   
@@ -39,17 +39,15 @@ background: '/img/posts/spring.png'
 <img width="600" alt="스크린샷 2020-06-01 오후 9 38 02" src="https://user-images.githubusercontent.com/26623547/83409926-5cd4a480-a450-11ea-99b7-083df65941cb.png">    
 
 - - - 
-<br> 
+### AOP 용어들     
 
-<h3>AOP 용어들</h3>
+<img width="500" alt="스크린샷 2020-03-08 오후 8 59 13" src="https://user-images.githubusercontent.com/26623547/76162294-beea7a00-617f-11ea-890e-f3991970d082.png">   
+<img width="500" alt="스크린샷 2020-03-08 오후 9 27 14" src="https://user-images.githubusercontent.com/26623547/76162706-9fede700-6183-11ea-9810-d9f7aade50e6.png">   
 
-<img width="500" alt="스크린샷 2020-03-08 오후 8 59 13" src="https://user-images.githubusercontent.com/26623547/76162294-beea7a00-617f-11ea-890e-f3991970d082.png">
-<img width="500" alt="스크린샷 2020-03-08 오후 9 27 14" src="https://user-images.githubusercontent.com/26623547/76162706-9fede700-6183-11ea-9810-d9f7aade50e6.png">
-<br/>
 
 #### Target   
 
-` 개발자가 작성한 비즈니스 로직(Core concern)을 가지는 객체`   
+`개발자가 작성한 비즈니스 로직(Core concern)을 가지는 객체`   
 
 target은 순수한 비즈니스 로직을 가지고 있고, 어떠한 관심사들과도 관계를 맺지 않는다.
 
@@ -57,8 +55,8 @@ target은 순수한 비즈니스 로직을 가지고 있고, 어떠한 관심사
 
 `target을 전체적으로 감싸고 있는 존재`   
 
-내부적으로 Target을 을 호출하지만, 중간에 필요한 관심사들을 거쳐서 Target을 호출하도록
-자동 혹은 수동으로 작성된다. Proxy 존재는 직접 코드를 통해서 구현하는 경우도 있지만,
+내부적으로 Target을 호출하지만, 중간에 필요한 관심사들을 거쳐서 Target을 호출하도록 
+자동 혹은 수동으로 작성된다. Proxy 존재는 직접 코드를 통해서 구현하는 경우도 있지만, 
 대부분 스프링 AOP 기능을 이용해서 자동으로 생성되는 auto-proxy 방식을 이용
 
 #### Pointcuts 와 JoinPoint 그리고 weaving   
