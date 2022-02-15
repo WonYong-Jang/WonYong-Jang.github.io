@@ -48,9 +48,11 @@ RetryTemplate은 RetryOperations의 구현체이다.
 
 ## RetryTemplate 사용
 
-```java
+```gradle
 implementation 'org.springframework.retry:spring-retry'
+```
 
+```java
 @Configuration
 public class RetryTemplateConfig {
 
@@ -87,6 +89,8 @@ public class SomeClass {
 }
 ```
 
+위와 같이 사용할 수 있으며, 재시도 정책 및 그외에 기능에 대해 알아보자.   
+
 #### Recovery Callback   
 
 `재시도가 전부 실패하면, RetryOperations는 RecoveryCallback을 호출한다.`   
@@ -94,15 +98,26 @@ public class SomeClass {
 전달해주어야 한다.   
 
 ```java
-Foo foo = template.execute(new RetryCallback<Foo>() {
-    public Foo doWithRetry(RetryContext context) {
-        // business logic here
-    },
-  new RecoveryCallback<Foo>() {
-    Foo recover(RetryContext context) throws Exception {
-          // recover logic here
-    }
-});
+String result = someRetryTemplate.execute(new RetryCallback<String, Throwable>() {
+            @Override
+            public String doWithRetry(RetryContext context) throws Throwable {
+                return "retry logic";
+            }
+        }, new RecoveryCallback<String>() {
+            @Override
+            public String recover(RetryContext context) throws Exception {
+                return "recovery logic";
+            }
+        });
+```
+
+람다로 변경하면 아래와 같이 변경이 가능하다.   
+
+```java
+String result = someRetryTemplate.execute(
+                (RetryCallback<String, Throwable>) 
+                        context -> "retry logic", 
+                context -> "recovery logic");
 ```
 
 모든 재시도가 실패하고 더 이상 재시도할 수 없는 경우, RecoveryCallback 메소드를 호출한다.    
