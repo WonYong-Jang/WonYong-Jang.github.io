@@ -18,7 +18,7 @@ background: '/img/posts/spring.png'
 Spring Retry에는 작업에 대한 재시도를 자동화하기 위한 인터페이스인 RetryOperations가 있다.   
 아래는 RetryOperations인터페이스 코드이며, execute() 메소드가 존재하는데 매개변수인 
 RetryCallback은 실패 시 재시도해야 하는 비즈니스 로직 삽입을 허용하는 
-인터페이스 이다.   
+인터페이스 이다.     
 
 ```java
 public interface RetryOperations {
