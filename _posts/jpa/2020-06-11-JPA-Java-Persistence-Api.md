@@ -242,6 +242,7 @@ public class PostsSaveRequestDto {
 - - -
 Referrence
 
+<https://www.inflearn.com/course/ORM-JPA-Basic/lecture/21670?tab=curriculum&volume=1.00>   
 [jojoldu.tistory.com/295](jojoldu.tistory.com/295)         
 [https://requirethings.wordpress.com/2013/10/08/spring-data-jpa-%EA%B8%B0%EB%B3%B8-%EC%9E%91%EC%97%85-%ED%9D%90%EB%A6%84/](https://requirethings.wordpress.com/2013/10/08/spring-data-jpa-%EA%B8%B0%EB%B3%B8-%EC%9E%91%EC%97%85-%ED%9D%90%EB%A6%84/)
 
