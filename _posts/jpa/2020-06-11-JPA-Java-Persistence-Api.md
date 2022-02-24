@@ -17,9 +17,50 @@ background: '/img/posts/mac.png'
 객체 지향 개발이 가능하다.   
 단, 잘 이해하고 사용하지 않으면 데이터 손실이 있을 수 있다.   
 
-JPA는 아래와같이 어플리케이션과 JDBC 사이에서 동작한다.   
+JPA는 아래와 같이 어플리케이션과 JDBC 사이에서 동작한다.   
 
-<img width="800" alt="스크린샷 2022-02-23 오후 6 57 13" src="https://user-images.githubusercontent.com/26623547/155296915-b49e9e59-f776-44e9-aee9-b7e353b04789.png">     
+<img width="500" alt="스크린샷 2022-02-23 오후 6 57 13" src="https://user-images.githubusercontent.com/26623547/155296915-b49e9e59-f776-44e9-aee9-b7e353b04789.png">    
+
+JPA의 작동 방식은 Persistence클래스로 부터 시작하며, META-INF 디렉토리 하위의 
+설정정보를 읽어서 EntityManagerFactory 클래스를 만든다.   
+그 이후 필요할 때마다 EntityManger를 만들어서 실행한다.   
+
+<img width="600" alt="스크린샷 2022-02-24 오후 8 56 04" src="https://user-images.githubusercontent.com/26623547/155519514-2ed6d525-85d3-467c-8e1f-404e8e710a2d.png">  
+
+`EntityManagerFactory는 하나만 생성해서 어플리케이션 전체를 공유한다.`   
+
+`여기서 주의할 점은 EntityManager는 고객의 요청이 올때마다 사용하고 버려야한다.`   
+`즉, 쓰레드간에 공유하면 안된다.`   
+
+`JPA의 모든 데이터 변경은 아래와 같이 트랜잭션 안에서 실행한다.`   
+
+```java
+public class JpaMain {
+    public static void main(String[] args) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Member member = em.find(Member.class, 1L);
+
+            member.setName("kaven");
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            em.close();
+        }
+        emf.close();
+    }
+}
+```
+
+> 위의 코드는 JPA의 이해를 돕기 위한 코드이며, 
+    이후는 인터페이스를 이용하여 더욱 편리하게 JPA를 사용할 수 있다.   
 
 - - -    
 
