@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Jpa] JPA(Java Persistence API)"
-subtitle: "자바 표준 ORM, Hibernate, Spring-data-jpa"
+subtitle: "자바 표준 ORM, Hibernate, Spring-data-jpa / 영속성 컨텍스트"
 comments: true
 categories : Jpa
 date: 2020-06-11
@@ -32,6 +32,11 @@ JPA의 작동 방식은 Persistence클래스로 부터 시작하며, META-INF �
 `여기서 주의할 점은 EntityManager는 고객의 요청이 올때마다 사용하고 버려야한다.`   
 `즉, 쓰레드간에 공유하면 안된다.`   
 
+EntityManagerFactory를 통해서 고객의 요청이 오면 EntityManager를
+생성하여 내부적으로 데이터베이스 커넥션을 사용하여 DB를 사용한다.
+
+<img width="568" alt="스크린샷 2022-02-24 오후 10 33 38" src="https://user-images.githubusercontent.com/26623547/155533878-06b4efd7-afeb-4769-bf52-9287ffd549f8.png">      
+
 `JPA의 모든 데이터 변경은 아래와 같이 트랜잭션 안에서 실행한다.`   
 
 ```java
@@ -44,10 +49,10 @@ public class JpaMain {
         tx.begin();
 
         try {
-            Member member = em.find(Member.class, 1L);
+            Member member = new Member();
+            member.setId(1L);
 
-            member.setName("kaven");
-
+            em.persist(member);
             tx.commit();
         } catch (Exception e) {
             tx.rollback();
@@ -62,9 +67,127 @@ public class JpaMain {
 > 위의 코드는 JPA의 이해를 돕기 위한 코드이며, 
     이후는 인터페이스를 이용하여 더욱 편리하게 JPA를 사용할 수 있다.   
 
+### 영속성 컨텍스트   
+
+JPA를 이해하려면 영속성 컨텍스트를 이해하는게 중요하다.  
+`영속성 컨텍스트는 엔티티를 영구 저장하는 환경 이라는 뜻이다.`   
+
+엔티티의 생명주기는 아래와 같다.   
+
+- 비영속(new/transient)   
+    - 영속성 컨텍스트와 전혀 관계가 없는 새로운 상태    
+- 영속(managed)   
+    - 영속성 컨텍스트에 관리되는 상태   
+- 준영속(detached)
+    - 영속성 컨텍스트에 저장되었다가 분리된 상태   
+- 삭제(removed)   
+    - 삭제된 상태  
+
+아래 코드로 살펴보면, em.persist 하기 전에 단순 객체만 생성해놓은 
+상태는 비영속 상태이다.   
+`persist 하는 순간 영속 상태가 된다. 주의할 점은 이때 DB에 저장이 
+되는 것이 아니라 commit 하는 순간 DB에 저장된다.`   
+
+```java
+// 객체를 생성한 상태(비영속)
+Member member = new Member();
+member.setId("member1");
+member.setUsername("kaven");
+
+EntityManager em = emf.createEntityManager();
+em.getTransaction().begin();
+
+// 객체를 저장한 상태(영속)
+em.persist(member);
+```
+
+detach는 영속성 컨텍스트에서 다시 지운다는 것이고, 
+    remove는 실제로 DB 값을 지운다.   
+
+```java
+// 회원 엔티티를 영속성 컨텍스트에서 분리, 준영속 상태   
+em.detach(member);
+
+// 객체를 삭제한 상태(삭제)
+em.remove(member);   
+```
+
+그럼 왜 영속성 컨텍스트를 사용할까?  
+
+`결국 DB와 어플리케이션 사이에서 중간 계층이 있고, 이를 통해 
+여러가지 이점을 얻을 수 있다.`   
+
+##### 1) 엔티티 조회, 1차 캐시   
+
+영속성 컨텍스트는 내부에 1차 캐시를 가지고 있다.   
+
+<img width="600" alt="스크린샷 2022-02-24 오후 11 37 07" src="https://user-images.githubusercontent.com/26623547/155544977-224be3db-f9bd-4fe9-9e7a-7d165ab506b4.png">   
+
+위처럼 persist를 하는 순간 pk값(id)과 객체를 맵핑하여 1차 캐시에 
+가지고 있는다.     
+
+그럼 어떤 이점이 있을까?   
+
+`이를 한 트랜잭션 내에 1차 캐시에 이미 있는 값을 
+조회하는 경우 DB를 조회하지 않고 1차 캐시에 있는 
+내용을 그대로 가져온다.`       
+`반면, 조회했을 때 1차 캐시에 없다면 DB에서 가져와서 
+1차 캐시에 저장을 하고 반환을 한다.`        
+
+`단, 어플리케이션이 공유하는 캐시가 아니라 한 트랜잭션 내에서만 
+캐시를 한다.`       
+
+##### 2) 영속 엔티티의 동일성 보장   
+
+JPA는 영속 엔티티의 동일성을 보장해준다.   
+마치 자바 컬렉션에서 동일한 객체를 꺼내서 
+비교했을 때 true가 나오는 것과 비슷하다.   
+
+이게 가능한 이유는 같은 트랜잭션 
+내에서 실행하여 1차 캐시가 존재하기 때문에 가능하다.    
+
+```java
+Member a = em.find(Member.class, "member1");
+Member b = em.find(Member.class, "member1");
+
+System.out.println(a == b); // 동일성 비교 true  
+```
+
+##### 3) 엔티티 등록, 트랜잭션을 지원하는 쓰기 지연   
+
+`영속성 컨텍스트는 1차 캐시도 있지만, 쓰기 지연 SQL 저장소도 있다.`   
+`아래 코드와 그림을 보면, memberA를 persist를 하게 되면, 
+    1차 캐시를 넣고, 쓰기 지연 SQL 저장소에 쿼리를 만들어 쌓는다.`           
+`memberB를 persist해도 동일한 과정을 거치며, commit 하는 순간에 
+flush가 되면서 DB에 저장된다.`      
+
+```java
+EntityManager em = emf.createEntityManager();
+EntityTransaction transaction = em.getTransaction();
+// 엔티티 매니저는 데이터 변경시 트랜잭션을 시작해야 한다.   
+transaction.begin(); // 트랜잭션 시작   
+
+em.persist(memberA);
+em.persist(memberB);
+// 여기까지 INSERT SQL을 데이터베이스에 보내지 않는다.   
+
+// 커밋하는 순간 데이터베이스에 INSERT SQL을 보낸다.
+transaction.commit(); // 트랜잭션 커밋   
+```  
+
+<img width="745" alt="스크린샷 2022-02-24 오후 11 58 54" src="https://user-images.githubusercontent.com/26623547/155550039-3be8c056-acc9-458b-a911-f2202856ba0a.png">   
+
+
+##### 4) 엔티티 수정(Dirty Checking)   
+
+자세한 내용은 
+[Dirty Checking](https://wonyong-jang.github.io/jpa/2020/06/20/JPA-Dirty-Checking.html)을 
+참고하자.   
+
+
 - - -    
 
-### SQL Mapper 와 ORM
+## SQL Mapper 와 ORM
 
 **1) SQL Mapper : Mybatis, JdbcTemplate와 같이 쿼리를 매핑한다.**       
 
@@ -80,7 +203,7 @@ public class JpaMain {
 
 - - -   
 
-### Spring Data JPA
+## Spring Data JPA
 
 `Spring에서 제공하는 모듈 중 하나로, 개발자가 JPA를 더 쉽고 편하게 사용할 수 있도록 
 도와준다.`      
@@ -93,8 +216,6 @@ Hibernate를 쓰는 것과 Spring Data JPA를 쓰는 것 사이에는 큰 차이
 
 > 추상화 정도는 Spring-Data-JPA -> Hibernate -> JPA 이다.   
 
-- - -
-
 ### Spring Data JPA 기본 작업 분류 
 
 전체적인 데이터 핸들링을 하기 위해 아래와 같이 나눌수 있다.   
@@ -104,7 +225,7 @@ Hibernate를 쓰는 것과 Spring Data JPA를 쓰는 것 사이에는 큰 차이
 - API 요청을 받을 Controller   
 - Request 데이터를 받을 DTO 
 
-#### 도메인(엔티티) 
+#### 1) 도메인(엔티티) 
 
 가장 먼저 해야할 일은 데이터의 구조를 설계하는 것이다. 아래 Posts 클래스는 
 실제 DB의 테이블과 매칭될 클래스이며, 보통 entity 클래스라고도 한다. JPA를 
@@ -171,8 +292,8 @@ public class Posts {
 ```java
 @Transient
 private Integer foo;
-```
-<br>
+```   
+
 2) @Enumerated : 자바의 enum 타입을 매핑할 때 사용한다.
 
 아래와 같은 경우는 kind 필드 값에는 A, B, C값만 추가할 수 있다. 정형화된 데이터를 
@@ -182,9 +303,9 @@ private Integer foo;
 @Enumerated(EnumType.STRING)
 @Column( name="kind", nullable=false, columnDefinition = "enum('A','B','C')")
 private Enum kind;
-```
-<br>
-### JpaRepository   
+```   
+
+#### 2) JpaRepository   
 
 Mybatis 에서는 DAO라고 불리는 DB Layer접근자이다.       
 `JPA에선 Repository라고 부르며 인터페이스로 생성한다.`    
@@ -210,9 +331,7 @@ public interface PostsRepository extends JpaRepository<Posts, Long> {
 }
 ```
 
-
-<br>
-### 등록/수정/조회 API 만들기   
+#### 3) 등록/수정/조회 API 만들기   
 
 API를 만들기 위해 총 3개의 클래스가 필요하다.(DTO, Controller, Service)   
 [웹 계층 링크](https://wonyong-jang.github.io/spring/2020/06/14/Spring-Web-Layer.html)   
