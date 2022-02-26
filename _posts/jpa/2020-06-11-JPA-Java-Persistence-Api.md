@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Jpa] JPA(Java Persistence API)"
-subtitle: "자바 표준 ORM, Hibernate, Spring-data-jpa / 영속성 컨텍스트"
+title: "[Jpa] JPA(Java Persistence API) 와 Persistence Context"
+subtitle: "자바 표준 ORM, Hibernate, Spring-data-jpa / 영속성 컨텍스트 / flush"
 comments: true
 categories : Jpa
 date: 2020-06-11
@@ -67,7 +67,7 @@ public class JpaMain {
 > 위의 코드는 JPA의 이해를 돕기 위한 코드이며, 
     이후는 인터페이스를 이용하여 더욱 편리하게 JPA를 사용할 수 있다.   
 
-### 영속성 컨텍스트   
+### 영속성 컨텍스트(PersistenceContext)   
 
 JPA를 이해하려면 영속성 컨텍스트를 이해하는게 중요하다.  
 `영속성 컨텍스트는 엔티티를 영구 저장하는 환경 이라는 뜻이다.`   
@@ -99,6 +99,10 @@ em.getTransaction().begin();
 
 // 객체를 저장한 상태(영속)
 em.persist(member);
+
+// find를 해서 1차 캐시에 없으면 올려 놓기 때문에 
+// 현재 상태도 영속 상태   
+em.find(Member.class, 1L);
 ```
 
 detach는 영속성 컨텍스트에서 다시 지운다는 것이고, 
@@ -107,6 +111,9 @@ detach는 영속성 컨텍스트에서 다시 지운다는 것이고,
 ```java
 // 회원 엔티티를 영속성 컨텍스트에서 분리, 준영속 상태   
 em.detach(member);
+
+// entityManger안에 있는 전체 영속성 컨텍스트 모두 분리, 준영속 상태가 됨    
+em.clear();
 
 // 객체를 삭제한 상태(삭제)
 em.remove(member);   
@@ -159,7 +166,14 @@ System.out.println(a == b); // 동일성 비교 true
 `아래 코드와 그림을 보면, memberA를 persist를 하게 되면, 
     1차 캐시를 넣고, 쓰기 지연 SQL 저장소에 쿼리를 만들어 쌓는다.`           
 `memberB를 persist해도 동일한 과정을 거치며, commit 하는 순간에 
-flush가 되면서 DB에 저장된다.`      
+flush가 되면서 DB에 저장된다.`     
+
+> 데이터베이스 commit 하기 직전에 flush를 이용하여 변경사항을 DB에 반영한다.     
+> flush 란 영속성 컨텍스트의 변경내용을 데이터베이스에 반영하는 것이다.   
+> flush가 변경사항을 반영하는 것이지 1차 캐시를 지우지는 않는다.   
+> flush를 직접 호출하는 경우는 거의 없지만 테스트 해볼 때는 em.flush() 이용하여 직접 호출할 수 있다.  
+> flush 기본 설정값은 FlushModeType.AUTO이며, 커밋이나 쿼리를 실행하기 직전 flush가 실행된다.   
+
 
 ```java
 EntityManager em = emf.createEntityManager();
