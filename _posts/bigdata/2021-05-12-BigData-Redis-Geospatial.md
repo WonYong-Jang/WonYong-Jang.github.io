@@ -26,7 +26,7 @@ sort를 하려고 했다.
 조금 더 빠르게 가까운 위치를 찾을 수 있어서 해당 자료구조를 
 이용하려고 한다.   
 
-> sort을 직접 하는 경우 O(NlogN)이고, geospatial을 이용하는 경우 O(N+logN) 이기 때문이다.   
+> sort를 직접 하는 경우 O(NlogN)이고, geospatial을 이용하는 경우 O(N+logN) 이기 때문이다.   
 
 명령어 마다 시간복잡도는 [링크](http://redisgate.kr/redis/command/georadius.php)를 
 참고했다.   
@@ -40,9 +40,9 @@ sort를 하려고 했다.
     여러 위치 정보를 활용할 수 있다.`      
    
 Redis Geo는 지구(Earth)가 완전한 구(sphere)라고 가정한다. 따라서 
-최대의 경우 0.5% 정도 오차가 발생할 수 있다.     
+최대의 경우 0.5% 정도 오차가 발생할 수 있다.       
 
-`또한 위도, 경도를 기준으로 거리를 계산하기 위해 Haversine formula를 사용한다.`   
+또한 위도, 경도를 기준으로 거리를 계산하기 위해 [Haversine formula](https://en.wikipedia.org/wiki/Haversine_formula)를 사용한다.      
 
 geospatial이란 지도상의 object들의 위치인 지리데이터를 의미한다.   
 우리가 자주 사용하는 배달의 민족이나, 카카오 택시등의 서비스에서는 
