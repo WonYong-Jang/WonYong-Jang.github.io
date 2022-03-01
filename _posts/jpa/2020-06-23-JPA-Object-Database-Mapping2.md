@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Jpa] 객체와 관계형 데이터베이스 매핑2"
+title: "[Jpa] 객체와 관계형 데이터베이스 매핑 2"
 subtitle: "연관관계 매핑 / 단반향, 양방향 / 연관관계의 주인 / 다중성(다대일, 일대다, 일대일, 다대다)"
 comments: true
 categories : Jpa
@@ -302,7 +302,180 @@ public class Member {
 `Entity를 직접 Controller로 보내서 Json으로 변경할 때, 연관관계일 경우 
 무한루프를 발생시킨다.`       
 `이때는 Controller에서 Entity를 반환 하지말고 반드시 Dto로 변환해서 
-보내면 문제는 해결된다.`      
+보내면 문제는 해결된다.`     
+
+지금 까지 양방향 매핑에 대해서 살펴봤다.   
+
+`정리를 해보면, 처음 설계를 진행할 때 단방향 매핑만으로 
+진행을 하고, 양방향 매핑이 필요할 때 추가하자.`      
+
+양방향 매핑은 관리 포인트가 추가되서 고려해야할 사항만 많아지기 때문이다.     
+
+- - - 
+
+## 3. 다양한 연관관계 매핑    
+
+위에서 다룬 내용을 바탕으로 다양한 연관관계를 모두 살펴보자.      
+
+### 3-1) 다대일 : @ManyToOne
+
+다대일은 위에서 Member와 Team 예제에서 봤던 내용과 동일하다.   
+가장 많이 사용하는 연관관계이며, 반대는 일대다 연관관계이다.   
+
+> 여기서 연관관계의 주인은 다대일 중에 "다(N)" 가 주인이다.   
+
+### 3-2) 일대다 : @OneToMany
+
+> 다대일의 반대이며, 연관관계주인은 일대다 중에 "일(1)" 이다.  
+
+`결론부터 말하면, 이 방식은 권장하지 않으며 다대일 연관관계를 권장한다.`         
+`객체 입장에서는 아래와 같이 설계가 나올 수도 있다.`      
+`하지만 DB 입장에서 보면 무조건 "다(N)" 쪽에 외래키가 들어가게 된다.`    
+
+<img width="500" alt="스크린샷 2022-03-01 오후 5 54 30" src="https://user-images.githubusercontent.com/26623547/156136959-e790758c-3add-4ac1-adc5-737b28535e99.png">    
+
+위의 설계대로라면, Team이 연관관계 주인이되며 객체와 테이블의 차이 때문에 
+반대편 테이블의 외래 키를 관리하는 특이한 구조가 된다.   
+
+코드를 작성해보면 아래와 같이 나온다.    
+`쿼리를 확인해보면, Team 테이블을 수정한 곳에서 Member 테이블 update 쿼리가 
+한번 더 발생한다.`   
+이를 실무에서 사용하게 되면 테이블이 굉장히 많은데 운영하는게 더 힘들어 진다.   
+
+해당 연관관계를 사용하기 보다는 다대일 연관관계에서 양방향 관계를 사용하는 것을 
+권장한다.   
+
+```java
+@Entity
+public class Member {
+    @Id @GeneratedValue
+    private Long id;
+
+    @Column(name = "USERNAME")
+    private String username;
+    //...
+}
+
+@Entity
+public class Team {
+
+    @Id @GeneratedValue
+    @Column(name = "TEAM_ID")
+    private Long id;
+    private String name;
+
+    @OneToMany
+    @JoinColumn(name = "TEAM_ID")
+    private List<Member> members = new ArrayList<>();
+    //...
+}
+```
+
+```java
+public class JpaMain {
+    public static void main(String[] args) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+
+            Member member = new Member();
+            member.setUsername("member1");
+            em.persist(member);
+
+            Team team = new Team();
+            team.setName("TeamA");
+            // Team 테이블을 수정했는데, Member 테이블 update가 한번 더 발생한다.
+            team.getMembers().add(member);
+            em.persist(team);
+
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            em.close();
+            emf.close();
+        }
+    }
+}
+```
+
+### 3-3) 일대일 : @OneToOne      
+
+`일대일 연관관계는 두 테이블 중에 외래 키를 넣는 것을 선택 가능하며, 
+    유니크 제약 조건을 추가해줘야 한다.`    
+
+아래 예제로 이해해보자.   
+Member와 Locker는 각각 하나만 가질 수 있는 일대일 연관관계이다.   
+
+<img width="500" alt="스크린샷 2022-03-01 오후 6 17 50" src="https://user-images.githubusercontent.com/26623547/156140775-f28db53c-54ca-4a2a-886e-0732599072e7.png">   
+
+다대일 연관관계로 셋팅해줄 때와 유사하며, 양방향 연관관계도 비슷하다.   
+
+```java
+@Entity
+public class Locker {
+
+    @Id @GeneratedValue
+    @Column(name = "LOCKER_ID")
+    private Long id;
+
+    private String name;
+    //...
+}
+
+@Entity
+public class Member {
+    @Id @GeneratedValue
+    private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "LOCKER_ID")
+    private Locker locker;
+    //...
+}
+```
+
+양방향을 해주기 위해서는 아래와 같이 가능하다.   
+
+<img width="500" alt="스크린샷 2022-03-01 오후 6 26 23" src="https://user-images.githubusercontent.com/26623547/156142032-cdaebb11-f2b6-4880-a1da-39ece35f1da8.png">   
+
+```java
+@Entity
+public class Team {
+
+    @Id @GeneratedValue
+    @Column(name = "TEAM_ID")
+    private Long id;
+    private String name;
+
+    @OneToOne(mappedBy = "locker")
+    private Member member;
+    //...
+}
+```
+
+
+
+### 3-4) 다대다 : @ManyToMany   
+
+`해당 방식은 다대다 연관관계를 실무에서 사용하지 않는 것을 권장한다.`   
+
+이유는 관계형 데이터베이스는 정규화된 테이블 2개로 다대다 관계를 표현할 수 없기 
+때문이다.   
+이를 JPA가 중간에서 연결 테이블을 만들어 해결해 주지만 한계가 존재한다.  
+중간 테이블에 매핑 정보만 가능하며, 필드 추가가 안된다. 또한 쿼리도 
+중간 테이블이 숨겨져 있기 때문에 예상치 못한 쿼리가 발생하기도 한다.   
+
+이를 사용해야 한다면, @ManyToOne, @OneToMany 사용하고 중간 테이블도 Entity로 직접 
+작성하면 가능하다.   
+
+<img width="500" alt="스크린샷 2022-03-01 오후 6 53 19" src="https://user-images.githubusercontent.com/26623547/156146595-f81d8b13-1174-4631-be11-fa352cf53742.png">   
+  
 
 
 - - -
