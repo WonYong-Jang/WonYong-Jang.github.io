@@ -12,7 +12,7 @@ JPA를 이해하기 위해 가장 중요한 2가지는 [영속성 컨텍스트](
 JPA가 어떻게 동작하는지 이해하는 것과 
 객체와 관계형 데이터베이스를 어떻게 맵핑하는지에 대한 부분이다.     
 
-이 글에서는 엔티티 맵핑에 대해서 살펴보자.     
+이 글에서는 객체와 관계형 데이터베이스 매핑에 대해서 살펴보자.        
 
 - - - 
 
@@ -25,8 +25,30 @@ JPA가 어떻게 동작하는지 이해하는 것과
 
 <img width="600" alt="스크린샷 2022-02-26 오후 5 56 05" src="https://user-images.githubusercontent.com/26623547/155837032-119fe445-9b52-48ac-ae9d-1877f9fb1688.png">   
 
-```java
-<property name="hibernate.hbm2ddl.auto" value="create" />
+##### resources/META-INF/persistence.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.2"
+             xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+    <persistence-unit name="hello">
+        <properties>
+            <!-- 필수 속성 -->
+            <property name="javax.persistence.jdbc.driver" value="org.h2.Driver"/>
+            <property name="javax.persistence.jdbc.user" value="sa"/>
+            <property name="javax.persistence.jdbc.password" value=""/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:h2:tcp://localhost/~/test"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
+            <!-- 옵션 -->
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.use_sql_comments" value="true"/>
+            <property name="hibernate.jdbc.batch_size" value="10"/>
+            <property name="hibernate.hbm2ddl.auto" value="create" /> <!--추가 -->
+        </properties>
+    </persistence-unit>
+</persistence>
 ```
 
 위 설정을 진행하면, 엔티티를 생성 및 수정할 때마다 테이블을 직접 수정해 줄 필요 없이 
@@ -122,8 +144,8 @@ Hibernate:
 
 Enumerated 타입의 기본값은 ORDINAL이며, 이를 사용했을 경우 Enum의 순서를 
 DB에 저장하게 된다.   
-이렇게 사용했을 때, Enum이 변경되었을때 매핑 정보가 잘못되어 문제가 
-발생할 수 있다.   
+`이렇게 사용할경우 Enum이 변경되었을때 매핑 정보가 잘못되어 문제가 
+발생할 수 있기 때문에 EnumType.String을 사용하자.`              
 
 <img width="500" alt="스크린샷 2022-02-26 오후 6 31 12" src="https://user-images.githubusercontent.com/26623547/155838002-720c81cf-81f1-4a21-9aba-59f596266d40.png">   
 
@@ -171,13 +193,14 @@ private Long id;
 하지만, [영속성 컨텍스트](https://wonyong-jang.github.io/jpa/2020/06/11/JPA-Java-Persistence-Api.html) 에서 
 관리되려면 PK 값이 있어야 했다.   
 `다시 말하면, 영속성 컨텍스트 1차 캐시에는 pk를 이용하여 관리하기 때문에 
-이런 경우는 관리를 할 수 가 없다.`     
+이런 경우는 관리를 할 수가 없다.`     
 
 `그렇기 때문에 IDENTITY를 사용했을 경우는 em.persist(member) 하는 시점에 
 실제 DB insert 쿼리를 날려 데이터를 저장하고, id값을 반환받아 1차 캐시에 
 저장한다.`      
 
-> 원래는 persist하는 순간 1차 캐시에 값을 저장해놓고 commit 하는 시점에 DB에 저장한다.   
+> 원래는 persist하는 순간 1차 캐시에 값을 저장해놓고 commit 하는 시점에 DB에 저장하지만, 
+    IDENTITY 전략을 사용할 때는 예외로 DB에 insert를 먼저 진행하고 1차 캐시에 저장한다.
 
 ##### 2) SEQUENCE 전략   
 

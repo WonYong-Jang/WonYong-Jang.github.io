@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Jpa] JPA(Java Persistence API) 와 Persistence Context"
-subtitle: "자바 표준 ORM, Hibernate, Spring-data-jpa / 영속성 컨텍스트 / flush"
+subtitle: "자바 표준 ORM, Hibernate, Spring-data-jpa / 영속성 컨텍스트(1차 캐시, 쓰기 지연 SQL) / flush"
 comments: true
 categories : Jpa
 date: 2020-06-11
@@ -141,8 +141,8 @@ em.remove(member);
 `반면, 조회했을 때 1차 캐시에 없다면 DB에서 가져와서 
 1차 캐시에 저장을 하고 반환을 한다.`        
 
-`단, 어플리케이션이 공유하는 캐시가 아니라 한 트랜잭션 내에서만 
-캐시를 한다.`       
+`단, 1차캐시는 어플리케이션이 전체 공유하는 캐시가 아니라 한 트랜잭션 내에서만 
+캐시를 하고 공유한다는 점 주의하자.`            
 
 ##### 2) 영속 엔티티의 동일성 보장   
 
@@ -168,11 +168,11 @@ System.out.println(a == b); // 동일성 비교 true
 `memberB를 persist해도 동일한 과정을 거치며, commit 하는 순간에 
 flush가 되면서 DB에 저장된다.`     
 
-> 데이터베이스 commit 하기 직전에 flush를 이용하여 변경사항을 DB에 반영한다.     
-> flush 란 영속성 컨텍스트의 변경내용을 데이터베이스에 반영하는 것이다.   
-> flush가 변경사항을 반영하는 것이지 1차 캐시를 지우지는 않는다.   
-> flush를 직접 호출하는 경우는 거의 없지만 테스트 해볼 때는 em.flush() 이용하여 직접 호출할 수 있다.  
-> flush 기본 설정값은 FlushModeType.AUTO이며, 커밋이나 쿼리를 실행하기 직전 flush가 실행된다.   
+`데이터베이스 commit 하기 직전에 flush를 이용하여 변경사항을 DB에 반영한다.`          
+`flush 란 영속성 컨텍스트의 변경내용을 데이터베이스에 반영하는 것이다.`        
+`flush가 변경사항을 반영하는 것이지 1차 캐시를 지우지는 않는다.`         
+flush를 직접 호출하는 경우는 거의 없지만 테스트 해볼 때는 em.flush() 이용하여 직접 호출할 수 있다.    
+flush 기본 설정값은 FlushModeType.AUTO이며, 커밋이나 쿼리를 실행하기 직전 flush가 실행된다.     
 
 
 ```java
