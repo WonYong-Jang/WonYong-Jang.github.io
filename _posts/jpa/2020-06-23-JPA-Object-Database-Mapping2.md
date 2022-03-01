@@ -4,9 +4,13 @@ title: "[Jpa] 객체와 관계형 데이터베이스 매핑2"
 subtitle: "연관관계 매핑 / 단반향, 양방향 / 연관관계의 주인 / 다중성(다대일, 일대다, 일대일, 다대다)"
 comments: true
 categories : Jpa
-date: 2020-06-22
+date: 2020-06-23
 background: '/img/posts/mac.png'
 ---
+
+[이전글](https://wonyong-jang.github.io/jpa/2020/06/22/JPA-Object-Database-Mapping.html)
+
+- - -
 
 ## 1. 다양한 연관관계 매핑
 
