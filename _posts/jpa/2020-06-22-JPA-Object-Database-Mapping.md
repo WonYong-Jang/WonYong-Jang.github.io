@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Jpa] 객체와 관계형 데이터베이스 매핑"
-subtitle: "객체와 테이블, 필드와 컬럼, 연관관계 매핑 / 단반향, 양방향 / 연관관계의 주인 / 다중성(다대일, 일대다, 일대일, 다대다)"
+subtitle: "객체와 테이블, 필드와 컬럼, 기본키 매핑 / 데이터베이스 스키마 자동 생성"
 comments: true
 categories : Jpa
 date: 2020-06-22
