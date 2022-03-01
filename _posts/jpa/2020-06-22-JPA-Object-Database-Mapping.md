@@ -250,7 +250,7 @@ DB에 반영 된다.`
 이때, 다시 사용하게 되었을 때 크게 이슈는 없지만 중간에 빈 공백이 
 생기게 되기 때문에 50~100이 적절해 보인다.   
 
-이제 [다음글](https://wonyong-jang.github.io/jpa/2020/06/22/JPA-Object-Database-Mapping2.html)에서 
+이제 [다음글](https://wonyong-jang.github.io/jpa/2020/06/23/JPA-Object-Database-Mapping2.html)에서 
 연관관계 매핑에 대해서 자세히 알아보자.   
 
 - - -
