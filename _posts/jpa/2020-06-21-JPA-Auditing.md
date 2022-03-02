@@ -1,14 +1,14 @@
 ---
 layout: post
 title: "[Jpa] Auditing으로 생성시간/수정시간 자동화"
-subtitle: "EnableJpaAuditing, BaseTimeEntity"
+subtitle: "EnableJpaAuditing, BaseTimeEntity / @MappedSuperclass"
 comments: true
 categories : Jpa
 date: 2020-06-21
 background: '/img/posts/mac.png'
 ---
 
-# Auditing으로 생성시간/수정시간 자동화
+## Auditing으로 생성시간/수정시간 자동화   
 
 `보통 entity에는 해당 데이터의 생성시간과 수정시간을 포함한다. 언제 만들어졌는지, 
 언제 수정되었는지 등은 차후 유지보수에 있어 굉장히 중요한 정보이기 때문이다.`    
@@ -45,7 +45,12 @@ Date의 문제점을 제대로 고친 타입이라 Java8인 경우 무조건 써
 ## Entity 생성   
 
 `아래 BaseTimeEntity 클래스는 모든 Entity의 상위 클래스가 되어 Entity들의 
-createdDate, modifiedDate를 자동으로 관리하는 역할을 한다.`   
+createdDate, modifiedDate를 자동으로 관리하는 역할을 한다.`    
+
+`실제 Entity가 아니기 때문에 테이블과 매핑이 되지 않는다. 즉, 
+    부모 클래스를 상속받는 자식 클래스에 매핑 정보만 제공해준다.`   
+
+`직접 생성해서 사용할 일이 없으므로 추상 클래스로 생성하는 것을 권장한다.`      
 
 <img width="234" alt="스크린샷 2020-06-21 오후 4 44 27" src="https://user-images.githubusercontent.com/26623547/85219482-1505c500-b3df-11ea-8608-e8d428e6a6ce.png">   
 
