@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "[Jpa] Auditing으로 생성시간/수정시간 자동화"
+title: "[JPA] Auditing으로 생성시간/수정시간 자동화"
 subtitle: "EnableJpaAuditing, BaseTimeEntity / @MappedSuperclass"
 comments: true
-categories : Jpa
+categories : JPA
 date: 2020-06-21
 background: '/img/posts/mac.png'
 ---

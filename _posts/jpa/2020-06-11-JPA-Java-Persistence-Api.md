@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "[Jpa] JPA(Java Persistence API) 와 Persistence Context"
+title: "[JPA] JPA(Java Persistence API) 와 Persistence Context"
 subtitle: "자바 표준 ORM, Hibernate, Spring-data-jpa / 영속성 컨텍스트(1차 캐시, 쓰기 지연 SQL) / flush"
 comments: true
-categories : Jpa
+categories : JPA
 date: 2020-06-11
 background: '/img/posts/mac.png'
 ---

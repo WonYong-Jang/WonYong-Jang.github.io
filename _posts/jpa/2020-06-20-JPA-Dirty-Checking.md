@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "[Jpa] 더티 체킹(Dirty Checking) 이란? "
+title: "[JPA] 더티 체킹(Dirty Checking) 이란? "
 subtitle: "ORM 에서의 더티 체킹 / @DynamicUpdate"
 comments: true
-categories : Jpa
+categories : JPA
 date: 2020-06-20
 background: '/img/posts/mac.png'
 ---

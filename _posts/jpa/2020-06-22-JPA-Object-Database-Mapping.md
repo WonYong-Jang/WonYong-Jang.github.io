@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "[Jpa] 객체와 관계형 데이터베이스 매핑"
+title: "[JPA] 객체와 관계형 데이터베이스 매핑"
 subtitle: "객체와 테이블, 필드와 컬럼, 기본키 매핑 / 데이터베이스 스키마 자동 생성"
 comments: true
-categories : Jpa
+categories : JPA
 date: 2020-06-22
 background: '/img/posts/mac.png'
 ---

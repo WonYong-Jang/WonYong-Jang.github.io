@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "[Jpa] Jpa 엔티티 작성 ( Setter 금지 )"
-subtitle: "Jpa 엔티티 일관성을 유지하는 방법"
+title: "[JPA] JPA 엔티티 작성 ( Setter 금지 )"
+subtitle: "JPA 엔티티 일관성을 유지하는 방법"
 comments: true
-categories : Jpa
+categories : JPA
 date: 2020-06-16
 background: '/img/posts/mac.png'
 ---
