@@ -313,9 +313,15 @@ for(Team team : result) {
 }
 ```
 
-`이를 @BatchSize(size= 100)를 이용하여 정해진 갯수만큼 가져올 수 있다.`   
+`이를 @BatchSize(size= 100)를 이용하여 정해진 갯수만큼 가져올 수 있다.`     
 
-> 각각 지정할수도 있고, global로 config 파일에 추가하여 적용할 수도 있다.   
+> 각각 지정할수도 있고, global로 config 파일에 추가하여 적용할 수도 있다.    
+> hibernate.default_batch_fetch_size 옵션을 추가하여 글로벌로 이용 가능하다.    
+
+> 위 옵션의 사이즈는 보통 100~1000를 권장한다.   
+
+이 전략은 SQL IN절을 사용하는데, 데이터베이스에 따라 IN 절 파라미터를 
+1000으로 제한하기도 한다.   
 
 ```java
 @BatchSize(size = 100)
@@ -328,7 +334,8 @@ private List<Member> members = new ArrayList<>();
 `즉, 100개의 팀에 연관된 members를 한번에 가져온다.`    
 그러면 team을 loop돌면서 members를 가져올때마다 발생한 쿼리를 줄일 수 있게 
 된다.   
-
+또한, 페이징도 가능하게 된다.     
+`결국 N+1 성능문제를 1+1로 최적화 할 수 있게 된다.`       
 
 
 정리를 해보면, 페치 조인이 N+1 성능 문제를 효과적으로 해결해 주기 때문에 
