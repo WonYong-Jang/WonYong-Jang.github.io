@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spring] 트랜잭션 관리(Transaction)"
-subtitle: "전파 레벨(propagation) /Spring Transaction Exception 에서 Rollback 처리 "
+subtitle: "Spring Transaction Exception 에서 Rollback 처리 "
 comments: true
 categories : Spring
 date: 2020-03-20
@@ -191,8 +191,9 @@ ex) @Transactional(readOnly = true)
 지정된 시간 내에 해당 메소드 수행이 완료되지 않는 경우 rollback 수행   
 ex) @Transactional(timeout=10)   
 
-`스프링에서 선언적 트랜잭션을 사용할 때 예외에 따른 롤백처리는 
-Checked 예외는 롤백되지 않고, Unchecked 예외는 롤백된다!`   
+`정리해보면, 스프링에서 선언적 트랜잭션을 사용할 때 예외에 따른 롤백처리는 
+Checked 예외는 롤백되지 않고, Unchecked 예외는 롤백된다`          
+
 
 - - -
 
