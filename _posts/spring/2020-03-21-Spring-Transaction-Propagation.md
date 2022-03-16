@@ -10,8 +10,8 @@ background: '/img/posts/spring.png'
 
 [지난글](https://wonyong-jang.github.io/spring/2020/03/20/Spring-Transaction.html)에서 스프링의 트랜잭션의 전반적인 내용과 
 스프링 트랜잭션의 롤백정책에 대해서 살펴봤다.       
-이번글에서는 Spring Transactional 어노테이션에서 propagation 특징에 
-대해서 정리해보려고 한다.     
+이번글에서는 Spring Transactional 어노테이션에서 제공하는 
+propagation 옵션에 대해서 정리해보려고 한다.     
 
 - - - 
 
@@ -32,12 +32,12 @@ Spring에서 사용하는 어노테이션 @Transactional은 해당 메서드를 
 - REQUIRED(default) : 이미 시작된 트랜잭션이 있으면 참여하고 없으면 새로 시작한다.   
 
 - REQUIES_NEW : 항상 새로운 트랜잭션을 시작한다. 이미 시작된 트랜잭션이 있다면, 기존의 트랜잭션은 메소드가 
-종료할 때까지 잠시 대기 상태로 두고 자신의 트랜잭션을 실행한다.   
+종료할 때까지 잠시 대기 상태로 두고 자신의 트랜잭션을 독립적으로 실행한다.     
 
 - SUPPORTS : 이미 시작된 트랜잭션이 있으면 참여하고, 없으면 트랜잭션 없이 진행한다.   
 
 - NESTED : 이미 진행중인 트랜잭션이 있으면 중첩 트랜잭션을 시작한다. 중첩 트랜잭션은 트랜잭션 안에 트랜잭션을 만드는 것이며, 독립적인 트랜잭션을 만드는 REQUIRES_NEW와는 다르다. 즉, 부모 트랜잭션의 커밋과 롤백에는 
-영향을 받지만 자신의 커밋과 롤백은 부모 트랜잭션에 영향을 주지 않는다.   
+영향을 받지만 자신의 커밋과 롤백은 부모 트랜잭션에 영향을 주지 않는다. 만약, 이미 진행 중인 트랜잭션이 없는 경우 Propagation.REQUIRED와 동일하게 작동한다.    
 
 - MANDATORY : REQUIRED와 비슷하게 이미 시작된 트랜잭션이 있으면 참여한다. 하지만, 트랜잭션이 시작된 것이 
 없으면 예외를 발생시킨다. 혼자서는 독립적으로 트랜잭션을 진행하면 안되는 경우에 사용한다.   
@@ -93,8 +93,8 @@ public class UserChildService {
 }
 ```   
 
-그렇다면 위와 같이 자식에서 발생한 예외를 부모 트랜잭션에서 try-catch 예외 처리 
-하는 경우에는 어떻게 될까?    
+그렇다면 위의 예제에서 자식에서 발생한 예외를 부모 트랜잭션에서 try-catch 예외 처리 
+하는 경우에는 어떻게 될까?     
 
 <img width="1439" alt="스크린샷 2022-03-15 오후 10 42 10" src="https://user-images.githubusercontent.com/26623547/158390678-9301fe97-c2c8-4e57-a007-f590719f4691.png">   
 
@@ -140,9 +140,9 @@ public class UserChildService {
 }
 ```  
 
-위의 설명에서 봤던 것처럼 부모, 자식 트랜잭션이 
+위의 설명에서 봤던 것처럼 부모, 자식 트랜잭션이 독립적으로  
 각각 열리기 때문에 자식에서 예외가 발생해도 부모에서 save 한 것은 
-저장이 되는 것을 예상했다.   
+저장이 되는 것을 예상했다.      
 
 하지만 결과를 확인해보면, 모두 Rollback 된 것을 확인 할 수 있다.   
 
@@ -403,18 +403,52 @@ mysql> select * from user;
 생성한다고 했는데, 결과를 확인해보자.   
 
 ```java
+@Service
+@RequiredArgsConstructor
+public class UserService {
 
+    private final UserRepository userRepository;
+    private final UserChildService userChildService;
+    // 부모 트랜잭션 존재하지 않음
+    public void parentMethod() { // 부모
+        try {
+            userRepository.save(createUser("k1"));
+            userChildService.childMethod();
+            userRepository.save(createUser("k3"));
+            throw new RuntimeException();
+        } catch (Exception e) { // 부모에서 예외 처리
+            e.printStackTrace();
+        }
+    }
+}
 ```
 
 ```java
+@Service
+@RequiredArgsConstructor
+public class UserChildService {
 
+    private final UserRepository userRepository;
+    @Transactional(propagation = Propagation.NESTED)
+    public void childMethod() { // 자식
+        userRepository.save(createUser("k2"));
+        throw new RuntimeException();
+    }
+}
 ```
 
 ```shell
-
+mysql> select * from user;
++----+------+
+| id | name |
++----+------+
+|  1 | k1   |
++----+------+
+1 row in set (0.00 sec)
 ```
 
-
+위처럼 부모 트랜잭션이 없을 때는 자식 트랜잭션에서 새로 열리다 보니 자식 트랜잭션에서 
+예외가 발생해도 부모 트랜잭션에서는 k1 유저가 커밋된 것을 볼 수 있다.   
 
 - - - 
 
