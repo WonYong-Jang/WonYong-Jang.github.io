@@ -1,14 +1,14 @@
 ---
 layout: post
 title: "[Spring] AOP (Aspect-Oriented-Programming)"
-subtitle: "관점 지향 프로그래밍 / Proxy / Aspect, Advice / Pointcut, JoinPoint"
+subtitle: "관점 지향 프로그래밍 / Proxy / Aspect, Advice / Pointcut, JoinPoint / CGLib, Dynamic Proxy"
 comments: true
 categories : Spring
 date: 2020-06-02
 background: '/img/posts/spring.png'
 ---
 
-## AOP(관점 지향 프로그래밍)   
+## 1. AOP(관점 지향 프로그래밍)   
 
 관점(Aspect)라는 용어는 개발자들에게 관심사(concern)이라는 말로 용통된다.   
 관심사는 개발 시 필요한 고민이나 염두에 두어야 하는 일이라고 생각할 수 있는데, 
@@ -35,11 +35,11 @@ background: '/img/posts/spring.png'
 > ex) 나눗셈을 구현 한다고 치면 핵심로직은 두개의 숫자를 나누는 것이지만, 주변 로직은
 0을 나누는 것이 아닌지 등을 체크 하는 것!   
 
-> 프로그램 실행 방향은 위에서 아래로 진행하는데 실행 방향과 cross 방향으로 진행 하면서 떼어 내고 붙이고 할수 있다고 하여 Cross Cutting Concern 라 부른다.   
+> 프로그램 실행 방향은 위에서 아래로 진행하는데 실행 방향과 cross 방향으로 진행 하면서 떼어 내고 붙이고 할수 있다고 하여 Cross Cutting Concern 라 부른다.     
 <img width="600" alt="스크린샷 2020-06-01 오후 9 38 02" src="https://user-images.githubusercontent.com/26623547/83409926-5cd4a480-a450-11ea-99b7-083df65941cb.png">    
 
 - - - 
-### AOP 용어들     
+### 1-1) AOP 용어들     
 
 <img width="500" alt="스크린샷 2020-03-08 오후 8 59 13" src="https://user-images.githubusercontent.com/26623547/76162294-beea7a00-617f-11ea-890e-f3991970d082.png">   
 <img width="500" alt="스크린샷 2020-03-08 오후 9 27 14" src="https://user-images.githubusercontent.com/26623547/76162706-9fede700-6183-11ea-9810-d9f7aade50e6.png">   
@@ -94,14 +94,119 @@ Aspect 는 관심사 자체를 의미하는 추상명사
 스프링 3버전 이후에는 어노테이션만으로도 모든 설정이 가능해졌다. 
 
 <p>Target 에 어떤 Advice 적용할 것인지는 XML을 이용한 설정, 또는 어노테이션을 
-이용하는 방식이 가능하다.</p>
+이용하는 방식이 가능하다.</p>   
 
-[AOP 실습 링크](https://wonyong-jang.github.io/spring/2020/06/03/Spring-AOP-Practice.html)
+- - - 
+
+## 2. Spring AOP의 Proxy 패턴   
+
+`Spring AOP는 기본적으로 디자인 패턴 중 하나인 Proxy 패턴을 사용하여 구현되는데, 
+Spring에서 사용하는 두 가지 프록시 구현체가 있다.`   
+
+`하나는 JDK Proxy(Dynamic Proxy)와 CGLib이다.`    
+
+둘의 차이는 다음 그림과 같다.   
+
+<img width="731" alt="스크린샷 2022-03-19 오후 3 58 32" src="https://user-images.githubusercontent.com/26623547/159111289-542c8c00-bf68-4ab0-8552-eced0f80fa88.png">     
+
+그럼 왜 두가지 방식이 존재할까?   
+
+#### 2-1) JDK Proxy   
+
+`먼저, JDK Proxy(Dynamic Proxy)의 경우 AOP를 적용하여 구현된 클래스의 인터페이스를 
+프록시 객체로 구현해서 코드를 끼워 넣는 방식이다.`   
+
+`JDK Proxy의 경우 AOP적용을 위해서 반드시 인터페이스를 구현해야 한다는 
+단점이 있다.`   
+그동안 서비스 계층에서 인터페이스를 XXXImpl 클래스를 작성하던 관례가 
+이러한 JDK Proxy의 특성 때문이다.   
+
+```java
+public class ExamDynamicHandler implements InvocationHandler {
+    private ExamInterface target; // 타깃 객체에 대한 클래스를 직접 참조하는것이 아닌 Interface를 이용
+
+    public ExamDynamicHandler(ExamInterface target) {
+        this.target = target;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args)
+            throws Throwable {
+        // TODO Auto-generated method stub
+        // 메소드에 대한 명세, 파라미터등을 가져오는 과정에서 Reflection 사용
+        String ret = (String)method.invoke(target, args); //타입 Safe하지 않는 단점이 있다.
+        return ret.toUpperCase(); //메소드 기능에 대한 확장
+    }
+}
+```   
+
+Dynimic Proxy는 InvocationHandler라는 인터페이스를 구현한다.
+InvocationHandler의 invoke 메소드를 오버라이딩 하여 Proxy 위임 기능을
+수행하는데, 이때 메소드에 대한 명세와 파라미터를 가져오는 과정에서
+리플렉션을 사용한다.   
+
+> JDK Proxy의 경우 자바에서 기본적으로 제공하고 있는 기능이다.   
+
+#### 2-2) CGLib   
+
+`반면, CGLib의 경우 외부 3rd party Library이며, JDK Proxy와 달리 
+리플렉션을 사용하지 않고 바이트코드 조작을 통해 프록시 객체 생성을 한다.`   
+
+`또한, 인터페이스를 구현하지 않고도 해당 구현체를 상속받는 것으로 
+문제를 해결하기 때문에 성능상 이점이 있다.`   
+
+즉, 인터페이스가 아닌 클래스에 대해서 동적 프록시를 생성할 수 있기 
+때문에 다양한 프로젝트에 널리 사용되고 있다.   
+
+
+```java
+// 1. Enhancer 객체를 생성
+Enhancer enhancer = new Enhancer();
+// 2. setSuperclass() 메소드에 프록시할 클래스 지정
+enhancer.setSuperclass(BoardServiceImpl.class);
+enhancer.setCallback(NoOp.INSTANCE);
+// 3. enhancer.create()로 프록시 생성
+Object obj = enhancer.create();
+// 4. 프록시를 통해서 간접 접근
+BoardServiceImpl boardService = (BoardServiceImpl)obj;
+boardService.writePost(postDTO);
+```
+
+CGLib은 Enhancer라는 클래스를 바탕으로 Proxy를 생성한다.   
+`상속을 통해 프록시 객체가 생성되기 때문에 더욱 성능상에 이점을 누릴 수 있다.`     
+
+
+위의 enhancer.setCallback(NoOp.INSTNACE); 라는 코드가 존재하는데 이는 
+Enhancer 프록시 객체가 직접 원본 객체에 접근하기 위한 옵션이다.  
+
+```java
+BoardServiceProxy.writePost(postDTO) -> BoardServiceImpl.writePost(postDTO)
+```
+
+기본적으로 프록시 객체들은 직접 원본 객체를 호출하기 보다는, 별도의 작업을 
+수행하는데 CGLib의 경우 Callback을 사용한다.   
+
+> CGLib에서 가장 많이 사용하는 콜백은 net,sf.cglib.proxy.MethodInterceptor인데, 
+    프록시와 원본 객체 사이에 인터셉터를 두어 메소드 호출을 조작하는 것을 도와줄 수 있게 된다.   
+
+```java
+BoardServiceProxy -> BoardServiceInterceptor -> BoardServiceImpl
+```
+
+Springboot의 경우 기본적으로 프록시 객체를 생성할 때 CGLib를 사용한다.    
+자바 리플렉션 방식보다 CGLib의 MethodProxy이 더 빠르고 예외를 발생시키지 않는다고 하여 
+Springboot에서는 CGLib를 기본 프록시 객체 생성 라이브러리로 채택하게 되었다.   
+
+> 리플렉션 자체가 비용이 비싼 API이기 때문에 가급적 사용하지 않는 것을 권장하고 있다.   
+
+[다음 글](https://wonyong-jang.github.io/spring/2020/06/03/Spring-AOP-Practice.html)에서는 
+AOP를 직접 구현해보자.   
 
 - - -
 Referrence 
 
-[http://www.newlecture.com](http://www.newlecture.com)   
+<https://minkukjo.github.io/framework/2021/05/23/Spring/>     
+<http://www.newlecture.com>   
 
 {% highlight ruby linenos %}
 {% endhighlight %}
