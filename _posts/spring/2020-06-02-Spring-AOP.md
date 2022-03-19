@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spring] AOP (Aspect-Oriented-Programming)"
-subtitle: "관점 지향 프로그래밍"
+subtitle: "관점 지향 프로그래밍 / Proxy / Aspect, Advice / Pointcut, JoinPoint"
 comments: true
 categories : Spring
 date: 2020-06-02
