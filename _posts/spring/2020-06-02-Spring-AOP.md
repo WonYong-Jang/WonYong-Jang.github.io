@@ -180,7 +180,10 @@ Dynamic Proxy는 InvocationHandler라는 인터페이스를 구현한다.
 #### 2-2) CGLib(Code Generator Library)      
 
 `반면, CGLib의 경우 외부 3rd party Library이며, JDK Proxy와 달리 
-리플렉션을 사용하지 않고 바이트코드 조작을 통해 프록시 객체 생성을 한다.`   
+리플렉션을 사용하지 않고 바이트코드 조작을 통해 프록시 객체 생성을 한다.`  
+
+> Spring 3.2 버전 부터는 CGLib을 Spring Core 패키지에 포함시켜서 
+더이상 의존성 추가할 필요가 없다.  
 
 `또한, 인터페이스를 구현하지 않고도 해당 구현체를 상속받는 것으로 
 문제를 해결하기 때문에 성능상 이점이 있다.`   
