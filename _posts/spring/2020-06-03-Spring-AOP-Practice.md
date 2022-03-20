@@ -8,7 +8,7 @@ date: 2020-06-03
 background: '/img/posts/spring.png'
 ---
 
-## 순수 자바코드로 AOP 구현  
+## 1. 순수 자바코드로 AOP 구현  
 
 [AOP 개념 링크](https://wonyong-jang.github.io/spring/2020/03/08/Spring-AOP.html)   
 
@@ -36,6 +36,9 @@ background: '/img/posts/spring.png'
 `자바에서 AOP를 구현하기 위한 방법은 proxy를 사용하는 방법이다.`    
 `즉, Core concern(핵심로직)과 Cross cutting concern (부가적인 로직)을 분리한다.`     
 
+아래는 [JDK Dynamic Proxy](https://wonyong-jang.github.io/spring/2020/06/02/Spring-AOP.html)를 
+사용하여 Proxy 객체를 생성하는 예제이다.     
+
 ##### Proxy.newProxyInstance
 
 - loader : Proxy가 동일한 기능을 사용하기 위해 로드할 객체 
@@ -43,10 +46,10 @@ background: '/img/posts/spring.png'
 - h : 부가적인 로직을 끼워 넣기 위한 부분 
 
 ```java
-// proxy는 Exam 클래스와 동일한 기능을 사용한다. proxy에 부가적인 로직(로깅, 에러처리 등)을 추가해서 사용 가능!     
-Exam proxy = newProxyInstance(ClassLoader loader,
-                Class<?>[] interfaces,
-               InvocationHandler h)
+// proxy는 Exam 클래스와 동일한 기능을 사용한다. proxy에 부가적인 로직(로깅, 에러처리 등)을 추가해서 사용 가능하다.        
+Exam proxy = newProxyInstance(ClassLoader loader, // 클래스 로더 
+                Class<?>[] interfaces,            // Target의 인터페이스  
+               InvocationHandler h)               // Target의 정보가 포함된 Handler   
 ```
 
 
@@ -99,7 +102,7 @@ public class Program {
 ```
 - - - 
 
-## 스프링으로 AOP 구현하기 
+## 2. 스프링으로 AOP 구현하기 
 
 
 
