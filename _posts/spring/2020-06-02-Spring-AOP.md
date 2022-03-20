@@ -47,13 +47,15 @@ background: '/img/posts/spring.png'
 
 #### Target   
 
-`개발자가 작성한 비즈니스 로직(Core concern)을 가지는 객체`   
+`Advice가 적용될 객체이며, 개발자가 작성한 비즈니스 로직(Core concern)을 가지는 객체를 뜻한다.`      
 
 target은 순수한 비즈니스 로직을 가지고 있고, 어떠한 관심사들과도 관계를 맺지 않는다.
 
 #### Proxy   
 
 `target을 전체적으로 감싸고 있는 존재`   
+
+> Proxy는 대신 일하는 사람이라는 사전적 의미를 가지고 있다.   
 
 내부적으로 Target을 호출하지만, 중간에 필요한 관심사들을 거쳐서 Target을 호출하도록 
 자동 혹은 수동으로 작성된다. Proxy 존재는 직접 코드를 통해서 구현하는 경우도 있지만, 
@@ -101,15 +103,43 @@ Aspect 는 관심사 자체를 의미하는 추상명사
 ## 2. Spring AOP의 Proxy 패턴   
 
 `Spring AOP는 기본적으로 디자인 패턴 중 하나인 Proxy 패턴을 사용하여 구현되는데, 
-Spring에서 사용하는 두 가지 프록시 구현체가 있다.`   
+아래 두가지 방식으로 AOP를 제공한다.`      
 
-`하나는 JDK Proxy(Dynamic Proxy)와 CGLib이다.`    
+- JDK Proxy(Dynamic Proxy)  
+- CGLib    
 
-둘의 차이는 다음 그림과 같다.   
 
-<img width="731" alt="스크린샷 2022-03-19 오후 3 58 32" src="https://user-images.githubusercontent.com/26623547/159111289-542c8c00-bf68-4ab0-8552-eced0f80fa88.png">     
+왜 두가지 방식이 존재하며 어떠한 차이가 있는지 살펴보자.   
 
-그럼 왜 두가지 방식이 존재할까?   
+<img width="500" alt="스크린샷 2022-03-19 오후 11 27 39" src="https://user-images.githubusercontent.com/26623547/159125111-7717956c-148d-4efe-b2da-b5b6c06de085.png">   
+
+위 그림처럼 Spring AOP는 사용자의 특정 호출 시점에 IoC 컨테이너에 의해 AOP를 
+할 수 있는 Proxy Bean을 생성해준다.    
+동적으로 생성된 Proxy Bean은 Target의 메소드가 호출되는 시점에 부가기능을 
+추가할 메소드를 자체적으로 판단하고 가로채어 부가기능을 주입해준다.   
+이처럼 호출 시점에 동적으로 위빙한다 하여 런타임 위빙(Runtime Weaving)이라 
+한다.   
+
+따라서 Spring AOP는 런타임 위빙 방식을 기반으로 하고 있으며, Spring에서 
+런타임 위빙을 할 수 있도록 상황에 따라 
+JDK Dynamic Proxy 또는 CGLib 방식을 통해 
+Proxy Bean을 생성해 준다.  
+그렇다면 이 두가지 AOP Proxy는 어떠한 상황에 생성하게 되는 걸까?    
+
+`결론부터 말하면, Spring은 AOP Proxy를 생성하는 과정에서 자체 검증 로직을 
+통해 Target의 인터페이스 유무를 판단한다.`   
+
+<img width="800" alt="스크린샷 2022-03-19 오후 11 15 21" src="https://user-images.githubusercontent.com/26623547/159125401-5eb0796e-f847-40f6-a8da-f2c5f32ad0d3.png">   
+
+`이때 만약 Target이 하나 이상의 인터페이스를 구현하고 있는 클래스라면 
+JDK Dynamic Proxy의 방식으로 생성되고 인터페이스를 구현하지 
+않는 클래스라면 CGLib의 방식으로 AOP 프록시를 생성해준다.`   
+
+
+그럼 두 방식의 차이를 살펴보자.    
+
+<img width="731" alt="스크린샷 2022-03-19 오후 3 58 32" src="https://user-images.githubusercontent.com/26623547/159111289-542c8c00-bf68-4ab0-8552-eced0f80fa88.png">    
+
 
 #### 2-1) JDK Proxy   
 
@@ -140,20 +170,25 @@ public class ExamDynamicHandler implements InvocationHandler {
 }
 ```   
 
-Dynimic Proxy는 InvocationHandler라는 인터페이스를 구현한다.
-InvocationHandler의 invoke 메소드를 오버라이딩 하여 Proxy 위임 기능을
+Dynamic Proxy는 InvocationHandler라는 인터페이스를 구현한다.
+`InvocationHandler의 invoke 메소드를 오버라이딩 하여 Proxy 위임 기능을
 수행하는데, 이때 메소드에 대한 명세와 파라미터를 가져오는 과정에서
-리플렉션을 사용한다.   
+리플렉션을 사용한다.`       
 
 > JDK Proxy의 경우 자바에서 기본적으로 제공하고 있는 기능이다.   
 
-#### 2-2) CGLib   
+#### 2-2) CGLib(Code Generator Library)      
 
 `반면, CGLib의 경우 외부 3rd party Library이며, JDK Proxy와 달리 
 리플렉션을 사용하지 않고 바이트코드 조작을 통해 프록시 객체 생성을 한다.`   
 
 `또한, 인터페이스를 구현하지 않고도 해당 구현체를 상속받는 것으로 
 문제를 해결하기 때문에 성능상 이점이 있다.`   
+
+상속을 하여 프록시를 생성하기 때문에 Final 메소드 또는 클래스에 대해 
+재정의를 할 수 없으므로 프록시를 생성할 수 없다는 단점이 있지만 
+리플렉션이 아닌 바이트 코드 조작으로 프록시를 생성해주기 때문에 
+성능상 JDK Dynamic Proxy 보다 좋다.   
 
 즉, 인터페이스가 아닌 클래스에 대해서 동적 프록시를 생성할 수 있기 
 때문에 다양한 프로젝트에 널리 사용되고 있다.   
@@ -163,7 +198,7 @@ InvocationHandler의 invoke 메소드를 오버라이딩 하여 Proxy 위임 기
 // 1. Enhancer 객체를 생성
 Enhancer enhancer = new Enhancer();
 // 2. setSuperclass() 메소드에 프록시할 클래스 지정
-enhancer.setSuperclass(BoardServiceImpl.class);
+enhancer.setSuperclass(BoardServiceImpl.class); // Target 클래스 
 enhancer.setCallback(NoOp.INSTANCE);
 // 3. enhancer.create()로 프록시 생성
 Object obj = enhancer.create();
@@ -205,6 +240,7 @@ AOP를 직접 구현해보자.
 - - -
 Referrence 
 
+<https://gmoon92.github.io/spring/aop/2019/04/20/jdk-dynamic-proxy-and-cglib.html>   
 <https://minkukjo.github.io/framework/2021/05/23/Spring/>     
 <http://www.newlecture.com>   
 
