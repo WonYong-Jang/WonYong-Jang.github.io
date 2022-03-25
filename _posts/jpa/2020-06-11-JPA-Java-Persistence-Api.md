@@ -147,7 +147,7 @@ em.remove(member);
 id값이 같은 경우는 문제가 발생할 수 있기 때문에 영속성 컨텍스트에 
 저장할 때부터 식별자를 id와 타입으로 같이 저장해둔다.     
 
-> 하이버네이트의 EntityKey 클래스 내부 로직을 확인해보면, 식별자(id)와 타입을 확인하여 
+> 하이버네이트의 EntityKey 클래스 내부 로직을 확인해보면, id와 타입을 확인하여 
 엔티티를 찾는 로직을 확인 할 수 있다.   
 
 `마지막으로 1차캐시는 어플리케이션이 전체 공유하는 캐시가 아니라 한 트랜잭션 내에서만 
@@ -235,18 +235,22 @@ JPA는 commit하는 순간 내부적으로 flush가 호출되고, 이때
 
 - - -   
 
-## Spring Data JPA
+## Spring Data JPA 와 Hibernate   
 
-`Spring에서 제공하는 모듈 중 하나로, 개발자가 JPA를 더 쉽고 편하게 사용할 수 있도록 
-도와준다.`      
+`Spring Data JPA는 
+Spring에서 제공하는 모듈 중 하나로, 개발자가 JPA를 더 쉽고 편하게 
+사용할 수 있도록 도와준다.`     
 
-Hibernate를 쓰는 것과 Spring Data JPA를 쓰는 것 사이에는 큰 차이가 없지만 스프링에서 
-아래 이유로 Spring Data JPA를 사용하는 것을 권장 한다.   
+기존에 JPA를 사용하려면 EntityManager를 주입받아 사용해야 하지만, 
+    Spring Data JPA는 JPA를 한단계 더 추상화 시킨 Repository 인터페이스를 제공한다.   
 
-- 구현체 교체의 용이성  
-- 저장소 교체의 용이성   
 
-> 추상화 정도는 Spring-Data-JPA -> Hibernate -> JPA 이다.   
+
+Hibernate는 JPA의 구현체이고, Spring Data JPA는 JPA에 대한 데이터 접근의 
+추상화라고 말할 수 있다. 
+
+
+
 
 ### Spring Data JPA 기본 작업 분류 
 
@@ -440,6 +444,7 @@ public class PostsSaveRequestDto {
 - - -
 Referrence
 
+<https://dev-coco.tistory.com/74>   
 <https://www.inflearn.com/course/ORM-JPA-Basic/lecture/21670?tab=curriculum&volume=1.00>   
 [jojoldu.tistory.com/295](jojoldu.tistory.com/295)         
 [https://requirethings.wordpress.com/2013/10/08/spring-data-jpa-%EA%B8%B0%EB%B3%B8-%EC%9E%91%EC%97%85-%ED%9D%90%EB%A6%84/](https://requirethings.wordpress.com/2013/10/08/spring-data-jpa-%EA%B8%B0%EB%B3%B8-%EC%9E%91%EC%97%85-%ED%9D%90%EB%A6%84/)
