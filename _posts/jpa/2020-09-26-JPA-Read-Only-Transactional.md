@@ -76,7 +76,7 @@ Member findreadOnlyByUsername(String username);
 이점을 얻을 수 있다.`   
 
 [Dirty Checking](https://wonyong-jang.github.io/jpa/2020/06/20/JPA-Dirty-Checking.html)은 
-Enitity와 스탭샷과 비교하는 것이며, 자세한 내용은 링크를 참고하자.   
+Enitity와 스탭샷과 비교하는 것이며, 자세한 내용은 링크를 참고하자.    
 
 
 
