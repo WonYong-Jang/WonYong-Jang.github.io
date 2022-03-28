@@ -10,34 +10,109 @@ background: '/img/posts/spring.png'
 
 # Dependency Injection
 
-`스프링에서 DI는 종속성 주입라고 하는데 부품 조립이라고 생각 할 것!`   
-`객체를 직접 생성하는 것이 아니라 외부에서 생성한 후 주입 시켜주는 방식!`   
+Spring 프레임워크는 3가지 핵심 프로그래밍 모델을 지원하고 있는데, 
+       그 중 하나가 의존성 주입(Dependency Injection, DI)이다.    
+`DI란 외부에서 두 객체 간의 관계를 결정해주는 디자인 패턴으로, 
+    인터페이스를 사이에 둬서 클래스 레벨에서는 의존관계가 고정되지 
+    않도록 하고 런타임 시에 관계를 다이나믹하게 주입하여 유연성을 
+    확보하고 결합도를 낮출 수 있게 해준다.`   
 
-A라는 클래스안에 B라는 클래스를 2가지 방법으로 객체화 해서 사용하고 있다.   
+> Spring 프레임워크 3가지 핵심 프로그래밍 모델은 DI/IoC, PSA, AOP이다.   
 
-- Composition : A클래스가 생성될때 B를 부품 처럼 가지기 때문에 일체형!  
-> 여기서 B를 종속 객체라고 하는데 B는 A의 부품이라고 생각!
+여기서 의존성이란 한 객체가 다른 객체를 사용할 때 의존성이 있다고 한다.   
 
-- Association : setter를 이용하여 B라는 부품을 조립하여 사용하는 조립형!
-> 실제 프로그램에서는 조립형을 사용하는게 Loose coupling에 유리하다.
+`스프링에서 DI는 의존성(종속성) 주입라고 하는데 부품 조립이라고 생각하면 이해하기 쉽다.`        
+`즉, 객체를 직접 생성하는 것이 아니라 외부에서 생성한 후 주입 시켜주는 방식이다.`      
 
-<img width="600" alt="스크린샷 2020-05-17 오후 9 31 17" src="https://user-images.githubusercontent.com/26623547/82146521-e9466b00-9885-11ea-973a-deb3a53f9d0c.png">
-
-#### 1. Setter Injection
+예를 들어 다음과 같이 Store 객체가 Pencil 객체를 사용하고 있는 경우에 
+우리는 Store객체가 Pencil 객체에 의존성이 있다고 표현한다.   
 
 ```java
-B b = new B(); // 부품을 Dependency라고 한다면
-A a = new A();
-a.setB(b);     // 해당 부품 B를 A에 Injection
+public class Store { 
+    private Pencil pencil; 
+}
 ```
 
-#### 2. Construction Injection
+<img width="494" alt="스크린샷 2022-03-28 오후 11 38 10" src="https://user-images.githubusercontent.com/26623547/160422777-2367d5e6-fbaa-4455-86fd-3146c4d645b2.png">   
 
+그리고 두 객체 간의 관계(의존성)를 맺어주는 것을 의존성 주입이라고 하며, 
+    생성자 주입, 필드 주입, 수정자 주입 등 다양한 주입 방법이 있다.   
+
+<img width="420" alt="스크린샷 2022-03-28 오후 11 38 15" src="https://user-images.githubusercontent.com/26623547/160422790-ebb336e6-a499-4e35-a5ff-edc356682bcd.png">   
+
+## 의존성 주입이 필요한 이유   
+
+예를 들어 연필이라는 상품과 1개의 연필을 판매하는 Store 클래스가 있다고 하자.   
+
+```java
+public class Pencil {
+}
 ```
-B b = new B(); // 부품을 Dependency라고 한다면
-A a = new A(b);
+
+```java
+public class Store {
+    private Pencil pencil;
+    public Store() {
+        this.pencil = new Pencil();   
+    }
+}
+```   
+
+위와 같은 예시는 다음과 같은 문제점을 가지고 있다.   
+
+- 두 클래스가 강하게 결합되어 있다.  
+- 객체들 간의 관계가 아니라 클래스 간의 관계가 맺어지고 있다.   
+
+##### 1. 두 클래스가 강하게 결합되어 있다.   
+
+위와 같은 Store 클래스는 현재 Pencil 클래스와 `강하게 결합되어 있다는 문제점`을 
+가지고 있다.   
+두 클래스가 강하게 결합되어 있어서 만약 Store에서 Pencil이 아닌 Food와 
+같은 상품을 판매하고자 한다면 Store 클래스의 생성자에 변경이 필요하다.   
+즉, 유연성이 떨어진다.    
+
+> 이에 대한 해결책으로 상속을 떠올릴 수 있지만, 상속은 제약이 많고 
+확장성이 떨어지므로 피하는 것이 좋다.   
+
+##### 2. 객체들 간의 관계가 아니라 클래스 간의 관계가 맺어지고 있다.   
+
+또한 위의 Store와 Pencil는 객체들 간의 관계가 아니라 클래스들 간의 
+관계가 맺어져 있다는 문제가 있다.    
+올바른 객체지향적 설계라면 객체들 간에 관계가 맺어져야 하지만 현재는 
+Store 클래스와 Pencil 클래스가 관계를 맺고 있다.   
+객체들 간에 관계가 맺어졌다면 다른 객체의 구체 클래스(Pencil 또는 Food)를 
+전혀 알지 못하더라도, (해당 클래스가 인터페이스를 구현했다면) 인터페이스 
+타입(Product)으로 사용할 수 있다.   
+
+`결국 위와 같은 문제점이 발생하는 근본적인 이유는 Store에서 불필요하게 
+어떤 제품을 판매할 지에 대한 관심이 분리되지 않았기 때문이다.`   
+
+Spring에서는 DI를 적용하여 이러한 문제를 해결하고자 하였다.   
+
+## 의존성 주입을 통한 해결   
+
+`위와 같은 문제를 해결하기 위해서는 우선 다형성이 필요하다.`  
+Pencil, Food 등 여러가지 제품을 하나로 표현하기 위해서는 Product라는 
+Interface가 필요하다.   
+그리고 Pencil에서 Product 인터페이스를 우선 구현해주도록 하자.   
+
+```java
+public interface Product {
+}
 ```
-<br>
+
+```java
+public class Pencil implements Product {
+}
+```
+
+이제 우리는 Store와 Pencil이 강하게 결합되어 있는 부분을 제거해 주어야 한다.  
+`이를 제거하기 위해서는 다음과 같이 외부에서 상품을 주입받아야 한다.`   
+
+
+
+- - - 
+
 ## 실습 
 
 Exam 이라는 인터페이스가 있고 그 인터페이스를 구현한 NewLecExam 클래스가 있다.    
@@ -106,12 +181,14 @@ InlineExamConsole로 변경하려면 ?
 - setting.xml( Colletion 을 개별적으로 생성 )    
 <img width="482" alt="스크린샷 2020-05-24 오후 6 24 50" src="https://user-images.githubusercontent.com/26623547/82750553-eef30200-9deb-11ea-991f-61bcf9397b8b.png">    
 네임스페이스 이용(xmlns:util="http://www.springframework.org/schema/util)   
-`실제로 객체를 만들어서 개별적으로 사용 가능하다.`   
+`실제로 객체를 만들어서 개별적으로 사용 가능하다.`    
+
 
 
 ---
 
-[http://www.newlecture.com](http://www.newlecture.com)
+<https://mangkyu.tistory.com/150>  
+<http://www.newlecture.com>   
 
 
 {% highlight ruby linenos %}
