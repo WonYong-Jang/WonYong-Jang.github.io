@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spring] Dependency Injection"
-subtitle: "종속성 주입 ( 부품 조립 )"
+subtitle: "종속성 주입 ( 부품 조립 ) / 다양한 의존성 주입 방법(생성자 주입, 필드 주입, 수정자 주입)"
 comments: true
 categories : Spring
 date: 2020-05-18
@@ -40,7 +40,7 @@ public class Store {
 
 <img width="420" alt="스크린샷 2022-03-28 오후 11 38 15" src="https://user-images.githubusercontent.com/26623547/160422790-ebb336e6-a499-4e35-a5ff-edc356682bcd.png">   
 
-## 의존성 주입이 필요한 이유   
+## 1. 의존성 주입이 필요한 이유   
 
 예를 들어 연필이라는 상품과 1개의 연필을 판매하는 Store 클래스가 있다고 하자.   
 
@@ -63,7 +63,7 @@ public class Store {
 - 두 클래스가 강하게 결합되어 있다.  
 - 객체들 간의 관계가 아니라 클래스 간의 관계가 맺어지고 있다.   
 
-##### 1. 두 클래스가 강하게 결합되어 있다.   
+##### 1-1) 두 클래스가 강하게 결합되어 있다.   
 
 위와 같은 Store 클래스는 현재 Pencil 클래스와 `강하게 결합되어 있다는 문제점`을 
 가지고 있다.   
@@ -74,12 +74,12 @@ public class Store {
 > 이에 대한 해결책으로 상속을 떠올릴 수 있지만, 상속은 제약이 많고 
 확장성이 떨어지므로 피하는 것이 좋다.   
 
-##### 2. 객체들 간의 관계가 아니라 클래스 간의 관계가 맺어지고 있다.   
+##### 1-2) 객체들 간의 관계가 아니라 클래스 간의 관계가 맺어지고 있다.     
 
 또한 위의 Store와 Pencil는 객체들 간의 관계가 아니라 클래스들 간의 
-관계가 맺어져 있다는 문제가 있다.    
+관계가 맺어져 있다는 문제가 있다.      
 올바른 객체지향적 설계라면 객체들 간에 관계가 맺어져야 하지만 현재는 
-Store 클래스와 Pencil 클래스가 관계를 맺고 있다.   
+Store 클래스와 Pencil 클래스가 관계를 맺고 있다.      
 객체들 간에 관계가 맺어졌다면 다른 객체의 구체 클래스(Pencil 또는 Food)를 
 전혀 알지 못하더라도, (해당 클래스가 인터페이스를 구현했다면) 인터페이스 
 타입(Product)으로 사용할 수 있다.   
@@ -89,9 +89,9 @@ Store 클래스와 Pencil 클래스가 관계를 맺고 있다.
 
 Spring에서는 DI를 적용하여 이러한 문제를 해결하고자 하였다.   
 
-## 의존성 주입을 통한 해결   
+## 2. 의존성 주입을 통한 해결   
 
-`위와 같은 문제를 해결하기 위해서는 우선 다형성이 필요하다.`  
+`위와 같은 문제를 해결하기 위해서는 우선 다형성이 필요하다.`     
 Pencil, Food 등 여러가지 제품을 하나로 표현하기 위해서는 Product라는 
 Interface가 필요하다.   
 그리고 Pencil에서 Product 인터페이스를 우선 구현해주도록 하자.   
@@ -107,7 +107,172 @@ public class Pencil implements Product {
 ```
 
 이제 우리는 Store와 Pencil이 강하게 결합되어 있는 부분을 제거해 주어야 한다.  
-`이를 제거하기 위해서는 다음과 같이 외부에서 상품을 주입받아야 한다.`   
+`이를 제거하기 위해서는 다음과 같이 외부에서 상품을 주입(Injection)받아야 한다.`   
+
+```java
+public class Store {
+    private Product product;
+    public Store(Product product) {
+        this.product = product;
+    }
+}
+```
+
+`여기서 Spring이 DI 컨테이너를 필요로 하는 이유를 알 수 있는데, 우선 Store에서 
+Product 객체를 주입하기 위해서는 애플리케이션 실행 시점에 필요한 객체(빈)를 
+생성해야 하며, 의존성이 있는 두 객체를 연결하기 위해 한 객체를 다른 객체로 
+주입시켜야 하기 때문이다.`        
+예를 들어 다음과 같이 Pencil 이라는 객체를 만들고, 그 객체를 
+Store로 주입시켜주는 역할을 위해 DI/IoC 컨테이너가 필요하게 된 것이다.   
+
+```java
+public class BeanFactory {
+    public void store() {
+        // Bean의 생성
+        Product pencil = new Pencil();
+
+        // 의존성 주입 
+        Store store = new Store(pencil);
+    }
+}
+```
+
+그리고 이러한 개념은 제어의 역전(Inversion of Control, IoC)라고 불리기도 한다.    
+`어떠한 객체를 사용할지에 대한 책임이 BeanFactory와 같은 클래스에게 
+넘어갔고, 자신은 수동적으로 주입받는 객체를 사용하기 때문이다.`   
+실제 Spring에서는 BeanFactory를 확장한 Application Context를 사용한다.   
+
+
+- - - 
+
+## 3. 의존성 주입 정리     
+
+한 객체가 어떤 객체(구체 클래스)에 의존할 것인지는 별도의 관심사이다.   
+`Spring에서는 DI/IoC 컨테이너를 통해 서로 강하게 결합되어 있는 두 클래스를 
+분리하고, 두 객체 간의 관계를 결정해 줌으로써 결합도를 낮추고 
+유연성을 확보하고자 하였다.`   
+의존성 주입으로 애플리케이션 실행시점에 객체를 생성하고 관계를 
+결정해 줌으로써 다른 구체 클래스에 의존하는 코드를 제거하며 서로 
+다른 두 객체의 결합을 약하게 만들어주었다.   
+`또한, 이러한 방법은 상속보다 훨씬 유연하다. 단, 여기서 주의해야 하는 것은 
+다른 빈을 주입받으려면 자기 자신이 반드시 컨테이너의 빈이여야 한다는 것이다.`   
+
+- 두 객체 간의 관계라는 관심사의 분리   
+- 두 객체 간의 결합도를 낮춤   
+- 객체의 유연성을 높임   
+- 테스트 작성을 용이하게 함   
+
+- - -   
+
+## 4. 다양한 의존성 주입 방법   
+
+### 4-1. 생성자 주입(Constructor Injection)    
+
+생성자 주입(Constructor Injection)은 생성자를 통해 의존 관계를 주입하는 방법이다.    
+
+```java
+@Service 
+public class UserServiceImpl implements UserService {
+    private UserRepository userRepository; 
+    private MemberService memberService; 
+
+    @Autowired // 생략 가능   
+    public UserServiceImpl(UserRepository userRepository, MemberService memberService) { 
+        this.userRepository = userRepository; 
+        this.memberService = memberService; 
+    } 
+}
+```
+
+`생성자 주입은 생성자의 호출 시점에 1회 호출 되는 것이 보장된다.`   
+`그렇기 때문에 주입 받은 객체가 변하지 않거나, 반드시 객체의 주입이 
+필요한 경우 강제하기 위해 사용할 수 있다.`   
+또한, Spring 프레임워크에서는 생성자 주입을 적극 권장하고 있기 때문에, 
+    생성자가 1개만 있을 경우에 @Autowired를 생략해도 주입이 가능하도록 
+    편의성을 제공하고 있다.   
+
+> 스프링 4.3 부터 생성자 1개일 경우 @Autowired 생략이 가능하다.   
+
+그렇기 때문에 위의 코드에서 @Autowired 생략이 가능하다.   
+
+### 4-2. 수정자 주입(Setter Injection)   
+
+수정자 주입은 필드 값을 변경하는 Setter를 통해서 의존 관계를 주입하는 
+방법이다.   
+Setter 주입은 생성자 주입과 다르게 `주입받은 객체가 변경될 가능성이 
+있는 경우에 사용한다.`   
+
+> 하지만, 실제로 변경이 필요한 경우는 극히 드물다.   
+
+```java
+@Service 
+public class UserServiceImpl implements UserService {
+    private UserRepository userRepository; 
+    private MemberService memberService; 
+
+    @Autowired 
+    public void setUserRepository(UserRepository userRepository) { 
+        this.userRepository = userRepository; 
+    }
+
+    @Autowired 
+    public void setMemberService(MemberService memberService) { 
+        this.memberService = memberService; 
+    } 
+}
+```
+
+@Autowired로 주입할 대상이 없는 경우에는 오류가 발생한다.    
+주입할 대상이 없어도 동작하도록 하려면 @Autowired(required = false)를 
+통해 설정할 수 있다.   
+
+### 4-3. 필드 주입(Field Injection)   
+
+필드 주입(Field Injection)은 필드에 바로 의존 관계를 주입하는 방법이다.    
+IntelliJ에서 필드 인젝션을 사용하면 Field Injejction is not recommended이라는 
+경고 문구가 발생한다.   
+
+```java
+@Service
+public class UserServiceImpl implements UserService {
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private MemberService memberService;
+}
+```
+
+필드 주입을 이용하면 코드가 간결해져서 과거에 상당히 많이 이용되었던 
+주입 방법이다.   
+하지만, 필드 주입은 여러 단점이 존재하기 때문에 생성자 주입을 권장하고 있다.   
+이에 대한 내용은 아래에서 자세히 살펴보자.   
+
+- - - 
+
+## 5. 생성자 주입을 사용해야 하는 이유   
+
+최근에는 Spring을 포함한 DI 프레임워크의 대부분이 생성자 주입을 
+권장하고 있는데, 자세한 이유를 살펴보도록 하자.   
+
+##### 5-1) 객체의 불변성 확보   
+
+실제로 개발을 하다 보면 느끼겠지만, `의존 관계 주입의 변경이 필요한 
+상황은 거의 없다.`   
+수정자 주입이나 일반 메소드 주입을 이용하면 불필요하게 수정의 
+가능성을 열어두게 되며, 이는 OOP의 5가지 개발 원칙 중 OCP(Open-Closed Principal, 개방-폐쇄의 법칙)를 
+위반하게 된다.    
+그러므로 `생성자 주입을 통해 변경의 가능성을 배제하고 불변성을 보장하는 것이 좋다.`       
+
+##### 5-2) 테스트 코드 작성   
+
+실제 코드가 `필드 주입으로 작성된 경우에는 순수한 자바 코드로 단위 테스트를 
+작성하는 것이 불가능하다.`    
+
+> 물론 ReflectionTestUtils를 사용해 주입해 줄 수 있기는 하다.   
+
+
+
+
 
 
 
@@ -187,6 +352,9 @@ InlineExamConsole로 변경하려면 ?
 
 ---
 
+Reference
+
+<https://mangkyu.tistory.com/125>   
 <https://mangkyu.tistory.com/150>  
 <http://www.newlecture.com>   
 
