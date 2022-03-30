@@ -270,10 +270,177 @@ public class UserServiceImpl implements UserService {
 
 > 물론 ReflectionTestUtils를 사용해 주입해 줄 수 있기는 하다.   
 
+아래 예시를 보자.   
+
+```java
+@Service 
+public class UserServiceImpl implements UserService { 
+
+    @Autowired 
+    private UserRepository userRepository; 
+    @Autowired 
+    private MemberService memberService; 
+
+    @Override public void register(String name) { 
+        userRepository.add(name); 
+    } 
+}
+```   
+
+위의 코드에 대한 순수 자바 테스트 코드를 작성하면 다음과 
+같이 작성할 수 있다.   
+
+```java
+public class UserServiceTest {
+    
+    @Test
+    public void addTest() {
+        UserService userService = new UserServiceImpl();
+        userService.register("kaven");   
+    }
+}
+```
+
+위와 같이 작성한 테스트 코드는 Spring과 같은 DI 프레임워크 위에서 
+동작하지 않으므로 의존 관계 주입이 되지 않을 것이고, userRepository가 
+null이 되어 userRepository의 add 호출시 NPE가 발생할 것이다.   
+이를 해결하기 위해 Setter를 사용하면 여러 곳에서 사용 가능한 
+싱글톤 패턴 기반의 빈이 변경될 수 있는 치명적인 단점을 갖게 된다.   
+또한 반대로 테스트 코드에서도 @Autowired를 사용하기 위해 
+스프링 빈을 올리면 단위 테스트가 아니며 컴포넌트들을 등록하고 
+초기화하는 시간이 커져 테스트 비용이 증가하게 된다.   
+
+`반면에 생성자 주입을 사용하면 컴파일 시점에 객체를 주입받아 테스트 코드를 
+작성할 수 있으며, 주입하는 객체가 누락된 경우 컴파일 시점에 오류를 
+발견할 수 있다.`   
+아래와 같이 직접 생성자를 넣어 줘서 테스트가 가능하다.   
+
+```java
+@Service
+public class ExampleService {
+    private final ExampleRepository exampleRepository;
+
+    public ExampleService(ExampleRepository exampleRepository) {
+        this.exampleRepository = exampleRepository;
+    }
+    public void save(int seq) {
+        exampleRepository.save(seq);
+    }
+}
+
+public class ExampleTest {
+    @Test
+    public void test() {
+        ExampleRepository exampleRepository = new ExampleRepository();
+        ExampleService exampleService = new ExampleService(exampleRepository);
+        exampleService.save(1);
+    }
+}
+```
+
+##### 5-3) final 키워드 작성 및 Lombok과의 결합   
+
+생성자 주입을 사용하면 필드 객체에 final 키워드를 사용할 수 있으며, 
+    `컴파일 시점에 누락된 의존성을 확인할 수 있다.`   
+`반면에 생성자 주입을 제외한 다른 주입 방법들은 객체의 생성(생성자 호출) 이후에 
+호출되므로 final 키워드를 사용할 수 없다.`   
+
+또한, final 키워드를 붙임으로써 Lombok과 결합되어 코드를 간결하게 작성할 수 있다.   
+Lombok에는 @RequiredArgsConstructor 어노테이션을 제공하며, 생성자의 인자로 추가할 
+변수에 @NonNull 또는 final을 붙이게 되면, 해당 변수를 생성자의 인자로 추가해준다.  
+아래와 같이 사용 가능하다.   
+
+```java
+@Service 
+@RequiredArgsConstructor 
+public class UserServiceImpl implements UserService { 
+    private final UserRepository userRepository; 
+    // 또는 @NonNull private UserRepository userRepository; 
+    private final MemberService memberService; 
+
+    @Override public void register(String name) { 
+        userRepository.add(name); 
+    } 
+}
+```
 
 
 
+##### 5-4) 순환 참조 에러 방지   
 
+`애플리케이션 구동 시점(객체의 생성 시점)에 순환 참조 에러를 방지할 수 있다.`   
+아래와 같이 UserServiceImpl의 register 함수가 memberService의 add를 호출하고, 
+    memberServiceImpl의 add함수가 UserServiceImpl의 register 함수를 
+    호출한다면 어떻게 될까?   
+
+```java
+@Service 
+public class UserServiceImpl implements UserService { 
+
+    @Autowired 
+    private MemberServiceImpl memberService; 
+
+    @Override public void register(String name) {
+        memberService.add(name); 
+    } 
+}
+```
+
+```java
+@Service 
+public class MemberServiceImpl extends MemberService { 
+
+    @Autowired 
+    private UserServiceImpl userService; 
+
+    public void add(String name){ 
+        userService.register(name); 
+    } 
+}
+```
+
+위의 두 메소드는 서로를 계속 호출할 것이고, 메모리에 함수의 CallStack이 
+계속 쌓여 StackOverflow 에러가 발생하게 된다.      
+
+즉 생성자 주입을 사용하지 않게 되면, 순환참조 발견을 실제 코드가 호출 되는 
+시점에야 발견할 수 있게 된다.   
+`객체 생성 시점에 순환참조가 일어나는게 아니라, 객체 생성 후 
+비즈니스 로직상에 순환참조가 일어나는 것이다.`   
+
+> 필드 주입이나, 수정자 주입은 객체 생성 시점에 순환참조가 일어나는지 아닌지 
+발견할 수 있는 방법이 없다.   
+
+`하지만, 생성자 주입을 이용하면 이러한 순환참조 문제를 방지할 수 있다.`     
+`애플리케이션 구동 시점(객체의 생성 시점)에 에러가 발생하기 때문이다.`     
+
+```
+Description: 
+
+The dependencies of some of the beans in the application context form a cycle:
+
+┌─────┐ 
+| memberServiceImpl defined in file   
+↑     ↓ 
+| userServiceImpl defined in file    
+└─────┘
+```
+
+`이유는 Bean에 등록하기 위해 객체를 생성하는 과정에서 다음과 같이
+순환 참조가 발생하기 때문이다.`  
+
+> 컨테이너가 빈을 생성하는 시점에서 객체생성에 사이클 관계가 생기기 때문이다.   
+
+```
+new UserServiceImpl(new MemberServiceImpl(new UserServiceImpl(new MemberServiceImpl()...)))
+```
+
+정리를 해보면, 이러한 이유들로 DI 프레임워크를 사용하는 경우, 생성자 주입을 
+사용하는 것을 권장한다.   
+
+- 객체의 불변성을 확보할 수 있다.   
+- 테스트 코드의 작성이 용이해진다.   
+- final 키워드를 사용할 수 있고, Lombok과의 결합을 통해 코드를 간결하게 작성할 수 있다.   
+- 순환 참조 문제를 애플리케이션 구동(객체의 생성) 시점에 파악하여 방지할 수 있다.   
 
 
 - - - 
