@@ -82,7 +82,7 @@ public void PointBuyService() {
 **Exception** : 개발 단계에서 잘못된 구현으로 인하여 구현 단계에서 예측하지 못한 상황으로 S/W와 관련이 있다. 
 Exception이 발생하면 구현 로직을 수정하여 처리가 가능한 상황이다.   
 
-<img width="754" alt="스크린샷 2020-06-27 오후 4 40 53" src="https://user-images.githubusercontent.com/26623547/85917608-8b4e6f80-b896-11ea-8a9d-765b3e9d9bf7.png">   
+<img width="1000" alt="스크린샷 2022-04-01 오후 8 41 56" src="https://user-images.githubusercontent.com/26623547/161257001-50561f44-3610-4346-95e5-e857737c9a14.png">   
 
 위처럼 Error와 Exception은 Throwable을 상속한다. 부모는 같지만 역할은 위에서 설명했듯이 다르다.   
 

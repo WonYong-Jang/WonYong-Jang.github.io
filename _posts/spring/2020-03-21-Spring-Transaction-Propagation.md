@@ -415,7 +415,6 @@ public class UserService {
             userRepository.save(createUser("k1"));
             userChildService.childMethod();
             userRepository.save(createUser("k3"));
-            throw new RuntimeException();
         } catch (Exception e) { // 부모에서 예외 처리
             e.printStackTrace();
         }
