@@ -246,8 +246,8 @@ public class JpaRunner {
 
     @Transactional
     public void savePost(int i) {
-        if(i == 3) throw new RuntimeException(); // 예외 발생   
         postRepository.save(new Post(i));
+        if(i == 3) throw new RuntimeException(); // 예외 발생
     }
 }
 ``` 
