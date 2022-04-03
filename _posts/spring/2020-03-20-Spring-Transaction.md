@@ -246,6 +246,10 @@ public class JpaRunner {
 
     @Transactional
     public void savePost(int i) {
+
+        // 현재 적용된 트랜잭션 이름을 확인할 수 있다.   
+        System.out.println("CurrentTransactionName:"+TransactionSynchronizationManager.getCurrentTransactionName());
+
         postRepository.save(new Post(i));
         if(i == 3) throw new RuntimeException(); // 예외 발생
     }
@@ -253,6 +257,9 @@ public class JpaRunner {
 ``` 
 
 `정답은 @Transactional 적용되지 않기 때문에 모두 롤백이 되지 않는다.`         
+
+> TransactionSynchronizationManager.getCurrentTransactionName() 로 현재 적용된 
+트랜잭션 이름을 확인할 수 있다.   
 
 스프링의 트랜잭션 처리가 스프링 AOP를 기반으로 하고 있으며 
 스피링 AOP가 프록시를 기반으로 동작한다는 것을 이해하고 있다면 
@@ -321,7 +328,44 @@ public class JpaRunner {
 }
 ```
 
-#### 2-2) @Transactional(readOnly = true)   
+#### 2-2) @Transactional의 우선순위   
+
+@Transactional은 우선순위를 가지고 있다.   
+
+- Class Method -> Class -> Interface Method -> Interface 순서로 우선순위를 가진다.   
+
+JPA의 구현체인 SimpleJpaRepository 코드를 살펴보면, 
+    클래스에 @Transactional(readOnly = true) 선언되어 있는 것을 
+    볼수 있다.   
+하지만, 실제 update가 발생하는 메소드에는 추가적으로 @Transactional이 
+선언된 것을 볼 수 있다.   
+`즉, 전체를 readOnly=true로 설정이 되어 있지만, update가 발생하는 
+메소드에는 readOnly=false로 추가 선언하여 이를 우선으로 
+적용시킨 것이다.`      
+
+
+```java
+@Repository
+@Transactional(readOnly = true)
+public class SimpleJpaRepository<T, ID> implements JpaRepositoryImplementation<T, ID> {
+
+    // ...
+	private final EntityManager em;
+
+    // ...
+
+	@Transactional
+	@Override
+	public void deleteById(ID id) {
+
+		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
+
+		delete(findById(id).orElseThrow(() -> new EmptyResultDataAccessException(
+				String.format("No %s entity with id %s exists!", entityInformation.getJavaType(), id), 1)));
+	}
+```
+
+#### 2-3) @Transactional(readOnly = true)   
 
 `@Transactional(readOnly=true)가 적용된 메서드에서 
 @Transactional 혹은 @Transactioanl(readOnly=false)가 적용된 
