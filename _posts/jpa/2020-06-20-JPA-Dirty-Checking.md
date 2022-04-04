@@ -1,14 +1,14 @@
 ---
 layout: post
 title: "[JPA] 더티 체킹(Dirty Checking) 이란? "
-subtitle: "ORM 에서의 더티 체킹 / @DynamicUpdate"
+subtitle: "ORM 에서의 더티 체킹 / Bulk update와 dirty checking 주의사항 / @DynamicUpdate"
 comments: true
 categories : JPA
 date: 2020-06-20
 background: '/img/posts/mac.png'
 ---
 
-## 더티 체킹(Dirty Checking)이란? 
+## 1. 더티 체킹(Dirty Checking)이란? 
 
 Spring Data Jpa와 같은 ORM 구현체를 사용하다보면 더티 체킹이란 단어를 종종 듣게 된다.   
 
@@ -140,9 +140,8 @@ public void SpringDataJpa로_확인() {
 
 > 첫번째와 동일하게 update 쿼리를 확인할 수 있다    
 
-- - - 
 
-## 변경 부분만 update 하고 싶을 땐?   
+### 1-1) 변경 부분만 update 하고 싶을 땐?   
 
 Dirty Checking으로 생성되는 update 쿼리는 기본적으로 모든 필드를 업데이트 한다.   
 
@@ -176,7 +175,156 @@ public class Pay {
 <img width="190" alt="스크린샷 2020-06-20 오후 6 24 49" src="https://user-images.githubusercontent.com/26623547/85198415-84b67a00-b323-11ea-8dad-19d5e8bf6c5d.png">   
     
 
-`변경분 trade_no 만 update 쿼리에 반영된 것을 확인 가능하다!`    
+`변경분 trade_no 만 update 쿼리에 반영된 것을 확인 가능하다!`   
+
+- - - 
+
+## 2. Bulk Update   
+
+JPA는 보통 데이터를 가져와서 변경하면 변경 감지(dirty checking)를 통해 
+DB에 업데이트 쿼리를 수행한다.   
+이런 업데이트들은 건 별로 select 이후 update가 이뤄지기 때문에 수천 건을 
+업데이트 해야하는 경우 비효율적일 수 있다.   
+
+JPA를 사용해서도 수천, 수만 건의 데이터를 한번에 업데이트 하는 
+Bulk update쿼리를 사용할 수 있다.   
+
+Bulk update하는 방법과 Bulk update 사용시 주의사항에 대해서 살펴보자.   
+
+
+```java
+// 순수 JPA
+@PersistenceContext EntityManager em; 
+
+public int bulkAgePlus(int age) {
+    return em.createQuery(
+                "update Member m set m.age = m.age + 1" + 
+                "where m.age >= :age")
+            .setParameter("age", age)
+            .executeUpdate();
+}
+
+
+// Spring Data JPA
+@Repository
+public interface MemberRepository extends JpaRepository<Member, Long> {
+    @Modifying
+    @Query("update Member m set m.age = m.age + 1 where m.age >= :age")
+    int increaseAgeOfAllMembersOver(@Param("age") int age);
+}
+```
+
+`위와 같이 Spring Data JPA에서는 Bulk update를 하기 위해서는 
+@Query와 함께 @Modifying 어노테이션을 사용해야 한다.`      
+
+`@Modifying 어노테이션을 사용할 때 주의할 점은 반환 타입을 반드시 void나 int 또는 Integer로 지정해야 
+한다는 것이다.`   
+
+다른 타입을 사용할 경우 아래와 같이 에러가 발생한다.   
+
+```
+org.springframework.dao.InvalidDataAccessApiUsageException: Modifying queries can only use void or int/Integer as return type! Offending method: public abstract long io.lcalmsky.springdatajpa.domain.repository.MemberRepository.increaseAgeOfAllMembersOver(int)
+```
+
+여기서 Bulk update시 또 하나의 주의해야할 사항이 있는데, 아래 코드로 살펴보자.     
+
+```java
+@Test
+@DisplayName("벌크 업데이트 테스트: 나이가 n살 이상인 멤버의 나이를 1씩 증가시킨다")
+@Transactional
+public void bulkUpdate() {
+    // given
+    memberRepository.save(new Member("a", 10));
+    memberRepository.save(new Member("b", 15));
+    memberRepository.save(new Member("c", 20));
+    memberRepository.save(new Member("d", 30));
+    memberRepository.save(new Member("e", 40));
+    // when
+    int count = memberRepository.increaseAgeOfAllMembersOver(20);
+    Member member = memberRepository.findByUsername("e");
+
+    // then
+    assertEquals(3, count);
+    assertEquals(41, member.getAge()); 
+}
+```   
+
+`Bulk update를 하게 되면, 영속성 컨텍스트에 반영을 하지 않고 
+바로 DB에 반영하게 된다.`   
+
+즉, 같은 트랜잭션 내에 Bulk update가 이뤄지고 update한 엔티티를 
+조회하여 로직을 수행하는 경우 문제가 발생할 수 있다.   
+위 예제와 같이 member 객체가 20살 이상이기 때문에 한살이 추가 되어야 
+하지만, 테스트 결과는 40살이다.   
+
+그 이유는 update는 이뤄져서 DB에는 반영되었지만 영속성 컨텍스트의 
+1차 캐시에 반영이 되지 않기 때문에 조회시 40살 그대로 조회가 된다.   
+
+그럼 Bulk update가 이뤄진 후에 반드시 조회가 필요한 경우는 어떻게 해야할까?   
+아래와 같이 Bulk update 이후 영속성 컨텍스트를 비워주는 로직이 추가되어야 한다.   
+
+```java
+// 순수 JPA
+@Test
+@DisplayName("벌크 업데이트 테스트: 나이가 n살 이상인 멤버의 나이를 1씩 증가시킨다")
+@Transactional
+public void bulkUpdate() {
+    // given
+    memberRepository.save(new Member("a", 10));
+    memberRepository.save(new Member("b", 15));
+    memberRepository.save(new Member("c", 20));
+    memberRepository.save(new Member("d", 30));
+    memberRepository.save(new Member("e", 40));
+    // when
+    int count = memberRepository.increaseAgeOfAllMembersOver(20);
+
+    entityManager.flush(); 
+    entityManager.clear();
+
+    Member member = memberRepository.findByUsername("e");
+
+    // then
+    assertEquals(3, count);
+    assertEquals(41, member.getAge());
+}
+
+// Spring Data JPA
+@Repository
+public interface MemberRepository extends JpaRepository<Member, Long> {
+    @Modifying(clearAutomatically = true)
+    @Query("update Member m set m.age = m.age + 1 where m.age >= :age")
+    int increaseAgeOfAllMembersOver(@Param("age") int age);
+}
+```
+
+`flushAutomatically옵션은 flush()만, clearAutomatically옵션은 flush() 이후 
+clear()까지 호출 해준다.`     
+
+그럼 무조건 Bulk update 이후 영속성 컨텍스트를 비워줘야 할까?   
+답은 상황에 따라 다르다.   
+설계에 따라 Bulk update이후 조회가 필요 하지 않는 경우는 옵션을 
+반드시 추가할 필요는 없다.    
+
+
+```java
+// 순수 JPA
+@PersistenceContext EntityManager em;
+
+public int bulkAgePlus(int age) {
+    return em.createQuery(
+                "update Member m set m.age = m.age + 1" +
+                "where m.age >= :age")
+            .setParameter("age", age)
+            .executeUpdate();
+}
+
+
+
+// Spring Data Jpa
+@Modifying
+@Query("update Member m set m.age = m.age + 1 where m.age >= :age")
+int bulkAgePlus(@Param("age") int age);
+```
 
 - - -
 Referrence
