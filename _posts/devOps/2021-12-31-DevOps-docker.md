@@ -160,7 +160,8 @@ $ docker pull ubuntu:14.04
 // 이미지 삭제   
 $ docker rmi [이미지 id]    
 
-// 이미지 빌드 
+// 이미지 빌드
+$ docker build -t [이미지명] .   
 $ docker build --tag node_server:0.0.1 [Dockerfile이 위치하는 경로]
 
 // 이미지 빌드할때 쓰일 도커파일을 임의로 지정해 준다.   
@@ -203,7 +204,15 @@ dockerfile의 전체적인 구조는 아래와 같다.
 ```  
 # 베이스 이미지를 명시해준다.   
 # 이미지 생성시 기반이 되는 이미지 레이어이다.   
-FROM baseImage   
+FROM baseImage     
+
+# Dockerfile또는 컨테이너 안에서 환경 변수로 사용 가능하며, docker run -e 옵션으로도 사용 가능하다.
+ENV [key] [value]
+
+# build 시점에만 사용되는 변수이며, docker build --build-arg 옵션으로 사용도 가능하다.   
+# ARG는 Dockerfile에서만 사용가능하다.   
+# ARG [key]=[value]
+ARG JAR_FILE=build/libs/*.jar
 
 # 추가적으로 필요한 파일들을 다운로드 받는다.   
 # 도커 이미지가 생성되기 전에 수행할 쉘 명령어   
