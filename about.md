@@ -24,15 +24,15 @@ background: '/img/bg-index.jpg'
 
 - Java, Kotlin, Scala   
 - Spring Boot/MVC 
-- JPA, Hibernate   
-- Junit4/5, Mockito   
+- JPA, Hibernate, Querydsl  
+- Junit4/5, Mockito, Spock   
 - Gradle, Maven   
 
 ##### DevOps   
 
 - DocumentDB(MongoDB), Mysql, Oracle   
 - Jenkins, Airflow   
-- Elastic Cache (Redis), S3, EC2, Cloud Watch   
+- Elastic Cache (Redis), S3, EC2, RDS, Cloud Watch   
 - Spark, Kafka, Hive 
 - ELK Stack   
 - Nginx, Tomcat   
@@ -57,6 +57,11 @@ background: '/img/bg-index.jpg'
 #### 쿠팡 CS Intelligence Backend Engineer   
 
 > 2021.02.01 ~ 현재   
+
+- Bus Route Recommendation Service    
+    - Fulfillment Center 지원자에게 버스가 제공되며, 지원자 거주지 기준으로 가까운 버스 추천   
+    - 지원자의 거주지를 위, 경도로 변환 후 버스 정류장 위, 경도와 haversine formula 공식 적용    
+    - Redis를 활용하여 버스 정류장 데이터를 캐싱하여 성능 개선   
 
 - Build customer service data pipeline with Kafka, Spark streaming and DocumentDB       
 
