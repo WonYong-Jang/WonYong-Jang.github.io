@@ -60,8 +60,9 @@ background: '/img/bg-index.jpg'
 
 - Bus Route Recommendation Service    
     - Fulfillment Center 지원자에게 버스가 제공되며, 지원자 거주지 기준으로 가까운 버스 추천   
-    - 지원자의 거주지를 위, 경도로 변환 후 버스 정류장 위, 경도와 haversine formula 공식 적용    
+    - 지원자의 거주지를 위, 경도로 변환 후 버스 정류장 위, 경도와 haversine formula 공식을 이용하여 가까운 거리 계산      
     - Redis를 활용하여 버스 정류장 데이터를 캐싱하여 성능 개선   
+    - 상담사의 상담 준비시간(After Call Work)를 단축하여 Conversion Rate 향상   
 
 - Build customer service data pipeline with Kafka, Spark streaming and DocumentDB       
 
