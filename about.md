@@ -8,7 +8,7 @@ background: '/img/bg-index.jpg'
 
 ## 👨‍💻 Backend Engineer      
 
-4년차 백엔드 개발자로서 Java, Spring, Kotlin, Redis, Kafka, AWS 등을 
+4년 차 백엔드 개발자로서 Java, Spring, Kotlin, Redis, Kafka, AWS 등을 
 사용하여 확장성과 유지 보수성이 높은 서비스를 
 설계, 개발, 운영한 경험이 있습니다.   
 
@@ -20,7 +20,7 @@ background: '/img/bg-index.jpg'
 좌우한다고 믿고 있습니다.   
 저는 주어진 일에 문제가 발생하였을 때 문제를 공유하고, 
 협업을 통해 문제를 해결하기 위해 끊임없이 노력하기 때문에 
-새로운 일에 대해 두려움 없이 성공적으로 마무리 할 수 있습니다.     
+새로운 일에 대해 두려움 없이 성공적으로 마무리할 수 있습니다.     
 
 <br>   
 - - - 

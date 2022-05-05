@@ -280,6 +280,7 @@ Spock의 실행 횟수 검증 방법을 살펴보자.
 (1..2) * numberBuilder.buildNumber()
 ```
 
+
 ---
 
 ## 마치며   
