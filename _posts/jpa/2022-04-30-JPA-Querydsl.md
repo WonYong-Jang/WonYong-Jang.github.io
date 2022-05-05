@@ -199,11 +199,6 @@ logging.level:
 # org.hibernate.type: trace # 쿼리에 있는 파라미터도 같이 보여준다.   
 ```  
 
-- - - 
-
-## 
-
-
 
 - - - 
 
