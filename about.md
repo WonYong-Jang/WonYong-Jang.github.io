@@ -8,12 +8,19 @@ background: '/img/bg-index.jpg'
 
 ## 👨‍💻 Backend Engineer      
 
+4년차 백엔드 개발자로서 Java, Spring, Kotlin, Redis, Kafka, AWS 등을 
+사용하여 확장성과 유지 보수성이 높은 서비스를 
+설계, 개발, 운영한 경험이 있습니다.   
+
 새로운 기술을 받아들이고 배우는 것을 좋아하여 Github와 블로그를 
-통해서 배운 내용을 꾸준히 포스팅을 하고 있습니다. 
+통해서 배운 내용을 꾸준히 포스팅을 하고 있습니다.   
+그 결과 어떠한 환경에서도 빠르게 기술을 습득하여 적용할 수 있게 되었습니다.   
+
 항상 일을 진행할 때 협업과 커뮤니케이션이 프로젝트의 성패를 
 좌우한다고 믿고 있습니다.   
-그 결과 저는 주어진 일에 문제가 발생하였을 때 원인을 분석하여 
-문제를 해결하기 위해 끊임없이 노력하고, 새로운 일에 대해 두려움 없이 일을 성공적으로 마무리 할 수 있습니다.     
+저는 주어진 일에 문제가 발생하였을 때 문제를 공유하고, 
+협업을 통해 문제를 해결하기 위해 끊임없이 노력하기 때문에 
+새로운 일에 대해 두려움 없이 성공적으로 마무리 할 수 있습니다.     
 
 <br>   
 - - - 
@@ -24,7 +31,7 @@ background: '/img/bg-index.jpg'
 
 - Java, Kotlin, Scala   
 - Spring Boot/MVC 
-- JPA, Hibernate, Querydsl  
+- JPA, Hibernate 
 - Junit4/5, Mockito, Spock   
 - Gradle, Maven   
 
