@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Redis] Java에서 Spring Data Redis 사용하기"
-subtitle: "RedisTemplate와 RedisRepository / @Indexed "       
+title: "[Redis] Spring Data Redis 사용하여 캐싱하기"
+subtitle: "Spring에서 RedisTemplate와 RedisRepository / @Cacheable, @CachePut, @CacheEvict / @Indexed "       
 comments: true
 categories : BigData
 date: 2021-05-11   
