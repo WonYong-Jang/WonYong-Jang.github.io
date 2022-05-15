@@ -1,10 +1,10 @@
 ---
 layout: post
 title: "[Docker] Spring testcontainer와 Spock를 이용한 독립 테스트환경 구축"
-subtitle: "멱등성있는 integration test 환경 구축"    
+subtitle: "멱등성있는 integration test 환경 구축 / DB와 Redis TestContainers 테스트"    
 comments: true
 categories : DevOps
-date: 2022-05-14
+date: 2022-05-15
 background: '/img/posts/mac.png'
 ---
 
@@ -35,19 +35,19 @@ background: '/img/posts/mac.png'
 
 ## 1. DB를 테스트하는 여러가지 방법   
 
-##### 1) 로컬에서 운영환경과 동일한 DB 사용하기    
+##### 1) 로컬에서 운영환경과 유사한 스펙의 DB 사용하기    
 
-운영환경에서 사용하는 동일 스펙의 DB를 개발환경의 데이터베이스로 
+운영환경에서 사용하는 유사한 스펙의 DB를 개발환경의 데이터베이스로 
 셋업하여 사용하는 방법이다.     
 이 방법은 운영환경과 유사한 환경에서 테스트할 수 있지만 동시에 
-여러 테스트가 이루어지거나 테스트가 끝났음에도 테스트용 데이터가 
-남아 있는 문제들로 인하여 멱등성 관리가 매우 어렵다.   
+여러 테스트가 동시에 이루어지거나 테스트가 끝났음에도 테스트용 데이터가 
+남아 있는 문제들로 인하여 멱등성 관리가 매우 어렵다.      
 
 ##### 2) 인메모리 DB 사용하기   
 
 위에서 공용으로 테스트 DB를 사용함에 따라 문제점이 있기 때문에 
 인 메모리 DB인 H2를 사용하여 테스트하는 방법이 있을 수 있다.    
-이 방법은 메모리를 이용하기 때문에 동작이 빠르고, 공용으로 사용하는게 
+이 방법은 메모리를 이용하기 때문에 성능이 좋고, 공용으로 사용하는게 
 아니기 때문에 위의 문제점을 해결할수 있다.   
 하지만 실제 운영환경과 다르기 때문에 각 DB마다 지원하는 부분이 달라서 
 멱등성이 깨질 수 있다.    
@@ -91,6 +91,9 @@ background: '/img/posts/mac.png'
 여기서 DB는 mariaDB를 이용하며, 테스트는 Spock를 이용하여 
 작성할 것이기 때문에 아래와 같이 의존성을 추가해준다.   
 
+Spock 프레임워크에 대한 자세한 내용은 [링크](https://wonyong-jang.github.io/spring/2022/05/01/Spring-Spock-Groovy.html)를 
+참고하자.   
+
 ```gradle
 testImplementation 'org.testcontainers:spock:1.17.1'
 testImplementation 'org.testcontainers:mariadb:1.17.1'
@@ -99,13 +102,17 @@ testImplementation 'org.testcontainers:mariadb:1.17.1'
 그 이후 [공식문서](https://www.testcontainers.org/modules/databases/jdbc/)를 
 참고하여 설정을 추가한다.   
 
-> 테스트를 위한 test/resources/application-test.yml을 추가한다.   
+> 테스트를 위한 test/resources/application-test.yml을 추가한다.     
+
+Spring에서 보통 DB를 사용하기 위해서는 application.yml에 
+spring.datasource.url 정보를 작성해 주게 되며, 
+jdbc:mariadb://localhost:3306/databasename 과 같은 형식이다.   
 
 `공식문서에 따르면 jdbc: 이후 tc:를 추가하면, host와 port, database name은 무시된다고 한다.`    
-`tc: 를 추가 하면 testcontainers가 제공하는 드라이버가 알아서 처리해 주기 
+`tc: 를 추가 하면 Testcontainers가 제공하는 드라이버가 알아서 처리해 주기 
 때문에 host와 port, database name은 제외해도 된다.`    
 
-또한 드라이버도 testcontainers가 제공하는 드라이버를 사용하도록 아래와 
+또한 드라이버도 Testcontainers가 제공하는 드라이버를 사용하도록 아래와 
 같이 추가한다.   
 
 ```shell
@@ -178,17 +185,106 @@ class PharmacyRepositoryTest extends Specification {
         assert true
     }
 }
+```  
+
+이제 나만의 독립적인 테스트 환경을 구축했다.   
+다른 개발자와 공용으로 개발 DB를 통해서 테스트 코드가 
+실행되지 않고 각각의 테스트마다 모든 테스트 했던 데이터를 삭제해주기 
+때문에 다른 테스트와 충돌이 없을 것이다.     
+또한, 테스트 할때 Testcontainers가 직접 도커의 실행 및 종료 라이프 사이클을 
+관리해주게 되었다.   
+
+[공식문서](https://www.testcontainers.org/)의 Modules에 있는 
+리스트를 보게 되면, Testcontainers가 지원하는 리스트를 확인할 수 있다.   
+
+이제 Testcontainers가 지원하지 않는 모듈을 어떻게 컨테이너를 
+생성하는지 살펴보자.   
+
+
+- - - 
+
+## 3. GenericContainer   
+
+`GenericContainer의 파라미터로 도커 이미지 이름을 추가하면 컨테이너 생성이 가능하다.`   
+`아래처럼 redis 이미지 이름을 지정하면, 첫번째로 로컬에 도커 이미지가 있는지 찾고 없다면 
+도커 허브에서 다운받아서 실행해준다.`       
+
+```groovy
+GenericContainer redis = new GenericContainer<>("redis:6-alpine")
+            .withExposedPorts(6379)
 ```
 
+위에서는 redis container의 exposedPort를 6379로 지정하였다.   
+`보통 docker를 실행할 때, host port와 docker가 expose한 port를 직접 
+매핑하여 작성하는데, Testcontainers는 host port를 직접 지정할 수 없고 
+현재 환경에서 충돌이 발생하지 않는 랜덤 port를 알아서 지정해준다.`      
+
+> docker run -p 6379:6379 는 host port 6379와 docker가 expose한 port를 맵핑한다.   
+
+아래와 같이 6379와 맵핑된 포트를 확인하는 것은 가능하다.   
+
+```groovy
+// 아래를 출력하여 docker redis 컨테이너 6379와 맵핑된 host port 확인가능하다.   
+redis.getMappedPort(6379)
+
+// port를 하나만 expose하는 경우 아래 메서드로 확인 가능하다.   
+redis.getFirstMappedPort()
+```   
+
+이제 Testcontainers를 이용하여 redis 테스트를 진행해보자.   
+`아래에서 docker container port를 6379로 expose 하였고, 이를 
+스프링이 host정보와 6379에 맵핑된 port를 알고 있어야 
+스프링이 Dependency Injection 및 컨테이너에 접근이 가능하다.`   
 
 
 
+컨테이너 정보를 스프링이 알수 있도록 System.setProperty를 통해 
+설정했다.   
+
+```groovy
+@Testcontainers
+@ActiveProfiles("test")
+@SpringBootTest
+class RedisConfigTest extends Specification {
+
+    @Autowired
+    RedisTemplate redisTemplate;
+
+    @Shared
+    GenericContainer redis = new GenericContainer<>("redis:6-alpine")
+            .withExposedPorts(6379)
+
+    def setupSpec() {
+        System.setProperty("spring.redis.host", redis.getHost())
+        System.setProperty("spring.redis.port", redis.getMappedPort(6379) + "")
+    }
+
+    def setup() {
+        println "컨테이너 로그 확인 : " +redis.getLogs()
+    }
+
+    def "redisTemplate test"() {
+        given:
+        ValueOperations ops = redisTemplate.opsForValue()
+
+        when:
+        ops.set("key", "hello")
+        String result = ops.get("key")
+
+        then:
+        result == "hello"
+    }
+}
+```
+
+ 
 
 
 - - - 
 
 **Reference**    
 
+<https://bsideup.gitbooks.io/spring-io-testcontainers-workshop/content/steps/step6.html>    
 <https://loosie.tistory.com/793>   
 <https://www.testcontainers.org/>   
 <https://taes-k.github.io/2021/05/02/spring-test-container/>   
