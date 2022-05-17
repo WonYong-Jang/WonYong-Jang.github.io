@@ -277,7 +277,6 @@ class RedisConfigTest extends Specification {
 }
 ```
 
- 
 
 
 - - - 

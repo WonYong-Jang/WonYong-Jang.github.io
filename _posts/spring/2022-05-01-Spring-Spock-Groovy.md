@@ -15,8 +15,11 @@ background: '/img/posts/spring.png'
 테스트의 의도를 더 명확하게 드러내주는 산만한 코드는 뒤로 
 숨겨주는 등의 큰 장점이 있다.`   
 
-또한, Groovy 기술을 이용해서 작성하지만 Groovy에서는 자바를 편하게 
+또한, Groovy 언어을 이용해서 작성하지만 Groovy에서는 자바를 편하게 
 가져다 사용하기 때문에 자바 코드의 테스팅에도 사용할 수 있다.   
+
+> Groovy란 JVM위에서 동작하는 동적 타입 프로그래밍 언어로 Java문법과 
+매우 유사하다.   
 
 만약 기존에 junit을 사용해본 경험이 있다면 spock을 배우는 것 역시 쉽다.   
 junit의 주요 요소들은 모두 spock에 있기 때문이다.  
@@ -308,6 +311,7 @@ Spock으로 쉬우면서도 오래 두어도 신선한 테스트를 작성해보
 - - -
 Referrence 
 
+<https://pompitzz.github.io/blog/Groovy/spock-summary.html#mocking%E1%84%8B%E1%85%A6%E1%84%89%E1%85%A5-%E1%84%89%E1%85%A1%E1%84%8B%E1%85%AD%E1%86%BC%E1%84%83%E1%85%AC%E1%84%82%E1%85%B3%E1%86%AB-%E1%84%87%E1%85%A7%E1%86%AB%E1%84%89%E1%85%AE%E1%84%8B%E1%85%B4-%E1%84%8B%E1%85%B1%E1%84%8E%E1%85%B5%E1%84%85%E1%85%B3%E1%86%AF-%E1%84%8C%E1%85%AE%E1%84%8B%E1%85%B4%E1%84%92%E1%85%A1%E1%84%8C%E1%85%A1>   
 <https://goodteacher.tistory.com/340>   
 <https://d2.naver.com/helloworld/568425>   
 <https://www.baeldung.com/spring-spock-testing>   
