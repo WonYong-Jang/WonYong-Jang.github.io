@@ -10,10 +10,13 @@ background: '/img/posts/spring.png'
 
 ## 1. Spock 소개   
 
-`Spock는 BDD(Behaviour-Driven Development) 프레임워크이다.`   
-`TDD프레임워크인 JUnit과 비슷한 점이 많으나, 기대하는 동작과 
+`Spock는 BDD(Behaviour Driven Development) 프레임워크이다.`   
+`TDDd(Test Driven Development)프레임워크인 JUnit과 비슷한 점이 많으나, 기대하는 동작과 
 테스트의 의도를 더 명확하게 드러내주는 산만한 코드는 뒤로 
-숨겨주는 등의 큰 장점이 있다.`   
+숨겨주는 등의 큰 장점이 있다.`  
+
+> TDD는 테스트 자체에 집중하여 개발하는 방식인 반면, BDD는 비즈니스 
+요구사항에 집중하여 테스트 케이스를 작성하게 된다.   
 
 또한, Groovy 언어을 이용해서 작성하지만 Groovy에서는 자바를 편하게 
 가져다 사용하기 때문에 자바 코드의 테스팅에도 사용할 수 있다.   
@@ -61,7 +64,6 @@ testImplementation('net.bytebuddy:byte-buddy:1.9.3')
 ```
 
 
-
 간단한 사용법은 아래와 같다.   
 
 - 테스트 클래스는 Groovy 클래스로 생성하고 Specification 클래스를 상속 받는다.   
@@ -73,12 +75,15 @@ testImplementation('net.bytebuddy:byte-buddy:1.9.3')
     테스트 메서드는 Spock에서 feature 메서드라고 하며 feature 메서드에는 이와 같은 블록이 
     최소한 하나는 들어 있어야 한다.`        
 
-Specification은 extends하면 Spock Test 클래스가 된다.    
+`Specification은 extends하면 Spock Test 클래스가 된다.`    
+
+
 
 Spock에서는 given, when, then 외에 추가로 3개가 더있어 총 6단계의 
 라이프사이클을 가지고 있다.   
 
-<img width="600" alt="스크린샷 2022-04-30 오후 11 08 34" src="https://user-images.githubusercontent.com/26623547/166108944-eb6cedcb-6dd1-420f-9d15-966add0fa7aa.png">   
+<img width="600" alt="스크린샷 2022-04-30 오후 11 08 34" src="https://user-images.githubusercontent.com/26623547/166108944-eb6cedcb-6dd1-420f-9d15-966add0fa7aa.png">    
+
 
 #### 2-1) 첫 번째 테스트 클래스 작성하기   
 
@@ -104,17 +109,24 @@ class MainTest extends Specification{
     def "Hello의 길이는 정말 5글자인가?"() {
 
         given:
-        String input = "hello"
+        def input = "hello"
 
         when:
-        int result = input.length()
+        def result = input.length()
 
         then:
         result == 5
     }
 }
-
 ```
+
+`위에서 def는 동적 타입을 선언하는 예약어이다. 선언 후에는 어떤 타입의 객체든 
+주입할 수 있다.`   
+`또한, def로 생성자를 구현하여 선언하면 하나의 유닛 테스트가 된다.`   
+
+> "Hello의 길이는 정말 5글자인가?" 라는 테스트를 생성하였다.   
+
+<img width="400" alt="스크린샷 2022-05-19 오전 12 15 27" src="https://user-images.githubusercontent.com/26623547/169077168-de4eebb1-95bf-405d-a268-6e9fe6139587.png">   
 
 given, when, then 등의 블록들 간의 변수들은 공유되어 사용할 수 있다.  
 즉, given: 에서 선언한 변수는 then: 에서도 사용 가능하다.   
