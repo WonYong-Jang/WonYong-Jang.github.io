@@ -77,10 +77,34 @@ testImplementation('net.bytebuddy:byte-buddy:1.9.3')
 
 `Specification은 extends하면 Spock Test 클래스가 된다.`    
 
+- setup/ given : 테스트에 필요한 값들을 준비한다.   
+- when : 테스트할 코드를 실행한다.   
+- then : when과 함께 사용해야 하며, 예외 및 결과값 확인한다.   
+- expect : then과 같으며, when을 필요로 하지 않기 때문에 간단한 테스트에 사용한다.   
+- where : 테스트 로직은 동일하고, 여러 파라미터 값으로 결과값을 확인하고 싶을 때 사용한다.   
+
+Spock에서는 given, when, then 외에 추가로 3개가 더있어 총 6단계의 
+라이프사이클을 가지고 있다.   
+
+`Spock를 사용함으로써, 기존 JUnit을 사용하면서 
+아래와 같이 직접 주석으로 구분해주었던 부분을 명확하게 
+구분할 수 있게 되었다.`   
+
+```java
+// given
+
+// when
+
+// then
+```
 
 
 Spock에서는 given, when, then 외에 추가로 3개가 더있어 총 6단계의 
 라이프사이클을 가지고 있다.   
+
+`Spock를 사용함으로써, 기존 JUnit을 사용하면서 
+아래와 같이 직접 주석으로 구분해주었던 부분을 명확하게 
+구분할 수 있게 되었다.`   
 
 <img width="600" alt="스크린샷 2022-04-30 오후 11 08 34" src="https://user-images.githubusercontent.com/26623547/166108944-eb6cedcb-6dd1-420f-9d15-966add0fa7aa.png">    
 
@@ -150,11 +174,38 @@ class MainTest extends Specification{
         3 | 9 | 9
     }
 }
-```
+```   
 
 위 코드를 실행해보면 아주 재밌는 결과를 볼 수 있다.   
 Math.max(a,b) == c 테스트 코드의 a,b,c에 각각 5,1,5 와 3,9,9가 입력되어 
 expect: 메소드가 실행된다.   
+
+`Spock의 where를 잘 사용하면 데이터가 다르고 로직이 동일한 테스트에 대해
+발생하는 중복코드를 많이 제거 할 수 있다.`   
+
+위 a, b, c 파라미터와 | 로 구분하여 생성한 한 것을 Data Table이라고 부르며, 
+    Data Table은 적어도 2개 이상 컬럼이 필요하다.   
+
+하나의 파라미터로 테스트 하고 싶다면 아래와 같이 가능하다.   
+
+```groovy
+where:
+a | _
+1 | _
+5 | _
+2 | _
+```
+
+또한, where 코드에서 파라미터와 결과값을 보기 좋게 구분이 가능하다.     
+> | 대신 || 사용 가능하다. 단지 보기 좋게 구분하기 위함이다.   
+
+```groovy
+
+where:
+a | b || c
+1 | 2 || 2
+2 | 5 || 5
+```
 
 `만약 이를 JUnit 기반의 테스트코드로 작성했다면 어떻게 작성했을까?`      
 `a, b, c 각 검사 케이스가 많아질 수록 중복코드가 계속해서 발생했을 것이다.`   
@@ -248,38 +299,6 @@ class MainTest extends Specification{
 
     def "입력값을 받아서 divideNumber로 나눈다."() {
 
-        given:
-        def numberBuilder = Mock(NumberBuilder.class)
-        int divideNumber = 2
-
-        when:
-        numberBuilder.buildNumber() >> 5  // 목 객체 5 반환 하도록 설정
-
-        int input = numberBuilder.buildNumber()
-        DivideUtils.divide(input, divideNumber)
-
-        then:
-        DivideUtils.divide(input,divideNumber) == 2
-    }
-}
-```   
-
-만약 Exception을 반환해야 한다면 아래와 같이 가능하다.  
-
-```java
-numberBuilder.buildNumber() >> { throw new Exception() }
-```
-
-#### 2-5) 호출 횟수 검증   
-
-Spock의 실행 횟수 검증 방법을 살펴보자.   
-
-아래와 같이 `메소드 앞에 숫자를 * 하면 그게 바로 수행 횟수 검증 코드가 된다.`   
-
-
-```java
-1 * numberBuilder.buildNumber()
-```
 
 위의 1 값을 2로 변경하면 2번 호출 되었는지를 확인한다.   
 `혹은 최소 실행 횟수와 최대 실행 횟수를 지정하여 검증할 수도 있다.`      
@@ -295,6 +314,18 @@ Spock의 실행 횟수 검증 방법을 살펴보자.
 (1..2) * numberBuilder.buildNumber()
 ```
 
+#### 2-6) 올인원 느낌의 편의성    
+
+Junit을 사용했을 때 assertThat 구문과 matcher, 그리고 
+여러 matcher를 제공해주는 Hamcrest라는 라이브러리를 알고 있을 것이다.   
+
+하지만, 항상 불편했던 부분이 matcher를 사용할 때 static import가 IDE에서 
+제대로 지원되지 않거나 지원되더라도 너무 많은 힌트를 줘서 헤멜 때가 많았다.   
+
+```java
+import static org.hamcrest.CoreMatchers.*;  
+import static org.hamcrest.MatcherAssert.assertThat;  
+```
 
 ---
 
@@ -302,8 +333,6 @@ Spock의 실행 횟수 검증 방법을 살펴보자.
 
 간략하게 기존 테스트 코딩의 불편함을 살펴봤으며, Spock으로 많은 
 불편이 해소되고 코드가 간결해지는 것을 보았다.   
-
-실제로 사용해보면, 글로 보는 것보다 더 좋다고 느낄 것이다.   
 
 어쩌면 테스트 편의성을 확보하는 일이 당장 시급하지 않을 수도 있다.   
 새 기능 구현, 트러블슈팅 등에 밀리기 쉽다. 하지만 그렇게 중요한 
