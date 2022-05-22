@@ -299,11 +299,26 @@ class MainTest extends Specification{
 
     def "입력값을 받아서 divideNumber로 나눈다."() {
 
+```
 
-위의 1 값을 2로 변경하면 2번 호출 되었는지를 확인한다.   
-`혹은 최소 실행 횟수와 최대 실행 횟수를 지정하여 검증할 수도 있다.`      
+#### 2-5) 다양한 호출 회수 검증   
 
-```java
+아래와 같이 사용하면 메소드의 호출 횟수를 
+확인해 볼 수 있고, buildNumber()가 한번도 호출되지 
+않아야 한다.   
+
+```groovy
+then:
+0 * numberBuilder.buildNumber()
+```
+
+위의 0 값을 1로 변경하면 1번 호출 되었는지를 확인한다.   
+
+`호출 회수를 검증할 때 정확히 몇번의 형태가 아니라
+범위를 지정해줄 수 있다.`   
+
+```groovy
+then:
 // 최소 1번 이상 실행   
 (0.._) * numberBuilder.buildNumber()
 

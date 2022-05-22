@@ -287,6 +287,7 @@ class RedisConfigTest extends Specification {
 
 **Reference**    
 
+<https://callistaenterprise.se/blogg/teknik/2020/10/09/speed-up-your-testcontainers-tests/>   
 <https://bsideup.gitbooks.io/spring-io-testcontainers-workshop/content/steps/step6.html>    
 <https://loosie.tistory.com/793>   
 <https://www.testcontainers.org/>   
