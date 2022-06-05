@@ -157,7 +157,22 @@ IP의 주소를 확인해야 하는 번거로움이 발생한다.
 탄력적 IP를 연결하고 다시 인스턴스 정보를 확인해보면 IP가 할당된 것을 볼 수 있다.   
 퍼블릭 IP 주소도 기존 값에서 탄력적 IP 주소로 자동으로 변경되었다.   
 
-<img width="1100" alt="스크린샷 2022-06-05 오후 8 18 26" src="https://user-images.githubusercontent.com/26623547/172048140-09b61bf0-0f26-4203-961d-d7ad58ed1a5b.png">   
+<img width="1100" alt="스크린샷 2022-06-05 오후 8 18 26" src="https://user-images.githubusercontent.com/26623547/172048140-09b61bf0-0f26-4203-961d-d7ad58ed1a5b.png">     
+
+- - - 
+
+## 3. SSH 클라이언트로 서버 접속    
+
+이제 내가 만든 EC2 인스턴스에 접속해보자.   
+`인스턴스 정보에서 연결 버튼을 클릭하면 인스턴스에 연결 가능한 
+여러가지 방법을 알려준다.`   
+
+<img width="1000" alt="스크린샷 2022-06-05 오후 11 15 06" src="https://user-images.githubusercontent.com/26623547/172054933-83b397ee-bafe-42de-b529-e17f2f031cd1.png">   
+
+여기서는 SSH 클라이언트로 접속하는 방법을 확인하고 그대로 따라가보자.   
+
+<img width="1000" alt="스크린샷 2022-06-05 오후 11 15 21" src="https://user-images.githubusercontent.com/26623547/172054938-ee8cd486-31f5-4c97-a7b9-b337c741be76.png">   
+
 
 - - -   
 
