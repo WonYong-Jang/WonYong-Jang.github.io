@@ -1,12 +1,17 @@
 ---
 layout: post
-title: "[AWS] EC2 인스턴스 생성 및 고정 IP"
-subtitle: "Elastic Compute Cloud / Elastic IP"
+title: "[AWS] EC2 인스턴스 생성 및 고정 IP를 이용한 클라우드 서비스 배포"
+subtitle: "Elastic Compute Cloud / Elastic IP / Docker Compose를 이용하여 ec2에 애플리케이션 배포하기"
 comments: true
 categories : AWS
 date: 2022-06-05
 background: '/img/posts/mac.png'
 ---
+
+이번 글에서는 AWS의 EC2를 생성하고 Docker Compose를 이용하여 
+애플리케이션을 배포하는 과정을 다루려고 한다.   
+
+AWS는 프리티어로 가입이 되어 있다고 가정하고 진행한다.   
 
 ## 1. AWS EC2 인스턴스 생성   
 
@@ -226,8 +231,94 @@ Stop된 상태라면 과금이 발생한다.
 
 <img width="1376" alt="스크린샷 2022-06-06 오후 4 53 38" src="https://user-images.githubusercontent.com/26623547/172119445-3bab7f12-f006-4149-a935-eaa8019f118a.png">   
  
- 
+- - - 
 
+## 5. Docker Compose 설치 및 배포   
+
+EC2에 접속하여 도커 및 Git을 설치해 보자.  
+
+#### 5-1) Git 설치   
+
+```
+#Perform a quick update on your instance:
+$ sudo yum update -y
+
+#Install git in your EC2 instance
+$ sudo yum install git -y
+
+#Check git version
+$ git version
+```
+
+#### 5-2) 도커 및 도커 컴포즈 설치   
+
+```
+//도커 설치  
+$ sudo yum install docker
+$ docker -v
+
+// 도커 컴포즈 설치 
+$ sudo curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+
+// 실행 권한 적용   
+$ sudo chmod +x /usr/local/bin/docker-compose    
+$ sudo chmod 666 /var/run/docker.sock
+$ docker-compose -v
+```   
+ 
+#### 5-3) 도커 시작하기   
+
+```
+$ sudo systemctl start docker
+```
+
+#### 5-4) Docker Compose 파일이 존재하는 소스 내려받기  
+
+```
+$ git clone https://github.com/WonYong-Jang/Pharmacy-Recommendation.git
+```  
+
+#### 5-5) Docker 환경변수    
+
+로컬에서 개발할 때, DB 계정 정보나 외부에 노출되면 안되는 값들을 따로 
+제외하여 관리하였고 이를 도커 컨테이너를 실행할 때 전달해주어야 하는데 
+이때 .ENV 파일을 사용할 수 있다.  
+
+`docker-compose를 사용할때 .env라는 파일에 환경변수를 사용하면 자동으로 
+참조하여 사용할 수 있다.`    
+
+이를 동일하게 EC2에서도 docker-compose파일이 있는 위치에 
+아래와 같이 환경변수 값들을 추가해 주어서 docker-compose 실행시 
+해당 값들을 참조하여 컨테이너를 실행시킬 수 있게 해준다.   
+
+```
+$ vi .env   
+
+SPRING_DATASOURCE_USERNAME=root
+SPRING_DATASOURCE_PASSWORD=1234
+```
+
+.env 파일을 생성후 아래 명령어를 통해 값을 확인 가능하다.   
+
+```
+$ docker-compose config    
+```   
+
+#### Docker 이미지 받고 Docker Compose 실행    
+
+```
+$ docker pull {도커 허브 이미지 경로}
+
+$ docker-compose up
+```
+
+위와 같이 도커 허브에 push한 이미지가 있다면, 해당 이미지를 
+내려받고 docker-compose를 이용해서 애플리케이션을 실행시킨다.     
+
+<img width="882" alt="스크린샷 2022-06-06 오후 6 07 46" src="https://user-images.githubusercontent.com/26623547/172131535-a3d87de5-dac4-43cb-a5fb-bb16245826ed.png">    
+
+위에서 적용한 Elastic IP를 통해 접속하게 되면, 정상적으로 애플리케이션을 
+접속하는 것을 확인 할 수 있다.   
 
 - - -   
 
