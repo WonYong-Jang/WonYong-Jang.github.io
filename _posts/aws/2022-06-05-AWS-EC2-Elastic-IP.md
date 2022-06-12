@@ -304,7 +304,7 @@ SPRING_DATASOURCE_PASSWORD=1234
 $ docker-compose config    
 ```   
 
-#### Docker 이미지 받고 Docker Compose 실행    
+#### 5-6) Docker 이미지 받고 Docker Compose 실행    
 
 ```
 $ docker pull {도커 허브 이미지 경로}
