@@ -70,7 +70,7 @@ background: '/img/bg-index.jpg'
     - 지원자의 거주지를 위, 경도로 변환 후 버스 정류장 위, 경도와 haversine formula 공식을 이용하여 가까운 거리 계산      
     - Redis를 활용하여 버스 정류장 데이터를 캐싱하여 성능 개선   
     - 상담사의 상담 준비시간(After Call Work)을 68.2% 개선    
-        - As-Is : 59sec (상담사의 셔틀버스노선 확인 시간)       
+        - As-Is : 59sec (상담사의 셔틀버스 노선 확인 시간)       
         - To-Be : 19sec      
 
 - Build customer service data pipeline with Kafka, Spark streaming and DocumentDB       
