@@ -28,7 +28,28 @@ background: '/img/posts/spring.png'
 junit의 주요 요소들은 모두 spock에 있기 때문이다.  
 둘의 구성요소를 비교해보면 아래와 같다.   
 
-<img width="782" alt="스크린샷 2022-04-30 오후 10 14 24" src="https://user-images.githubusercontent.com/26623547/166107075-adae39ae-aba4-4f40-ac6e-146481c3330b.png">   
+<img width="782" alt="스크린샷 2022-04-30 오후 10 14 24" src="https://user-images.githubusercontent.com/26623547/166107075-adae39ae-aba4-4f40-ac6e-146481c3330b.png">     
+
+```java
+class ExampleSpecification extends Specification {
+    def setupSpec() {
+        // run before the first feature method  
+    }
+
+    def setup() {
+        // run before every feature method   
+    }
+
+    def cleanup() {
+        // run after every feature method 
+    }
+
+    def cleanupSpec() {
+        // run after the last feature method   
+    }
+
+}
+```
 
 이제 JUnit을 기반으로 테스트를 작성할 때 불편했던 점과 Spock으로 
 해결할 수 있는 부분을 살펴보자.    

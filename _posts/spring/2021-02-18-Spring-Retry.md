@@ -271,6 +271,8 @@ public Optional<DocumentDto> recover(RuntimeException e, String address) {
 }
 ```
 
+`이제 최대 2번 재시도를 하고, 모두 실패하게 된다면 recover 메서드가 실행된다.`     
+
 `여기서 주의할 점은 Recover 메서드의 반환 타입은 반드시 맞춰야 하는데, convertAddressToGeospatialData 메서드의 
 반환타입을 맞춰 주었다.`   
 
@@ -297,8 +299,6 @@ class Service {
 ```
 
 > retryable 메소드와 recover 메소드 반환 타입을 맞춰주지 않으면 Cannot locate recovery method 에러가 발생한다.  
-
-`이제 최대 2번 재시도를 하고, 모두 실패하게 된다면 recover 메서드가 실행된다.`   
 
 > recover 메서드에서는 특정 값을 리턴해줄 수도 있고, exception을 throw 할 수도 있다.   
 
