@@ -38,7 +38,7 @@ Datadog 같은 기업의 클라우드 환경 솔루션도 이런 분산 시스�
 네트워크에 더 부담을 줄 가능성이 크다.    
 예를 들어 트래픽이 몰려서 요청 자체가 지연되고 있는데 모든 클라이언트가 
 재시도를 연속으로 시도한다고 생각해보자.  
-네트워크 트래픽이 3배 더 증가할 것이다.   
+네트워크 트래픽이 더 증가할 것이다.   
 `따라서 Retry 행위는 똑똑해야 하며, 
     Spring에서 재시도 기능을 사용하기 위해서는 Resilience4j, Spring Retry 라이브러리를 보통 많이 사용한다.`      
 
@@ -51,7 +51,8 @@ Datadog 같은 기업의 클라우드 환경 솔루션도 이런 분산 시스�
 재처리를 할 때 보통 아래를 고려하게 된다.    
 
 - 재시도를 몇 번 실행할 것인가?     
-- 재시도 하기 전에 지연시간을 얼마나 줄 것인가?     
+- 재시도 하기 전에 지연시간을 얼마나 줄 것인가?    
+- 재시도를 모두 실패했을 경우 어떻게 처리할 것인가?   
 
 물론 이를 직접 자바 코드로 구현하여 사용할 수 있지만, 비지니스 로직에 
 집중이 가능하도록 스프링에서 제공하는 라이브러리를 사용했을 때 
@@ -112,7 +113,7 @@ public class RetryTemplateConfig {
     @Bean
     public RetryTemplate retryTemplate() {
         FixedBackOffPolicy backOffPolicy = new FixedBackOffPolicy();
-        backOffPolicy.setBackOffPeriod(1); //지정한 시간만큼 대기후 재시도 한다.
+        backOffPolicy.setBackOffPeriod(1000L); //지정한 시간만큼 대기후 재시도 한다.
         // ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
         // backOffPolicy.setInitialInterval(100L); //millisecond
         // backOffPolicy.setMultiplier(2); //interval * N 만큼 대기후 재시도 한다.
@@ -199,11 +200,17 @@ BackoffPolicy 인터페이스의 backOff 메소드를 원하는 방식으로 구
 하지만, 위에서 언급한 것처럼 똑똑하게 재처리를 하지 않으면 
 오히려 네트워크 부하를 줄 가능성이 크다.   
 
-그래서 조금 더 좋은 방법으로 `점진적으로 시간 간격이 늘어나는 ExponentialBackOffPolicy`를 
-사용할 수 있다.   
+그래서 조금 더 좋은 방법으로 `점진적으로 시간 간격이 늘어나는 ExponentialBackOffPolicy`를 사용할 수 있다.      
 이는 지수에 비례하여 backOff 시간을 조절한다. 예를 들어 첫번째 재시도를 위한 대기 시간은 
 100ms 두번째 재시도를 위한 대기시간은 200ms, 세번째 재시도를 위한 대기 시간은 400ms 처럼 
-지수배만큼 늘어나는 방식이다.   
+정해진 배수만큼 늘어나는 방식이다.    
+아래 코드로 확인해보자.   
+
+```java
+ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
+backOffPolicy.setInitialInterval(100L); // millisecond
+backOffPolicy.setMultiplier(2); //interval * N 만큼 대기후 재시도 한다.
+```
 
 그 외에도 Jitter라는 방식으로 backOff를 지정할 수 있으며, AWS에서도 Retry를 
 [Exponential BackOff And Jitter](https://docs.aws.amazon.com/ko_kr/general/latest/gr/api-retries.html) 함께 사용한다고 한다.   
