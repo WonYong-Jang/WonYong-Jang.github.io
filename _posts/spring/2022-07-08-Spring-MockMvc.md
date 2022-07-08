@@ -1,0 +1,277 @@
+---
+layout: post
+title: "[Spring] MockMvc를 이용하여 controller 테스트하기"
+subtitle: "standaloneSetup, webAppContextSetup" 
+comments: true
+categories : Spring
+date: 2022-07-08
+background: '/img/posts/spring.png'
+---
+
+## 1. MockMvc란?   
+
+우리는 웹 어플리케이션을 작성한 후, 해당 웹 어플리케이션을 
+Tomcat이라는 이름의 WAS(Web Application Server)에 배포하여 실행한다.   
+
+브라우저의 요청은 WAS에 전달되는 것이고 응답도 WAS에게서 받게 된다.   
+WAS는 요청을 받은 후, 해당 요청을 처리하는 웹 어플리케이션을 실행하게 된다.   
+즉, Web API를 테스트한다는 것은 WAS를 실행해야만 된다는 문제가 있다.    
+
+> Tomcat은 대표적인 서블릿 컨테이너 중 하나이며, 톰캣 같은 WAS가 
+java 파일을 컴파일해서 class로 만들고 메모리에 올려 서블릿 객체를 만든다.   
+
+이런 문제를 해결하기 위해 MockMvc가 추가 되었다.   
+
+`MockMvc란 스프링 3.2부터 스프링 MVC를 모킹하여 웹 어플리케이션을 
+테스트하는 유용한 라이브러리이다.`        
+이 기능으로 실제 서블릿 컨테이너에서 컨트롤러를 실행하지 않고도 
+컨트롤러에 HTTP 요청을 할 수 있다.   
+스프링 Mock MVC 프레임워크는 어플리케이션을 마치 
+서블릿 컨테이너에서 실행하는 것처럼 스프링 MVC를 흉내 내지만 
+실제 컨테이너에서 실행하지는 않는다.   
+
+여기서 서블릿 컨테이너를 모킹한다는 의미는 무엇일까?    
+
+`웹 환경에서 컨트롤러를 테스트하려면 서블릿 컨테이너가 구동되고 DispatcherServlet 객체가 
+메모리에 올라가야 한다. 이때 서블릿 컨테이너를 모킹하면 실제 서블릿 
+컨테이너가 아닌 테스트 모형 컨테이너를 사용해서 간단하게 컨트롤러를 테스트할 수 있다.`    
+
+테스트에서 Mock MVC를 설정하려면 MockMvcBuilders를 사용한다.   
+이 클래스는 정적 메서드 두 개를 제공한다.   
+
+standaloneSetup() 메서드와 webAppContextSetup() 이다.    
+
+`먼저 webAppContextSetup은 스프링에서 로드한 WebApplicationContext의 
+인스턴스로 작동하기 때문에 스프링 컨트롤러는 물론 의존성까지 로드되기 
+때문에 완전한 통합테스트를 할 수 있다.`       
+
+`반면, standaloneSetup은 테스트할 컨트롤러를 수동으로 주입하는 것이며, 
+    한 컨트롤러에 집중하여 테스트하는 용도로만 사용한다는 점에서 
+    유닛 테스트와 유사하다.`       
+
+이제 예제를 통해 Controller를 테스트 해보자.   
+
+- - - 
+
+## 2. MockMvc 사용하기    
+
+MockMvc는 spring-test 라이브러리에 포함되어 있으며, MockMvc클래스를 살펴보면 
+아래와 같다.   
+
+```java
+/**
+ * Main entry point for server-side Spring MVC test support.
+ *
+ * import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+ * import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+ * import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+ *
+ * // ...
+ *
+ * WebApplicationContext wac = ...;
+ *
+ * MockMvc mockMvc = webAppContextSetup(wac).build();
+ *
+ * mockMvc.perform(get("/form"))
+ *     .andExpect(status().isOk())
+ *     .andExpect(content().mimeType("text/html"))
+ *     .andExpect(forwardedUrl("/WEB-INF/layouts/main.jsp"));
+ *
+ * @since 3.2
+ */
+public final class MockMvc {
+    //...
+}
+```   
+
+위에서 보이는 static 메서드를 import 해서 사용하자.   
+
+```java
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;  
+```
+
+아래는 테스트할 Controller이며, 2개의 메소드를 각각 테스트 해보자.    
+
+```java
+@Controller
+@RequiredArgsConstructor
+public class FormController {
+    private final PharmacyRecommendationService pharmacyRecommendationService;
+
+    @GetMapping("/")
+    public String main() {
+        return "main";
+    }
+
+    @PostMapping("/search")
+    public ModelAndView postDirection(@ModelAttribute InputDto inputDto)  {
+
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.setViewName("output");
+        modelAndView.addObject("outputFormList",
+                pharmacyRecommendationService.recommendPharmacyList(inputDto.getAddress()));
+
+        return modelAndView;
+    }
+}
+```
+
+#### 2-1) 테스트 1   
+
+먼저 get방식의 main 메소드를 MockMvc를 이용하여 테스트 해보자.   
+
+```java
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
+
+class FormControllerTest extends Specification {
+
+    private MockMvc mockMvc
+    private PharmacyRecommendationService pharmacyRecommendationService = Mock()
+
+    def setup() {
+        // FormController를 MockMvc 객체로 만든다.
+        mockMvc = MockMvcBuilders.standaloneSetup(new FormController(pharmacyRecommendationService)).build();
+    }
+    def "GET /"() {
+
+        expect:
+        // FormController 의 "/" URI를 get방식으로 호출
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk()) // 예상 값을 검증한다.
+                .andExpect(view().name("main")) // 호출한 view의 이름이 main인지 검증(확장자는 생략)   
+                .andDo(log())
+    }
+}
+```
+
+위와 같이 perform()을 이용하여 설정한 MockMvc를 실행 할 수 있으며, 
+    andExpect() 메서드를 통해 테스트를 검증할 수 있다.   
+
+이 메소드가 리턴하는 객체는 ResultActions라는 인터페이스이며, 아래와 같이 
+여러가지로 사용 가능하다.   
+
+```java
+this.mockMvc.perform(get("/")) // basic
+this.mockMvc.perform(post("/")) // send post
+this.mockMvc.perform(get("/?foo={var}", "1")) // query string
+this.mockMvc.perform(get("/").param("bar", "2")) // using param
+this.mockMvc.perform(get("/").accept(MediaType.ALL)) // select media type
+```
+
+또한, andDo()를 이용하여 print, log를 사용하여 출력할 수 있다.   
+print()는 실행 결과를 지정해준 대상으로 출력하며 default는 System.out으로 출력한다.   
+log()는 실행 결과를 디버깅 레벨로 출력하며 레벨은 org.springframework.test.web.servlet.result 이다.     
+
+```
+MockHttpServletRequest:
+      HTTP Method = GET
+      Request URI = /
+       Parameters = {}
+          Headers = []
+             Body = <no character encoding set>
+    Session Attrs = {}
+
+Handler:
+             Type = com.example.demo.direction.controller.FormController
+           Method = com.example.demo.direction.controller.FormController#main()
+
+Async:
+    Async started = false
+     Async result = null
+
+Resolved Exception:
+             Type = null
+
+ModelAndView:
+        View name = main
+             View = null
+            Model = null
+
+FlashMap:
+       Attributes = null
+
+MockHttpServletResponse:
+           Status = 200
+    Error message = null
+          Headers = [Content-Language:"en"]
+     Content type = null
+             Body =
+    Forwarded URL = main
+   Redirected URL = null
+          Cookies = []
+```
+
+
+#### 2-2) 테스트 2    
+
+다음으로 post방식의 postDirection 메소드를 테스트해보자.   
+
+```java
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*
+
+class FormControllerTest extends Specification {
+
+    private MockMvc mockMvc
+    private PharmacyRecommendationService pharmacyRecommendationService = Mock()
+    private ObjectMapper objectMapper
+    private List<OutputDto> outputDtoList
+
+    def setup() {
+        // FormController를 MockMvc 객체로 만든다.
+        mockMvc = MockMvcBuilders.standaloneSetup(new FormController(pharmacyRecommendationService))
+                .build()
+
+        outputDtoList = Lists.newArrayList(
+                OutputDto.builder()
+                        .pharmacyName("pharmacy1")
+                        .build(),
+                OutputDto.builder()
+                        .pharmacyName("pharmacy2")
+                        .build()
+        )
+
+        objectMapper = new ObjectMapper()
+    }
+
+    def "POST /search"() {
+        given:
+        InputDto inputDto = new InputDto()
+        inputDto.setAddress("서울 성북구")
+
+        when:
+        pharmacyRecommendationService.recommendPharmacyList(_) >> outputDtoList
+        ResultActions result = mockMvc.perform(
+                post("/search")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+
+        then:
+        result.andExpect(status().isOk())
+                .andExpect(view().name("output"))
+                .andExpect(model().attributeExists("outputFormList"))
+                .andExpect(model().attribute("outputFormList", outputDtoList))
+                .andDo(print())
+    }
+}
+```
+
+
+- - -
+Referrence 
+
+<https://jdm.kr/blog/165>   
+
+{% highlight ruby linenos %}
+{% endhighlight %}
+
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}
+
