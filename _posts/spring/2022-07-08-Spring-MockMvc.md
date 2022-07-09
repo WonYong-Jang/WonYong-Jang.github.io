@@ -219,7 +219,6 @@ class FormControllerTest extends Specification {
 
     private MockMvc mockMvc
     private PharmacyRecommendationService pharmacyRecommendationService = Mock()
-    private ObjectMapper objectMapper
     private List<OutputDto> outputDtoList
 
     def setup() {
@@ -235,23 +234,24 @@ class FormControllerTest extends Specification {
                         .pharmacyName("pharmacy2")
                         .build()
         )
-
-        objectMapper = new ObjectMapper()
     }
-
     def "POST /search"() {
         given:
+        String address = "서울 성북구 종암동"
         InputDto inputDto = new InputDto()
-        inputDto.setAddress("서울 성북구")
+        inputDto.setAddress(address)
 
         when:
-        pharmacyRecommendationService.recommendPharmacyList(_) >> outputDtoList
         ResultActions result = mockMvc.perform(
                 post("/search")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputDto)))
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content("address="+address))
 
         then:
+        1 * pharmacyRecommendationService.recommendPharmacyList(argument -> {
+            assert argument == address
+        }) >> outputDtoList
+
         result.andExpect(status().isOk())
                 .andExpect(view().name("output"))
                 .andExpect(model().attributeExists("outputFormList"))
@@ -260,6 +260,20 @@ class FormControllerTest extends Specification {
     }
 }
 ```
+
+위의 경우 테스트 하기 위한 controller 로직을 살펴보면, 
+    pharmacyRecommendationService.recommendPharmacyList() 메소드를 호출하여 
+리턴한 결과 리스트를 outputFormList라는 이름으로 ModelAndView에 추가해준다.   
+
+하지만, Controller 레이어만 단위 테스트를 통해서 검증하고자 하므로 
+Service 레이어는 Mock 객체로 생성하여 결과값을 Stubbing 해준다.   
+
+따라서 위와 같이 post방식으로 호출하였을 때, 결과값이 정상적으로 200상태인지 
+model attribute 값들이 기대한 값과 동일한지 위와 같이 검증이 가능하다.   
+
+또한, ModelAttribute 어노테이션으로 의도한 값이 매핑이 되었는지 확인하기 위하여, 
+    contentType과 content를 post방식으로 요청하고 이를 의도한 값과 
+    비교하여 검증하였다.    
 
 
 - - -
