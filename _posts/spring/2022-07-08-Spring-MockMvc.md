@@ -244,12 +244,12 @@ class FormControllerTest extends Specification {
         when:
         ResultActions result = mockMvc.perform(
                 post("/search")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED) // @ModelAttribute 매핑 검증을 위한 content type 지정    
                         .content("address="+address))
 
         then:
         1 * pharmacyRecommendationService.recommendPharmacyList(argument -> {
-            assert argument == address
+            assert argument == address // mock 객체의 argument 검증    
         }) >> outputDtoList
 
         result.andExpect(status().isOk())
@@ -271,9 +271,75 @@ Service 레이어는 Mock 객체로 생성하여 결과값을 Stubbing 해준다
 따라서 위와 같이 post방식으로 호출하였을 때, 결과값이 정상적으로 200상태인지 
 model attribute 값들이 기대한 값과 동일한지 위와 같이 검증이 가능하다.   
 
-또한, ModelAttribute 어노테이션으로 의도한 값이 매핑이 되었는지 확인하기 위하여, 
-    contentType과 content를 post방식으로 요청하고 이를 의도한 값과 
-    비교하여 검증하였다.    
+또한, ModelAttribute 어노테이션으로 의도한 값이 매핑이 되었는지 확인하기 위하여,  
+    contentType과 content를 지정하고, 이를 기대한 주소값과 동일한지 
+    확인하였다.   
+
+참고로 [@ModelAttribute](https://wonyong-jang.github.io/spring/2020/06/07/Spring-Representational-State-Transfer.html)를 application/json 형태의 content type을 지정하여 요청하면, 
+    null이 출력되기 때문에 form 형식으로 content type을 요청해야 한다.      
+
+#### 2-3) 테스트 3    
+
+이번에는 아래 예제를 통해 `redirect 여부를 테스트` 해보자.    
+
+```java
+@GetMapping("/dir/{encodedId}")
+public String searchDirection(@PathVariable("encodedId") String encodedId) {
+
+    Direction resultDirection = directionService.findById(encodedId);
+
+    String result = buildRedirectUrl(resultDirection);
+
+    return "redirect:"+result;
+}
+```
+
+```java
+mockMvc.perform(get("/dir/{encodedId}", "r"))
+        .andExpect(redirectedUrl("https://map.kakao.com/link/map/address,38.11,128.11"));
+        .andExpect(status().is3xxRedirection());
+```
+
+위처럼 리다이렉트는 status().is3xxRedirection()으로 확인 가능하다.    
+
+```
+MockHttpServletRequest:
+      HTTP Method = GET
+      Request URI = /dir/r
+       Parameters = {}
+          Headers = []
+             Body = <no character encoding set>
+    Session Attrs = {}
+
+Handler:
+             Type = com.example.demo.direction.controller.DirectionController
+           Method = com.example.demo.direction.controller.DirectionController#searchDirection(String)
+
+Async:
+    Async started = false
+     Async result = null
+
+Resolved Exception:
+             Type = null
+
+ModelAndView:
+        View name = redirect:https://map.kakao.com/link/map/address,38.11,128.11
+             View = null
+            Model = null
+
+FlashMap:
+       Attributes = null
+
+MockHttpServletResponse:
+           Status = 302
+    Error message = null
+          Headers = [Content-Language:"en", Location:"https://map.kakao.com/link/map/address,38.11,128.11"]
+     Content type = null
+             Body = 
+    Forwarded URL = null
+   Redirected URL = https://map.kakao.com/link/map/address,38.11,128.11
+          Cookies = []
+```
 
 
 - - -

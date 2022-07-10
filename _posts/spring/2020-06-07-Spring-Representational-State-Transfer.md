@@ -79,7 +79,20 @@ Content-Type: text/plain;charset=UTF-8   //
 Date: Mon, 08 Jun 2020 13:28:21 GMT
 ```
 
-- - - 
+- - -    
+
+### PathVariable    
+
+`@PathVariable 어노테이션이란 아래와 같이 URI의 
+일부를 변수로 전달할 수 있다.`    
+
+
+```java
+@GetMapping("/dir/{encodedId}")
+    public String searchDirection(@PathVariable("encodedId") String encodedId) {
+       // ...
+    }
+```
 
 ### ModelAttribute     
 
@@ -116,6 +129,20 @@ public class InputDto {
          <button type="submit" class="btn btn-primary" id="btn-save">Search</button>
        </div>
 </form>
+```    
+
+`쿼리 스트링 또는 form 형태로 데이터를 받기 때문에, 
+    application/json 형식으로 받지 못한다.`   
+
+아래와 같이 form테스트를 진행할 때 application/x-www-form-urlencoded 형식으로 
+content type을 지정해야 정상적으로 전송된다.      
+
+
+```java
+mockMvc.perform(post("/search")
+       .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+       .content("address="+address))
+       .andExpect(status().isOk())
 ```
 
 - - -
