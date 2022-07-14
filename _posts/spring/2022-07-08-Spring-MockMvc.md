@@ -294,6 +294,7 @@ public String searchDirection(@PathVariable("encodedId") String encodedId) {
 }
 ```
 
+
 ```java
 mockMvc.perform(get("/dir/{encodedId}", "r"))
         .andExpect(redirectedUrl("https://map.kakao.com/link/map/address,38.11,128.11"));
