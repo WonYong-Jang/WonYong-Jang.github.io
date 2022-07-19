@@ -33,6 +33,7 @@ background: '/img/bg-index.jpg'
 - Spring Boot/MVC 
 - JPA, Hibernate 
 - Junit4/5, Mockito, Spock   
+- Nginx, Tomcat   
 - Gradle, Maven   
 
 ##### DevOps   
@@ -42,7 +43,6 @@ background: '/img/bg-index.jpg'
 - Elastic Cache (Redis), S3, EC2, RDS, Cloud Watch   
 - Spark, Kafka, Hive 
 - ELK Stack   
-- Nginx, Tomcat   
 - Grafana, Graylog   
 - Git/Github, Gerrit      
 
