@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Gradle] Gradle task 이해와 Gradle Wrapper 사용하기"
-subtitle: "gradle wrapper"    
+subtitle: "gradle wrapper /  up to date"    
 comments: true
 categories : DevOps
 date: 2022-07-17
@@ -82,10 +82,11 @@ Wrapper를 빌드할 때 실행할 배치 스크립트이다.
 
 ## 2. Gradle task
 
-`Gradle의 task는 Gradle 프로젝트의 작업 단위이다.`
-실행 시 콘솔상에서 gradle {task 명} 로 실행을 하면 된다. 이러한 task는
-groovy언어로 작성되어 지며 Gradle 내부에 미리 만들어져 있는 내장 task들과
-build.gradle 파일에 사용자가 정의한 사용자 정의 task 두 종류가 존재한다.
+`Gradle의 task는 Gradle 프로젝트의 작업 단위이다.`    
+task는 다른 task가 먼저 선행되어야 실행되는 것과 같은 의존성을 
+가지기도 하며, 실행 시 콘솔상에서 gradle {task 명} 로 실행을 하면 된다.     
+`이러한 task는 groovy언어로 작성되며 Gradle 내부에 미리 만들어져 있는 내장 task들과
+build.gradle 파일에 사용자가 정의한 사용자 정의 task 두 종류가 존재한다.`   
 
 gradle task는 아래와 같이 확인 가능하다.    
 
@@ -117,7 +118,62 @@ classes - Assembles main classes.
 clean - Deletes the build directory.
 
 // ...
+```   
+
+### 2-1) task up-to-date    
+
+task는 함수와 같이 input과 output이 있으며, input과 output을 확인함으로써 
+해당 task가 최신인지를 확인한다.   
+
+따라서 input과 output 변화가 없다면, up to date를 표기해줌으로써 
+해당 태스크를 실행하지 않는다.   
+`따라서, gradle build를 처음 실행했을 때보다 두번째 실행했을 때 
+빌드 속도가 향상되는 것은 이 때문이다.`   
+
 ```
+> Task :compileJava UP-TO-DATE
+Resolving global dependency management for project 'demo'
+Excluding []
+Excluding []
+Caching disabled for task ':compileJava' because:
+  Build cache is disabled
+Skipping task ':compileJava' as it is up-to-date.
+:compileJava (Thread[Execution worker for ':',5,main]) completed. Took 0.524 secs.
+:compileGroovy (Thread[Execution worker for ':',5,main]) started.
+
+> Task :compileGroovy NO-SOURCE
+Skipping task ':compileGroovy' as it has no source files and no previous output files.
+:compileGroovy (Thread[Execution worker for ':',5,main]) completed. Took 0.0 secs.
+:processResources (Thread[Execution worker for ':',5,main]) started.
+
+> Task :processResources UP-TO-DATE
+// ...
+```
+
+### 2-2) task 기본 사용법   
+
+task를 사용하기 위해 아래와 같이 사용가능하다.   
+
+```
+task {task 명} {
+    // 내용   
+}
+
+task hello {
+    println "hello"
+}
+```
+
+실행은 아래와 같이 task 명을 입력하여 실행하면 된다.   
+
+```
+$ ./gradlew hello
+
+hello
+```
+
+
+
 
 
 
@@ -125,6 +181,7 @@ clean - Deletes the build directory.
 
 **Reference**    
 
+<https://stackoverflow.com/questions/15137271/what-does-up-to-date-in-gradle-indicate>   
 <https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=sharplee7&logNo=221413629068>   
 <https://goateedev.tistory.com/133>    
 <https://junilhwang.github.io/TIL/Gradle/GradleWrapper/#build-gradle-%E1%84%8C%E1%85%A1%E1%86%A8%E1%84%89%E1%85%A5%E1%86%BC>    
