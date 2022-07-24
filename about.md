@@ -109,6 +109,18 @@ background: '/img/bg-index.jpg'
     > [https://github.com/kookmin-sw/2018-cap1-4](https://github.com/kookmin-sw/2018-cap1-4)   
 
 
+<br>  
+
+- - - 
+
+## ✍🏻 Personal Experience    
+
+#### 패스트 캠퍼스 강의     
+
+- [<u>https://fastcampus.co.kr/dev_online_befinal</u>](https://fastcampus.co.kr/dev_online_befinal)   
+- [<u>외부 API와 공공데이터를 이용한 약국 추천 서비스</u>](https://github.com/WonYong-Jang/Pharmacy-Recommendation)를 
+주제로 강의 진행     
+
 <br>   
 
 - - - 
@@ -129,13 +141,6 @@ background: '/img/bg-index.jpg'
 
 - [<u>Airflow에서 execution date에 대한 오해와 한국시간에 대한 고려</u>](https://wonyong-jang.github.io/bigdata/2021/03/08/BigData-Apache-Airflow.html)    
 
-
-
-
-<br>    
-#### Airflow를 이용한 Hive 성능 최적화     
-
-- [<u>TEZ엔진과 파티셔닝 사용을 통해 Hive 쿼리 성능 개선</u>](https://wonyong-jang.github.io/hadoop/2021/05/26/Hadoop-Apache-Hive.html)   
 
 
 <br>   
