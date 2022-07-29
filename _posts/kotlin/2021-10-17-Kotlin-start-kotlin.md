@@ -649,16 +649,16 @@ fun recognize(c: Char) = when (c) {
 
 ```kotlin
 var i = 0
-    do {
-        i++
-        println(i)
-    }while(i >= 10)
+do {
+    i++
+    println(i)
+}while(i >= 10)
 
 var i2 = 0
-    while (i2 < 10){
-        i2++
-        println(i2)
-    }
+while (i2 < 10){
+    i2++
+    println(i2)
+}
 ```
 
 

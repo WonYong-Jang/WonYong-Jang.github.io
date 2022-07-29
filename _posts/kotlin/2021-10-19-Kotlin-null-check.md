@@ -184,7 +184,7 @@ int l = (b != null) ? b.length() : -1;
     ```   
 
 - `Safe Cast`   
-    - 코틀린에서 형변환할 때 Safe Cast를 이용하면 안전하다. 아래코드에서 string은 문자열이지만 Any타입니다.    
+    - 코틀린에서 형변환할 때 Safe Cast를 이용하면 안전하다. 아래코드에서 string은 문자열이지만 Any 타입이다.       
     - as?를 이용하여 String과 Int로 형변환을 시도하고 있다. String은 가능하기 때문에 성공하였고, Int는 타입이 맞지 않기 때문에 null을 리턴하였다.   
     ```kotlin
     val string: Any = "AnyString"
