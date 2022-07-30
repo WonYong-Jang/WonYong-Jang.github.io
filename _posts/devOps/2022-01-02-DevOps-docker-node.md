@@ -359,7 +359,7 @@ $ docker-compose -d up
 
 // 이미지가 있든 없든 이미지를 빌드하고 컨테이너를 실행한다.   
 // 이미지 수정된 부분이 반영이 필요하면 build 옵션을 추가한다.   
-$ docker-compose up -- build   
+$ docker-compose up --build   
 
 // 중지 
 $ docker-compose down 
