@@ -250,7 +250,12 @@ $ sudo yum install git -y
 $ git version
 ```
 
-#### 5-2) 도커 및 도커 컴포즈 설치   
+#### 5-2) 도커 및 도커 컴포즈 설치     
+
+docker client와 server(docker daemon)간 통신 방식은 기본적으로 
+unix domain socket(IPC socket)을 사용하며, 내부적으로 
+/var/run/docker.sock파일을 사용하여 통신한다.   
+따라서, 아래와 같이 설치 후 권한을 부여한다.   
 
 ```
 //도커 설치  
