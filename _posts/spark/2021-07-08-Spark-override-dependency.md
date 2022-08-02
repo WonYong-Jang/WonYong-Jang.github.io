@@ -55,13 +55,37 @@ shadowJar 플러그인에서 relocate 기능을 사용하여 해결하였으며,
 
 ## shadowJar의 relocate 사용하기
 
-기본적으로 gradle 빌드를 하면 내가 만들 코드만 컴파일하여 build/libs 경로에 
-jar 파일로 패키징된다. 개발이 끝나고 IDE를 벗어나 커맨드로 동작시키려면 
-dependency로 걸어서 사용하던 라이브러리 파일들은 내가 손수 찾아서 클래스패스에 
-넣어줘야 한다.   
 
-클래스패스 잡고 하는거 다 귀찮으면, 내 jar 파일에 모든 라이브러리를 넣어주는 
-[shadowJar](https://imperceptiblethoughts.com/shadow/) 플러그인이 있다.   
+[shadowJar](https://imperceptiblethoughts.com/shadow/)은 
+그래들 플러그인이며 주요 목적은 2가지이다.   
+
+`첫번째는 실행 가능한 통일된 하나의 jar 파일을 만든다는 점과 
+2번째는 각 서브 프로젝트에서 중복되는 의존성 버전을 하나로 
+통일할 수 있다는 점이다.`    
+
+싱글 프로젝트가 아닌 멀티 모듈 프로젝트에서 shadow jar는 유용하다.   
+아래와 같이 A 프로젝트는 B,C 프로젝트를 의존한다고 해보자.   
+
+```
+// A setting.gradle 
+rootProject.name = 'A'
+
+include 'B'
+include 'C'
+```
+
+위와 같이 A 의 build.gradle이 작성되어 있으면 build가 실행될 때 
+의존하고 있는 B와 C의 build가 실행된다.   
+그 결과 만들어진 B와 C의 jar파일들이 A가 build를 돌 때 포함이 된다.   
+실제로 A의 jar를 압축해제하면 B와 C가 jar로 들어가 있다.    
+
+이 때 발생하고 있는 문제점은 A, B, C이 모두 사용하는 의존성의 
+버전이 다를 수 있다.    
+
+`즉, shadowJar는 B와 C의 jar를 압축해제하여 A, B, C의 통일된 
+하나의 Jar를 만든다.`      
+`이 과정에서 shadowJar는 동일한 의존성의 버전을 통일하는 작업을 한다.`   
+
 
 ```
 plugins {
@@ -157,6 +181,7 @@ relocate되었기 때문에 dependency 충돌을 해결할 수 있다.
 <https://blog.leocat.kr/notes/2017/10/11/gradle-shadowjar-make-fat-jar>    
 <https://stackoverflow.com/questions/38495683/what-is-the-solution-for-spark-cluster-libs-version-is-lower-than-my-projects-d>   
 <https://medium.com/@ruijiang/using-gradle-shadow-plugin-to-resolve-java-version-conflict-183bd6ea4228>   
+<https://guswns1659.github.io/newtech/Gradle)-Wiki/>    
 
 {% highlight ruby linenos %}
 
