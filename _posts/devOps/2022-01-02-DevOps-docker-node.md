@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Docker] 도커를 이용한 간단한 Node.js 어플 만들기"
-subtitle: " dockerfile / docker volume / Working Directory / docker compose"    
+subtitle: " dockerfile 최적화 / docker volume / Working Directory / docker compose 작성가이드"    
 comments: true
 categories : DevOps
 date: 2022-01-02
@@ -163,6 +163,8 @@ package.json을 먼저 COPY를 해주고, npm install을 하도록 변경하였�
 기존에 전체파일을 COPY를 먼저 했을 때는 소스코드가 조금만 변경되어도 
 전체 모듈를 다시 받게 되었지만 이를 분리시켜서 dockerfile을 생성하면 된다.   
 
+`즉, 각 단계의 빌드 캐시는 파일이 변경되었을 때만 재실행 하게 된다.`    
+
 ##### Dockerfile   
 
 ```
@@ -245,6 +247,12 @@ docker compose를 이용하면 된다.`
 `즉, docker compose에서는 compose 파일을 준비하여 커맨드를 1회 실행하는 
 것으로, 그 파일로부터 설정을 읽어들여 모든 컨테이너 서비스를 
 실행시키는 것이 가능하다.`    
+
+참고로, Dockerfile을 compose로 변환해주는 사이트가 있으니 참고하면 
+도움이 될 것이다.   
+[https://www.composerize.com/](https://www.composerize.com/) 사이트는 
+완벽하게 변환해주지는 않지만 처음 docker compose를 구성할 때 도움이 될 것이다.   
+
 
 이제 실습을 진행해보자.   
 
@@ -346,29 +354,15 @@ services:
 
 이제 docker-compose.yml파일이 있는 위치로 가서 실행을 해보자.   
 
-##### docker-compose 명령어   
+docker-compose 각 자세한 명령어는 [링크](https://wonyong-jang.github.io/devops/2021/12/31/DevOps-docker.html)를 참고하자.    
 
-```
-// 이미지가 없을 때 이미지를 빌드하고 컨테이너를 실행한다.   
-$ docker-compose up
-
-
-// detached 모드로서 앱을 백그라운드에서 실행시킨다.
-// 그래서 앱에서 나오는 output을 표출하지 않는다.   
-$ docker-compose -d up   
-
-// 이미지가 있든 없든 이미지를 빌드하고 컨테이너를 실행한다.   
-// 이미지 수정된 부분이 반영이 필요하면 build 옵션을 추가한다.   
-$ docker-compose up --build   
-
-// 중지 
-$ docker-compose down 
-```
 
 - - - 
 
 **Reference**    
 
+<https://meetup.toast.com/posts/277>    
+<https://www.composerize.com/>    
 <https://www.inflearn.com/course/%EB%94%B0%EB%9D%BC%ED%95%98%EB%A9%B0-%EB%B0%B0%EC%9A%B0%EB%8A%94-%EB%8F%84%EC%BB%A4-ci/lecture/52082?tab=curriculum&volume=1.00>    
 
 {% highlight ruby linenos %}

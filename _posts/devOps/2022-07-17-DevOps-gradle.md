@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Gradle] Gradle task 이해와 Gradle Wrapper 사용하기"
-subtitle: "gradle wrapper /  up to date"    
+subtitle: "gradle wrapper /  up to date / 빌드시 Plain jar 와 Executable jar"        
 comments: true
 categories : DevOps
 date: 2022-07-17
@@ -38,6 +38,7 @@ $ ./gradlew [task]
 `gradle build를 사용하면 로컬에 설치된 gradle과 java를 기준으로 build하고, 
     ./gradlew build를 실행하면 build.gradle파일에 정의한 내용을 
     기준으로 build되기 때문에 로컬 환경과 관계없이 프로젝트를 빌드할 수 있다.`      
+
 
 Gradle 프로젝트를 생성하면 기본적으로 아래와 같은 gradle 폴더가 생기게 된다.   
 
@@ -80,7 +81,53 @@ Wrapper를 빌드할 때 실행할 배치 스크립트이다.
 
 - - - 
 
-## 2. Gradle task
+## 2. Plain jar 와 Executable jar    
+
+위에서 gradle build를 살펴봤었고, 그 결과물로 jar파일을 확인할 수 있다.   
+참고로, `스프링 부트 2.5부터 gradle 빌드 시 jar파일이 2개가 생성`는데 이에 
+대해서 살펴보자.    
+
+별도의 설정을 하지 않았을 때는 아래와 같이 2개의 jar파일이 생성된다.   
+
+```
+프로젝트 이름-버전.jar
+프로젝ㅌ 이름-버전-plain.jar
+```
+
+#### 2-1) Plain Archive   
+
+plain이 붙은 jar파일을 plain archive라고 한다.   
+
+> 여기서 archive는 jar이든 war이든 빌드 결과물을 의미한다.   
+
+`plain archive는 어플리케이션 실행에 필요한 모든 의존성을 포함하지 않고, 
+작성된 소스코드의 클래스 파일과 리소스 파일만 포함한다.`    
+
+`이렇게 생성된 jar파일을 plain jar, standard jar, thin jar`라고 한다.   
+
+모든 의존성이 존재하는게 아니기 때문에 plain jar는 "java -jar" 명령어로 
+실행 시 에러가 발생한다.   
+
+build.gradle 파일에 아래와 같이 설정을 추가하면 plain jar 생성을 제외한다.   
+
+```
+jar {
+    enabled = false
+}
+```
+
+#### 2-2) Executable Archive   
+
+반면 plain 키워드가 없는 jar파일을 executable archive 라고 하며, 
+    어플리케이션 실행에 필요한 모든 의존성을 함께 빌드한다.   
+
+`이렇게 생성된 executable jar는 fat jar라고도 한다.`    
+
+모든 의존성을 포함하기 때문에 java -jar 명령어를 통해 실행 가능하다.
+
+- - -    
+
+## 3. Gradle task
 
 `Gradle의 task는 Gradle 프로젝트의 작업 단위이다.`    
 task는 다른 task가 먼저 선행되어야 실행되는 것과 같은 의존성을 

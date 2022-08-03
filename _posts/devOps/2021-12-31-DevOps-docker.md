@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Docker] 도커에 대한 이해"
-subtitle: "도커에 대한 개념과 기존 가상화 기술과의 차이 / 명령어 / dockerfile"    
+subtitle: "도커에 대한 개념과 기존 가상화 기술과의 차이 / 명령어 / dockerfile 작성가이드"    
 comments: true
 categories : DevOps
 date: 2021-12-31
@@ -19,7 +19,10 @@ background: '/img/posts/mac.png'
 
 서버에서 이야기하는 컨테이너도 이와 비슷한데 다양한 프로그램, 실행환경을 
 컨테이너로 추상화하고 동일한 인터페이스를 제공하여 프로그램 배포 및 
-관리를 단순하게 해준다.   
+관리를 단순하게 해준다.  
+
+> 더 간단하게 말해, 컨테이너란 우리가 구동하려는 애플리케이션을 실행할 수 있는 환경까지 감싸서, 
+    어디서든 쉽게 실행할 수 있도록 해주는 기술이다.      
 
 `일반 컨테이너 개념에서 물건을 손쉽게 운송해주는 것처럼 어플리케이션 환경에 
 구애 받지 않고 손쉽게 배포 관리를 할수 있게 해준다.`          
@@ -53,25 +56,25 @@ A서버는 잘 되는데 B 서버는 왜 안되지?
 
 ## 2. 도커 이미지와 도커 컨테이너   
 
-`컨테이너`는 코드와 모든 종속성을 패키지화하여 응용 프로그램이 
-한 컴퓨팅 환경에서 다른 컴퓨팅 환경으로 빠르고 안정적으로 실행되도록 
-하는 소프트웨어 표준 단위이다.     
-
-> 조금 더 쉽게 풀어서 설명하면, 간단하고 편리하게 프로그램을 실행시켜 주는 것이다.     
-
 `컨테이너 이미지`는 코드, 런타임, 시스템 도구, 시스템 라이브러리 및 설정과 
-같은 응용 프로그램을 실행하는 데 필요한 모든 것을 포함하는 가볍고 
-독립적이며 실행 가능한 소프트웨어 패키지이다.       
+같은 응용 프로그램을 실행하는 데 필요한 모든 것을 포함하는 패키지를 말한다.    
 
 즉, 이미지는 컨테이너를 실행하기 위한 모든 정보를 가지고 있기 때문에 
 더 이상 새로운 서버가 추가되면 의존성 파일을 컴파일하고 이것저것 
-설치할 필요가 없다.    
+설치할 필요가 없다.      
 
-도커 이미지는 [Docker hub](https://hub.docker.com/)에 직접 등록할 수 있고, 공개된 이미지를 
-받아서 사용할 수도 있다.   
+> 예를 들면, Ubuntu이미지는 Ubuntu를 실행하기 위한 모든 파일을 가지고 있으며, 
+    Oracle 이미지는 Oracle을 실행하는데 필요한 파일과 실행명령어, port 정보 등을 
+    모두 가지고 있다.   
+
+도커 이미지는 Github와 유사한 서비스인 [Docker hub](https://hub.docker.com/)를 통해 버전 관리 및 배포(push&pull)가 가능하다.     
+
+`도커에서 이미지를 독립된 공간에서 실행할 수 있게 해주는 기술이다.`      
 
 컨테이너 이미지는 런타임에 컨테이너가 되고 도커 컨테이너의 경우 
 도커 엔진에서 실행될 때 이미지가 컨테이너가 된다.   
+또한, 하나의 이미지는 여러 컨테이너를 생성할 수 있고, 컨테이너가 
+삭제되더라도 이미지는 변하지 않고 그대로 남아 있는다.   
 
 <img width="600" alt="스크린샷 2021-12-31 오후 11 00 31" src="https://user-images.githubusercontent.com/26623547/147827111-0dc2534f-11fe-45e5-aa99-54a91298dcb3.png">      
 
@@ -79,9 +82,7 @@ A서버는 잘 되는데 B 서버는 왜 안되지?
 종속성을 갖고 있으며 도커 이미지를 이용해서 컨테이너를 생성하며 
 도커 컨테이너를 이용하여 프로그램을 실행한다.`       
 
-
-
----
+- - -    
 
 ## 3. 도커와 기존 가상화 기술과의 차이    
 
@@ -89,10 +90,14 @@ A서버는 잘 되는데 B 서버는 왜 안되지?
 때문에 남는 서버 공간은 그대로 방치가 되었다. 즉, 하나의 서버에 
 하나의 운영체제, 하나의 프로그램만 운영을 했다.   
 
+하나의 서버에 여러 어플리케이션을 운영하게 되면, 하나의 어플리케이션에 
+문제가 발생했을 때, 다른 어플리케이션에도 문제가 발생할 수 있는 치명적인 단점이 있다.   
+
 안정적이지만 비효율적이기 때문에 `하이퍼 바이저 기반의 가상화`가 등장했다.   
 
-> 하이퍼 바이저는 호스트 시스템(윈도우, 리눅스 등)에서 다수의 게스트 OS를 구동할 수 
-있게 하는 소프트웨어이다.    
+`하이퍼 바이저는 호스트 시스템(윈도우, 리눅스 등)에서 다수의 게스트 OS(가상 머신)를 구동할 수 
+있게 하는 소프트웨어이다.`    
+
 > VMware나 VirtualBox같은 가상머신을 예로 들 수 있다.   
 
 즉, 논리적으로 공간을 분할하여 VM이라는 독립적인 가상 환경의 서버를 
@@ -124,6 +129,10 @@ A서버는 잘 되는데 B 서버는 왜 안되지?
 리소스 사용량을 관리      
 
 - namespaces : 하나의 시스템에서 프로세스를 격리시킬 수 있는 가상화 기술   
+
+`Docker는 근간이 되는 격리 기술을 넘어 컨테이너와 이미지, 네트워크와 서비스, 보안 등 
+Software의 배포와 생명주기를 관리할 수 있는 다양한 주변 기능에 초점이 
+맞추어져 있다.`   
 
 - - - 
 
@@ -202,7 +211,6 @@ $ docker attach [컨테이너id 또는 name]
 $ docker run [컨테이너 id 또는 name]
 
 
-
 // 실행중인 컨테이너에 명령어 전달   
 $ docker exec [컨테이너 Id 또는 name]   
 $ docker exec -it [컨테이너 id 또는 name] redis-cli   
@@ -234,9 +242,17 @@ $ docker images
 $ docker pull ubuntu:14.04
 
 // 이미지 삭제   
-$ docker rmi [이미지 id]    
+$ docker rmi [이미지 id]   
+
+// 이미지 히스토리 
+// 이미지가 생성되기까지 어떤 레이어들을 거쳤는지
+// dockerfile 명령어들을 확인 할 수 있다.
+$ docker history [이미지 이름, id]    
+
 
 // 이미지 빌드
+// 태그를 지정하지 않으면 latest로 지정 
+// docker build -t [userID]/[이미지 이름:태그] [Dockerfile의 경로]
 $ docker build -t [이미지명] .   
 $ docker build --tag node_server:0.0.1 [Dockerfile이 위치하는 경로]
 
@@ -249,7 +265,9 @@ $ docker build -f Dockerfile.dev [Dockerfile이 위치하는 경로]
 
 ```
 // 이미지가 없을 때 이미지를 빌드하고 컨테이너를 실행한다.   
+// -f 기본적으로 제공하는 docker-compose.yml이 아닌 별도의 파일명을 실행할 때 사용   
 $ docker-compose up
+$ docker-compose -f docker-compose-test.yml up     
 
 
 // detached 모드로서 앱을 백그라운드에서 실행시킨다.
@@ -260,8 +278,19 @@ $ docker-compose -d up
 // 이미지 수정된 부분이 반영이 필요하면 build 옵션을 추가한다.   
 $ docker-compose up -- build   
 
-// 중지 
-$ docker-compose down 
+// 실행 중인 서비스를 삭제
+// 컨테이너와 네트워크를 삭제하며, 옵션에 따라 볼륨도 같이 삭제 가능  
+$ docker-compose down   
+
+// 현재 환경에서 실행 중인 각 서비스 상태 
+$ docker-compose ps  
+
+// 로그 확인    
+// --follow(혹은 -f)로 실시간으로 나오는 로그 확인 가능    
+$ docker-compose logs  
+
+// docker-compose에 최종적으로 적용된 설정을 확인   
+$ docker-compose config
 ```
 
 ---
@@ -275,7 +304,191 @@ $ docker-compose down
 만들어야 하며, 도커 파일은 이미지를 만들기 위한 설정 파일이고 어떻게 
 행동해야 하는지에 대한 설정들을 정의해 주는 곳이다.`    
 
-dockerfile의 전체적인 구조는 아래와 같다.   
+dockerfile에서 자주 사용되는 명령문과 예시는 아래에서 확인하자.    
+
+#### 6-1) FROM   
+
+새로운 이미지를 생성할 때 기반으로 사용할 이미지를 지정한다.       
+이미 만들어진 다양한 베이스 이미지는 [Docker hub](https://hub.docker.com/)에서 확인할 수 있다.      
+
+```
+// <이미지 이름>:<태그>   
+FROM ubuntu:16.04    
+```
+
+#### 6-2) COPY    
+
+호스트에 있는 파일이나 디렉토리를 Docker 이미지의 파일 시스템으로 복사하기 
+위해서 사용된다.    
+
+
+#### 6-3) ADD   
+
+ADD 명령문은 좀 더 파워풀한 COPY 명령문이라고 생각하면 된다.   
+일반 파일뿐만 아니라 압축파일이나 네트워크 상의 파일도 사용할 수 있다.   
+이렇게 특수한 파일을 다루는게 아니라면 COPY를 사용하는 것이 권장된다.   
+
+#### 6-4) RUN     
+
+도커 이미지를 생성할 때 실행될 명령어이다.      
+
+```
+RUN npm install    
+```
+
+RUN 명령을 통해 필요한 패키지를 주로 설치하게 되는데 주의해야 할 부분이 있다.    
+`길거나 복잡한 RUN 구문은 백슬래시를 활용하여 여러줄로 분할해야 하며, RUN을 여러번 단독으로 
+사용했을 경우 문제가 발생할 수 있다.`    
+
+예를 들면, apt-get update와 apt-get install의 경우다.   
+
+```
+FROM ununtu:18:04
+RUN apt-get update
+RUN apt-get install -y curl
+```
+
+위의 경우는 이미지가 빌드된 이후에, 모든 레이어가 도커 캐시안에 들어가게 된다.   
+apt-get install 뒤에 nginx을 추가했다고 가정해보자.   
+
+```
+FROM ununtu:18:04
+RUN apt-get update
+RUN apt-get install -y curl nginx   
+```
+
+도커는 이전 명령어와 수정된 명령어가 동일할 때에만 이전단계의 캐시를 사용한다.  
+`따라서 빌드가 캐시된 버전을 사용하기 때문에 apt-get update가 실행되지 
+않는다.`       
+`그러므로 이 빌드는 잠재적으로 오래된 버전의 curl과 nginx 패키지를 얻게되는 
+결과를 초래할 수 있다.`     
+
+따라서 아래와 같이 하나의 RUN 구문으로 작성해야 한다.   
+
+```
+RUN apt-get update && apt-get install -y \
+        curl 
+```
+
+
+#### 6-5) CMD     
+
+도커 컨테이너가 실행되었을 때 실행되는 명령어를 정의한다.  
+빌드할 때는 실행되지 않으며 여러 개의 CMD가 존재할 경우 가장 마지막 CMD만 실행된다.   
+또한, ENTRYPOINT와 유사하지만 Docker run 명령어에 인자값을 전달하여 
+실행하면 CMD에 명시된 명령어와 인자값은 무시된다.    
+
+`즉, CMD는 사용자 파라미터 입력에 따라 변하며, ENTRYPOINT는 파라미터와 
+상관없이 항상 실행 된다.`    
+
+
+#### 6-6) ENTRYPOINT   
+
+컨테이너가 실행되었을 때 `항상 실행`되어야 하는 커맨드를 지정할 때 사용한다.   
+
+```
+ENTRYPOINT ["java", "-jar", "./app.jar"]    
+```
+
+#### 6-7) WORKDIR   
+
+RUN, CMD, ADD, COPY 등이 이루어질 기본 디렉토리를 설정한다.    
+각 명령어의 현재 디렉토리는 한 줄마다 초기화되기 때문에 RUN cd /path를 하더라도 다음 
+명령어에선 위치가 초기화 된다.   
+따라서 같은 디렉토리에서 계속 작업하기 위해서 WORKDIR을 사용하면 된다.   
+
+```
+WORKDIR /usr/app
+```
+
+#### 6-8) EXPOSE   
+
+EXPOSE 명령문은 네트워크 상에서 컨테이너로 들어오는 트래픽을 리스닝(listening)하는 
+포트와 프로토콜을 지정하기 위해서 사용된다.    
+
+> 프로토콜은 TCP와 UDP 중 선택할 수 있는데 지정하지 않으면 TCP가 기본값으로 사용된다.   
+
+`여기서 주의할 점은 EXPOSE 명령문으로 지정된 포트는 해당 컨테이너의 
+내부에서만 유효하며, 호스트(host) 에서 이 포트를 바로 
+접근을 할 수 있는 것은 아니다.`   
+`호스트로부터 해당 포트로의 접근을 허용하려면 -p 옵션을 통해 
+호스트의 특정 포트를 포워딩(forwarding) 시켜줘야 한다.`        
+
+```
+// 80/TCP 포트로 리스닝    
+EXPOSE 80
+
+// 9999/UDP 포트로 리스팅 
+EXPOSE 9999/udp   
+```
+
+#### 6-9) VOLUME  
+
+`Docker Volume은 COPY와는 다르게 파일들을 컨테이너로 복사하지 않고 참조하도록 
+설정한다.`        
+docker는 기본적으로 컨테이너를 삭제하면 데이터가 삭제되므로 데이터를 
+보존하고 싶을 때 혹은 
+여러 컨테이너간에 데이터를 공유해서 사용하고 싶을 때 사용한다.   
+
+
+#### 6-10) ARG    
+
+`ARG 명령문은 docker build 커맨드로 이미지를 빌드 시 --build-arg 옵션을 통해 
+넘길 수 인자를 정의하기 위해 사용한다.`       
+
+예를 들어, Dockerfile에 다음과 같이 ARG 명령문으로 jar file 인자로 선언해주면, 
+
+```
+ARG JAR_FILE    
+```
+
+다음과 같이 docker build build-arg 옵션에 port값을 넘길 수 있다.   
+
+```
+$ docker build --build-arg JAR_FILE=build/libs/*.jar
+```
+
+인자의 디폴트값을 지정해주면, --build-arg 옵션으로 해당 인자가 넘어오지 않았을 때 
+사용된다.    
+
+```
+ARG JAR_FILE=build/libs/*.jar    
+```
+
+설정된 인자값은 다음과 같이 사용 가능하다.   
+
+```
+COPY ${JAR_FILE} app.jar    
+```
+
+`참고로, ENV와 달리 ARG로 설정한 값은 이미지가 빌드되는 
+동안에만 유효하니 주의하자.`        
+
+#### 6-11) ENV   
+
+컨테이너에서 사용할 환경변수를 지정한다.   
+`도커 컨테이너 시간은 기본적으로 UTC로 되어 있으며, 
+Timezone으로 변경하기 위해서는 아래와 같이 환경변수 TZ를 사용하면 된다.`   
+
+```
+// 컨테이너를 실행할 때 --env(-e)옵션을 사용하면 기존 값을 오버라이딩 하게 된다.   
+// TimeZone 환경변수 지정    
+ENV TZ=Asia/Seoul
+```
+
+#### .dockerignore 파일    
+
+명령문은 아니지만 .dockerignore 파일도 알아두면 Dockerfile을 작성할 때 유용하다.   
+Docker 이미지를 빌드할 때 제외시키고 싶은 파일이 있다면, .dockerignore 파일에 
+추가해주면 된다.   
+
+```
+.git
+*.md
+```
+
+
+#### 도커파일 예시   
 
 ```  
 # 베이스 이미지를 명시해준다.   
@@ -318,9 +531,11 @@ $ docker build --tag node_server:0.0.1 [Dockerfile이 위치하는 경로]
 
 **Reference**    
 
+<https://yceffort.kr/2022/02/dockerfile-instructions#run>    
 <https://subicura.com/2017/01/19/docker-guide-for-beginners-1.html>   
 <https://www.44bits.io/ko/post/why-should-i-use-docker-container>   
 <https://www.inflearn.com/course/%EB%94%B0%EB%9D%BC%ED%95%98%EB%A9%B0-%EB%B0%B0%EC%9A%B0%EB%8A%94-%EB%8F%84%EC%BB%A4-ci/lecture/52082?tab=curriculum&volume=1.00>    
+<https://www.daleseo.com/dockerfile/>     
 
 {% highlight ruby linenos %}
 
