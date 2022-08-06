@@ -289,7 +289,7 @@ $ docker-compose ps
 // --follow(혹은 -f)로 실시간으로 나오는 로그 확인 가능    
 $ docker-compose logs  
 
-// docker-compose에 최종적으로 적용된 설정을 확인   
+// docker-compose에 최종적으로 적용된 설정을 확인    
 $ docker-compose config
 ```
 
