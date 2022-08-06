@@ -248,10 +248,8 @@ docker compose를 이용하면 된다.`
 것으로, 그 파일로부터 설정을 읽어들여 모든 컨테이너 서비스를 
 실행시키는 것이 가능하다.`    
 
-참고로, Dockerfile을 compose로 변환해주는 사이트가 있으니 참고하면 
-도움이 될 것이다.   
-[https://www.composerize.com/](https://www.composerize.com/) 사이트는 
-완벽하게 변환해주지는 않지만 처음 docker compose를 구성할 때 도움이 될 것이다.   
+자세한 내용은 [링크](https://wonyong-jang.github.io/devops/2022/01/01/DevOps-docker-compose.html)를 
+참고하자.   
 
 
 이제 실습을 진행해보자.   
@@ -358,55 +356,8 @@ docker-compose 각 자세한 명령어는 [링크](https://wonyong-jang.github.i
 
 - - - 
 
-## 7. docker-compose 환경 변수    
-
-docker-compose를 사용할 때 환경 마다 다른 설정 값을 사용하고 
-싶을 때가 있다.   
-하지만, 각 실행 환경에 따라 변경되어야 하는 옵션들이 있는데 
-이것들 때문에 일일이 파일을 수정 또는 추가하는 건 비효율적일 것이다.   
-그래서 `각 실행하는 환경마다 환경변수 파일을 정의하여 동일한 compose 파일로 
-각각의 환경과 동적인 옵션으로 실행이 가능하다.`       
-
-또한, `코드상으로 노출되지 않아야 하는 정보들을 따로 구분하여 
-외부에서 주입해 줄 수도 있다.`      
-
-#### 7-1) .env file    
-
-`기본적으로 .env 이라는 파일 이름을 생성하고 아래와 같이 작성 후 
-docker-compose.yml 파일에서 ${SPRING_DATASOURCE_USERNAME}처럼 
-사용하면 된다.`   
-
-```
-// .env 파일 
-// --env-file 옵션을 주지 않으면 자동으로 사용됨   
-SPRING_DATASOURCE_USERNAME=root
-SPRING_DATASOURCE_PASSWORD=1234
-```   
-
-`아래 명령어를 통해서 환경변수가 적용된 config를 확인할 수 있다.`   
-
-```
-$ docker-compose config    
-services:
-  pharmacy-recommendation-app:
-    container_name: pharmacy-recommendation-app
-    environment:
-      SPRING_DATASOURCE_PASSWORD: '1234'
-      SPRING_DATASOURCE_USERNAME: root
-```
-
-`상황에 따라 .env.dev, env.prod, .env.local 형식으로 나눠서 적용할 수 있는데 
---env-file 옵션을 주어서 환경변수 파일 지정이 가능하다.`   
-
-```
-$ docker-compose --env-file ./config/.env.dev up 
-```
-
-- - - 
-
 **Reference**    
 
-<https://seongjin.me/environment-variables-in-docker-compose/>    
 <https://meetup.toast.com/posts/277>    
 <https://www.composerize.com/>    
 <https://www.inflearn.com/course/%EB%94%B0%EB%9D%BC%ED%95%98%EB%A9%B0-%EB%B0%B0%EC%9A%B0%EB%8A%94-%EB%8F%84%EC%BB%A4-ci/lecture/52082?tab=curriculum&volume=1.00>    
