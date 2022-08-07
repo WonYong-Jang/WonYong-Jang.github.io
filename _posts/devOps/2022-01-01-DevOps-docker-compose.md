@@ -26,7 +26,13 @@ docker compose를 이용하면 된다.`
 참고로, Dockerfile을 compose로 변환해주는 사이트가 있으니 참고하면
 도움이 될 것이다.
 [https://www.composerize.com/](https://www.composerize.com/) 사이트는
-완벽하게 변환해주지는 않지만 처음 docker compose를 구성할 때 도움이 될 것이다.   
+완벽하게 변환해주지는 않지만 처음 docker compose를 구성할 때 도움이 될 것이다.      
+
+- - - 
+
+## 2. 도커 컴포즈 실행 순서   
+
+
 
 
 - - - 
@@ -102,7 +108,7 @@ $ docker compose convert
 
 ##### 2-3-1) 하나의 .env 파일로 구성하기  
 
-`Docker Compose에서 환경 변수 정보들을 떼어 별도의 파일로 구성할 때 가장 
+`Docker Compose에서 환경 변수 정보들을 분리하여 별도의 파일로 구성할 때 가장 
 간편한 방법은 Compose 파일이 위치한 동일 경로에 .env 파일을 따로 구성하는 
 것이다.`    
 .env 파일은 평문 텍스트 포맷으로, 아래의 문법을 따라 작성한다.   
@@ -302,6 +308,7 @@ AWS, Azure등 주요 클라우드 서비스 제공자들이 지원하는 컨테�
 
 **Reference**    
 
+<https://docs.docker.com/compose/startup-order/>     
 <https://seongjin.me/environment-variables-in-docker-compose/>    
 
 {% highlight ruby linenos %}
