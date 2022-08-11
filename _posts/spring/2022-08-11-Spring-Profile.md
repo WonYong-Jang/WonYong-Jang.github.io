@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spring] application 설정 파일을 통해 profile 설정"
+title: "[Spring] application profile 환경 별 설정 분리"
 subtitle: "Spring boot 2.4 이전과 이후 profile 설정 방법 비교하기 / 환경 별 profile 설정 " 
 comments: true
 categories : Spring
