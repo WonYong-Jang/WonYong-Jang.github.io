@@ -1,18 +1,23 @@
 ---
 layout: post
 title: "[Spring] application profile 환경 별 설정 분리"
-subtitle: "Spring boot 2.4 이전과 이후 profile 설정 방법 비교하기 / 환경 별 profile 설정 " 
+subtitle: "Spring boot 2.4 이전과 이후 profile 설정 방법 비교하기 / 환경 별 profile 설정 / properties, yaml  파일 형식" 
 comments: true
 categories : Spring
 date: 2022-08-11
 background: '/img/posts/spring.png'
 ---
 
-`Spring Profiles는 어플리케이션 설정을 특정 환경에서만 적용되게 하거나, 
+`Spring Profile는 어플리케이션 설정을 특정 환경에서만 적용되게 하거나, 
        환경 별(local, develop, production 등)로 다르게 적용 할 때 사용 한다.`    
 
 Spring boot 2.4 버전이 릴리즈 되면서 application.properties, application.yml 파일 
 로드 방식에 변화가 있었다.   
+
+> application.properties와 application.yml을 동시에 사용하지 않도록 주의하자.   
+> 같이 존재할 경우 properties가 항상 나중에 로드되어 yaml에 정의한 profile 설정을 
+덮어 쓸 수 있기 때문이다.   
+
 
 Spring boot 2.4 이전 버전의 profile 방식과 2.4 이후 profile 작성 
 방법에 대해서 살펴보자.   
@@ -77,7 +82,7 @@ spring:
 ##### application.yml   
 
 ```yml
-pring:
+spring:
   profiles:
     active: local
 
@@ -139,7 +144,7 @@ spring:
 ```
 
 `인텔리제이에서 profile 값을 주기 위해서는 아래와 같이 줄 수 있고 자바로 
-실행할 때 파라미터로 java -jar -Dspring.profiles.active=local app.jar 로 
+실행할 때 VM arguments로 java -jar -Dspring.profiles.active=local app.jar 로 
 줄 수도 있다.`   
 
 <img width="1000" alt="스크린샷 2022-08-11 오후 11 59 28" src="https://user-images.githubusercontent.com/26623547/184165138-75ea0666-4284-4438-b3e6-a271a06a8775.png">   
@@ -162,10 +167,10 @@ test=overridden-value
 
 
 
-
 - - -
 Referrence 
 
+<https://www.baeldung.com/spring-boot-yaml-vs-properties>   
 <https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.files>    
 <https://data-make.tistory.com/722>   
 
