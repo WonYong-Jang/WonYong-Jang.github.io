@@ -11,8 +11,8 @@ background: '/img/posts/spring.png'
 ## 1. Spock 소개   
 
 `Spock는 BDD(Behaviour Driven Development) 프레임워크이다.`   
-`TDDd(Test Driven Development)프레임워크인 JUnit과 비슷한 점이 많으나, 기대하는 동작과 
-테스트의 의도를 더 명확하게 드러내주는 산만한 코드는 뒤로 
+`TDD(Test Driven Development)프레임워크인 JUnit과 비슷한 점이 많으나, 기대하는 동작과 
+테스트의 의도를 더 명확하게 드러내주고 산만한 코드는 뒤로 
 숨겨주는 등의 큰 장점이 있다.`  
 
 > TDD는 테스트 자체에 집중하여 개발하는 방식인 반면, BDD는 비즈니스 
