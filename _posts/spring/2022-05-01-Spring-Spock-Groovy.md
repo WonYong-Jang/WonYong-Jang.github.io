@@ -100,8 +100,8 @@ testImplementation('net.bytebuddy:byte-buddy:1.9.3')
 
 - setup/ given : 테스트에 필요한 값들을 준비한다.   
 - when : 테스트할 코드를 실행한다.   
-- then : when과 함께 사용해야 하며, 예외 및 결과값 확인한다.   
-- expect : then과 같으며, when을 필요로 하지 않기 때문에 간단한 테스트에 사용한다.   
+- then : when과 함께 사용해야 하며, 예외 및 결과값을 검증한다.     
+- expect : then과 같으며, when을 필요로 하지 않기 때문에 간단한 테스트 또는 where와 같이 사용된다.     
 - where : 테스트 로직은 동일하고, 여러 파라미터 값으로 결과값을 확인하고 싶을 때 사용한다.   
 
 Spock에서는 given, when, then 외에 추가로 3개가 더있어 총 6단계의 
@@ -127,7 +127,7 @@ Spock에서는 given, when, then 외에 추가로 3개가 더있어 총 6단계�
 아래와 같이 직접 주석으로 구분해주었던 부분을 명확하게 
 구분할 수 있게 되었다.`   
 
-<img width="600" alt="스크린샷 2022-04-30 오후 11 08 34" src="https://user-images.githubusercontent.com/26623547/166108944-eb6cedcb-6dd1-420f-9d15-966add0fa7aa.png">    
+<img width="400" alt="스크린샷 2022-08-15 오후 4 30 18" src="https://user-images.githubusercontent.com/26623547/184594360-e45e9e8e-1a37-472f-baec-5f3075f5c147.png">   
 
 
 #### 2-1) 첫 번째 테스트 클래스 작성하기   
@@ -178,7 +178,7 @@ given, when, then 등의 블록들 간의 변수들은 공유되어 사용할 �
 
 #### 2-2) where 블록 이용하여 테스트하기   
 
-여기서 [where 블록](https://spockframework.org/spock/docs/1.0/spock_primer.html)에 대해서 
+여기서 [where 블록](https://spockframework.org/spock/docs/1.3/all_in_one.html)에 대해서 
 생소할수 있는데, 아래 예제를 살펴보자.   
 
 ```java
