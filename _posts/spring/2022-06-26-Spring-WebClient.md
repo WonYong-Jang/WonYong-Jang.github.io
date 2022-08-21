@@ -190,7 +190,7 @@ Application: (자신의 일이 끝나면, 결과값을 확인하여 다음 일�
 
 그럼 RestTemplate과 WebClient를 더 자세하게 비교하여 차이점을 자세히 살펴보자.     
 
-#### 3-1) RestTemplate   
+### 3-1) RestTemplate   
 
 `먼저, RestTemplate은 Multi-Thread와 Blocking방식을 사용한다.`   
 
@@ -218,7 +218,7 @@ Request는 먼저 Queue에 쌓이고 가용한 스레드가 있으면 그 스레
 이런 문제가 여러 스레드에서 발생하면 가용한 스레드 수가 
 현저하게 줄어들게 되고, 결국 전체 서비스는 매우 느려지게 된다.`   
 
-#### 3-2) WebClient   
+### 3-2) WebClient   
 
 `WebClient는 Single Thread와 Non-Blocking 방식을 사용한다.`   
 
@@ -244,7 +244,7 @@ WebClient는 이렇게 이벤트에 반응형으로 동작하도록 설계되었
 또한, React Web 프레임워크인 Spring WebFlux에서 Http Client로 사용된다.   
 
 
-#### 3-3) 성능 비교   
+### 3-3) 성능 비교   
 
 아래는 RestTemplate을 사용하는 Spring Boot1과 WebClient를 사용하는 
 Spring Boot2의 성능 비교 결과이다.   
