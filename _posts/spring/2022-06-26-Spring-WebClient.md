@@ -10,7 +10,7 @@ background: '/img/posts/spring.png'
 
 ## 1. Spring WebClient 소개   
 
-`Spring WebClient는 스프링 5.0 부터 제공되며, 
+`Spring WebClient는 스프링 5와 스프링 부트 2 부터 제공되며, 
 웹으로 API를 호출하기 위해 사용되는 Http Client 모듈 중 하나이다.`      
 
 참고로 Java에서 가장 많이 사용하는 Http Client는 RestTemplate이며, 스프링 3.0부터 지원하여 
