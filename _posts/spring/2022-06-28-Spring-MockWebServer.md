@@ -16,10 +16,10 @@ background: '/img/posts/spring.png'
 
 그럼 외부 서버를 Mocking함으로써 얻을 수 있는 장점은 무엇일까?   
 
-- `외부 서버에 종속적인 API를 외부 서버와 나의 비즈니스 로직으로 분리함으로써 
+- `외부 서버에 종속적인 외부 API와 나의 비즈니스 로직을 분리함으로써 
 나의 비즈니스 로직을 테스트할 수 있게 된다.`      
 
-- `API 스펙만 확립되어 있다면 다른 개발팀에서 개발 중인 외부 서버와 
+- `API 스펙만 확립되어 있다면 다른 개발팀에서 개발 중인 외부 API와 
 서로 독립적으로 개발이 가능해진다.`      
 
 - `외부 API 혹은 네트워크가 문제가 있더라도 외부 요인과 관계없이 테스트가 가능해진다.`      
@@ -100,15 +100,10 @@ class KakaoAddressSearchServiceRetryTest extends Specification {
     }
 ```
 
-MockWebServer에는 내가 원하는 response를 리턴할 수 있도록 차례대로 stub response를 
-만들어서 넣을 수 있다.   
-아래와 같이 MockResponse 타입으로 내가 원하는 stub 객체를 생성한 뒤, enqueue해서 넣어 주면 
-MockWebServer는 엔큐된 순서대로 응답을 리턴한다.   
-
-아래 코드를 MockWebServer를 통해 재처리가 잘 되는지 확인해보자.    
+이제 아래 코드를 MockWebServer를 통해 재처리가 잘 되는지 확인해보자.    
 
 ```java
-public Mono<KakaoApiResponseDto> requestAddressSearch(String address) {
+public KakaoApiResponseDto requestAddressSearch(String address) {
 
         URI uri = kakaoUriBuilderService.buildUriByAddressSearch(address);
 
@@ -118,10 +113,93 @@ public Mono<KakaoApiResponseDto> requestAddressSearch(String address) {
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(KakaoApiResponseDto.class)
-                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2)));
+                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2)))
+                .block();
 }
 ```
 
+`MockWebServer에는 내가 원하는 response를 리턴할 수 있도록 차례대로 stub response를
+만들어서 넣을 수 있다.`   
+`아래와 같이 MockResponse 타입으로 내가 원하는 stub 객체를 생성한 뒤, enqueue 메소드를 이용하여 
+넣어 주면 MockWebServer는 순서대로 응답을 리턴한다.`      
+`즉, 우리는 response code, headers, response body 등을 지정하여 리턴할 수 있게 된다.`    
+
+또한, 테스트 실행시 MockWebServer의 port는 동적으로 localhost에 할당 된다.     
+
+아래는 최종 retry 테스트 코드이다.   
+
+```java
+class KakaoAddressSearchServiceRetryTest extends AbstractIntegrationContainerBaseTest {
+
+    @Autowired
+    private KakaoAddressSearchService kakaoAddressSearchService
+
+    @SpringBean
+    private KakaoUriBuilderService kakaoUriBuilderService = Mock()
+
+    private MockWebServer mockWebServer
+
+    private ObjectMapper mapper = new ObjectMapper()
+
+    def setup() {
+        mockWebServer = new MockWebServer()
+        mockWebServer.start()
+    }
+
+    def cleanup() {
+        mockWebServer.shutdown()
+    }
+
+    def "requestAddressSearch retry success"() {
+        given:
+        def address = "서울 성북구 종암로 10길"
+        def metaDto = new MetaDto(1)
+        def documentDto = DocumentDto.builder()
+                .addressName(address)
+                .build()
+        def expectedResponse = new KakaoApiResponseDto(metaDto, Arrays.asList(documentDto))
+        def uri = mockWebServer.url("/").uri()
+
+        when:
+        kakaoUriBuilderService.buildUriByAddressSearch(address) >> uri
+
+        mockWebServer.enqueue(new MockResponse().setResponseCode(429))
+        mockWebServer.enqueue(new MockResponse().setResponseCode(429))
+        mockWebServer.enqueue(new MockResponse().setResponseCode(429))
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200)
+                .setBody(mapper.writeValueAsString(expectedResponse))
+                .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+
+        def kakaoApiResult = kakaoAddressSearchService.requestAddressSearch(address)
+
+        then:
+        def takeRequest = mockWebServer.takeRequest()
+        takeRequest.getMethod() == "GET"
+        kakaoApiResult.getDocumentList().size() == 1
+        kakaoApiResult.getMetaDto().totalCount == 1
+        kakaoApiResult.getDocumentList().get(0).getAddressName() == address
+    }
+
+    def "requestAddressSearch retry fail "() {
+        given:
+        def address = "서울 성북구 종암로 10길"
+        def uri = mockWebServer.url("/").uri()
+
+        when:
+        kakaoUriBuilderService.buildUriByAddressSearch(address) >> uri
+
+        mockWebServer.enqueue(new MockResponse().setResponseCode(429))
+        mockWebServer.enqueue(new MockResponse().setResponseCode(429))
+        mockWebServer.enqueue(new MockResponse().setResponseCode(429))
+        mockWebServer.enqueue(new MockResponse().setResponseCode(429))
+
+        kakaoAddressSearchService.requestAddressSearch(address)
+
+        then:
+        def e = thrown(Exceptions.RetryExhaustedException.class)
+    }
+}
+```   
 
 
 - - -
