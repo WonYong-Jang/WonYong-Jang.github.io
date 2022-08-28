@@ -67,7 +67,12 @@ RetryTemplate를 이용하여 재시도하는 방법을 살펴볼 것이다.
 
 ## 1. RetryTemplate   
 
-먼저 RetryTemplate을 사용해서 재시도 하는 방법을 살펴보자.   
+gradle에 아래와 같이 의존성을 추가해주고 관련 retryTemplate 인터페이스를 보면서 
+재시도 하는 방법을 살펴보자.   
+
+```
+implementation 'org.springframework.retry:spring-retry'
+```
 
 Spring Retry에는 작업에 대한 재시도를 자동화하기 위한 인터페이스인 RetryOperations가 있다.   
 아래는 RetryOperations인터페이스 코드이며, execute() 메소드가 존재하는데 매개변수인 
