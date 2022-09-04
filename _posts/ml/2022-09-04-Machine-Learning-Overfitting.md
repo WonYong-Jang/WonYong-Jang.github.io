@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Machine Learning] 오버피팅의 개념과 해결 "
-subtitle: "Overfitting(과적합)" 
+subtitle: "Overfitting(과적합), Data Augmentation" 
 comments: true
 categories : ML
 date: 2022-09-04
@@ -50,10 +50,10 @@ overfitting과 유사한 경우이다.
 
 - - - 
 
-## Overfitting 문제를 해결하는 방법    
+## 2. Overfitting 문제를 해결하는 방법    
 
 
-#### 1. 일단 데이터부터 자세히 살펴보기   
+#### 2-1) 일단 데이터부터 자세히 살펴보기   
 
 데이터에서 중요한 통계치들을 면밀히 봐야한다.   
 변수들의 평균과 중앙값은 물론이고, 예를 들면 pandas의 groupby와 같은 메서드를 
@@ -62,7 +62,7 @@ overfitting과 유사한 경우이다.
 그게 곧 머신러닝의 학습하게 될 패턴이기 때문에 
 데이터 확인할 때 가장 도움이 되는 건 역시 시각화(visualization)이다.   
 
-#### 2. 애초에 적절하게 수집된 데이터인지 확인하기   
+#### 2-2) 애초에 적절하게 수집된 데이터인지 확인하기   
 
 머신러닝 모델을 적용하고자 하는 모든 집단으로부터 골고루 수집된 데이터인지 
 확인할 필요도 있다.    
@@ -71,14 +71,14 @@ overfitting과 유사한 경우이다.
 `특정 집단의 특성만 반영할 가능성이 높기 때문에 데이터 수집 단계에서부터 신중했는지 
 검토하자.`   
 
-#### 3. 학습 데이터 보강(Augmentation)하기   
+#### 2-3) 학습 데이터 보강(Augmentation)하기   
 
 예를들어 불법 신용카드 거래를 감지하는 머신러닝 모델을 생성한다고 가정해보자.   
 우선 모든 거래 중 불법 거래는 거의 없을 테니 모든 거래가 합법적이라고 
 에측하는 무식한 모델을 만들어놔도 매우 높은 정확도를 얻게 될 수 있다.    
 
 물론 정확도 외에 다른 지표들로 모델의 성능을 평가할 수 있다.   
-[링크](https://wonyong-jang.github.io/ml/2022/09/01/Machine-Learning-Classification-Metric.html)를 통해 확인해보자.   
+[분류모델 성능지표](https://wonyong-jang.github.io/ml/2022/09/01/Machine-Learning-Classification-Metric.html)를 통해 확인해보자.   
 
 아무튼 이 문제를 해결하려면 학습 데이터에 내가 가지고 있던 사례의 특성들을 
 조금씩 조작해서 추가시켜주는 방법이 있다.   
@@ -93,7 +93,7 @@ overfitting과 유사한 경우이다.
 회전시키거나 약간 찌그러트린 수정본들도 함께 학습시키는 것이다.    
 
 
-#### 4. 학습 데이터에 포함될 특성(featureset)을 제한하기   
+#### 2-4) 학습 데이터에 포함될 특성(featureset)을 제한하기   
 
 대표적인 예시로 [Amazon 채용 프로그램에 인공지능(AI) 시스템](https://www.bbc.com/korean/news-45820560)을 적용했다가 
 결국 폐기했다는 사실이 이슈가 된 적이 있다.      
