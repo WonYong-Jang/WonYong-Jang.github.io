@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[JPA] Auditing으로 생성시간/수정시간 자동화"
-subtitle: "EnableJpaAuditing, BaseTimeEntity / @MappedSuperclass"
+subtitle: "@EnableJpaAuditing, @EntityListeners ,@MappedSuperclass"
 comments: true
 categories : JPA
 date: 2020-06-21
@@ -66,6 +66,13 @@ public abstract class BaseTimeEntity {
     private LocalDateTime modifiedDate;
 }
 ```
+
+`위의 @MappedSuperClass 어노테이션은 엔티티의 공통 매핑 정보가 필요할 때 
+주로 사용한다.`   
+`즉, 부모 클래스에 필드를 선언하고 단순히 속성만 받아서 사용하고 싶을 때 사용하는 
+방법이다.`   
+
+
 
 > 아래 Entity가 BaseTimeEntity를 상속받도록 변경한다.   
 

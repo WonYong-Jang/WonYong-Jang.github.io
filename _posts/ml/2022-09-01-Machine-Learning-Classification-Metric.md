@@ -5,7 +5,7 @@ subtitle: "Confusion Matrix / True Positive, False Positive, True Negative, Fals
 comments: true
 categories : ML
 date: 2022-09-01
-background: '/img/posts/spring.png'
+background: '/img/posts/mac.png'
 ---
 
 머신러닝을 통하여 모델을 학습하고 나면, 이 모델의 성능이 얼마나 되는지 확인을 
@@ -26,7 +26,9 @@ background: '/img/posts/spring.png'
 
 ## 1. TP, FP, TN, FN    
 
-먼저 True Positive, False Positive, True Negative, False Negative 를 살펴보자.     
+분류 모델 성능 지표를 살펴보기 전에 정답을 맞히거나 틀리는 경우의 수를 
+먼저 봐야 한다.    
+True Positive, False Positive, True Negative, False Negative 를 살펴보자.     
 
 - 앞의 True 또는 False는 모델이 예측한게 맞았는지 틀렸는지를 의미한다.   
 - 뒤의 Positive 또는 Negative는 모델이 예측한 값이 true 인지 false인지를 의미한다.    
@@ -103,6 +105,7 @@ false라고 한다면 precision이 높은 모델이 좋은 모델일까 recall�
 
 <img width="1200" alt="스크린샷 2022-09-02 오후 5 45 28" src="https://user-images.githubusercontent.com/26623547/188101567-736f254c-51e8-433b-99ca-20622a76aa44.png">   
 
+
 결과적으로 일반 메일함은 5개가 남아 있을 것이고, 스팸 메일함은 5개가 
 분류되어 들어갈 것이다.   
 
@@ -117,6 +120,8 @@ false라고 한다면 precision이 높은 모델이 좋은 모델일까 recall�
 
 <img width="1200" alt="스크린샷 2022-09-02 오후 5 58 05" src="https://user-images.githubusercontent.com/26623547/188103852-ee3dc990-f72b-441f-ba49-4c7cd8b7624e.png">    
 
+> False Positive가 가 낮을 수록 좋은 모델이다.       
+
 위처럼 되면 스팸 메일함에는 스팸 메일 2개만 분류되며, 일반 메일함에는 
 3개의 스팸 메일함이 들어가 있다.   
 `생각해보면 recall이 높은 케이스보다 precision이 높은 케이스가 사용자 입장에서는 
@@ -130,7 +135,9 @@ false라고 한다면 precision이 높은 모델이 좋은 모델일까 recall�
 
 세포가 비정상 일 경우 true 정상일 경우 false로 구분하는 모델일 경우도 살펴보자.   
 
-<img width="1200" alt="스크린샷 2022-09-02 오후 6 07 31" src="https://user-images.githubusercontent.com/26623547/188105584-e1986a3b-faae-4e25-9697-5cacb8bf04dd.png">   
+<img width="1200" alt="스크린샷 2022-09-02 오후 6 07 31" src="https://user-images.githubusercontent.com/26623547/188105584-e1986a3b-faae-4e25-9697-5cacb8bf04dd.png">  
+
+> False Negative가 낮을 수록 좋은 모델이다.    
 
 `해당 모델은 질병의 유무를 판단하는 모델로써, 질병이 있는 사람을 
 놓치지 않고 판별하는게 중요하다.`   
@@ -158,7 +165,58 @@ precision이 높은 케이스이며, recall이 낮기 때문에 False Negative�
 
 > 만일 Accuracy가 100% 라면?   
 > Accuracy가 100%인 경우, Precision과 Recall 모두 100%인 (이론상으로) 이상적인 모델이 된다.   
-> 하지만, Accuracy가 100%인 모델은 overfiting(과대적합)이 매우 의심되니 데이터와 모델을 다시 한번 살펴봐야 한다.   
+> 하지만, Accuracy가 100%인 모델은 overfiting(과대적합)이 매우 의심되니 데이터와 모델을 다시 한번 살펴봐야 한다.     
+
+- - - 
+
+## 4. 분류모델 성능지표 정리
+
+위에서 살펴본 분류모델 성능 지표를 정리해보자.    
+
+`Accuracy(정확도)는 전체 예측 건수에서 정답을 맞힌 건수이다.`       
+`여기서 정답을 맞힐 때 답이 Positivie든 Negative든 상관없이 맞히기만 하면 된다.`       
+
+Accuracy의 단점을 예시를 통해 살펴보자.   
+
+예를 들어 내일 서울에 시간당 1m 이상의 눈이 내릴지 여부를 예측한다고 해보자.   
+그땐 머신러닝이 필요 없을 수 있다.   
+왜냐하면 그냥 무조건 Negative를 에측하면 이 모델은 99.9% 정도의 accuracy를 
+나타낼 것이다.      
+그 정도로 눈 내리는 날은 거의 없기 때문에 정답을 True Negative로만 잔뜩 
+맞히는 셈이다.(True Positive는 하나도 발견하지 못한다.)    
+
+이런 상황을 정확도 역설(Accuracy Paradox)라고 부른다.   
+
+`그래서 이렇게 실제 데이터에 Negative 비율이 너무 높아서 희박한 가능성으로 
+발생할 상황에 대해 제대로 된 분류를 해주는지 평가해줄 지표는 바로 recall(재현율)이다.`      
+
+`recall(재현율)은 실제로 정답이 True인 것들 중에서 모델이 True로 예측한 비율이다.`    
+
+그래서 위에서 예로 들었던 시간당 1m 이상의 눈이 내릴지 예측하는 과제에 
+적절할 것이다. 그러면 실제로 그렇게 눈이 내린 날짜 중에 몇 개나 맞히는지 
+확인할 수 있다.    
+만약 여기서 언제나 False로 에측하는 모델이라면 accuracy가 99%를 넘기겠지만, 
+    True Positive를 찾을 수 없으니 recall이 0이 된다.   
+
+그러나 안타깝게도 recall 또한 완벽한 통계 지표가 아니다.    
+시간당 1m 이상의 눈이 내릴지 분류하는 모델이 언제나 True만 답하는 
+분류기가 있다고 해보자.   
+그러면 accuracy는 낮지만 눈이 많이 온 날에 대해서 만큼은 정확하게 
+맞힐 수 있기 때문에 recall은 1이 된다.    
+이 역시 말이 안되는 지표이다.   
+
+`이럴 때 해당 알고리즘에 결함이 있음을 잘 나타내는 지표는 바로 precision(정밀도)이다.`       
+
+모델이 눈이 많이 내릴 것이라고 예측한 날 중에 실제로 눈이 많이 내린 날의 비율을 구하는 것이다.   
+즉, 언제나 True라고 답하는 모델이 있다면 recall은 1로 나오겠지만, precision은 0에 
+가까울 것이다.   
+
+그렇기 때문에 recall과 precision은 서로 반대 개념의 지표이기 때문에 
+하나가 내려가면 다른 하나는 올라갈 수 밖에 없다.   
+
+`정리를 해보면 모델의 성능이 좋다는 뜻은 오류가 적다는 뜻이고 
+학습시킨 모델을 어떤 서비스에 
+어떻게 적용하냐에 따라서 집중해야하는 지표를 확인하고 검증하여야 한다.`    
 
 
 - - -
@@ -167,6 +225,8 @@ Referrence
 <https://www.youtube.com/watch?v=VbJHlCDOteU>     
 <https://www.youtube.com/watch?v=GIzIk1C-_yE>     
 <https://www.youtube.com/watch?v=Kb7LMWLZK0M>   
+<https://hleecaster.com/ml-accuracy-recall-precision-f1/>   
+
 
 {% highlight ruby linenos %}
 {% endhighlight %}
