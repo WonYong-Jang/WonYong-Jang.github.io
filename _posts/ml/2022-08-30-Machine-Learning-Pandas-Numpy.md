@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Machine Learning] ML 구현하기 위한 넘파이와 판다스 실습"
-subtitle: "Indexing(slicing, fancy, boolean) / Reshape / DataFrame, Series / 판다스 결손 데이터 처리" 
+subtitle: "Indexing(slicing, fancy, boolean) / Reshape / DataFrame, Series / apply lambda /판다스 결손 데이터 처리" 
 comments: true
 categories : ML
 date: 2022-08-30
@@ -434,8 +434,23 @@ df[['Age' ,'Fare']].count() // 갯수
 
 #### 3-7) DataFrame Group By
 
+
 ```
 df.groupby(by='Pclass').head()
+
+df.groupby(by='Pclass').count() // Pclass groupby 별 각 컬럼 갯수 
+
+df.groupby(by='Pclass')[['Age', 'Fare']].count() 
+
+df.groupby(by='Pclass')[['Age','Fare']].agg([max, min])
+
+// 서로 다른 컬럼에 서로 다른 aggregation 메소드를 적용할 경우 agg() 내에 컬럼과 적용할 메소드를 Dict 형태로 입력   
+agg_format = {'Age': 'max', 'SibSp': 'sum', 'Fare': 'mean' }
+df.groupby('Pclass').agg(agg_format)
+
+// 위의 dict을 사용했을때, 문제점은 dict 객체에 동일한 key를 가지게 되면, 마지막 key가 덮어쓰게 된다.   
+// 이럴 때, 아래와 같이 사용 가능   
+df.groupby(['Pclass']).agg(age_max=('Age', 'max'), age_mean=('Age','mean'), fare_mean=('Fare', 'mean'))
 ```
 
 #### 3-8) 결손 데이터(Missing Data) 처리하기   
@@ -475,6 +490,8 @@ df['Sex'].replace('male', 'Man')
 // 여러 값을 바꿀 때 
 df['Sex'].replace({'male': 'Man', 'female': 'Woman'})
 
+// NaN을 replace로 처리할 수 있다.
+df['Cabin'] = df['Cabin'].replace(np.nan, 'C000')
 ```
 
 #### 3-10) Pandas 람다식 적용   
@@ -483,7 +500,15 @@ df['Sex'].replace({'male': 'Man', 'female': 'Woman'})
 데이터를 가공하는 기능을 제공한다.`   
 
 ```
+// 입력인자 x를 기반으로 한 계산식이며, 호출 시 계산 결과가 반환된다.   
+// Name 컬럼에 있는 값들의 길이를 구해서 새로운 컬럼에 update
 df['Name_len'] = df['Name'].apply(lambda x: len(x))
+
+// 15살 이하면, child 그렇지 않으면 adult로 적용 
+df['Child_Adult'] = df['Age'].apply(lambda x : 'Child' if x<= 15 else 'Adult')
+
+// 다중 if 
+df['Child_Adult'] = df['Age'].apply(lambda x : 'Child' if x<= 15 else ('Adult' if x <= 60 else 'Elderly'))
 ```
 
 - - -
