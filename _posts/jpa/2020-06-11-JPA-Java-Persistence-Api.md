@@ -235,7 +235,7 @@ JPA는 commit하는 순간 내부적으로 flush가 호출되고, 이때
 변경된 값이 있는지 비교하여, 변경된 
 값이 있으면 update 쿼리를 쓰기 지연 SQL에 넣어둔다.`     
 
-<img width="800" alt="스크린샷 2022-02-25 오전 12 13 06" src="https://user-images.githubusercontent.com/26623547/155551753-bc407009-f57e-4bde-90a3-c5a3dda7c714.png">   
+<img width="800" alt="스크린샷 2022-09-12 오후 12 01 14" src="https://user-images.githubusercontent.com/26623547/189566603-4005df63-8157-452a-8b1c-e24f4ef0e193.png">   
 
 자세한 내용은 
 [Dirty Checking](https://wonyong-jang.github.io/jpa/2020/06/20/JPA-Dirty-Checking.html)을 
