@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Machine Learning] ML 구현하기 위한 넘파이와 판다스 실습"
-subtitle: "Indexing(slicing, fancy, boolean) / Reshape / DataFrame, Series / apply lambda /판다스 결손 데이터 처리" 
+subtitle: "Indexing(slicing, fancy, boolean) / Reshape / DataFrame, Series / apply lambda / 판다스 결손 데이터 처리" 
 comments: true
 categories : ML
 date: 2022-08-30
