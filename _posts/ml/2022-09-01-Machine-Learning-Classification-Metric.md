@@ -55,11 +55,12 @@ False 값은 모델이 예측한게 틀렸음을 의미하기 때문에 실제 �
 ## 2. Metrics 계산   
 
 이제 위의 내용을 토대로 아래와 같이 Confusion Matrix를 그려보자.  
+
+`Confusion Matrix(오차 행렬)은 이진 분류의 예측 오류가 얼마인지와
+더불어 어떠한 유형의 예측 오류가 발생하고 있는지를 함께 나타내는 지표이다.`
+
 모델이 예측한 값과 실제 평가 데이터를 기준으로 TP, FP, TN, FN를 
 작성하면 아래와 같다.  
-
-`Confusion Matrix(오차 행렬)은 이진 분류의 예측 오류가 얼마인지와 
-더불어 어떠한 유형의 예측 오류가 발생하고 있는지를 함께 나타내는 지표이다.`   
 
 <img width="1200" alt="스크린샷 2022-09-02 오전 1 28 34" src="https://user-images.githubusercontent.com/26623547/187965454-d92b133c-cc49-4cca-8a1b-0b7c74cbdd3d.png">   
 
@@ -83,7 +84,7 @@ precision과 recall은 비슷해 보이지만 전혀 다른 지표이다.
 
 참고로 F1 Score는 Precision과 Recall의 중간 값을 확인해 보는 지표이다.   
 
-> F1 Score는 precision과 recall이 어느 한쪽으로 치우치지 않는 수치를 나타낼 때 상대적으로 높은 값을 가진다.     
+> F1 Score는 precision과 recall이 어느 한쪽으로 치우치지 않는 수치를 나타낼 때 상대적으로 높은 값을 가진다.    
 
 그럼 여기서 여러 metrics을 살펴봤는데, Recall 지표값은 0.95 이지만 Precision은 0.4의 
 성능을 가진다면 이 모델은 좋은 모델이 될 수 있을까?   
@@ -170,11 +171,63 @@ precision이 높은 케이스이며, recall이 낮기 때문에 False Negative�
 
 > 만일 Accuracy가 100% 라면?   
 > Accuracy가 100%인 경우, Precision과 Recall 모두 100%인 (이론상으로) 이상적인 모델이 된다.   
-> 하지만, Accuracy가 100%인 모델은 overfiting(과대적합)이 매우 의심되니 데이터와 모델을 다시 한번 살펴봐야 한다.     
+> 하지만, Accuracy가 100%인 모델은 overfiting(과대적합)이 매우 의심되니 데이터와 모델을 다시 한번 살펴봐야 한다.    
+
+- - -
+
+## 4. 성능지표 사이킷런으로 구현    
+
+사이킷런을 이용하여 오차행렬, 정확도, 정밀도, 재현율을 각각 구해보자.    
+
+
+```
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score   
+
+# 예측 결과인 pred와 실제 결과값인 y_test의 Confusion Metrix 출력
+print(confusion_matrix(y_test, pred)) 
+
+## Output
+
+array([[109,   9],     # TN  FP
+       [ 14,  47]])    # FN  TP
+```
+
+```
+print("정밀도: ", precision_score(y_test, pred))
+print("정밀도: ", recall_score(y_test, pred))
+
+## Output   
+
+정밀도:  0.8392857142857143
+정밀도:  0.7704918032786885
+```
+
+위 코드를 함수화 하여 한번에 계산 될 수 있도록 리펙토링 해보자.   
+
+```
+def get_clf_eval(y_test, pred):
+    confusion = confusion_matrix(y_test, pred)
+    accuracy = accuracy_score(y_test, pred)
+    precision = precision_score(y_test, pred)
+    recall = recall_score(y_test, pred)
+    print('오차 행렬')
+    print(confusion)
+    print('정확도: {0: .4f}, 정밀도: {1: .4f}, 재현율: {2: .4f}'.format(accuracy, precision, recall))
+```
+
+Output   
+
+```
+오차 행렬
+[[109   9]
+ [ 14  47]]
+정확도:  0.8715, 정밀도:  0.8393, 재현율:  0.7705
+```
 
 - - - 
 
-## 4. 분류모델 성능지표 정리
+## 5. 분류모델 성능지표 정리
 
 위에서 살펴본 분류모델 성능 지표를 정리해보자.    
 
@@ -188,7 +241,7 @@ Accuracy의 단점을 예시를 통해 살펴보자.
 왜냐하면 그냥 무조건 Negative를 예측하면 이 모델은 99.9% 정도의 accuracy를 
 나타낼 것이다.      
 그 정도로 눈 내리는 날은 거의 없기 때문에 정답을 True Negative로만 잔뜩 
-맞히는 셈이다.(True Positive는 하나도 발견하지 못한다.)    
+맞히는 셈이다. (True Positive는 하나도 발견하지 못한다.)    
 
 이런 상황을 정확도 역설(Accuracy Paradox)라고 부른다.   
 
@@ -217,13 +270,28 @@ Accuracy의 단점을 예시를 통해 살펴보자.
 가까울 것이다.   
 
 분류하려는 업무의 특성상 정밀도 또는 재현율이 특별히 강조되어야 할 경우 
-분류의 결정 임계값(Threshold)을 조정해 정밀도 또는 재현율의 수치를 
-높일 수 있다.   
+`분류의 결정 임계값(Threshold)`을 조정해 정밀도 또는 재현율의 수치를 
+높일 수 있다.    
 
+여기서 `Threshold`란 분류 모델이 true, false를 예측을 하는데 이를 확률로 예측을 하며,  
+이를 구분하는 기준이 되는 구분 값이다.   
 
-하지만 정밀도와 재현율은 상호 보완적인 평가 지표이기 때문에 
+> default threshold값은 0.5이며  0.6이면 true, 0.4이면 false로 예측하게 된다.    
+
+<img width="800" alt="스크린샷 2022-09-19 오후 5 33 19" src="https://user-images.githubusercontent.com/26623547/190979089-44ec8a87-0b3d-4977-8d72-738feec891a2.png">    
+
+> Threshold가 낮아질 수록 재현율이 증가 하는 이유는 FN 값이 적어지기 때문이다.   
+> Positive로 예측이 많아졌으니, Negative로 예측하는 횟수가 적어진다.   
+> 반대로, FP는 증가하게 되므로, 정밀도는 감소한다.   
+
+따라서, Threshold를 통해 정밀도, 재현율을 조정할 수 있지만 
+정밀도와 재현율은 상호 보완적인 평가 지표이기 때문에 
 어느 한쪽을 강제로 높이면 다른 하나의 수치는 떨어지기 쉽다.   
-이를 정밀도/재현율의 트레이드 오프(Trade-off)라고 부른다.    
+이를 `정밀도/재현율의 트레이드 오프(Trade-off)`라고 부른다.    
+
+<img width="500" alt="스크린샷 2022-09-19 오후 5 24 14" src="https://user-images.githubusercontent.com/26623547/190978425-c0d70bf5-3c23-439b-9bc5-f144f31c851f.png">  
+
+> x 축은 threshold 값이다.    
 
 `정리를 해보면 모델의 성능이 좋다는 뜻은 오류가 적다는 뜻이고 
 학습시킨 모델을 어떤 서비스에 
@@ -233,6 +301,7 @@ Accuracy의 단점을 예시를 통해 살펴보자.
 - - -
 Referrence 
 
+<https://www.inflearn.com/course/%ED%8C%8C%EC%9D%B4%EC%8D%AC-%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D-%EC%99%84%EB%B2%BD%EA%B0%80%EC%9D%B4%EB%93%9C/unit/25205?category=questionDetail&tab=curriculum>    
 <https://www.youtube.com/watch?v=VbJHlCDOteU>     
 <https://www.youtube.com/watch?v=GIzIk1C-_yE>     
 <https://www.youtube.com/watch?v=Kb7LMWLZK0M>   
