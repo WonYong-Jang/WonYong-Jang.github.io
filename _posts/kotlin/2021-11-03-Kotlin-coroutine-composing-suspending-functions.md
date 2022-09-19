@@ -85,7 +85,7 @@ fun main() = runBlocking  {
 ```   
 
 위처럼 async를 이용하여 각 suspend 함수를 감싸서 동시에 실행 시킬 수 있다.   
-launch를 이용하여 감싸도 되며, 두 키워드의 차이점은 [링크](https://wonyong-jang.github.io/kotlin/2021/11/01/Kotlin-coroutine3.html)를 
+launch를 이용하여 감싸도 되며, 두 키워드의 차이점은 [링크](https://wonyong-jang.github.io/kotlin/2021/11/01/Kotlin-coroutine-launch-asynch-job-deferred.html)를 
 참조하자.    
 `즉, 동시에 실행 시키기 위해서는 async 또는 launch를 이용하여 명시적으로 
 콜을 해야 한다.`    
