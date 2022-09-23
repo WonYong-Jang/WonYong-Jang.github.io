@@ -74,7 +74,6 @@ background: '/img/bg-index.jpg'
         - To-Be : 19sec      
 
 - Build customer service data pipeline with Kafka, Spark streaming and DocumentDB       
-
     - 기존 batch 기반으로 API를 반복적으로 호출하는 방식에서 AWS event bridge를 사용하여 3rd party data pipeline 구축     
     - API 기반의 데이터 처리 방식 대비 약 60배의 퍼포먼스 개선  
         - As-Is : 250/sec   

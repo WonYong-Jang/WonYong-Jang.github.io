@@ -72,8 +72,8 @@ Member findreadOnlyByUsername(String username);
 `이렇게 하면 강제로 flush를 호출하지 않는 한 트랜잭션 커밋 시 flush를 하지 않는다.`   
 
 결국은 Hibernate는 flush를 호출하지 않게 되고, 변경은 자연스럽게 무시되게 된다.    
-`즉, flush가 호출되지 않고 Dirty Checking을 하지 않기 때문에 성능적으로도 
-이점을 얻을 수 있다.`   
+`즉, flush가 호출되지 않고 스냅샷 저장 및 Dirty Checking을 하지 않기 때문에 성능적으로도 
+이점을 얻을 수 있다.`      
 
 [Dirty Checking](https://wonyong-jang.github.io/jpa/2020/06/20/JPA-Dirty-Checking.html)은 
 Enitity와 스탭샷과 비교하는 것이며, 자세한 내용은 링크를 참고하자.    
@@ -81,6 +81,10 @@ Enitity와 스탭샷과 비교하는 것이며, 자세한 내용은 링크를 �
 `참고로, 스프링 5.1 이후 버전에서 @Tranactional(readOnly=true)를 
 사용하게 되면 @QueryHint의 readOnly까지 모두 동작한다.`       
 
+또한, @Transactional(readOnly = true)으로 지정했을 때 DB 부하를 줄이고 
+약간의 성능상 이점이 있을 수 있다.   
+DB가 이중화 구성(master - slave)으로 이루어진 경우 
+master가 아닌 slave로 호출되기 때문에 성능상 이점이 있을 수 있다.    
 
 - - - 
 
