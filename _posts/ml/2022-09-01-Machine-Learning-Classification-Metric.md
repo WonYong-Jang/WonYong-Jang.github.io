@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Machine Learning] 분류(Classification) 모델 지표(metrics)의 의미와 계산법"
-subtitle: "Confusion Matrix / True Positive, False Positive, True Negative, False Negative / accuracy, precision, recall" 
+subtitle: "Confusion Matrix / TP, FP, TN, FN / accuracy, precision, recall / ROC AUC" 
 comments: true
 categories : ML
 date: 2022-09-01
@@ -173,16 +173,35 @@ precision이 높은 케이스이며, recall이 낮기 때문에 False Negative�
 > Accuracy가 100%인 경우, Precision과 Recall 모두 100%인 (이론상으로) 이상적인 모델이 된다.   
 > 하지만, Accuracy가 100%인 모델은 overfiting(과대적합)이 매우 의심되니 데이터와 모델을 다시 한번 살펴봐야 한다.    
 
+- -- 
+
+## 4. ROC 곡선과 AUC   
+
+
+<img width="837" alt="스크린샷 2022-09-24 오후 4 09 01" src="https://user-images.githubusercontent.com/26623547/192085218-d1ad38f8-80c5-4549-9fcb-55e59d879ec5.png">   
+
+TPR은 재현율을 나타내며, 민감도로도 불린다.   
+
+> TPR은 TP / (FN + TP)   
+
+FPR은 실제는 Negative인데, Positive로 잘못 예측한 비율이다.   
+
+> FPR은 FP / (FP + TN)    
+
+사이킷런에서는 아래와 같이 함수로 제공한다.   
+
+<img width="830" alt="스크린샷 2022-09-24 오후 4 27 32" src="https://user-images.githubusercontent.com/26623547/192085881-27153df7-a3bf-4011-bfb6-4d595f922227.png">   
+
 - - -
 
-## 4. 성능지표 사이킷런으로 구현    
+## 5. 성능지표 사이킷런으로 구현    
 
-사이킷런을 이용하여 오차행렬, 정확도, 정밀도, 재현율을 각각 구해보자.    
+사이킷런을 이용하여 오차행렬, 정확도, 정밀도, 재현율, F1 socre을 각각 구해보자.    
 
 
 ```
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score, precision_score, recall_score   
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score   
 
 # 예측 결과인 pred와 실제 결과값인 y_test의 Confusion Metrix 출력
 print(confusion_matrix(y_test, pred)) 
@@ -195,12 +214,12 @@ array([[109,   9],     # TN  FP
 
 ```
 print("정밀도: ", precision_score(y_test, pred))
-print("정밀도: ", recall_score(y_test, pred))
+print("재현율: ", recall_score(y_test, pred))
 
 ## Output   
 
 정밀도:  0.8392857142857143
-정밀도:  0.7704918032786885
+재현율:  0.7704918032786885
 ```
 
 위 코드를 함수화 하여 한번에 계산 될 수 있도록 리펙토링 해보자.   
@@ -211,6 +230,7 @@ def get_clf_eval(y_test, pred):
     accuracy = accuracy_score(y_test, pred)
     precision = precision_score(y_test, pred)
     recall = recall_score(y_test, pred)
+    f1 = f1_score(y_test, pred)
     print('오차 행렬')
     print(confusion)
     print('정확도: {0: .4f}, 정밀도: {1: .4f}, 재현율: {2: .4f}'.format(accuracy, precision, recall))
@@ -227,7 +247,7 @@ Output
 
 - - - 
 
-## 5. 분류모델 성능지표 정리
+## 6. 분류모델 성능지표 정리
 
 위에서 살펴본 분류모델 성능 지표를 정리해보자.    
 
