@@ -14,6 +14,7 @@ background: '/img/posts/spring.png'
 Spring boot 2.4 버전이 릴리즈 되면서 application.properties, application.yml 파일 
 로드 방식에 변화가 있었다.   
 
+> Spring boot는 어플리케이션이 실행될 때 자동으로 application.properties 또는 application.yml을 찾는다.   
 > application.properties와 application.yml을 동시에 사용하지 않도록 주의하자.   
 > 같이 존재할 경우 properties가 항상 나중에 로드되어 yaml에 정의한 profile 설정을 
 덮어 쓸 수 있기 때문이다.   
@@ -84,7 +85,7 @@ spring:
 ```yml
 spring:
   profiles:
-    active: local
+    active: local # 기본적으로 활성화할 profile을 local로 설정 
 
 ---
 spring:
@@ -117,10 +118,10 @@ spring:
   profiles:
     active: local # default
     group:
-      local:
+      local:  # local, common profile을 그룹지어 함께 어플리케이션 구동    
         - local
         - common
-      prod:
+      prod:   # prod, common profile을 그룹지어 함께 어플리케이션 구동  
         - prod
         - common   
 
@@ -128,7 +129,7 @@ spring:
 spring:
   config:
     activate:
-      on-profile: common
+      on-profile: common   # application-common.yml 과 동일한 역할
 
 ---
 spring:
