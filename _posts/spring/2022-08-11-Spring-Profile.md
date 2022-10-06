@@ -119,10 +119,8 @@ spring:
     active: local # default
     group:
       local:  # local, common profile을 그룹지어 함께 어플리케이션 구동    
-        - local
         - common
       prod:   # prod, common profile을 그룹지어 함께 어플리케이션 구동  
-        - prod
         - common   
 
 ---
