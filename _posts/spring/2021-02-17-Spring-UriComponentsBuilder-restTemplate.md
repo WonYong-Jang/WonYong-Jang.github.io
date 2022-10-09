@@ -24,7 +24,7 @@ HttpServletRequest.setCharacterEncoding()으로 문자셋을
 
 ```java
 StringBuilder uri = new StringBuilder("http://localhost:8080?param=");
-uri.append(URLEncoder.encode("한글입니다만?", "UTF-8"));
+uri.append(URLEncoder.encode("한글 파라미터", "UTF-8"));
 
 System.out.println(uri.toString());
 
@@ -39,7 +39,7 @@ System.out.println(uri.toString());
 
 ```java
 String uri2 = UriComponentsBuilder.fromHttpUrl("http://localhost:8080")
-  .queryParam("param", "한글입니다만?")
+  .queryParam("param", "한글 파라미터")
   .toUriString();
 
 System.out.println(uri2);
@@ -47,12 +47,12 @@ System.out.println(URLDecoder.decode(uri2, "UTF-8"));
 
 // Output   
 // http://localhost:8080?param=%ED%95%9C%EA%B8%80%EC%9E%85%EB%8B%88%EB%8B%A4%EB%A7%8C?
-// http://localhost:8080?param=한글입니다만?   
+// http://localhost:8080?param=한글 파라미터
 ```
 
 이 방식은 코드가 더 직관적이라는 장점도 있지만 또 다른 장점은 
 `인코딩 역시 자동으로 해준다는 점이다.`   
-`위의 경우 "한글입니다만?"을 자동으로 UTF-8로 인코딩 해준다.`   
+`위의 경우 "한글 파라미터"를 자동으로 UTF-8로 인코딩 해준다.`   
 
 만약 인코딩 문자셋을 바꾸고 싶은 경우는 어떻게 해야 할까?   
 위 코드에서 toUriString() 메소드 내부 구현을 보면, 내부적으로 
@@ -62,7 +62,7 @@ UTF-8을 기본 문자셋으로 지정한다.
 
 ```java
 String uri3 = UriComponentsBuilder.fromHttpUrl("http://localhost:8080")
-                .queryParam("param", "한글입니다만?")
+                .queryParam("param", "한글 파라미터")
                 .build()
                 .encode(Charsets.toCharset("EUC-KR")) // 변경할 문자셋 입력  
                 .toUriString();
@@ -81,14 +81,14 @@ String을 생성하던가 인코딩 완료된 URI를 생성해서 사용하면 �
 
 ```java
 String uri4 = UriComponentsBuilder.fromHttpUrl("http://localhost:8080")
-		.queryParam("param", "한글입니다만?")
+		.queryParam("param", "한글 파라미터")
 		.build()  // 인코딩을 해주지 않는다.   
         .toUriString();
 
 System.out.println(uri4);
 
 // Output
-// http://localhost:8080?param=한글입니다만?   
+// http://localhost:8080?param=한글 파라미터   
 ```
 
 `위의 방식으로 해결할 수 있지만, RestTemplate은 내부적으로 charset을 ISO-8859-1 사용하기 때문에 
@@ -120,7 +120,7 @@ public class StringHttpMessageConverter extends AbstractHttpMessageConverter<Str
 
 ```java
 URI uri5 = UriComponentsBuilder.fromHttpUrl("http://localhost:8080")
-                .queryParam("param", "한글입니다만?")
+                .queryParam("param", "한글 파라미터")
                 .build()
                 .encode()
                 .toUri();
@@ -130,7 +130,7 @@ System.out.println(URLDecoder.decode(uri5.toString(), "UTF-8"));
 
 // Output
 // http://localhost:8080?param=%ED%95%9C%EA%B8%80%EC%9E%85%EB%8B%88%EB%8B%A4%EB%A7%8C?
-// http://localhost:8080?param=한글입니다만?
+// http://localhost:8080?param=한글 파라미터
 ```
 
 - - -
