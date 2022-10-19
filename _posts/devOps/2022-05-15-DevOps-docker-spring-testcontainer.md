@@ -36,7 +36,7 @@ background: '/img/posts/mac.png'
 
 ## 1. DB를 테스트하는 여러가지 방법   
 
-##### 1) 로컬에서 운영환경과 유사한 스펙의 DB 사용하기    
+#### 1) 로컬에서 운영환경과 유사한 스펙의 DB 사용하기    
 
 운영환경에서 사용하는 유사한 스펙의 DB를 개발환경의 데이터베이스로 
 셋업하여 사용하는 방법이다.     
@@ -48,7 +48,7 @@ background: '/img/posts/mac.png'
 테스트를 진행하고, 다른 테스트 코드에서는 해당 데이터를 조회하여 테스트하는 경우 
 멱등성이 깨질 것이다.   
 
-##### 2) 인메모리 DB 사용하기   
+#### 2) 인메모리 DB 사용하기   
 
 위에서 공용으로 테스트 DB를 사용함에 따라 문제점이 있기 때문에 
 인 메모리 DB인 H2를 사용하여 테스트하는 방법이 있을 수 있다.    
@@ -62,7 +62,7 @@ background: '/img/posts/mac.png'
 
 <img width="445" alt="스크린샷 2022-05-14 오후 5 24 56" src="https://user-images.githubusercontent.com/26623547/168417697-1af0143f-fc1d-4ee8-b0c3-c50264ce8b51.png">   
 
-##### 3) Docker 활용하기     
+#### 3) Docker 활용하기     
 
 운영환경과 동일한 스펙의 도커 이미지를 구성하여 
 로컬에서 컨테이너를 실행해서 테스트 가능하다.     
@@ -74,7 +74,7 @@ background: '/img/posts/mac.png'
 
 마지막 방법인 Testcontainers를 살펴보자.   
 
- - - -
+- - -
 
 ## 2. Testcontainers    
 
@@ -162,7 +162,24 @@ class PharmacyRepositoryTest extends Specification {
 
 `위처럼 작성하면 테스트할 때마다 직접 도커 컨테이너를 시작하고 종료하는 부분을 자동화 할 수 있다.`      
 
-> 터미널에서 docker ps로 확인해보면, 테스트 코드 실행시 컨테이너가 실행되고 종료되는 것을 확인할 수 있다.   
+
+#### 2-1) Ryuk Container   
+
+터미널에서 docker ps로 확인해보면, 
+    테스트 코드 실행시 컨테이너가 실행되고 종료되는 것을 확인할 수 있다.     
+
+또한, docker ps로 확인했을 때, 따로 설정하지 않은 `Ryuk container`도 아래와 같이 볼 수 있다.     
+
+<img width="296" alt="스크린샷 2022-10-13 오후 11 36 45" src="https://user-images.githubusercontent.com/26623547/195627265-62fc2ef2-b50a-4bba-b0dc-66dccdd302ca.png">   
+
+도커 허브에서 해당 컨테이너에 대한 설명을 아래와 같이 볼 수 있고, `이는  
+testcontainers 라이브러리를 통해 생성한 컨테이너들을 관리하기 위한 컨테이너이며, 
+테스트가 끝난 이후 container, network, volume 등을 정리해주는 역할을 한다.`       
+
+> This project helps you to remove containers/networks/volumes/images by given filter after specified delay.    
+
+  
+
 
 위의 코드에서 직접 컨테이너 라이프 사이클을 관리하였는데, 이를 조금더 리팩토링해보면 
 아래와 같다.   
