@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Spring] 트랜잭션 관리(Transaction)"
-subtitle: "Spring Transaction Exception 에서 Rollback 처리 / @Transactional과 Proxy"
+title: "[Spring] 트랜잭션 관리 및 주의사항"
+subtitle: "Spring Transaction Exception 에서 Rollback 처리 / @Transactional과 Proxy / self invocation"
 comments: true
 categories : Spring
 date: 2020-03-20
@@ -207,7 +207,7 @@ Proxy를 이해하기 앞서 AOP(Aspect Oriented Programming)을 이해해야 �
 참고하자.   
 AOP는 관점지향 프로그래밍이며, 이는 반복 사용되는 로직들을 
 모듈화 하여 필요할 때 호출해서 사용하는 방법이다.     
-`스피링 트랜잭션이 대표적인 AOP 관점이 적용되는 사례라 볼 수 있다.`    
+`스피링 트랜잭션은 대표적인 AOP 관점이 적용되는 사례라 볼 수 있다.`    
 
 @Transactioanl은 클래스 또는 메소드에 사용할 수 있으며, @Transactional이 
 포함된 메소드가 호출될 경우, 프록시 객체가 생성된다.   
@@ -228,38 +228,65 @@ AOP는 관점지향 프로그래밍이며, 이는 반복 사용되는 로직들�
 #### 2-1) Self Invocation 문제   
 
 위에서 트랜잭션에 대해서 살펴봤던 것처럼 @Transactional 어노테이션을 
-savePost()메소드에 선언하고, 외부에서 run()를 호출하여 savePost()를 
+foo()메소드에 선언하고, 외부에서 bar()를 호출하여 내부적으로 
+foo() 메서드를  
 호출하게 작성했다면 정상적으로 트랜잭션이 적용되어 롤백이 될까?   
 
 ```java
 @Service
 @RequiredArgsConstructor
-public class JpaRunner {
+public class PharmacyRepositoryService {
 
-    private final PostRepository postRepository;
+    private final PharmacyRepository pharmacyRepository;
 
-    public void run() {
-        for(int i=0; i<5; i++)  {
-            savePost(i);
-        }
+    public void bar(List<Pharmacy> pharmacyList) {
+        log.info("bar CurrentTransactionName: "+ TransactionSynchronizationManager.getCurrentTransactionName());
+        foo(pharmacyList);
     }
 
     @Transactional
-    public void savePost(int i) {
-
-        // 현재 적용된 트랜잭션 이름을 확인할 수 있다.   
-        System.out.println("CurrentTransactionName:"+TransactionSynchronizationManager.getCurrentTransactionName());
-
-        postRepository.save(new Post(i));
-        if(i == 3) throw new RuntimeException(); // 예외 발생
+    public void foo(List<Pharmacy> pharmacyList) {
+        log.info("foo CurrentTransactionName: "+ TransactionSynchronizationManager.getCurrentTransactionName());
+        pharmacyList.forEach(pharmacy -> {
+           pharmacyRepository.save(pharmacy);
+           throw new RuntimeException("error"); // 예외 발생
+        });
     }
 }
+
+// Output
+PharmacyRepositoryService      : bar CurrentTransactionName: null   
+
+// 만약 bar() 메소드에 트랜잭션을 선언했다면, 아래와 같이 로그가 출력된다.   
+PharmacyRepositoryService      : bar CurrentTransactionName: com.example.project.pharmacy.service.PharmacyRepositoryService.bar
 ``` 
 
-`정답은 @Transactional 적용되지 않기 때문에 모두 롤백이 되지 않는다.`         
+`정답은 @Transactional 적용되지 않기 때문에 롤백이 되지 않는다.`        
 
-> TransactionSynchronizationManager.getCurrentTransactionName() 로 현재 적용된 
-트랜잭션 이름을 확인할 수 있다.   
+> TransactionSynchronizationManager.getCurrentTransactionName() 로 현재 적용된
+트랜잭션 이름을 확인할 수 있다.
+
+아래 테스트 코드를 통해 결과를 확인해보자.    
+
+```groovy
+def "self invocation"() {
+
+        given:
+        String address = "서울 특별시 성북구 종암동"
+
+        def pharmacy = Pharmacy.builder()
+                .pharmacyAddress(address)
+                .build()
+
+        when:
+        pharmacyRepositoryService.bar(Arrays.asList(pharmacy))
+
+        then:
+        def e = thrown(RuntimeException.class)
+        def result = pharmacyRepositoryService.findAll()
+        result.size() == 1 // 트랜잭션이 적용되지 않는다( 롤백 적용 X )
+    }
+```
 
 스프링의 트랜잭션 처리가 스프링 AOP를 기반으로 하고 있으며 
 스프링 AOP가 프록시를 기반으로 동작한다는 것을 이해하고 있다면 
@@ -268,20 +295,23 @@ public class JpaRunner {
 `프록시 기반 AOP의 단점 중에 하나인 프록시 내부에서 내부를 호출할 때는 
 부가적인 서비스(여기서는 그게 바로 트랜잭션)가 적용되지 않는다.`    
 `호출하려는 Target을 감싸고 있는 프록시를 통해야만 부가적인 기능이 적용되는데 
-프록시 내부에서 내부를 호출할 때는 감싸고 있는 영역을 거치지 않기 때문이다.`   
+프록시 내부에서 내부를 호출할 때는 감싸고 있는 영역을 거치지 않기 때문이다.`     
 
-<img width="500" alt="스크린샷 2022-03-20 오후 2 40 18" src="https://user-images.githubusercontent.com/26623547/159149789-3123f25d-467e-494c-a19e-2652653c3636.png">     
+![스크린샷 2022-10-22 오후 2 55 21](https://user-images.githubusercontent.com/26623547/197322960-cc566be7-38fa-4eb3-8b53-7aa9b32616b6.png)    
 
-프록시로 감싼 Target(JpaRunner)을 외부에서 호출할 때 run()이라는 
-public 메소드를 호출하는데 이 때 run()메소드에는 트랜잭션이 
+프록시로 감싼 Target을 외부에서 호출할 때 bar()라는 
+public 메소드를 호출하는데 이 때 bar()메소드에는 트랜잭션이 
 적용되어 있지 않다.  
 
-그렇게 호출한 `run()이 내부에서 @Transactional을 사용한 savePost()를 
-호출하더라도, JpaRunner 밖에서 호출이 되는게 아니라 프록시 내부에서 
-savePost()를 바로 호출하기 때문에 
+따라서 bar() 메소드가 foo() 메소드를 호출 할때는 proxy를 통한 호출이 아닌 this 참조를 
+이용해서 호출하게 된다.   
+
+그렇게 호출한 `bar() 메소드가 내부에서 @Transactional을 사용한 foo()를 
+호출하더라도, 프록시 내부에서 
+foo()를 바로 호출하기 때문에 
 Target을 감싼 트랜잭션이 적용되지 않는 것이다.`       
-차라리 JpaRunner 밖에서 savePost() 메소드를 바로 호출했다면 트랜잭션이 
-적용됐을 것이다.  
+차라리 외부에서 foo() 메소드를 바로 호출했다면 트랜잭션이 
+적용됐을 것이다.     
 
 > 참고로, 프록시로 동작하기 때문에 외부에서 접근 가능한 메소드만 @Transactional 설정이 
 가능하다.   
@@ -289,41 +319,44 @@ Target을 감싼 트랜잭션이 적용되지 않는 것이다.`
 트랜잭션이 동작하지 않는다.   
 > 반드시 접근제어자를 public을 사용해야한다.   
 
-이 문제를 해결하기 위한 제일 간단한 방법은 @Transactional을 run() 메소드로 
-옮기면 된다. 그럼 run()을 호출 할 때 부터 트랜잭션이 적용되면서 
+이 문제를 해결하기 위한 제일 간단한 방법은 @Transactional을 bar() 메소드로 
+옮기면 된다. 그럼 bar()를 호출 할 때 부터 트랜잭션이 적용되면서 
 그 메소드에서 호출하는 다른 메소드도 전부 해당 트랜잭션 안에서 
 처리하기 때문에 정상적으로 롤백이되어 트랜잭션이 적용된다.    
 
 ```java
-@Transactional   
-public void run() {
-    for(int i=0; i<5; i++)  {
-        savePost(i);
-    }
+@Transactional
+public void bar(List<Pharmacy> pharmacyList) {
+     log.info("bar CurrentTransactionName: "+ TransactionSynchronizationManager.getCurrentTransactionName());
+     foo(pharmacyList);
 }
 
-public void savePost(int i) {
-    postRepository.save(new Post(i));
-    if(i == 3) throw new RuntimeException(); // 예외 발생
+public void foo(List<Pharmacy> pharmacyList) {
+    log.info("foo CurrentTransactionName: "+ TransactionSynchronizationManager.getCurrentTransactionName());
+    pharmacyList.forEach(pharmacy -> {
+       pharmacyRepository.save(pharmacy);
+       throw new RuntimeException("error");
+    });
 }
 ``` 
 
 또 다른 해결 방법은 처음부터 self invocation 상황을 만들지 않는 것이다.  
-`즉, 객체의 책임을 최대한 분리(상위 메소드 분리)해서 외부 호출을 하는 방법을 활용하는게 좋은 
-방법이다.`   
+`즉, 객체의 책임을 최대한 분리해서 외부 호출을 하는 방법을 활용하는게 좋은 
+방법이다.`      
+
+`즉, 메소드 내에 this를 사용하는 것이 아니라, 스프링 컨테이너에 등록된 빈을 활용 하는 방법이다.`     
 
 ```java
 @Service
 @RequiredArgsConstructor
-public class JpaRunner {
+public class PharmacyRepositoryService {
 
-    private final PostService postService;
-    
-    @Transactioanl
-    public void run() {
-        for(int i=0; i<5; i++)  {
-            postService.savePost(i);
-        }
+    private final PharmacyService pharmacyService;
+
+    public void bar(List<Pharmacy> pharmacyList) {
+        log.info("bar CurrentTransactionName: "+ TransactionSynchronizationManager.getCurrentTransactionName());
+        pharmacyService.foo(pharmacyList);
+        //foo(pharmacyList);
     }
 }
 ```
@@ -384,6 +417,7 @@ public class SimpleJpaRepository<T, ID> implements JpaRepositoryImplementation<T
 
 Reference   
 
+<https://tedblob.com/spring-aop-proxy/>    
 <https://woodcock.tistory.com/30>   
 <https://conpulake.tistory.com/m/257>   
 <https://www.whiteship.me/jpa-entitymanager-contains/>   
