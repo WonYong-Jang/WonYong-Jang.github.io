@@ -321,12 +321,25 @@ FROM ubuntu:16.04
 호스트에 있는 파일이나 디렉토리를 Docker 이미지의 파일 시스템으로 복사하기 
 위해서 사용된다.    
 
+`copy는 volume과는 다르게 빌드 시간에 이루어지기 때문에`, 호스트의 파일이 
+변경되어도 즉시 반영되지 않는다.   
+
+![스크린샷 2022-10-24 오후 4 00 48](https://user-images.githubusercontent.com/26623547/197466505-774262a8-aa90-4b29-b1db-7533955146cb.png)    
+
 
 #### 6-3) ADD   
 
 ADD 명령문은 좀 더 파워풀한 COPY 명령문이라고 생각하면 된다.   
 일반 파일뿐만 아니라 압축파일이나 네트워크 상의 파일도 사용할 수 있다.   
-이렇게 특수한 파일을 다루는게 아니라면 COPY를 사용하는 것이 권장된다.   
+이렇게 특수한 파일을 다루는게 아니라면 COPY를 사용하는 것이 권장된다.    
+
+```
+// URL로 부터 컨텐츠를 가져오는 예시   
+ADD https://www-us.apache.org/dist//httpd/httpd-2.4.41.tar.gz  /linuxteacher/from_url
+
+// 압축파일의 경우 압축 해제하는 예시   
+ADD abc.tar.gz /linuxteacher/from_local   
+```
 
 #### 6-4) RUN     
 
@@ -430,6 +443,11 @@ docker는 기본적으로 컨테이너를 삭제하면 데이터가 삭제되므
 보존하고 싶을 때 혹은 
 여러 컨테이너간에 데이터를 공유해서 사용하고 싶을 때 사용한다.   
 
+![스크린샷 2022-10-24 오후 4 00 54](https://user-images.githubusercontent.com/26623547/197466518-0a488bd4-d556-485e-8429-4eda5692313a.png)    
+
+호스트의 파일이 변경되면, 즉시 컨테이너에 참조하고 있는 파일이 반영이 
+이루어지기 때문에, 개발 환경에서 유용하다.   
+
 
 #### 6-10) ARG    
 
@@ -531,6 +549,7 @@ $ docker build --tag node_server:0.0.1 [Dockerfile이 위치하는 경로]
 
 **Reference**    
 
+<https://www.linuxteacher.com/docker-add-vs-copy-vs-volume/>   
 <https://yceffort.kr/2022/02/dockerfile-instructions#run>    
 <https://subicura.com/2017/01/19/docker-guide-for-beginners-1.html>   
 <https://www.44bits.io/ko/post/why-should-i-use-docker-container>   
