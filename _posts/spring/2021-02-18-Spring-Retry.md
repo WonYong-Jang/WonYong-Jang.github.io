@@ -277,10 +277,10 @@ public class RetryTemplateConfig {
 ```java
 @Service
 @RequiredArgsConstructor
-public class AddressConverterService {
+public class KakaoAddressSearchService {
 
     @Retryable(value = {RuntimeException.class})
-    public Optional<DocumentDto> convertAddressToGeospatialData(String address) {
+    public KakaoApiResponseDto requestAddressSearch(String address) {
         // ...
     }
 ```
@@ -296,14 +296,14 @@ public class AddressConverterService {
 ```java
 @Service
 @RequiredArgsConstructor
-public class AddressConverterService {
+public class KakaoAddressSearchService {
 
     @Retryable(
             value = RuntimeException.class,
             maxAttempts = 2,
             backoff = @Backoff(delay = 3000)
     )
-    public Optional<DocumentDto> convertAddressToGeospatialData(String address)
+    public KakaoApiResponseDto requestAddressSearch(String address) {
         // ...
     }
 ```
@@ -313,15 +313,15 @@ public class AddressConverterService {
 
 ```java
 @Recover
-public Optional<DocumentDto> recover(RuntimeException e, String address) {
-    log.error("All the retries failed. error : {}", e);
-    return Optional.empty();
+public KakaoApiResponseDto recover(Exception e, String address) {   
+    log.error("All the retries failed. address: {}, error : {}", address, e.getMessage());    
+    return null;    
 }
 ```
 
 `이제 최대 2번 재시도를 하고, 모두 실패하게 된다면 recover 메서드가 실행된다.`     
 
-`여기서 주의할 점은 Recover 메서드의 반환 타입은 반드시 맞춰야 하는데, convertAddressToGeospatialData 메서드의 
+`여기서 주의할 점은 Recover 메서드의 반환 타입은 반드시 맞춰야 하는데, requestAddressSearch 메서드의 
 반환타입을 맞춰 주었다.`   
 
 파라미터의 경우는 선택적으로 던져진 예외와 retryable 메서드에서 사용한 

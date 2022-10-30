@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spring] MockWebServer 외부 API 테스트하기"
-subtitle: "WebClient, RestTemplate 재처리 테스트" 
+subtitle: "WebClient, RestTemplate 재처리 테스트 / spock @SpringBean" 
 comments: true
 categories : Spring
 date: 2022-06-28
@@ -201,10 +201,26 @@ class KakaoAddressSearchServiceRetryTest extends AbstractIntegrationContainerBas
 }
 ```   
 
+위의 `@SpringBean`는 Spock에서는 @MockBean 대신에 [@SpringBean](https://spockframework.org/spock/docs/1.2/module_spring.html#_using_code_springbean_code)을 사용한다.     
+
+Mock은 껍데기만 있는 객체를 의미한다.    
+인터페이스의 추상메서드가 메소드 바디는 없고 파라미터 타입과 
+리턴타입만 선언된 것처럼, `Mock Bean은 기존에 사용되던 Bean의 껍데기만 
+가져오고 내부의 구현 부분은 모두 사용자에게 위임한 형태이다.`      
+
+즉, 해당 Bean의 어떤 메소드가 어떤 값이 입력 되면 어떤 값이 
+리턴 되어야 한다는 내용을 모두 개발자 필요에 의해서 
+조작이 가능하다.   
+
+위에서는 KakaoUriBuilderService mock bean 객체를 이용하여 
+실제 서버 url을 호출하는 것이 아니라, mockWebServer url (localhost)을 
+호출 하기 위해서 스프링 컨테이너 내에 있는 bean 객체를 mocking하여 
+테스트 하였다.   
 
 - - -
 Referrence 
 
+<https://spockframework.org/spock/docs/1.3/module_spring.html>    
 <https://www.arhohuttunen.com/spring-boot-webclient-mockwebserver/>    
 <https://github.com/square/okhttp/blob/master/mockwebserver/README.md>   
 <https://github.com/spring-projects/spring-framework/issues/19852#issuecomment-453452354>   
