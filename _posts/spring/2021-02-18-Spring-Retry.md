@@ -299,7 +299,7 @@ public class KakaoAddressSearchService {
 public class KakaoAddressSearchService {
 
     @Retryable(
-            value = RuntimeException.class,
+            value = {RuntimeException.class},   // 여러 exception 선택 가능
             maxAttempts = 2,
             backoff = @Backoff(delay = 3000)
     )
@@ -313,7 +313,7 @@ public class KakaoAddressSearchService {
 
 ```java
 @Recover
-public KakaoApiResponseDto recover(Exception e, String address) {   
+public KakaoApiResponseDto recover(RuntimeException e, String address) {   
     log.error("All the retries failed. address: {}, error : {}", address, e.getMessage());    
     return null;    
 }
