@@ -291,7 +291,7 @@ public class KakaoAddressSearchService {
 
 `재시도 동작을 사용자 정의하기 위해 maxAttempts 및 backoff 매개변수를 사용할 수 있다.`    
 
-아래는 최대 2회 재시도를 하고 재시도 전 3초 지연을 주었다.   
+아래는 최대 2회 재시도(첫번째 시도 포함)를 하고 재시도 전 3초 지연을 주었다.   
 
 ```java
 @Service
@@ -319,7 +319,7 @@ public KakaoApiResponseDto recover(Exception e, String address) {
 }
 ```
 
-`이제 최대 2번 재시도를 하고, 모두 실패하게 된다면 recover 메서드가 실행된다.`     
+`이제 최대 2번 재시도(첫번 째 시도 포함)를 하고, 모두 실패하게 된다면 recover 메서드가 실행된다.`     
 
 `여기서 주의할 점은 Recover 메서드의 반환 타입은 반드시 맞춰야 하는데, requestAddressSearch 메서드의 
 반환타입을 맞춰 주었다.`   
