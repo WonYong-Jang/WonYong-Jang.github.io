@@ -8,9 +8,9 @@ date: 2021-03-08
 background: '/img/posts/mac.png'
 ---
 
-# Apache Airflow   
+## 1. Apache Airflow   
 
-빅데이터 분석이나, 머신러닝 코드를 만들다 보면 필요한것 중에 하나가 
+빅데이터 분석이나, 머신러닝 코드를 만들다 보면 필요한 것 중에 하나가 
 여러개의 태스크를 연결해서 수행해야 할 경우가 있다. 데이터 베이스 ETL(Extract, 
         Transform, Load) 작업과 
 비슷한 흐름이라고 보면 된다.    
@@ -39,7 +39,7 @@ Airflow 상의 작업흐름은 방향성 비순환 그래프(DAG)로 설계된�
 `Airflow의 장점 중 하나는 각 태스크에서 오류가 발생할 때 재처리 작업을 편리 하게 
 수행할 수 있다.`        
 
-#### Apache Airflow 기본 동작 원리   
+### 1-1) Apache Airflow 기본 동작 원리   
 
 먼저 Airflow를 구성하는 각 컴포넌트의 역할을 간략하게 살펴보자.   
 
@@ -61,11 +61,10 @@ Airflow 상의 작업흐름은 방향성 비순환 그래프(DAG)로 설계된�
 
 - Worker : 실제 작업을 수행하는 주체이며 워커의 동작 방식은 Executor의 종류에 따라 상이하다.   
 
-#### Executor의 종류 및 특징과 장단점   
+### 1-2) Executor의 종류 및 특징과 장단점   
 
 앞에서 Airflow의 기본 동작 원리를 설명하면서 Airflow에 Executor라는 개념이 
-있다고 언급했는데, `Executor는 문자 그대로 작업의 한 단위인 태스크 인스턴스를 
-실행하는 주체이다.`    
+있다고 언급했는데, `Executor는 작업의 한 단위인 Task를 실행 하는 주체이다.`       
 
 Executor에는 다양한 종류가 있고 각 종류에 따라 동작 원리가 상이하다. 
 현재 Airflow에는 Sequential Executor와 Debug Executor, Local Executor, Dask 
@@ -74,7 +73,7 @@ Airflow 2.0에는 CeleryKubernetes Executor가 추가되었다.
 
 - - - 
 
-## 설치 방법    
+## 2. 설치 방법    
 
 apache/airflow를 docker images로 로컬에서 간단하게 설치하고 테스트 할 수 있다.   
 
@@ -100,17 +99,17 @@ $ docker ps // 현재 실행중인 컨테이너 확인
 
 - - - -
 
-## Airflow Tutorial 진행    
+## 3. Airflow Tutorial 진행    
 
 [Airflow Tutorial](https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html) 페이지를 참고해서 Tutorial을 진행해보자.   
 
-#### simple_bash.py DAG 파일 생성    
+### 3-1) simple_bash.py DAG 파일 생성    
 
 simple_bash 라는 이름의 DAG를 생성할 것이다. Docker Compose를 실행한 경로(다른 
         경로로 이동하지 않았다면 docker-airflow/dags) 에 dags라는 디렉토리가 
 있을 것이다. 이 디렉토리에 simple_bash.py 파일을 생성하고, 작성을 시작한다.    
 
-##### import 구문   
+### 3-2) import 구문   
 
 ```python
 from datetime import datetime, timedelta   
@@ -118,7 +117,7 @@ from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 ```
 
-##### Default Arguments 객체 생성   
+### 3-3) Default Arguments 객체 생성   
 
 DAG 및 DAG 내 Task들에 일괄적으로 적용할 속성 객체를 작성한다.    
 
@@ -144,7 +143,7 @@ default_args={
 - retries : 작업 재시도 횟수   
 - retry_delay : 작업 재시도 간격    
 
-##### DAG 정의    
+### 3-4) DAG 정의    
 
 DAG 객체를 정의한다.    
 
@@ -159,7 +158,7 @@ dag = DAG(
 
 - schedule_interval : DAG 스케줄링 간격(Cron 표현식 혹은 미리 정의된 속성 사용 가능)   
 
-##### Task 정의    
+### 3-5) Task 정의    
 
 hello world를 출력하는 작업(say_hello)와 현재 시간을 출력하는 작업(what_time)을 정의할 것이다.   
 
@@ -188,7 +187,7 @@ BashOperator 에는 다음과 같은 속성이 존재한다.
 `또한 t1 >> t2 는 t1이 실행된 후 t2를 실행한다는 의미이다.(t1이 t2의 Upstream Task)`    
 
 
-##### Airflow CLI와 Webserver를 통해 생성된 DAG 확인하기    
+### 3-6) Airflow CLI와 Webserver를 통해 생성된 DAG 확인하기    
 
 Airflow CLI로 방금 만든 DAG가 잘 반영되었는지 확인해보자. 원래는 airflow list_dags 명령어로 Airflow에 
 등록된 DAG 목록을 출력할 수 있는데, 여기서는 Docker Compose로 띄워 놓았기 때문에 
@@ -212,7 +211,7 @@ WebServer에서도 일정 시간이 지나면 아래와 같이 tutorial_bash가 
 <img width="830" alt="스크린샷 2021-03-09 오후 11 33 10" src="https://user-images.githubusercontent.com/26623547/110486957-7b2ea580-8130-11eb-8fbe-096c7872cb7a.png">    
 
 
-##### DAG를 활성화하여 실행 확인하기    
+### 3-7) DAG를 활성화하여 실행 확인하기    
 
 만들어진 DAG는 활성화된 상태가 아니어서(Paused) 실행되지 않는다. 실행을 
 위해서는 CLI나 Web UI상에서 'Off' 버튼을 눌러 'On' 상태로 변경해주어야 한다.   
@@ -248,7 +247,7 @@ DAG에서 특정 tak를 클랙했을 때 아래와 같이 팝업창을 볼수 �
 다음으로는 Apache airflow를 사용함에 있어서 혼동할 수 있는 부분과 주의사항에 
 대해 살펴보자.     
 
-## execution_date 주의 사항   
+## 4. execution_date 주의 사항   
 
 airflow에서 DAG를 동작시키고 task instance를 확인해 보면  
     아래와 같이 Execution Date, Start Date, End Date를 확인 할수 있다.    
@@ -304,7 +303,9 @@ airflow는 분명히 의도와는 다르게 동작할 것이다.
 데이터와 날짜를 넣어야 하다 보니 excution_date를 날짜 변수값으로 이용해 
 꼭 필요한 값이라 생각한다.   
 
-## 한국 시간(UTC +9)에 대한 고려     
+- - -    
+
+## 5. 한국 시간(UTC +9)에 대한 고려     
 
 UTC 환경을 전제로 작업할 경우, 즉 UTC 기준 날짜로 로그가 쌓이고 UTC 기준으로 로그를 
 읽을 경우 고려하지 않아도 되지만 한국 시간(UTC +9)기준으로 로그를 사용한다면, 
@@ -337,43 +338,24 @@ schedule_interval="31 15 * * *", #(한국 시간 00:31)
 
 따라서 한국시간 기준으로 2019-06-12일에 실행되고 2019-06-10일 데이터를 작업하게 된다.   
 
-이러한 오류를 피하기 context 변수를 이용하여 날짜를 조정해야 한다.    
+- - -    
+
+## 6. Backfill and Catchup    
+
+과거에 start_date를 설정하면 airflow는 과거의 task를 차례대로 실행하는 Backfill을 실행한다.   
+간혹 "과거 언베부터 데이터를 쭈욱 빌드해 주세요" 라는 요청을 받으면 과거 start_date를 
+잘 설정하기만 하면 빌드는 자동으로 과거부터 실행되어 편리하게 데이터를 빌드할 수 있다.   
+하지만 이런 동작을 원하지 않는 경우도 있다.    
+그럴 때는 DAG를 선언할 때 Catchup 설정을 False로 해주면 backfill을 실행하지 않는다.   
 
 ```
-// execution_date 이 "2019-06-10" 인 경우
-
-{'END_DATE': '2019-06-10',
- 'conf': <module 'airflow.configuration' from '.../configuration.py'>,
- 'ds_nodash': '20190610',
- 'end_date': '2019-06-10',
- 'execution_date': <Pendulum [2019-06-10T00:00:00+00:00]>,
- 'inlets': [],
- 'latest_date': '2019-06-10',
- 'macros': <module 'airflow.macros' from '.../__init__.py'>,
- 'next_ds': '2019-06-10',
- 'next_ds_nodash': '20190610',
- 'next_execution_date': datetime.datetime(2019, 6, 10, 16, 31, tzinfo=<TimezoneInfo [UTC, GMT, +00:00:00, STD]>),
- 'outlets': [],
- 'params': {},
- 'prev_ds': '2019-06-09',
- 'prev_ds_nodash': '20190609',
- 'prev_execution_date': datetime.datetime(2019, 6, 9, 16, 31, tzinfo=<TimezoneInfo [UTC, GMT, +00:00:00, STD]>),
- 'run_id': None,
- 'tables': None,
- 'task': <Task(PythonOperator): show_me_the_context>,
- 'task_instance': <TaskInstance: template.show_me_the_context 2019-06-10T00:00:00+00:00 [None]>,
- 'task_instance_key_str': 'template__show_me_the_context__20190610',
- 'templates_dict': None,
- 'test_mode': True,
- 'ti': <TaskInstance: template.show_me_the_context 2019-06-10T00:00:00+00:00 [None]>,
- 'tomorrow_ds': '2019-06-11',
- 'tomorrow_ds_nodash': '20190611',
- 'ts': '2019-06-10T00:00:00+00:00',
- 'ts_nodash': '20190610T000000',
- 'ts_nodash_with_tz': '20190610T000000+0000',
- 'var': {'json': None, 'value': None},
- 'yesterday_ds': '2019-06-09',
- 'yesterday_ds_nodash': '20190609'}
+dag = DAG(
+    dag_id="test_dag",
+    default_args=default_args,
+    start_date=datetime(2021, 1, 1, tzinfo=kst),
+    schedule_interval="0 8 * * *",
+    catchUp=False,
+)
 ```
 
 - - - 
@@ -387,6 +369,7 @@ schedule_interval="31 15 * * *", #(한국 시간 00:31)
 <https://engineering.linecorp.com/ko/blog/data-engineering-with-airflow-k8s-1/>    
 <https://bomwo.cc/posts/execution_date/>   
 <https://leeyh0216.github.io/2020-05-16/airflow_install_and_tutorial>    
+<https://www.bucketplace.com/post/2021-04-13-%EB%B2%84%ED%82%B7%ED%94%8C%EB%A0%88%EC%9D%B4%EC%8A%A4-airflow-%EB%8F%84%EC%9E%85%EA%B8%B0/>     
 
 {% highlight ruby linenos %}
 
