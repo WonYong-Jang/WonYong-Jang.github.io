@@ -35,6 +35,8 @@ Caffeine Cache [Github 페이지](https://github.com/ben-manes/caffeine)에서 h
 Caffeine Cache는 eviction policy로 [Window TinyLfu](https://github.com/ben-manes/caffeine/wiki/Efficiency)라는 것을 사용한다.   
 해당 알고리즘을 사용함으로써 최적의 적중률(near-optimal hit rate)을 보여준다고 한다.    
 
+> Caffeine 캐시 내부 알고리즘은 LFU와 LRU의 장점을 통합했다.     
+
 그럼 Caffeine 어떤 기능들을 제공하는지 살펴보자.   
 
 참고로 scala 언어를 사용하는 경우는 [Scaffeine](https://github.com/blemale/scaffeine)을 사용할 수 있다.   
@@ -99,7 +101,9 @@ LoadingCache<String, DataObject> cache = Caffeine.newBuilder()
   .build(k -> DataObject.get("Data for " + k));
 ```
 
-아래와 같이 get 메서드를 사용하여 값을 검색한다.   
+아래와 같이 get 메서드를 사용하여 값을 검색한다.  
+즉, cache.get 함수를 콜 했을 때 키가 없으면 위에서 build 함수에 등록한 
+코드가 동작하여 등록되고 리턴된다.   
 
 ```java
 DataObject dataObject = cache.get(key);
@@ -160,7 +164,8 @@ Caffeine은 [Window TinyLfu](https://github.com/ben-manes/caffeine/wiki/Efficien
 
 그렇다면, 어떤 값을 제거 할까?   
 
-`위에서 언급했던, Window TinyLfu를 적용하여 자주 사용되어지지 않는 것을 제거한다.`       
+`위에서 언급했던, Window TinyLfu 제거 정책에 따라서, 제거된다.`     
+
 
 ```
 Caffeine.newBuilder().maximumSize(long)    
@@ -220,7 +225,8 @@ assertEquals(1, cache.stats().missCount());
 `통계 정보를 사용하려면 Caffeine.recordStats()를 설정해주면 된다.`    
 
 
-- - - 
+- - -    
+
 
 # 2. EhCache   
 
@@ -228,6 +234,10 @@ EhCache는 Java 진영에서 유명한 Local Cache 라이브러리 종류 중 �
 EhCache는 Caffeine Cache 보다 더 많은 기능을 제공해 준다.   
 
 > 서버 간 분산캐시, 동기/비동기, 디스크 저장 지원 등    
+
+LRU(Least Recent Used), LFU(Least Frequency Used), FIFO(First In First Out) 세가지 
+제거 알고리즘을 제공한다.    
+해당 알고리즘에 따라 메모리 공간이 가득차면 요소가 제거된다.   
 
 EhCache는 Heap 메모리 공간 이외에 데이터를 저장할 수 있는 Off Heap 기능을 
 지원한다.   
