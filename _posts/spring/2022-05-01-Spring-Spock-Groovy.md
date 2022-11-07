@@ -101,7 +101,7 @@ testImplementation('net.bytebuddy:byte-buddy:1.9.3')
 - setup/ given : 테스트에 필요한 값들을 준비한다.   
 - when : 테스트할 코드를 실행한다.   
 - then : when과 함께 사용해야 하며, 예외 및 결과값을 검증한다.     
-- expect : then과 같으며, when을 필요로 하지 않기 때문에 간단한 테스트 또는 where와 같이 사용된다.     
+- expect : then과 같으며(when과 then이 합쳐진 형태), when을 필요로 하지 않기 때문에 간단한 테스트 또는 where와 같이 사용된다.     
 - where : 테스트 로직은 동일하고, 여러 파라미터 값으로 결과값을 확인하고 싶을 때 사용한다.   
 
 Spock에서는 given, when, then 외에 추가로 3개가 더있어 총 6단계의 
