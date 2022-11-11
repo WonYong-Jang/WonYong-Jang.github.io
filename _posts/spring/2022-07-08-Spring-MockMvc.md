@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spring] MockMvc를 이용하여 controller 테스트하기"
-subtitle: "standaloneSetup, webAppContextSetup" 
+subtitle: "standaloneSetup, webAppContextSetup / ContentType 과 Accept" 
 comments: true
 categories : Spring
 date: 2022-07-08
@@ -51,9 +51,132 @@ standaloneSetup() 메서드와 webAppContextSetup() 이다.
 
 이제 예제를 통해 Controller를 테스트 해보자.   
 
+- - -
+
+
+## 2. MockMvc의 메서드   
+
+#### 2-1) perform()   
+
+`요청을 전송하는 역할을 한다.`    
+결과로 ResultActions 객체를 받으며, `ResultActions 객체는 리턴 값을 검증하고 
+확인할 수 있는 andExpect() 메서드를 제공해준다.`   
+
+#### 2-2) get("/search")    
+
+HTTP 메소드를 결정할 수 있다(get(), post(), put(), delete())   
+인자로는 경로를 전달한다.   
+
+#### 2-3) params   
+
+`키=값의 파라미터를 전달할 수 있다.`   
+`여러 개일 때는 params()를, 하나일 때에는 param()을 사용한다.`   
+
+#### 2-4) andExpect()   
+
+`응답을 검증하는 역할을 한다.`    
+andExpect가 1개라도 실패하면 테스트는 실패한다.   
+
+- 상태 코드(status())
+    - 메소드 이름: 상태 코드   
+    - isOk(): 200
+    - isNotFound(): 404   
+    - isMethodNotAllowed(): 405   
+    - isInternalServerError(): 500
+    - is(int status): status 상태 코드   
+    ```java
+    mockMvc.perform(get("/"))
+          .andExpect(status().isOk()) // status()로 예상 값을 검증한다.
+          .andExpect(is(404))         // 또는 is()로 검증 
+    ```
+
+- 뷰(view())   
+    - 리턴하는 뷰 이름을 검증한다.   
+    ```java
+    mockMvc.perform(get("/"))
+          .andExpect(view().name("output")) // 리턴하는 뷰 이름이 output 인지 검증   
+    ```    
+
+- 리다이렉트(redirect())
+    - 리다이렉트 응답을 검증한다.    
+    ```java
+    mockMvc.perform(get("/"))
+          .andExpect(redirectUrl("/output")) // /output로 리다이렉트 되는지 검증   
+    ```   
+
+- 모델 정보( model() )   
+    - 컨트롤러에서 저장한 모델들의 정보 검증  
+    - attributeExists(String name)     // name에 해당하는 데이터가 model에 있는지 검증   
+    - attribute(String name, Object value) // name에 해당하는 데이터가 value 객체인지 검증    
+    ```java
+    mockMvc.perform(get("/"))
+          .andExpect(model().attributeExists("outputFormList"))
+          .andExpect(model().attribute("outputFormList", outputDtoList))
+    ```    
+
+#### 2-5) 응답 정보 검증(content())   
+    
+응답에 대한 정보를 검증한다.    
+
+```java
+ResultActions result = mockMvc.perform(
+                post("/search")
+                 .contentType(MediaType.APPLICATION_FORM_URLENCODED) // @ModelAttribute 매핑 검증을 위한 content type 지정
+                 .content("address=서울 성북구 종암동"))
+```
+
+#### 2-6) ContentType   
+
+`ContentType이란 HTTP 메시지(요청과 응답 모두)에 담겨 보내는 데이터의 형식을 알려주는 헤더이다.`   
+HTTP 표준 스펙을 따르는 브라우저와 웹서버는 ContentType 헤더를 확인하고 HTTP 메시지에 담긴 
+데이터를 분석과 파싱을 한다.   
+
+즉, ContentType으로 요청 또는 응답의 데이터가 어떤 형식인지 판단하고 처리할 수 있다.   
+
+`만약 ContentType 헤더가 없다면 데이터를 전송하는 쪽(브라우저나 웹서버)에서는 
+특정한 형식의 데이터 일지라도 데이터를 받는 입장에서는 단순히 텍스트 데이터로 받아들인다.`       
+
+`중요한 점은 HTTP 요청의 경우 GET방식인 경우에는 무조건 URL 끝에 쿼리스트링으로 
+key=value 형식으로 보내지기 때문에 ContentType은 필요 없다.`   
+즉, GET방식으로는 데이터를 전송 시 웹서버 입장에서는 key=value 형식 데이터라는 것을 
+알 수 있기 때문이다.   
+
+`따라서, ContentType은 POST나 PUT처럼 메시지 바디에 데이터를 보낼 때 필요로 한다.`   
+
+예를 들어 브라우저 기준으로 설명하자면, Ajax를 통해 json 형식의 데이터를 전송하는 경우 
+ContentType값을 application/json 으로 지정하여 보낸다.   
+
+form 태그를 통해 첨부파일 등을 전송하는 경우라면 브라우저가 자동으로 
+ContentType을 multipart/form-data로 설정하여 요청 메시지를 보낸다.   
+
+#### 2-7) Accept    
+
+Accept 헤더의 경우에는 브라우저(클라이언트)에서 웹서버로 요청시 요청메시지에 담기는 헤더이다.   
+이 `Accept 헤더는 쉽게 말해 자신에게 이러한 데이터 타입만 허용하겠다는 뜻이다.`      
+
+즉, 브라우저가 요청 메시지의 Accept 헤더 값을 application/json이라고 설정했다면 
+클라이언트는 웹서버에게 json 데이터만 처리할 수 있으니 json 데이터 형식으로 응답을 돌려줘 라고 
+말하는 것과 같다.   
+
+ContentType헤더와 Accept 헤더 공통점은 둘 다 데이터 타입(MIME)을 다루는 헤더이다.   
+
+> 과거에는 MIME type으로 불렸지만, 지금은 media type으로 사용된다.   
+
+`하지만 차이점은 ContentType 헤더는 현재 전송하는 데이터가 어떤 타입인지에 대한 설명을 하는 
+개념이고, Accept 헤더는 클라이언트가 서버에게 어떤 특정한 데이터 타입을 보낼 때 
+클라이언트가 보낸 특정 타입으로만 응답을 해야한다.`    
+
+
+#### 2-7) andDo()
+
+요청/응답 전체 메시지를 확인할 수 있다.   
+
+- print(): 실행결과를 지정해준 대상으로 출력해준다.(default는 System.out)   
+- log(): 실행결과를 디버깅 레벨로 출력한다.    
+
 - - - 
 
-## 2. MockMvc 사용하기    
+## 3. MockMvc 사용하여 테스트 코드 작성하기   
 
 MockMvc는 spring-test 라이브러리에 포함되어 있으며, MockMvc클래스를 살펴보면 
 아래와 같다.   
@@ -118,7 +241,7 @@ public class FormController {
 }
 ```
 
-#### 2-1) 테스트 1   
+#### 3-1) 테스트 1   
 
 먼저 get방식의 main 메소드를 MockMvc를 이용하여 테스트 해보자.   
 
@@ -163,8 +286,6 @@ this.mockMvc.perform(get("/").accept(MediaType.ALL)) // select media type
 ```
 
 또한, andDo()를 이용하여 print, log를 사용하여 출력할 수 있다.   
-print()는 실행 결과를 지정해준 대상으로 출력하며 default는 System.out으로 출력한다.   
-log()는 실행 결과를 디버깅 레벨로 출력하며 레벨은 org.springframework.test.web.servlet.result 이다.     
 
 ```
 MockHttpServletRequest:
@@ -206,7 +327,7 @@ MockHttpServletResponse:
 ```
 
 
-#### 2-2) 테스트 2    
+#### 3-2) 테스트 2    
 
 다음으로 post방식의 postDirection 메소드를 테스트해보자.   
 
@@ -278,7 +399,7 @@ model attribute 값들이 기대한 값과 동일한지 위와 같이 검증이 
 참고로 [@ModelAttribute](https://wonyong-jang.github.io/spring/2020/06/07/Spring-ModelAttribute-RequestBody.html)를 application/json 형태의 content type을 지정하여 요청하면, 
     null이 출력되기 때문에 form 형식으로 content type을 요청해야 한다.      
 
-#### 2-3) 테스트 3    
+#### 3-3) 테스트 3    
 
 이번에는 아래 예제를 통해 `redirect 여부를 테스트` 해보자.    
 
@@ -346,6 +467,7 @@ MockHttpServletResponse:
 - - -
 Referrence 
 
+<https://shinsunyoung.tistory.com/52>   
 <https://jdm.kr/blog/165>   
 
 {% highlight ruby linenos %}
