@@ -275,7 +275,7 @@ model attribute 값들이 기대한 값과 동일한지 위와 같이 검증이 
     contentType과 content를 지정하고, 이를 기대한 주소값과 동일한지 
     확인하였다.   
 
-참고로 [@ModelAttribute](https://wonyong-jang.github.io/spring/2020/06/07/Spring-Representational-State-Transfer.html)를 application/json 형태의 content type을 지정하여 요청하면, 
+참고로 [@ModelAttribute](https://wonyong-jang.github.io/spring/2020/06/07/Spring-ModelAttribute-RequestBody.html)를 application/json 형태의 content type을 지정하여 요청하면, 
     null이 출력되기 때문에 form 형식으로 content type을 요청해야 한다.      
 
 #### 2-3) 테스트 3    
