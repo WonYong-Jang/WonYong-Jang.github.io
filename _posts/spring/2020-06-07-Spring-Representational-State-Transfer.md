@@ -1,12 +1,13 @@
 ---
 layout: post
-title: "[Spring] Rest 방식"
-subtitle: "@RestController, @PathVariable, @RequestBody, ResponseEntity"
+title: "[Spring] Rest 방식 및 어노테이션"
+subtitle: "@RestController, @PathVariable / ResponseEntity"
 comments: true
 categories : Spring
 date: 2020-06-07
 background: '/img/posts/spring.png'
 ---
+
 
 ## REST (Representational State Transfer)
 
@@ -94,57 +95,6 @@ Date: Mon, 08 Jun 2020 13:28:21 GMT
     }
 ```
 
-### ModelAttribute     
-
-`@ModelAttribute는 사용자가 요청시 전달하는 값을 오브젝트 형태로 매핑해주는 어노테이션이다.`      
-`/check?name=kaven&age=1 같은 query string 형태 혹은 요청 본문에 삽입되어 있는 
-form 형태의 데이터를 처리한다.`     
-
-아래 코드와 같이 InputDto라는 클래스 안에 address 값을 매핑하며, getter와 setter가 존재해야 한다.   
-
-```java
-@Getter @Setter
-public class InputDto {
-    String address;
-}
-```
-
-```java
-@PostMapping("/search")
-    public ModelAndView postDirection(@ModelAttribute InputDto inputDto)  {
-
-        ModelAndView modelAndView = new ModelAndView();
-        modelAndView.setViewName("output");
-        modelAndView.addObject("outputFormList",
-                pharmacyRecommendationService.recommendPharmacyList(inputDto.getAddress()));
-
-        return modelAndView;
-    }
-```
-
-```hbs
-<form action="/search" method = "post">
-       <input type="text">
-       <div>
-         <button type="submit" class="btn btn-primary" id="btn-save">Search</button>
-       </div>
-</form>
-```    
-
-`쿼리 스트링 또는 form 형태로 데이터를 받기 때문에, 
-    application/json 형식으로 받지 못한다.`   
-
-아래와 같이 form테스트를 진행할 때 application/x-www-form-urlencoded 형식으로 
-content type을 지정해야 정상적으로 전송된다.      
-
-
-```java
-mockMvc.perform(post("/search")
-       .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-       .content("address="+address))
-       .andExpect(status().isOk())
-```
-
 - - -
 
 ### ResponseEntity   
@@ -163,6 +113,7 @@ HTTP의 상태 코드와 에러 메시지 등을 함께 데이터를 전달할 �
 - - -
 Referrence 
 
+<https://minchul-son.tistory.com/546>    
 [http://www.newlecture.com](http://www.newlecture.com)   
 
 {% highlight ruby linenos %}
