@@ -49,7 +49,12 @@ standaloneSetup() 메서드와 webAppContextSetup() 이다.
     한 컨트롤러에 집중하여 테스트하는 용도로만 사용한다는 점에서 
     유닛 테스트와 유사하다.`       
 
-이제 예제를 통해 Controller를 테스트 해보자.   
+이제 예제를 통해 Controller를 에서 아래 내용을 테스트 해보자.     
+
+- 요청 경로에 대해 적절한 handler method가 호출 되는가?   
+- 입력 파라미터는 handler method에 잘 전달되는가?   
+- model에 설정한 값은 잘 참조 하는가?   
+- 요청 결과 페이지는 잘 연결되는가?   
 
 - - -
 
@@ -106,8 +111,8 @@ andExpect가 1개라도 실패하면 테스트는 실패한다.
 
 - 모델 정보( model() )   
     - 컨트롤러에서 저장한 모델들의 정보 검증  
-    - attributeExists(String name)     // name에 해당하는 데이터가 model에 있는지 검증   
-    - attribute(String name, Object value) // name에 해당하는 데이터가 value 객체인지 검증    
+    - attributeExists(String name) : name에 해당하는 데이터가 model에 있는지 검증   
+    - attribute(String name, Object value) : name에 해당하는 데이터가 value 객체인지 검증    
     ```java
     mockMvc.perform(get("/"))
           .andExpect(model().attributeExists("outputFormList"))
