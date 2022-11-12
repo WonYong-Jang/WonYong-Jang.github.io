@@ -100,7 +100,15 @@ andExpect가 1개라도 실패하면 테스트는 실패한다.
     ```java
     mockMvc.perform(get("/"))
           .andExpect(view().name("output")) // 리턴하는 뷰 이름이 output 인지 검증   
-    ```    
+    ```   
+
+- 핸들러(handler())    
+    - 요청에 매핑된 컨트롤러를 검증한다.   
+    ```java
+    mockMvc.perform(get("/"))
+           .andExpect(handler().handlerType(FormController.class))
+           .andExpect(handler().methodName("main"))
+    ```
 
 - 리다이렉트(redirect())
     - 리다이렉트 응답을 검증한다.    
@@ -269,6 +277,8 @@ class FormControllerTest extends Specification {
         expect:
         // FormController 의 "/" URI를 get방식으로 호출
         mockMvc.perform(get("/"))
+                .andExpect(handler().handlerType(FormController.class))
+                .andExpect(handler().methodName("main"))
                 .andExpect(status().isOk()) // 예상 값을 검증한다.
                 .andExpect(view().name("main")) // 호출한 view의 이름이 main인지 검증(확장자는 생략)   
                 .andDo(log())
@@ -364,14 +374,11 @@ class FormControllerTest extends Specification {
     def "POST /search"() {
         given:
         String address = "서울 성북구 종암동"
-        InputDto inputDto = new InputDto()
-        inputDto.setAddress(address)
 
         when:
-        ResultActions result = mockMvc.perform(
-                post("/search")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED) // @ModelAttribute 매핑 검증을 위한 content type 지정    
-                        .content("address="+address))
+        ResultActions result = mockMvc.perform(post("/search")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED) // @ModelAttribute 매핑 검증을 위한 content type 지정
+                        .content("address="+address))   // ex) "address=서울 성북구&name=은혜약국" 형태의 쿼리 스트링    
 
         then:
         1 * pharmacyRecommendationService.recommendPharmacyList(argument -> {
@@ -402,7 +409,38 @@ model attribute 값들이 기대한 값과 동일한지 위와 같이 검증이 
     확인하였다.   
 
 참고로 [@ModelAttribute](https://wonyong-jang.github.io/spring/2020/06/07/Spring-ModelAttribute-RequestBody.html)를 application/json 형태의 content type을 지정하여 요청하면, 
-    null이 출력되기 때문에 form 형식으로 content type을 요청해야 한다.      
+    null이 출력되기 때문에 form 형식으로 content type을 요청해야 한다.     
+
+또는 param을 사용하여 아래와 같이 사용할 수도 있다.   
+
+```java
+when:
+def resultActions = mockMvc.perform(post("/search")
+       .param("address", inputAddress))
+
+// param 에 대한 주석 
+
+/**
+ * Add a request parameter to {@link MockHttpServletRequest#getParameterMap()}.
+* <p>In the Servlet API, a request parameter may be parsed from the query
+ * string and/or from the body of an {@code application/x-www-form-urlencoded}
+ * request. This method simply adds to the request parameter map. You may
+ * also use add Servlet request parameters by specifying the query or form
+ * data through one of the following:
+ * <ul>
+ * <li>Supply a URL with a query to {@link MockMvcRequestBuilders}.
+ * <li>Add query params via {@link #queryParam} or {@link #queryParams}.
+ * <li>Provide {@link #content} with {@link #contentType}
+ * {@code application/x-www-form-urlencoded}.
+ * </ul>
+ * @param name the parameter name
+ * @param values one or more values
+ */
+public MockHttpServletRequestBuilder param(String name, String... values) {
+	addToMultiValueMap(this.parameters, name, values);
+	return this;
+}
+```
 
 #### 3-3) 테스트 3    
 
