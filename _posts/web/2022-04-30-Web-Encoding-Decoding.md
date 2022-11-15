@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Web] 인코딩/디코딩(ASCII, URL, Base64)"
+title: "[Web] 인코딩/디코딩(ASCII, URL, Base64, Base62)"
 subtitle: "Encoding/Decoding"
 comments: true
 categories : Web
@@ -8,14 +8,14 @@ date: 2022-04-30
 background: '/img/posts/mac.png'
 ---
 
-인코딩이란, 정보의 형태나 형식을 표준화, 보안, 처리 속도 향상, 저장 공간 절약 등을 위해서 다른 형태나 형시기으로 변환하는 처리 혹은 
+인코딩이란, 정보의 형태나 형식을 표준화, 보안, 처리 속도 향상, 저장 공간 절약 등을 위해서 다른 형태나 형식으로 변환하는 처리 혹은 
 처리 방식을 뜻한다.   
 즉, 컴퓨터가 이해할 수 있는 형식으로 바꾸어 주는 것을 말한다.   
 형태를 변환하는 것이지 내용을 바꾸는 것은 아니며, 암호화로는 사용이 불가능하다.   
 
 > 디코딩은 변환된 형태를 원래의 형태로 되돌리는 것을 말한다.   
 
-인코딩/디코딩 종류로는 ASCII, URL, Base 64 등이 있으며, 이를 자세히 살펴보자.   
+인코딩/디코딩 종류로는 ASCII, URL, Base 64, Base 62 등이 있으며, 이를 자세히 살펴보자.   
 
 - - - 
 
@@ -65,10 +65,35 @@ Base 64를 글자 그대로 변역하여 보면 64진법이란 뜻이다.
 
 
 
+- - - 
+
+## 3. Base 62 인코딩/디코딩   
+
+Base 62의 경우에는 '+', '/', '=' 문자를 제외한 62개의 값을 표현한다.     
+
+`긴 URL을 Shorten URL로 만들 때 적합하게 사용될 수 있다.`      
+`왜냐하면, URL의 예약어인 ( '/', '=' ) 등의 특수 문자를 사용하지 않기 때문이다.`   
+
+> 알파벳 숫자 조합으로 Shorten URL 시퀀스 정보를 표현 가능하다.   
+
+https://wonyong-jang.github.io/spring/2021/02/17/Spring-UriComponentsBuilder-restTemplate.html 와 같은 긴 URL을 http://localhost/1000000와 같이 
+시퀀스 값으로 shorten url을 만들 수 있고, 해당 시퀀스를 base62 인코딩을 통해 더 줄일 수 있다.   
+
+1000000 은 10진수로 표현되었으니, 16진수로 표현하면 어떨까?   
+
+총 268,435,455 개를 만들 수 있고, 268배 더 만들 수 있다.   
+
+- 1000000 -> f4240
+- 9999999 -> 98967f
+- 268435455 -> fffffff
+
+`그럼 62진수로 표현하면 같은 자릿수이지만 더욱 많은 수를 표현하여 Shorten URL을 제공할 수 있게 된다.`       
+
 
 - - -
 Referrence 
 
+<https://medium.com/monday-9-pm/%EC%B4%88%EB%B3%B4-%EA%B0%9C%EB%B0%9C%EC%9E%90-url-shortener-%EC%84%9C%EB%B2%84-%EB%A7%8C%EB%93%A4%EA%B8%B0-1%ED%8E%B8-base62%EC%99%80-%EC%B6%A4%EC%9D%84-9acc226fb7eb>     
 <https://it-eldorado.tistory.com/143>   
 
 {% highlight ruby linenos %}
