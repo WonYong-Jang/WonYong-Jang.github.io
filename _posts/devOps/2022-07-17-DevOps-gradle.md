@@ -220,6 +220,60 @@ hello
 ```
 
 
+### 2-3) 변수 사용    
+
+build.gradle에서 변수를 사용하는 방식에 대해서 살펴보자.   
+
+```groovy
+task printTask(){
+    // 시스템 환경변수를 가져와서 작업할 경우 
+    println(System.getenv("REST_API_KEY"))
+
+    // 시스템 내부에 저장된 것이 아니라, args로 넘겨주기 위한 용도로 사용된다.
+    // 유저의 정보 및 api key값을 command line으로 넘길 때 사용된다.   
+    println(System.getProperty("REST_API_KEY")) 
+
+    println(project.getProperties().get("REST_API_KEY"))
+}
+```
+
+### 2-4) processTestResources   
+
+gradle wrapper를 이용하여 build를 진행하게되면, 전체 빌드 후 모든 테스트 코드를 
+실행시키게 된다.    
+이때, 테스트 코드를 실행할 때 전체 통합 테스트의 경우 스프링 컨테이너에 모든 빈을 
+등록해 놓고 관련 빈을 주입하여 테스트를 진행하게 된다.     
+이때, api key 값과 같은 args 를 주입해주어 정상적으로 통합 테스트를 진행할 수 있도록 
+해주어야 한다.   
+
+이때, 아래와 같이 -P 옵션으로 args를 전달해주고, 이를 processTestResources task에서 
+전달 받아서, application.yml에 정상적으로 매핑 시켜줄 수 있다.   
+
+```groovy
+// $ ./gradlew clean build -PKAKAO_REST_API_KEY={api key 값} 명령어로 전체 테스트 및 빌드하여 jar 파일 생성
+processTestResources {
+	boolean hasProperty = project.hasProperty("KAKAO_REST_API_KEY")
+	System.out.println("Set kakao rest api key: $hasProperty")
+	filesMatching('**/application.yml') {
+		expand(project.properties)
+	}
+}
+```
+
+expand(project.properties)만 하게되면 모든 설정 파일을 가져가게 된다.   
+따라서, 필요한 설정 파일만 expand하기 위해 filesMatching로 원하는 
+파일 포맷만 사용하도록 지정하였다.   
+
+`빌드가 완료된 후 build/resources/test/application.yml 파일을 보면, 
+    매핑된 값들로 채워져 있는 것을 볼 수 있다.`      
+
+```
+kakao:
+  rest:
+    api:
+      key: 6bb0c3e199d...
+```
+
 - - - 
 
 **Reference**    

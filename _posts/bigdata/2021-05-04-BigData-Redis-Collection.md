@@ -163,7 +163,7 @@ OK
 > HGET yundream email
 "yundream@gmail.com"
 
-// HGETALL : Key로 Hash의 모든 subkey의 값을 가져온다.
+// HGETALL : Key로 Hash의 모든 subkey(필드)와 값을 가져온다.   
 > HGETALL yundream
 1) "email"
 2) "yundream@gmail.com"
