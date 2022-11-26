@@ -184,20 +184,31 @@ Stop된 상태라면 과금이 발생한다.
 따라서, 반드시 Elastic ip를 만들어두고 할당을 하지 않은 상태라면 
 실행중인 ec2에 할당 혹은 Elastic ip 삭제해야 한다.   
 
-> EIP를 만들어두고 사용하지 않게되면 낭비되는 IP가 발생하기 때문에 과금을 발생시키는 것 같다.   
+> EIP를 만들어두고 사용하지 않게되면 낭비되는 IP가 발생하기 때문에 과금을 발생시키는 것 같다.  
+
+#### 2-6) ec2 및 elastic ip 제거   
 
 아래와 같이 EC2 및 Elastic IP를 제거해보자.      
 
+Elastic ip 주소 연결 해제를 먼저 진행한다.    
 
+<img width="1000" alt="스크린샷 2022-11-27 오전 1 08 42" src="https://user-images.githubusercontent.com/26623547/204098089-b8a368a1-0b70-48cc-b7bf-f80f7619c61b.png">   
 
-Elastic ip 의 연결을 해제후 아래 그림과 같이 Elastic IP 주소 릴리즈를 진행한다.   
+그 후 아래 그림과 같이 Elastic IP 주소 릴리즈를 진행한다.   
 
 <img width="1394" alt="스크린샷 2022-11-26 오후 11 11 12" src="https://user-images.githubusercontent.com/26623547/204093215-a1d428a4-7e4b-4226-9c69-a11520a11667.png">    
 
 그럼 아래처럼, 더 이상 계정에 할당할 수 없고 리소스에 연결할 수 없다고 안내한다.   
+릴리즈 버튼을 클릭하여 완전히 삭제한다.   
 
-<img width="998" alt="스크린샷 2022-11-26 오후 11 11 23" src="https://user-images.githubusercontent.com/26623547/204093235-aa8728e6-098d-4c76-be5b-14849297e000.png">  
+<img width="998" alt="스크린샷 2022-11-26 오후 11 11 23" src="https://user-images.githubusercontent.com/26623547/204093235-aa8728e6-098d-4c76-be5b-14849297e000.png">    
 
+다음으로는 ec2를 제거해보자.   
+
+<img width="1000" alt="스크린샷 2022-11-27 오전 1 13 05" src="https://user-images.githubusercontent.com/26623547/204098231-5cfdf034-e21b-4129-9c76-0ab65e3c0c61.png">    
+
+인스턴스 종료 버튼을 클릭하게 되면, 인스턴스 상태가 종료됨(terminated)로 변경되면 정상적으로 
+삭제가 된 것이다.   
 
 
 - - - 
