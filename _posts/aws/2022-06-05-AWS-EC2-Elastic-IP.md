@@ -11,7 +11,16 @@ background: '/img/posts/mac.png'
 이번 글에서는 AWS의 EC2를 생성하고 Docker Compose를 이용하여 
 애플리케이션을 배포하는 과정을 다루려고 한다.   
 
-AWS는 프리티어로 가입이 되어 있다고 가정하고 진행한다.   
+AWS에서는 처음 가입한 날부터 1년동안 사용가능한 서버를 무료로 제공해 준다.   
+하지만 모든 서비스가 무료인 것은 아니기 때문에 사용량 등을 모니터링해서 
+불필요한 요금이 발생하지 않도록 주의해야 한다.   
+
+> ec2는 클라우드에서 제공되는 컴퓨터이며, 월별 750시간까지 무료이다.   
+
+
+계정은 [AWS 홈페이지](https://aws.amazon.com/ko/)에서 계정을 만들면 된다.   
+이 과정에서 전화번호 인증과 사용가능한 카드인지 확인을 한다.   
+
 
 ## 1. AWS EC2 인스턴스 생성   
 
@@ -162,20 +171,33 @@ IP의 주소를 확인해야 하는 번거로움이 발생한다.
 탄력적 IP를 연결하고 다시 인스턴스 정보를 확인해보면 IP가 할당된 것을 볼 수 있다.   
 퍼블릭 IP 주소도 기존 값에서 탄력적 IP 주소로 자동으로 변경되었다.   
 
-<img width="1100" alt="스크린샷 2022-06-05 오후 8 18 26" src="https://user-images.githubusercontent.com/26623547/172048140-09b61bf0-0f26-4203-961d-d7ad58ed1a5b.png">      
+<img width="1100" alt="스크린샷 2022-06-05 오후 8 18 26" src="https://user-images.githubusercontent.com/26623547/172048140-09b61bf0-0f26-4203-961d-d7ad58ed1a5b.png">     
 
 
 #### 2-5) Elastic IP 요금 주의사항   
 
 `AWS 프리티어에서는 무료로 EIP 1개를 사용할 수 있다.`   
 
-하지만 [링크](https://aws.amazon.com/ko/premiumsupport/knowledge-center/elastic-ip-charges/)를 확인하지 않고 
-사용할 경우 과금이 발생할 수 있으니 반드시 숙지하자.  
-
-EIP를 만들어두고 사용하지 않거나, EC2에 연결해두었다고 해도 EC2가 
+하지만, EIP를 만들어두고 사용하지 않거나, EC2에 연결해두었다고 해도 EC2가 
 Stop된 상태라면 과금이 발생한다.   
 
+따라서, 반드시 Elastic ip를 만들어두고 할당을 하지 않은 상태라면 
+실행중인 ec2에 할당 혹은 Elastic ip 삭제해야 한다.   
+
 > EIP를 만들어두고 사용하지 않게되면 낭비되는 IP가 발생하기 때문에 과금을 발생시키는 것 같다.   
+
+아래와 같이 EC2 및 Elastic IP를 제거해보자.      
+
+
+
+Elastic ip 의 연결을 해제후 아래 그림과 같이 Elastic IP 주소 릴리즈를 진행한다.   
+
+<img width="1394" alt="스크린샷 2022-11-26 오후 11 11 12" src="https://user-images.githubusercontent.com/26623547/204093215-a1d428a4-7e4b-4226-9c69-a11520a11667.png">    
+
+그럼 아래처럼, 더 이상 계정에 할당할 수 없고 리소스에 연결할 수 없다고 안내한다.   
+
+<img width="998" alt="스크린샷 2022-11-26 오후 11 11 23" src="https://user-images.githubusercontent.com/26623547/204093235-aa8728e6-098d-4c76-be5b-14849297e000.png">  
+
 
 
 - - - 
