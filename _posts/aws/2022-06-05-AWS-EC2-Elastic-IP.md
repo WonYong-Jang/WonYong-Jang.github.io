@@ -338,18 +338,32 @@ SPRING_DATASOURCE_PASSWORD=1234
 
 ```
 $ docker-compose config    
-```   
+```  
 
-#### 5-5) Docker 이미지 받고 Docker Compose 실행    
+#### 5-5) JDK 설치 및 jar 파일 생성   
+
+아래와 같이 Amazon에서 제공하는 OpenJDK인 Amazon Coretto를 다운받아 간편하게 설치할 수 있다.   
 
 ```
-$ docker pull {도커 허브 이미지 경로}
+# aws coreetto 다운로드
+$ sudo curl -L https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.rpm -o jdk11.rpm
 
-$ docker-compose up
+# jdk11 설치
+$ sudo yum localinstall jdk11.rpm
 ```
 
-위와 같이 도커 허브에 push한 이미지가 있다면, 해당 이미지를 
-내려받고 docker-compose를 이용해서 애플리케이션을 실행시킨다.     
+```
+// 테스트 케이스 제외하고, jar 파일 빌드만 진행
+$ ./gradlew clean build -x test
+```
+
+#### 5-6) Docker 이미지 받고 Docker Compose 실행    
+
+```
+$ docker-compose up --build
+```
+
+docker-compose를 이용해서 애플리케이션을 실행시킨다.     
 
 <img width="882" alt="스크린샷 2022-06-06 오후 6 07 46" src="https://user-images.githubusercontent.com/26623547/172131535-a3d87de5-dac4-43cb-a5fb-bb16245826ed.png">    
 
