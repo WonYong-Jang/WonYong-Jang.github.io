@@ -284,7 +284,7 @@ $ sudo yum install git -y
 $ git version
 ```
 
-#### 5-2) 도커 및 도커 컴포즈 설치     
+#### 5-2) 도커, 도커 컴포즈 설치 및 시작    
 
 docker client와 server(docker daemon)간 통신 방식은 기본적으로 
 unix domain socket(IPC socket)을 사용하며, 내부적으로 
@@ -297,27 +297,24 @@ $ sudo yum install docker
 $ docker -v
 
 // 도커 컴포즈 설치 
-$ sudo curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+$ sudo curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose   
+
+// 도커 시작하기     
+$ sudo systemctl start docker
 
 // 실행 권한 적용   
 $ sudo chmod +x /usr/local/bin/docker-compose    
 $ sudo chmod 666 /var/run/docker.sock
 $ docker-compose -v
 ```   
- 
-#### 5-3) 도커 시작하기   
 
-```
-$ sudo systemctl start docker
-```
-
-#### 5-4) Docker Compose 파일이 존재하는 소스 내려받기  
+#### 5-3) Docker Compose 파일이 존재하는 소스 내려받기  
 
 ```
 $ git clone https://github.com/WonYong-Jang/Pharmacy-Recommendation.git
 ```  
 
-#### 5-5) Docker 환경변수    
+#### 5-4) Docker 환경변수    
 
 로컬에서 개발할 때, DB 계정 정보나 외부에 노출되면 안되는 값들을 따로 
 제외하여 관리하였고 이를 도커 컨테이너를 실행할 때 전달해주어야 하는데 
@@ -343,7 +340,7 @@ SPRING_DATASOURCE_PASSWORD=1234
 $ docker-compose config    
 ```   
 
-#### 5-6) Docker 이미지 받고 Docker Compose 실행    
+#### 5-5) Docker 이미지 받고 Docker Compose 실행    
 
 ```
 $ docker pull {도커 허브 이미지 경로}
