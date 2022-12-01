@@ -91,6 +91,8 @@ PUT _template/member_template
 기존에는 10,000개 이상의 document들에 대해 페이징을 적용할 때 scroll api를 
 사용하는 것이 권장되었지만 7 버전이 되면서 상황이 바뀌었다.   
 
+> Scroll api는 컨텍스트 비용이 많이 들기에 실시간 사용자 요청에는 Search After가 권장된다.   
+
 We no longer recommend using the scroll API for deep pagination. 
 If you need to preserve the index state while paging through more than 
 10,000 hits, use the [search after](https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html#search-after) 
@@ -100,7 +102,11 @@ parameter with a point in time (PIT).
 
 ## 3. search after 필드 사용하기    
 
-`search after는 동일한 쿼리를 여러번 반복하여 조회하는 방식`으로 요약할 수 있다.    
+`Search After는 많은 쿼리를 병렬로 스크롤하는 솔루션으로, 이전 페이지의 결과를 
+사용하여 다음 페이지를 조회한다.`    
+
+`문서의 고유한 값이 있는 필드를 순위 결정자로 사용해야 한다.` 그렇지 않으면 
+정렬 순서가 정의되지 않아 결과가 누락되거나 중복될 수 있다.   
 
 ES Search에서 정렬을 하고 조회를 하게 되면, hit 값에 sortValues를 반환하게 
 되는데, 이 값을 이용하여 가장 마지막으로 조회한 문서의 다음 값을 다시 
@@ -109,14 +115,32 @@ ES Search에서 정렬을 하고 조회를 하게 되면, hit 값에 sortValues�
 이 때 중요한 점은, PIT(Point In Time) 값을 함께 설정해주어 동일한 시점에 
 검색을 한 것과 같은 효과를 내주어야 한다는 것이다.   
 
-> 주의: collapse나 aggregation은 search after를 지원하지 않는다.   
+> 주의: collapse나 aggregation은 search after를 지원하지 않는다.  
 
+
+```
+GET your_index/_search
+{
+    "query": {
+        "match_all": {}
+    },
+    "sort": [
+        {
+            "account_number": {
+                "order": "asc"
+            }
+        }
+
+    ]
+}
+```
 
 
 - - - 
 
 **Reference**   
 
+<https://heesutory.tistory.com/29>   
 <https://jaimemin.tistory.com/1543>   
 <https://wedul.site/518>   
 
