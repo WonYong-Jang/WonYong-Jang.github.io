@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[DB] MongoDB 커넥션"
-subtitle: ""
+subtitle: "maxConnectionIdleTime, maxConnectionLifeTime"
 comments: true
 categories : Database
 date: 2021-09-17
@@ -12,6 +12,7 @@ background: '/img/posts/mac.png'
 
 `MongoDB 드라이버는 커넥션 풀을 명시적으로 설정하지 않아도 커넥션 풀을 사용하고 
 기본 값이 MaxPoolSize 100, MinPoolSize 0이다.`   
+
 
 웹 어플리케이션에서 동시적으로 많은 트래픽이 몰리는 상황에서는 사용하지 
 않는 커넥션을 계속 점유하는 문제가 발생할 수 있다.   
@@ -38,10 +39,20 @@ clientOptions.SetMaxConnIdleTime(10 * time.Second)
 있음을 의미한다.   
 
 
+- - - 
+
+## 2. 커넥션 확인 
+
+```
+db.serverStatus() 
+```
+
 - - -   
 
 **Reference**
 
+<https://medium.com/@kyle_martin/mongodb-in-production-how-connection-pool-size-can-bottleneck-application-scale-439c6e5a8424>   
+<https://www.mongodb.com/docs/manual/tutorial/connection-pool-performance-tuning/>   
 <https://www.popit.kr/mongodb-golang-%EB%93%9C%EB%9D%BC%EC%9D%B4%EB%B2%84%EC%9D%98-%EC%BB%A8%ED%85%8D%EC%8A%A4%ED%8A%B8%EC%99%80-%EC%BB%A4%EB%84%A5%EC%85%98/>     
 
 {% highlight ruby linenos %}
