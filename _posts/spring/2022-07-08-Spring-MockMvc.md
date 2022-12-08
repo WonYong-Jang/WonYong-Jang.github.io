@@ -385,11 +385,16 @@ class FormControllerTest extends Specification {
             assert argument == address // mock 객체의 argument 검증    
         }) >> outputDtoList
 
-        result.andExpect(status().isOk())
-                .andExpect(view().name("output"))
-                .andExpect(model().attributeExists("outputFormList"))
-                .andExpect(model().attribute("outputFormList", outputDtoList))
-                .andDo(print())
+        def result = resultActions
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.view().name("output"))
+                .andExpect(MockMvcResultMatchers.model().attributeExists("outputFormList")) // model에 outputFormList라는 key가 존재하는지 확인
+                .andExpect(MockMvcResultMatchers.model().attribute("outputFormList", outputDtoList))
+                .andDo(MockMvcResultHandlers.print())
+                .andReturn()
+
+        def outputFormList = (List<OutputDto>) result.getModelAndView().getModel().get("outputFormList") // model 값을 직접 검증   
+        outputFormList.size() == 2 
     }
 }
 ```
