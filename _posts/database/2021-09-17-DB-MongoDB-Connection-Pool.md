@@ -43,8 +43,30 @@ clientOptions.SetMaxConnIdleTime(10 * time.Second)
 
 ## 2. 커넥션 확인 
 
+아래는 서버 상태를 조회할 수 있다.    
+
 ```
 db.serverStatus() 
+```
+
+아래는 DB 세션 연결 수, 허용 수, 여태까지 연결된 수를 확인 가능하다.     
+
+```
+db.serverStatus().connections   
+
+{
+    "currnet": 58,
+    "available": 51142,
+    "totalCreated": 116599,
+    "active": 2
+}
+```
+
+replication 조회 및 상태 구성 확인 가능하다.   
+
+```
+rs.status()
+rs.conf()
 ```
 
 - - -   
