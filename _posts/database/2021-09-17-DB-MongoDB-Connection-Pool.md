@@ -30,10 +30,13 @@ clientOptions.SetMaxConnIdleTime(10 * time.Second)
 늘어나며, `사용하지 않고 대기하고 있는 커넥션 즉 유후 커넥션은 10초가 
 지나면 종료한다.`   
 
-`여기서 주의해야 할 점은 MongoDB 드라이버의 유휴 커넥션을 종료 시키는 시점이다.   
+`여기서 주의해야 할 점은 MongoDB 드라이버의 유휴 커넥션을 종료 시키는 시점이다.`     
+
 드라이버 내부에서 유휴 시간을 지속적으로 확인하여 종료 시키는 것이 
-아니라, 커넥션을 사용하는 시점(collection.InsertOne, collection.Find 등)에 
-커넥션 풀의 커넥션을 꺼내 확인 후 종료시킨다는 것이다.`       
+아니라, maintenanceInitialDelayMS, maintenanceFrequencyMS 시간에 따라 일정 주기로 
+관리를 한다.
+`해당 주기에 따라, 유휴 커넥션을 모두 정리하고, 최소 커넥션 풀의 크기를 확인하여 
+부족한 커넥션을 생성하는 행위가 maintenance라고 한다.`   
 
 즉, 이것은 엄밀하게 커넥션이 최대 유휴 시간이 지나도 종료되지 않을 수 
 있음을 의미한다.   

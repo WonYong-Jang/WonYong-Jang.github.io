@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[DB] DocumentDB(MongoDB) Replica Set 과 readPreference 설정"
-subtitle: "Primary, Secondary, Arbiter / Write Concern / 복제 지연"
+subtitle: "Primary, Secondary, Arbiter / Write Concern / Replica Lag(복제지연) / Oplog, Journaling"
 comments: true
 categories : Database
 date: 2021-09-20
@@ -151,7 +151,9 @@ Client에게 Response를 보내게 된다.`
 
 - - - 
 
-## 4. 복제 지연   
+## 4. 복제 지연(Replica Lag)   
+
+`복제지연이란 Primary가 Secondary 노드로 복제할 때의 지연 시간을 의미한다.`   
 
 복제 지연에 관한 정보는 아래 명령어로 확인 가능하다.   
 
@@ -242,20 +244,44 @@ rs0:PRIMARY> rs.conf()
 "writeConcernMajorityJournalDefault: true" 는 write concern을 majority로 설정한 후 disk로 
 data journal을 기록하는 설정이다.   
 
-> DocumentDB는 데이터의 내구성을 높이기 위해 majority와 dis journaling을 사용하도록 기본적으로 
+> DocumentDB는 데이터의 내구성을 높이기 위해 majority와 disk journaling을 사용하도록 기본적으로 
 설정되어 있음을 알 수 있다.   
 
+- - - 
 
+## 6. Oplog와 Journaling 차이
+
+MongoDB에서 Oplog와 Journaling를 통해서 로깅을 하며, 이 개념에 대해서 살펴보자.   
+
+#### 6-1) Oplog(operations log)   
+
+정확한 이름은 Replica Set Oplog이다.    
+`Oplog는 Replica Set의 데이터를 동기화를 위해 내부에서 발생하는 모든 동작의 로그를 기록한 것이다.`   
+
+Oplog는 capped collection이라는 특수한 컬렉션에 저장되며, secondary 노드들은 oplog를 보고 
+데이터의 변환을 반영한다.   
+
+> capped collection은 고정된 크기를 가지며 해당 크기가 꽉차면 오래된 순으로 자동으로 삭제가 되는 로그성 데이터를 저장하는 컬렉션이다.   
+
+#### 6-2) Journaling   
+
+`Journaling이란 실패시 복구상황에서 사용되는 journal 파일에 로깅하는 행위를 말한다.`    
+
+MongoDB의 Storage 엔진인 WiredTiger는 쓰기 작업(삽입, 수정)이 발생할때마다 하나의 
+journal record를 생성하며 journal에는 해당 쿼리와 인덱스 변경에 대한 내용이 
+포함되어 있다.   
 
 
 - - -   
 
 **Reference**
 
+<https://dontbesatisfied.tistory.com/12>   
 <https://www.mongodb.com/docs/manual/reference/replica-configuration/#rsconf.writeConcernMajorityJournalDefault>   
 <https://www.mongodb.com/docs/manual/reference/write-concern/>   
 <https://bluese05.tistory.com/74>    
 <https://rastalion.me/mongodb-replica-set-%EA%B5%AC%EC%84%B1%ED%95%98%EA%B8%B0/>    
+<https://aws.amazon.com/ko/blogs/database/building-resilient-applications-with-amazon-documentdb-with-mongodb-compatibility-part-1-client-configuration/>    
 
 {% highlight ruby linenos %}
 
