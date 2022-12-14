@@ -81,7 +81,7 @@ rs.conf()
 
 minSize와 maxSize로 connection을 관리할 수 있는 것을 확인할 수 있다.   
 
-자세한 내용은 [링크](https://aws.amazon.com/ko/blogs/database/building-resilient-applications-with-amazon-documentdb-with-mongodb-compatibility-part-1-client-configuration/)를 
+자세한 내용은 [https://aws.amazon.com/ko/blogs/database/building-resilient-applications-with-amazon-documentdb-with-mongodb-compatibility-part-1-client-configuration/](https://aws.amazon.com/ko/blogs/database/building-resilient-applications-with-amazon-documentdb-with-mongodb-compatibility-part-1-client-configuration/)를 
 확인하자.   
 
 ```java
@@ -116,6 +116,16 @@ MongoClientSettings settings =
                  .build();
 
 MongoClient mongoClient =  MongoClients.create(settings);
+```
+
+- - - 
+
+## 4. Connection URI   
+
+MongoDB에 연결하는 URI는 아래 예제처럼 사용할 수 있다.   
+
+```
+mongodb://<user-name>:<password>@mycluster.node.us-east-1.docdb.amazonaws.com:27017/?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false&maxIdleTimeMS=30000&connectTimeoutMS=30000&socketTimeoutMS=30000&minPoolSize=10&maxPoolSize=200
 ```
 
 - - -   
