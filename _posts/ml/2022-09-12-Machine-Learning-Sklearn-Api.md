@@ -40,7 +40,12 @@ test size parameter를 통상적으로 사용하기 때문에 해당 파라미�
 난수 값이다. train_test_split()는 호출 시 무작위로 데이터를 분리하므로 random_state를 
 지정하지 않으면 수행할 때마다 다른 학습/테스트 용 데이터를 생성한다.   
 
-아래 예제를 살펴보자.   
+아래 예제를 살펴보자.  
+
+`train_test_split 함수를 이용하여 학습 데이터와 테스트 데이터를 분리하였고, 이를 fit 함수를 이용하여 
+학습을 하였다. 이때, 학습 데이터의 feature(X_train)과 학습 데이터의 target(y_train)을 사용하였다.`   
+`학습된 모델을 이용하여 predict 함수로 정확도를 예측할 수 있고, 이때, 나머지 테스트 데이터를 이용하였다.`   
+
 
 ```
 from sklearn.metrics import accuracy_score
@@ -54,8 +59,8 @@ dt_clf = DecisionTreeClassifier()
 
 X_train, X_test, y_train, y_test = train_test_split(df.data, df.target, test_size = 0.2, random_state = 121)
 
-dt_clf.fit(X_train, y_train)
-pred = dt_clf.predict(X_test)
+dt_clf.fit(X_train, y_train)   ## 학습  
+pred = dt_clf.predict(X_test)  ## 예측   
 print('예측 정확도: {0:.4f}'.format(accuracy_score(y_test, pred)))
 ```
 
@@ -87,10 +92,10 @@ k 폴드 방식의 문제점은 불균형한 분포도를 가진 레이블(Targe
 적기 때문에 단순하게 k번 나누었을 경우 불균형이 생길 수 있다.      
 
 `따라서, Stratified K 폴드 방식은 
-학습데이터와 검증 데이터 세트가 가지는 레이블 분포도가 유사하도록 검증 데이터를 추출한다.`   
+학습데이터와 검증 데이터 세트가 가지는 레이블(Target) 분포도가 유사하도록 검증 데이터를 추출한다.`   
 
-> 참고로 Stratified K 폴드 방식은 분류 모델에만 적용이 가능하며, 회귀의 경우 값에 대한 분포도가 연속형이기 때문에 
-적용이 불가능하다.    
+`Stratified K 폴드 방식은 분류 모델에만 적용이 가능하며, 회귀의 경우 값에 대한 분포도가 연속형이기 때문에 
+적용이 불가능하다.`        
 
 아래와 같이 코드 결과를 살펴보면, 학습 데이터와 검증 데이터의 분포도가 균일하게 분포되어 
 검증하는 것을 확인할 수 있다.   
@@ -115,6 +120,44 @@ for train_index, test_index in skf.split(iris_df, iris_df['label']):
     print('## 교차 검증: {0}'.format(n_iter))
     print('학습 레이블 데이터 분포:\n', label_train.value_counts())
     print('검증 레이블 데이터 분포:\n', label_test.value_counts())
+```   
+
+Output
+
+```
+## 교차 검증: 1
+학습 레이블 데이터 분포:
+ 2    34
+0    33
+1    33
+Name: label, dtype: int64
+검증 레이블 데이터 분포:
+ 0    17
+1    17
+2    16
+Name: label, dtype: int64
+## 교차 검증: 2
+학습 레이블 데이터 분포:
+ 1    34
+0    33
+2    33
+Name: label, dtype: int64
+검증 레이블 데이터 분포:
+ 0    17
+2    17
+1    16
+Name: label, dtype: int64
+## 교차 검증: 3
+학습 레이블 데이터 분포:
+ 0    34
+1    33
+2    33
+Name: label, dtype: int64
+검증 레이블 데이터 분포:
+ 1    17
+2    17
+0    16
+Name: label, dtype: int64
 ```
 
 - - - 

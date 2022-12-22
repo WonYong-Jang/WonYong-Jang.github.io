@@ -367,7 +367,7 @@ df.drop(['age'], axis=1, inplace=True)
 ```
 df.index         // 인덱스 범위 확인 
 df.index.values  // 전체 인덱스 확인 
-df.df.index[:5]
+df.index[:5]
 df.index.values[:5]
 df.index[6]
 ```
