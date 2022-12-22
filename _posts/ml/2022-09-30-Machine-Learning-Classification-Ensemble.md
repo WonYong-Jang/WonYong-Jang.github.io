@@ -106,6 +106,115 @@ background: '/img/posts/mac.png'
 사용되는 파라미터가 랜덤 포레스트에도 똑같이 적용될 수 있다.   
 
 
+사이킷런에서 제공하는 RandomForestClassifier를 이용하여 직접 구현해보자.   
+
+```
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import load_iris
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+
+df = load_iris()
+
+X_train, X_test, y_train, y_test = train_test_split(df.data, df.target, test_size = 0.2, random_state = 121)
+
+# 랜덤포레스트 학습 및 별도의 테스트 셋으로 예측 성능 평가 
+rf_clf = RandomForestClassifier(n_estimators=100, random_state=0, max_depth=8)
+rf_clf.fit(X_train, y_train)
+pred = rf_clf.predict(X_test)
+
+accuracy = accuracy_score(y_test, pred)
+print('랜덤 포레스트 정확도: {0: .4f}'. format(accuracy))
+```
+
+`GridSearchCV를 이용하여 하이퍼파라미터를 최적화 해보자.`       
+
+```
+from sklearn.model_selection import GridSearchCV
+
+params = {
+    'max_depth': [2, 4, 6, 8, 16, 24],
+    'min_samples_leaf': [1, 3, 6, 8 ,12, 14],
+    'min_samples_split': [2,4, 8,10, 16]
+    
+}
+
+# RandomForestClassifier 객체 생성 후 GridSearchCV 수행 
+# n_jobs의 default는 None이며, -1로 설정하게 되면 pc의 모든 cpu를 모두 사용하여 병렬로 처리
+# shift + tab 단축키로 파라미터 확인 가능
+rf_clf = RandomForestClassifier(n_estimators=100, random_state=0, n_jobs=-1)
+grid_cv = GridSearchCV(rf_clf, param_grid=params, cv=2, n_jobs=-1)
+grid_cv.fit(X_train, y_train)
+
+print('최적 하이퍼 파라미터:\n', grid_cv.best_params_)
+print('최고 예측 정확도: {0: .4f}'. format(grid_cv.best_score_))
+```
+
+Output
+
+```
+최적 하이퍼 파라미터:
+ {'max_depth': 4, 'min_samples_leaf': 1, 'min_samples_split': 10}
+최고 예측 정확도:  0.9667
+```
+
+아래와 같이 각 하이퍼 파라미터의 score와 자세한 내용을 확인 할 수 있다.   
+
+```
+pd.set_option('display.max_rows', 100)
+pd.set_option('display.max_colwidth', 100)
+pd.set_option('display.max_columns',100)
+
+scores_df = pd.DataFrame(grid_cv.cv_results_).sort_values(by = ['rank_test_score'], ascending=True)[:20]
+scores_df
+```
+
+최종적으로 최적화된 하이퍼 파라미터를 이용하여 랜덤포레스트 모델을 학습 후 예측값을 확인한다.   
+
+
+```
+rf_clf1 = RandomForestClassifier(n_estimators=100, min_samples_leaf=1, max_depth=4, min_samples_split=10, random_state=0)
+
+rf_clf1.fit(X_train, y_train)
+pred = rf_clf1.predict(X_test)
+
+accuracy = accuracy_score(y_test, pred)
+print('랜덤 포레스트 정확도: {0: .4f}'. format(accuracy))
+```
+
+`학습된 모델의 각 피처별 중요도를 확인해보고 시각화를 해보자.`      
+
+```
+feature_importance_values = rf_clf_result.feature_importances_
+feature_importance_values = pd.Series(feature_importance_values, index=df.feature_names)
+feature_importance_values
+```
+
+Output
+
+```
+sepal length (cm)    0.082101
+sepal width (cm)     0.013294
+petal length (cm)    0.451294
+petal width (cm)     0.453310
+```
+
+아래 코드는 피처별 중요도를 x 축으로 두고, y 축은 feature의 이름들로 
+구성하였다.   
+
+```
+import matplotlib.pyplot as plt
+import seaborn as sns
+%matplotlib inline
+
+plt.figure(figsize = (8,6))
+plt.title('Feature importances')
+sns.barplot(x=feature_importance_values, y = df.feature_names)
+```
+
+
+<img width="602" alt="스크린샷 2022-12-22 오후 10 10 19" src="https://user-images.githubusercontent.com/26623547/209141566-04d41fcb-0ca2-4643-831c-5ecfae4fa7c4.png">   
+
 
 
 
