@@ -78,6 +78,11 @@ db.tickets.find({"status":"closed", "$ne":{"requesterId": null} })
 db.tickets.find({"comments":{"$elemMatch": {"commentId": 1}} })
 ```
 
+```
+// 
+db.tickets.find({"tags": {"$all": ["a", "b"] } })
+```
+
 
 #### 1-1-4) Evaluation   
 
