@@ -106,7 +106,9 @@ db.products.createIndex({ category: 1 })
 생성한 인덱스를 확인하기 위해서 아래와 같이 조회 할 수 있다.    
 
 ```ruby
-db.products.getIndexes()
+db.products.getIndexes() // 인덱스 확인
+
+db.products.totalIndexSize() // 인덱스 사이즈 확인 
 ```
 
 카테고리 필드를 키로 인덱스를 만든다. `여기서 1은 오름차순, -1은 내림차순을 의미한다.`     

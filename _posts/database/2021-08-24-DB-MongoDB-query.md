@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[DB] MongoDB Query 명령어"
-subtitle: "database, collection, document / eq, ne, in, nin, elemMatch"
+subtitle: "database, collection, document / eq, ne, in, nin, elemMatch, regex"
 comments: true
 categories : Database
 date: 2021-08-24
@@ -47,7 +47,7 @@ db.tickets.find({"status": {"$exists": true} })
 
 ```
 // 배열안에 값이 속한다면 조회 
-db.tickets.find({"tags": {"$in":["parent_1", "parent_2"] } })
+db.tickets.find({"tags": {"$in":["111", "222"] } })
 ```
 
 #### 1-1-2) Logical   
@@ -66,7 +66,7 @@ db.tickets.find({"$or": [{"status": "closed"}, {"status": "solved"}] })
 db.tickets.find({"$and": [{"status": "closed"} , {"$ne": {"requesterId": null} }] })     
 
 // 이렇게도 가능하다.  
-db.tickets.find({"status":"closed", "$ne":{"requesterId": null} })
+db.tickets.find({"status":"closed", "requesterId":{"$ne": null} })
 ```
 
 #### 1-1-3) Array   
@@ -79,20 +79,53 @@ db.tickets.find({"comments":{"$elemMatch": {"commentId": 1}} })
 ```
 
 ```
-// 
-db.tickets.find({"tags": {"$all": ["a", "b"] } })
+// ticket의 tags 배열에 모두 포함된 document 조회 
+db.tickets.find({"tags": {"$all": ["111", "222"] } })
+```
+
+또한, 아래와 같이도 배열을 조회할 수 있다.   
+
+```
+// userFields 배열중에 key값과 value값에 만족하는 document 조회
+db.users.find({"userFields.key": "customer"}, {"userFields.value": "111"})   
+```
+
+`배열의 사이즈는 아래와 같이 구할 수 있다.`   
+
+```
+db.tickets.find({"tags": {"$size": 0}})
 ```
 
 
 #### 1-1-4) Evaluation   
 
-아래와 같이 $where 연산자를 통하여 javascript expression을 사용할 수 있다.   
+정규식 연산자를 통하여 document를 조회할 수 있다.   
 
 ```
-// comments가 비어있는 document 조회   
-db.tickets.find({"$where": "this.comments.length == 0"})
+{ <field>: { $regex: /pattern/, $options: '<options>' } }
+{ <field>: { $regex: 'pattern', $options: '<options>' } }
+{ <field>: { $regex: /pattern/<options> } }
+{ <field>: /pattern/<options> }
 ```
 
+<img width="700" alt="스크린샷 2022-12-27 오전 1 05 57" src="https://user-images.githubusercontent.com/26623547/209566263-f14f64af-5fa0-402a-a7f0-bb94cc1120bd.png">    
+
+```
+// description에 hello가 포함된 document가 조회  
+db.tickets.find({"description": {"$regex": /hello/} })
+
+// $regex를 작성하지 않고 바로 정규식을 쓸수도 있다.   
+db.tickets.find({"description": /hello/})
+```
+
+#### 1-1-5) projection   
+
+find() 메소드의 두번째 parameter인 projection에 대해 살펴보자.   
+`projection이란 쿼리의 결과값에서 보여질 field를 정하는 것이다.`   
+
+```
+db.tickets.find({}, {"_id": true, "status": true, "ticketUpdatedAt": true})
+```
 
 - - -   
 
