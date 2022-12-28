@@ -66,8 +66,10 @@ background: '/img/bg-index.jpg'
 > 2021.02.01 ~ 현재   
 
 - Bus Route Recommendation Service    
-    - Fulfillment Center 지원자에게 버스가 제공되며, 지원자 거주지 기준으로 가까운 버스 추천   
-    - 지원자의 거주지를 위, 경도로 변환 후 버스 정류장 위, 경도와 haversine formula 공식을 이용하여 가까운 거리 계산      
+    - Fulfillment Center 지원자에게 버스가 제공되며, 지원자 거주지 기준으로 자동으로 가까운 버스 추천  
+    - 기존에는 상담사가 직접 지원자의 거주지와 가까운 버스 정류장을 찾아서 전달하기 때문에 상담시간 지연 발생   
+    - 지원자의 거주지를 위, 경도로 변환 후 버스 정류장의 위, 경도와 비교하여 거리 및 우선순위에 따라 추천   
+    - Haversine formula 알고리즘을 이용하여 가까운 거리 계산      
     - Redis를 활용하여 버스 정류장 데이터를 캐싱하여 성능 개선   
     - 상담사의 상담 준비시간(After Call Work)을 68.2% 개선    
         - As-Is : 59sec (상담사의 셔틀버스 노선 확인 시간)       
@@ -75,11 +77,11 @@ background: '/img/bg-index.jpg'
 
 - Build customer service data pipeline with Kafka, Spark streaming and DocumentDB       
     - 기존 batch 기반으로 API를 반복적으로 호출하는 방식에서 AWS event bridge를 사용하여 3rd party data pipeline 구축     
+    - Spark Streaming의 마이크로 배치(10초)를 통해 Data 수집 및 Kafka publishing 하여 타 도메인에서 사용할 수 있도록 제공     
     - API 기반의 데이터 처리 방식 대비 약 60배의 퍼포먼스 개선  
         - As-Is : 250/sec   
         - To-Be : 15,000/sec      
     - Airflow를 통해 3rd party domain의 장애 발생 및 Event bridge로 데이터 전달 누락, 이벤트 처리 실패에 대한 retry 프로세스 적용     
-    - Spark Streaming의 마이크로 배치(10초)를 통해 Data 수집 및 Kafka publishing 하여 타 도메인에서 사용할 수 있도록 제공     
     - Data 저장을 위한 AWS storage cost 절감     
         - As-Is : $12,264 / Month (AuroraDB r5.12xlarge)      
         - To-Be : $3,901 / Month (DocumentDB r5.4xlarge)     
@@ -102,10 +104,10 @@ background: '/img/bg-index.jpg'
 
 > 2018.01 ~ 2018.02 (총 2개월)     
 
-- 사용 기술 : Java, Spring MVC, Mybatis, Tomcat, Nginx, Mysql, Drools   
-- 한의학 분야와 전문가 시스템을 융합 및 웹서비스 제공 
+- 한의학 분야와 Drools를 이용한 전문가 시스템을 융합 및 웹서비스 제공    
 - Nginx를 이용한 로드밸런싱 구조 구축 및 성능 벤치마킹   
-    > [https://github.com/kookmin-sw/2018-cap1-4](https://github.com/kookmin-sw/2018-cap1-4)   
+- A Scalability Study with Nginx for Drools-Based Oriental Medical Expert System 논문 발행     
+    > [https://github.com/WonYong-Jang/Medical-Expert-System](https://github.com/WonYong-Jang/Medical-Expert-System)   
 
 
 <br>  
