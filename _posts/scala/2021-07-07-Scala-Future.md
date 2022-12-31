@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Scala] Future와 동시성"
+title: "[Scala] 동시성을 위한 Future와 Promise"
 subtitle: "Concurrency"    
 comments: true
 categories : Scala
@@ -28,19 +28,15 @@ Starvation과 같은 문제가 발생할 수 있다. 이렇게 블로킹 기반�
 
 자바에도 Future가 있지만 스칼라의 Future와 다르다. 두 Future 모두 비동기적인 
 연산의 결과를 표현하지만 자바의 경우 블로킹 방식의 get()을 사용해 
-결과를 얻어와야 한다. 오히려 자바 8에 추가된 CompletableFuture가 
+결과를 얻어와야 한다. `오히려 자바 8에 추가된 CompletableFuture가 
 스칼라의 Future와 비슷하다. CompletableFuture를 정의하고 그 값을 
-얻었을 때 행동을 정의할 수 있다.   
+얻었을 때 행동을 정의할 수 있다.`       
 
 반면 스칼라의 Future는 이미 연산 결과의 완료 여부와 관계없이 결과 값의 변환을 
 지정할 수 있다. Future의 연산을 수행하는 스레드는 암시적으로 제공되는 
 Execution context를 사용해 결정된다. 이러한 방식을 사용해서 
 불변 값에 대한 일련의 변환으로 비동기적 연산을 표현할 수 있고, 
     공유 메모리나 락에 대해 신경 쓸 필요가 없는 장점이 있다.   
-
-- - - 
-
-## 1. 낙원의 곤경   
 
 공유 데이터와 락 모델을 사용해 멀티 스레드 어플리케이션을 신뢰성 있게 
 구축하기가 어렵다. 프로그램의 각 위치에서 접근하거나 변경하는 데이터 중 
@@ -59,12 +55,19 @@ Execution context를 사용해 결정된다. 이러한 방식을 사용해서
 
 - - -   
 
-## 2. 비동기 실행과 Try    
+## 1. 비동기 실행과 Try    
 
 스칼라에서 메소드를 호출하고 그 결과가 Future라면 그것을 비동기적으로 
 진행할 다른 연산을 표현하는 것이다. 이러한 Future를 실행하기 위해서는 
-암시적인 execution context가 필요하다.   
-Future에는 isCompleted와 value 메서드를 통해서 polling 기능을 제공한다. 
+암시적인 execution context가 필요하다.    
+
+먼저, 스칼라에서의 Future모양은 아래와 같다.
+
+```scala
+trait Future[T]  // T타입은 우리가 리턴받기 원하는 객체를 포함한다.   
+```
+
+Future에는 isCompleted와 value 메서드를 통해서 polling 기능을 제공한다.    
 value 메서드의 경우 Option[Try[T]]의 값을 리턴한다. Try는 성공을 
 나타내는 Suceess와 예외가 들어있어 실패를 나타내는 Failure 중에 
 하나를 표현한다. Try의 목적은 동기적 계산이 있는 try 식이 하는 역할을 
@@ -79,6 +82,11 @@ Try의 계층 구조는 아래의 그림과 같다.
 그래서 비동기적 연산에서는 Try 객체를 사용해서 예외가 발생하여 갑자기 종료되는 
 상황에 대비할 수 있다.     
 
+- - -      
+
+## 2. Future의 사용   
+
+
 
 
 
@@ -88,6 +96,7 @@ Try의 계층 구조는 아래의 그림과 같다.
 **Reference**    
 
 <https://seamless.tistory.com/46>    
+<https://hamait.tistory.com/763>    
 
 {% highlight ruby linenos %}
 

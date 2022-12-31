@@ -74,6 +74,7 @@ background: '/img/bg-index.jpg'
     - 상담사의 상담 준비시간(After Call Work)을 68.2% 개선    
         - As-Is : 59sec (상담사의 셔틀버스 노선 확인 시간)       
         - To-Be : 19sec      
+          
 
 - Build customer service data pipeline with Kafka, Spark streaming and DocumentDB       
     - 기존 batch 기반으로 API를 반복적으로 호출하는 방식에서 AWS event bridge를 사용하여 3rd party data pipeline 구축     
