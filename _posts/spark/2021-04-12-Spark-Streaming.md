@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] 아파치 스파크(spark) 스트리밍 "
-subtitle: "Event-driven 실시간 스파크 스트리밍"    
+subtitle: "DStream(Discretized Streams) / DynamicAllocation"    
 comments: true
 categories : Spark
 date: 2021-04-12
@@ -21,7 +21,7 @@ background: '/img/posts/mac.png'
 `즉, 스파크 스트리밍에서 다루는 데이터는 하루 전 혹은 한달 전과 같이 과거에 
 생성된 고정된 데이터가 아니라 현재의 미래에 꾸준히 변화되는 데이터를 대상으로 한다.`   
 
-## 실시간 스파크 스트리밍    
+## 1. 실시간 스파크 스트리밍    
 
 스트리밍이란 실시간으로 끊임없이 들어오는 데이터를 의미한다.    
 `Spark Streaming이란 이렇게 실시간으로 들어오는 데이터를 처리하기 위한 
@@ -46,7 +46,7 @@ background: '/img/posts/mac.png'
 
 - - - 
 
-## 아키텍처와 개념  
+## 2. 아키텍처와 개념  
 
 마이크로 배치(micro-batch)라 불리는 아키텍처를 사용한다.    
 마이크로 배치 데이터 스트림을 개별 세그먼트로 나눈 후 각 세그먼트의 데이터를 스파크 엔진으로 
@@ -66,7 +66,29 @@ RDD의 연속적인 묶음이다. (아래 그림 참조)`
 
 - - - 
 
-## 예제 1 
+## 3. 실습하기     
+
+먼저, 스파크 스트리밍을 위한 의존성을 추가해줘야 한다.   
+`그후 RDD와 데이터셋을 사용하기 위해 SparkContext와 SparkSession을 가장 먼저 생성해야 했듯이 스파크 
+스트리밍 모듈을 사용하기 위해서는 StreamingContext 인스턴스를 먼저 생성해야 한다.`    
+
+이때, 어떤 주기로 배치 처리를 수행할지에 대한 정보(batchDuration)를 함께 제공해야 한다.   
+
+또한, `StreamingContext는 명시적인 시작(start)와 종료(stop), 대기(awaitTermination) 메서드를 가지고 있다.`       
+즉, StreamingContext는 SparkSession이나 SparkContext와 달리 명시적으로 시작, 종료, 대기 등의 메서드를 
+호출해서 시작 혹은 종료시켜야 한다.   
+
+
+
+```groovy
+implementation group: 'org.apache.spark', name: 'spark-streaming_2.11', version: '2.3.0'
+```
+
+#### 3-1) 예제 1    
+
+아래 예제는 스파크 컨텍스트를 먼저 생성한 뒤 이를 스트리밍 컨텍스트의 인자로 전달해서 스트리밍 컨텍스트 인스턴스를 
+생성하고 있지만 `new StreamingContext(conf, Seconds(3))과 같이 직접 SparkConf를 이용해서 생성하는 
+것도 가능하다.`    
 
 ```scala 
 val conf = new SparkConf()
@@ -83,15 +105,19 @@ val lines = ssc.queueStream(inputQueue, true)
 val words = lines.flatMap(_.split(" "))
 words.countByValue().print()
 
-ssc.start()
-ssc.awaitTermination()
+ssc.start()  // 명시적으로 시작해야 스트리밍 시작   
+ssc.awaitTermination() 
 ```
 
-- - - 
+위 예제를 보면, `awaitTermination() 메서드를 호출해서 어플리케이션이 종료되지 않게 했다.`       
+즉, 한번 시작하면 명시적인 종료 또는 에러가 없다면 어플리케이션이 임의로 종료되지 않아야 하기 때문이다.   
 
-## 예제 2. 소켓   
+또한, 종료는 sparkStreamContext.stop() 메서드를 이용하면 된다.    
+참고로 데이터 손실 없는 종료는 [링크](https://wonyong-jang.github.io/spark/2021/06/29/Spark-graceful-shutdown.html)를 
+참고하자.   
 
 
+#### 3-2) 예제 2     
 
 ```scala 
 val conf = new SparkConf()
@@ -108,6 +134,26 @@ ssc.start()
 ssc.awaitTermination()    
 ```
 
+
+- - - 
+
+## 4. Spark 설정   
+
+#### 4-1) 동적 자원 할당 방식   
+
+[동적 자원 할당 방식](https://spark.apache.org/docs/latest/job-scheduling.html#dynamic-resources-allocation)으로 상황에 따라 자원을 할당 및 회수할 수 있다.   
+즉, executor 사용량이 적을땐 줄이고, 지연이 발생하거나 에러가 발생할 때 
+늘리는 방식이다.   
+dynamicAllocation 옵션을 사용할 때 항상 같이 사용하는 옵션이 spark.shuffle.service.enabled=true 옵션이다.   
+
+
+```
+spark.dynamicAllocation.enabled true
+spark.shuffle.service.enabled true
+spark.dynamicAllocation.minExecutors 50
+spark.dynamicAllocation.maxExecutors 100
+spark.dynamicAllocation.cachedExecutorIdleTimeout 600
+```
 
 - - - 
 
