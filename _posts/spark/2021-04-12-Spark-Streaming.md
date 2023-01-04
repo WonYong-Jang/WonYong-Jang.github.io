@@ -43,31 +43,32 @@ background: '/img/posts/mac.png'
 
 <img width="599" alt="스크린샷 2021-04-12 오후 9 12 10" src="https://user-images.githubusercontent.com/26623547/114394973-caa43d80-9bd6-11eb-9338-d26e10669ec2.png">   
 
+### 1-1) DStream(Discretized Streams)    
+
+`스파크 스트리밍에서는 새로운 데이터 모델인 DStream을 사용하는데, 이름에 
+포함된 Stream이라는 단어를 통해 알 수 있듯이 고정되지 않고 끊임없이 
+생성되는 연속된 데이터를 나타내기 위한 일종의 추상 모델이다.`    
+
+이렇게 연속된 데이터를 다루는 방법에는 다양한 해법들이 있을 수 있지만 
+그 중에서 가장 직관적이고 자주 사용되는 방법은 일정한 시간 간격 사이에 
+새로 생성된 데이터를 모아서 한번에 처리하는 방식이다.   
+
+> 이 때 데이터를 처리하는 주기가 짧아질수록 소위 리얼타임이라 불리는 
+실시간 처리에 가까운 상황이 되는데, 어느 정도의 주기로 데이터를 처리할지는 
+각 시스템의 요구사항에 따라 달라질수 있다.   
+
+`DStream의 경우에도 같은 방식으로 데이터스트림을 처리해서 일정 시간마다 
+데이터를 모아서 RDD를 만드는데 이러한 RDD로 구성된 시퀀스가 바로 DStream이라고 
+할 수 있다.`    
+
+<img width="839" alt="스크린샷 2023-01-04 오후 11 56 55" src="https://user-images.githubusercontent.com/26623547/210583050-61537d76-a3d5-42c6-b060-6c95aedbb918.png">    
+
+
 
 
 - - - 
 
-## 2. 아키텍처와 개념  
-
-마이크로 배치(micro-batch)라 불리는 아키텍처를 사용한다.    
-마이크로 배치 데이터 스트림을 개별 세그먼트로 나눈 후 각 세그먼트의 데이터를 스파크 엔진으로 
-처리하는 방식이다.   
-
-마이크로 배치들은 정해진 시간 간격마다 만들어진다. 
-
-<img width="664" alt="스크린샷 2021-04-12 오후 9 14 50" src="https://user-images.githubusercontent.com/26623547/114392783-376a0880-9bd4-11eb-927d-1699d8590105.png">      
-
-
-`스파크 스트리밍에서 프로그래밍적인 추상화 개념은 DStream이라 불리는 
-RDD의 연속적인 묶음이다. (아래 그림 참조)`   
-
-
-<img width="687" alt="스크린샷 2021-04-12 오후 9 28 09" src="https://user-images.githubusercontent.com/26623547/114394330-0be81d80-9bd6-11eb-8bb9-6d232885088c.png">    
-
-
-- - - 
-
-## 3. 실습하기     
+## 2. 실습하기     
 
 먼저, 스파크 스트리밍을 위한 의존성을 추가해줘야 한다.   
 `그후 RDD와 데이터셋을 사용하기 위해 SparkContext와 SparkSession을 가장 먼저 생성해야 했듯이 스파크 
@@ -85,11 +86,15 @@ RDD의 연속적인 묶음이다. (아래 그림 참조)`
 implementation group: 'org.apache.spark', name: 'spark-streaming_2.11', version: '2.3.0'
 ```
 
-#### 3-1) 예제 1    
+#### 2-1) 예제 1    
 
 아래 예제는 스파크 컨텍스트를 먼저 생성한 뒤 이를 스트리밍 컨텍스트의 인자로 전달해서 스트리밍 컨텍스트 인스턴스를 
 생성하고 있지만 `new StreamingContext(conf, Seconds(3))과 같이 직접 SparkConf를 이용해서 생성하는 
 것도 가능하다.`    
+
+아래에서 사용한 RDD 큐는 RDD들을 구성하여 직접 DStream을 만들 수 있다.  
+이 방식은 테스트 데이터를 만들고 DStream의 다양한 연산을 테스트하고 학습하는 
+용도로 많이 사용한다.   
 
 ```scala 
 val conf = new SparkConf()
@@ -98,7 +103,7 @@ conf.setAppName("RDDTest")
 conf.set("spark.driver.host", "127.0.0.1")
 
 val sc = new SparkContext(conf)
-val ssc = new StreamingContext(sc, Seconds(3))
+val ssc = new StreamingContext(sc, Seconds(3))  // 3초 간격 배치 처리   
 val rdd1 = sc.parallelize(List("Spark Streaming Sample ssc"))
 val rdd2 = sc.parallelize(List("Spark Queue Spark API"))
 val inputQueue = mutable.Queue(rdd1, rdd2)
@@ -118,7 +123,10 @@ ssc.awaitTermination()
 참고하자.   
 
 
-#### 3-2) 예제 2     
+#### 2-2) 예제 2     
+
+아래와 같이 TCP 소켓을 이용해 데이터를 수신하는 경우 서버의 IP와 포트 번호를 
+지정해 스파크 스트리밍의 데이터 소스로 사용할 수 있다.   
 
 ```scala 
 val conf = new SparkConf()
@@ -128,19 +136,26 @@ conf.set("spark.driver.host", "127.0.0.1")
 
 val ssc = new StreamingContext(conf, Seconds(3))
 
-val ds = ssc.socketTextStream("localhost", 9000)
+val ds = ssc.socketTextStream("localhost", 9000) // IP, port 입력    
 ds.print()
 
 ssc.start()
 ssc.awaitTermination()    
 ```
 
+```
+// 서버를 실행 후 netcat 서버에 문자열을 입력하면, 스파크 스트리밍 어플리케이션에 의해 
+// 해당 문자열이 출력되는 것을 확인할 수 있다.   
+$ nc -lk 9000
+Hello, World!
+```
+
 
 - - - 
 
-## 4. Spark 설정   
+## 3. Spark 설정   
 
-#### 4-1) 동적 자원 할당 방식   
+#### 3-1) 동적 자원 할당 방식   
 
 [동적 자원 할당 방식](https://spark.apache.org/docs/latest/job-scheduling.html#dynamic-resources-allocation)으로 상황에 따라 자원을 할당 및 회수할 수 있다.   
 즉, executor 사용량이 적을땐 줄이고, 지연이 발생하거나 에러가 발생할 때 
@@ -155,6 +170,7 @@ spark.dynamicAllocation.minExecutors 50
 spark.dynamicAllocation.maxExecutors 100
 spark.dynamicAllocation.cachedExecutorIdleTimeout 600
 ```
+
 
 - - - 
 
