@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Docker] 도커 컴포즈 및 환경 변수 "
-subtitle: "Docker Compose 가이드 / Docker Compose에서 환경 변수를 다루는 4가지 방법"    
+subtitle: "Docker Compose 가이드 / env 파일 / Docker Compose에서 환경 변수를 다루는 4가지 방법"    
 comments: true
 categories : DevOps
 date: 2022-01-01
@@ -138,7 +138,7 @@ $ docker-compose config
 ```   
 
 `이처럼 .env 파일을 이용하는 방식은 간편하기는 하지만, 
-    오직 Docker compose에서 docker-compose up 명령을 수행할 때에만 
+    오직 Docker 파일 또는 docker compose에서 docker-compose up 명령을 수행할 때에만 
     활용 가능하다는 점에 유의하자.`   
 
 

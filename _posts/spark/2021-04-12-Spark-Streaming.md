@@ -171,6 +171,88 @@ spark.dynamicAllocation.maxExecutors 100
 spark.dynamicAllocation.cachedExecutorIdleTimeout 600
 ```
 
+- - - 
+
+
+## 4. 데이터 다루기(기본 연산)
+
+데이터를 읽고 DStream을 생성했다면 이제 DStream이 제공하는 API를 사용해 
+원하는 형태로 데이터를 가공하고 결과를 도출해보자.   
+
+#### 4-1) print()   
+
+아래 예제를 통해 여러 api를 사용해보자.   
+
+```scala
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.spark.{SparkConf, SparkContext}
+
+import scala.collection.mutable
+
+object main {
+
+  def main(args: Array[String]): Unit = {
+
+    val conf = new SparkConf()
+    conf.setMaster("local[*]")
+    conf.setAppName("RDDTest")
+    conf.set("spark.driver.host", "127.0.0.1")
+
+    val sc = new SparkContext(conf)
+    val ssc = new StreamingContext(sc, Seconds(3))
+    val rdd1 = sc.parallelize(List("a", "b", "c", "c", "c"))
+    val rdd2 = sc.parallelize(List("1,2,3,4,5"))
+    val rdd3 = sc.parallelize(List(("k1", "r1"), ("k2", "r2"), ("k3", "r3")))
+    val rdd4 = sc.parallelize(List(("k1", "s1"), ("k2", "s2")))
+    val rdd5 = sc.range(1, 6)
+
+    val q1 = mutable.Queue(rdd1)
+    val q2 = mutable.Queue(rdd2)
+    val q3 = mutable.Queue(rdd3)
+    val q4 = mutable.Queue(rdd4)
+    val q5 = mutable.Queue(rdd5)
+
+    val ds1 = ssc.queueStream(q1, false)
+    val ds2 = ssc.queueStream(q2, false)
+    val ds3 = ssc.queueStream(q3, false)
+    val ds4 = ssc.queueStream(q4, false)
+    val ds5 = ssc.queueStream(q5, false)
+
+    ds1.print()
+
+    ssc.start()  // 명시적으로 시작해야 스트리밍 시작
+    ssc.awaitTermination()
+  }
+}
+```
+
+`위 예제에서 print() 는 DStream에 포함된 각 RDD의 내용을 콘솔에 출력한다.`   
+기본적으로 각 RDD의 맨 앞쪽 10개의 요소를 출력하는데, print(20)과 같이 
+출력할 요소의 개수를 직접 지정해서 변경할 수 있다.   
+
+#### 4-2) map(), flatMap()    
+
+DStream의 RDD에 포함된 각 원소에 func 함수를 적용한 결과값으로 구성된 
+새로운 DStream을 반환한다.    
+
+```scala
+val result: DStream[(String, Int)] = ds1.map((_, 1))
+result.print()
+```
+
+```scala
+val result = ds2.flatMap(_.split(","))
+result.print()
+```
+
+#### 4-3) count(), countByValue()    
+
+
+```scala
+ds1.count().print()
+
+ds1.countByValue()
+```
 
 - - - 
 

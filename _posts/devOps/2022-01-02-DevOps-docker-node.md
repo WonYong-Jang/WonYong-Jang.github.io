@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Docker] 도커를 이용한 간단한 Node.js 어플 만들기"
-subtitle: " dockerfile 최적화 / docker volume / Working Directory / docker compose 작성가이드 / ENV 환경 변수"    
+subtitle: " dockerfile 최적화 / docker volume / Working Directory / docker compose 작성가이드"    
 comments: true
 categories : DevOps
 date: 2022-01-02
