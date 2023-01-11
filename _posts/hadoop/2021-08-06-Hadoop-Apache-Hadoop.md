@@ -8,7 +8,7 @@ date: 2021-08-06
 background: '/img/posts/mac.png'
 ---
 
-# 하둡(Hadoop)     
+## 1. 하둡(Hadoop) 이란
 
 하둡은 빅데이터 인프라 기술 중에 하나로 분산처리를 통해 수많은 데이터를 저장하고 
 처리하는 기술이다.    
@@ -18,7 +18,8 @@ background: '/img/posts/mac.png'
 
 하둡은 여러 대의 서버를 이용해 하나의 클러스터를 구성하며, 이렇게 클러스터로
 묶인 서버의 자원을 하나의 서버처럼 사용할 수 있는 클러스터 컴퓨팅 환경을
-제공한다.
+제공한다.    
+
 기본적인 동작 방법은 분석할 데이터를 하둡 파일 시스템인 HDFS에 저장해 두고
 HDFS 상에서 맵리듀스 프로그램을 이용해 데이터 처리를 수행하는
 방식이다.
@@ -33,13 +34,13 @@ HDFS 상에서 맵리듀스 프로그램을 이용해 데이터 처리를 수행
 메타정보를 읽어서 처리할 데이터의 위치를 확인하고 분산처리를 수행한다.`      
 
 
+- - - 
 
+## 2. 맵리듀스의 원리     
 
-## 맵리듀스의 원리     
-
-상식적으로 1명이 100개를 훑어보는 것과 100명이 1개씩 훑어보는 것이 빠를 것이다. 
-이것이 분산처리의 핵심이지만 100명이 훑어본 결과를 취합하고 정리하는 소요가 
-있게 마련이다. 또한 탐색할 양이 101개이거나 1개의 길이가 서로 다르다면 
+상식적으로 1명이 100개를 훑어보는 것보다 100명이 1개씩 훑어보는 것이 빠를 것이다.    
+이것이 분산처리의 핵심이지만 100명이 훑어본 결과를 취합하고 정리하는 시간이 소요되기
+마련이다. 또한 탐색할 양이 101개이거나 1개의 길이가 서로 다르다면 
 이를 동일한 업무크기로 나누는 일도 쉽지가 않을 것이다.   
 
 맵리듀스는 이러한 처리를 돕는 역할을 한다. 이름 그대로 Map단계와 Reduce단계로 
@@ -49,106 +50,77 @@ HDFS 상에서 맵리듀스 프로그램을 이용해 데이터 처리를 수행
 
 - - - 
 
-## 1. 하둡 설치 
+## 3. 하둡 설치   
 
-macOS에서 brew를 이용하여 쉽게 설치할 수 있다.   
+#### 3-1) ssh와 java 버전 확인    
 
-```
-$ brew install hadoop   
-```   
+Hadoop 설치 전에 java가 설치되어 있어야 하며, 아래 명령어를 이용하여
+ssh 사용가능한지 확인한다.   
 
-아래와 같이 에러가 발생한다면 /usr/local/sbin 폴더를 생성하면 해결된다.   
+> java 8 이상 버전으로 설치한다.   
 
-```
-" Error: The `brew link` step did not complete successfully. The formula built, but is not symlinked into /usr/local. Could not symlink sbin/FederationStateStore. /usr/local/sbin is not writable."
-```
-
-- - - 
-
-## 2. 하둡 설정    
-
-하둡 설정을 위해 관련된 파일을 수정해줘야 한다. 수정해야 할 파일은 아래 경로에 있다.     
+아래와 같이 ssh key가 없는 경우 생성한다.    
+key 이름과 비밀번호 입력 라인이 나올때, 빈칸으로 엔터를
+누르면 자동으로 id_rsa.pub이 생성된다.
 
 ```
-$ cd /usr/local/Cellar/hadoop/3.3.1/libexec/etc/hadoop
-// 또는 Finder에서 Cmd+Shift+G 명령어를 이용하여 경로 검색
+# 키가 없는 경우 키 생성
+$ ssh-keygen -t rsa
+$ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 ```
 
-- `hadoop-env.sh`     
-- `core-site.xml`     
-- `mapred-site.xml`  
-- `hdfs-site.xml`      
+이제 하둡을 실행할 때 아래와 같이 에러가 날 경우는
+원격 로그인을 허용하지 않았을 경우 발생 한다.
 
-#### 2-1) hadoop-env.sh   
-
-해당하는 파일의 기존 내용이 없다면 변경에 해당하는 내용을 추가로 기재한다.    
 
 ```
-기존: export HADOOP_OPTS="$HADOOP_OPTS -Djava.net.preferIPv4Stack=true"
-변경: export HADOOP_OPTS="$HADOOP_OPTS -Djava.net.preferIPv4Stack=true -Djava.security.krb5.realm= -Djava.security.krb5.kdc=" 
-```   
-
-#### 2-2) core-site.xml    
-
-core-site.xml 파일은 HDFS와 맵리듀스에 공통적으로 사용되는 IO와 같은 
-하둡 코어를 위한 환경을 설정하는 파일이다.   
-파일의 configuration 태그 안에 작성한다.   
-
-```
-  <configuration>
-      <property>
-          <name>hadoop.tmp.dir</name>
-          <value>/usr/local/Cellar/hadoop/hdfs/tmp</value>
-          <description>A base for other temporary directories.</description>
-      </property>
-      <property>
-          <name>fs.default.name</name>
-          <value>hdfs://localhost:9000</value>
-      </property>
-  </configuration>
+"localhost: ssh: connect to host localhost port 22: Connection refused"
 ```
 
-#### 2-3) mapred-site.xml    
+환경설정의 공유에 들어가서 원격 로그인을 허용한다.
 
-mapred-site.xml 파일은 Job Tracker와 Task Tracker 같은 맵리듀스 데몬을 
-위한 환경을 설정하는 파일이다.    
-파일의 configuration 태그 안에 작성한다.   
+<img width="591" alt="스크린샷 2021-08-06 오후 11 14 22" src="https://user-images.githubusercontent.com/26623547/128523833-79843bec-8a03-403b-9190-6c9d21ecd0ff.png">
 
-```
-  <configuration>
-      <property>
-          <name>mapred.job.tracker</name>
-          <value>localhost:9010</value>
-      </property>
-  </configuration>
-```   
-
-#### 2-4) hdfs-site.xml   
-
-hdfs-site.xml 파일은 네임노드, 보조 네임노드, 데이터 노드 등과 같이 
-HDFS 데몬을 위한 환경을 설정하는 파일이다.   
-파일의 configuration 태그 안에 작성한다.   
+아래와 같이 ssh가 제대로 접속되는지 확인 할 수 있다.
 
 ```
-  <configuration>
-      <property>
-          <name>dfs.replication</name>
-          <value>1</value>
-      </property>
-  </configuration>
+$ ssh localhost
+Last login: Wed Jan 11 00:37:47 2023
 ```
 
-- - - 
 
-## 3. 하둡 실행  
+#### 3-2) hadoop 설치   
 
-하둡을 실행하기 전에 하둡 파일 시스템(HDFS)으로 포맷을 해야한다.   
-터미널에서 다음과 같이 입력하여 HDFS로 포맷한다.    
+그 후 [Hadoop 공식문서](https://hadoop.apache.org/)에서 Binary Download를 클릭한다.   
+
 
 ```
-$ cd cd /usr/local/cellar/hadoop/3.3.1/libexec/bin
-$ hdfs namenode -format
+$ wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.4/hadoop-3.3.4.tar.gz
+$ tar zxvf hadoop-3.3.4.tar.gz
+
+$ vi ~/.zshrc
+
+# hadoop 환경 변수 추가
+export HADOOP_HOME=/Users/jang-won-yong/dev/hadoop/hadoop-3.3.4
+export PATH=$PATH:$HADOOP_HOME/bin
 ```
+
+위에서 추가한 hadoop 환경 변수를 확인해보자.
+
+```
+$ source ~/.zshrc
+$ echo $HADOOP_HOME
+```
+
+최종적으로 hadoop 명령어로 설치가 정상적으로 되었는지 확인한다.
+
+```
+$ hadoop
+```
+
+
+
+
 
 포맷 후, 아래와 같이 ssh key를 생성하고 사용한다.   
 key 이름과 비밀번호 입력 라인이 나올때, 빈칸으로 엔터를 
@@ -174,7 +146,8 @@ $ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 아래와 같이 ssh가 제대로 접속되는지 확인 할 수 있다.   
 
 ```
-$ ssh localhost    
+$ ssh localhost
+Last login: Wed Jan 11 00:37:47 2023   
 ```   
 
 #### 3-1) 실행 및 종료 명령어    
