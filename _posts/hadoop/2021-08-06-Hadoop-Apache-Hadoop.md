@@ -52,10 +52,14 @@ HDFS 상에서 맵리듀스 프로그램을 이용해 데이터 처리를 수행
 
 ## 3. 하둡 설치   
 
-#### 3-1) ssh와 java 버전 확인    
+### 3-1) ssh와 java 버전 확인    
 
 Hadoop 설치 전에 java가 설치되어 있어야 하며, 아래 명령어를 이용하여
-ssh 사용가능한지 확인한다.   
+ssh 사용 가능한지 확인한다.   
+
+```
+$ ssh localhost   
+```
 
 > java 8 이상 버전으로 설치한다.   
 
@@ -69,19 +73,19 @@ $ ssh-keygen -t rsa
 $ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 ```
 
-이제 하둡을 실행할 때 아래와 같이 에러가 날 경우는
-원격 로그인을 허용하지 않았을 경우 발생 한다.
+위의 ssh 명령어 입력할 때 아래와 같이 에러가 날 경우는
+원격 로그인을 허용하지 않았을 경우 발생 한다.    
 
 
 ```
 "localhost: ssh: connect to host localhost port 22: Connection refused"
 ```
 
-환경설정의 공유에 들어가서 원격 로그인을 허용한다.
+시스템 환경설정의 공유에 들어가서 원격 로그인을 허용한다.       
 
-<img width="591" alt="스크린샷 2021-08-06 오후 11 14 22" src="https://user-images.githubusercontent.com/26623547/128523833-79843bec-8a03-403b-9190-6c9d21ecd0ff.png">
+<img width="591" alt="스크린샷 2021-08-06 오후 11 14 22" src="https://user-images.githubusercontent.com/26623547/128523833-79843bec-8a03-403b-9190-6c9d21ecd0ff.png">   
 
-아래와 같이 ssh가 제대로 접속되는지 확인 할 수 있다.
+아래와 같이 ssh가 제대로 접속되는지 확인 할 수 있다.    
 
 ```
 $ ssh localhost
@@ -89,7 +93,7 @@ Last login: Wed Jan 11 00:37:47 2023
 ```
 
 
-#### 3-2) hadoop 설치   
+### 3-2) hadoop 설치   
 
 그 후 [Hadoop 공식문서](https://hadoop.apache.org/)에서 Binary Download를 클릭한다.   
 
@@ -118,95 +122,148 @@ $ echo $HADOOP_HOME
 $ hadoop
 ```
 
+### 3-3) hadoop 설정
+
+`하둡 설정 파일은 etc/hadoop 에 위치한 것을 확인할 수 있고, 이 글에서는 
+하둡 실습을 위한 최소한의 설정만 진행한다.`    
 
 
-
-
-포맷 후, 아래와 같이 ssh key를 생성하고 사용한다.   
-key 이름과 비밀번호 입력 라인이 나올때, 빈칸으로 엔터를 
-누르면 자동으로 id_rsa.pub이 생성된다.       
-
-```
-$ ssh-keygen -t rsa
-$ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-```
-
-이제 하둡을 실행할 때 아래와 같이 에러가 날 경우는 
-원격 로그인을 허용하지 않았을 경우 발생 한다.   
-
+- etc/hadoop/core-site.xml
 
 ```
-"localhost: ssh: connect to host localhost port 22: Connection refused"   
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://localhost:9000</value>
+    </property>
+</configuration>
 ```
 
-환경설정의 공유에 들어가서 원격 로그인을 허용한다.    
+- etc/hadoop/hdfs-site.xml
 
-<img width="591" alt="스크린샷 2021-08-06 오후 11 14 22" src="https://user-images.githubusercontent.com/26623547/128523833-79843bec-8a03-403b-9190-6c9d21ecd0ff.png">   
-
-아래와 같이 ssh가 제대로 접속되는지 확인 할 수 있다.   
-
-```
-$ ssh localhost
-Last login: Wed Jan 11 00:37:47 2023   
-```   
-
-#### 3-1) 실행 및 종료 명령어    
-
-하둡을 실행하고 종료하는 명령어는 다음과 같다.   
-
-- 실행  
+아래는 hdfs 설정이며, replication 개수는 1개로 설정하였다.   
+`또한, namenode, datanode 디렉토리 경로를 설정 하고 디렉토리를 생성해주어야 한다.`      
 
 ```
-$ cd /usr/local/cellar/hadoop/3.3.1/libexec/sbin
-$ ./start-all.sh
-# 또는
-$ ./start-dfs.sh
-# 또는
-$ ./start-yarn.sh
-```  
-
-- 종료  
-
-```
-$ cd /usr/local/cellar/hadoop/3.3.1/libexec/sbin   
-$ ./stop-all.sh
-# 또는
-$ ./stop-dfs.sh
-# 또는
-$ ./stop-yarn.sh
-```  
-
-정상적으로 실행된 것인지 알고 싶을 때 jps 명령어를 입력한다.    
-
-```
-29171 NodeManager
-28644 NameNode
-29255 Jps
-28745 DataNode
-28206 ResourceManager
-28879 SecondaryNameNode
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>1</value>
+    </property>
+    <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>/Users/jang-won-yong/dev/hadoop/hadoop-3.3.4/dfs/name</value>
+    </property>
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>/Users/jang-won-yong/dev/hadoop/hadoop-3.3.4/dfs/data</value>
+    </property>
+</configuration>
 ```
 
-참고로 start-dfs.sh 실행할때 아래와 같이 warning이 나올수 있는데, 이는 
-64비트 운영체제에서 32비트 하둡을 실행하기 때문에 발생하는 에러라고 한다.    
-인터넷 검색해보니 해결방법이 없지는 않으나, 크게 중요한 문제는 아니라고 한다.  
-해당 warning이 떠도 실행은 잘된다.   
+- etc/hadoop/mapred-site.xml   
+
+맵리듀스 프레임워크는 yarn을 사용하겠다는 설정을 아래와 같이 입력한다.   
 
 ```
-"2018-12-16 09:22:37,400 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable"    
-```    
+<configuration>
+    <property>
+        <name>mapreduce.framework.name</name>
+        <value>yarn</value>
+    </property>
+    <property>
+        <name>mapreduce.application.classpath</name>
+        <value>$HADOOP_MAPRED_HOME/share/hadoop/mapreduce/*:$HADOOP_MAPRED_HOME/share/hadoop/mapreduce/lib/*</value>
+    </property>
+</configuration>
+```
+
+- etc/hadoop/yarn-site.xml
+
+```
+<configuration>
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+    <property>
+        <name>yarn.nodemanager.env-whitelist</name>
+        <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_HOME,PATH,LANG,TZ,HADOOP_MAPRED_HOME</value>
+    </property>
+</configuration>
+```
 
 
-#### 3-2) 하둡 실행 확인      
+### 3-4) HDFS 실행   
 
-localhost로 접속해서 하둡의 상태를 체크할 수 있다.   
+먼저, 아래와 같이 네임노드를 포맷해준다.   
 
-Cluster status : [http://localhost:8088](http://localhost:8088)     
-HDFS status : [http://localhost:9870](http://localhost:9870)   
-Secondary NameNode status : [http://localhost:9868](http://localhost:9868)   
+```
+hadoop-3.3.4 $ hdfs namenode -format
+```
 
-<img width="711" alt="스크린샷 2021-08-06 오후 11 15 02" src="https://user-images.githubusercontent.com/26623547/128523847-dbc654c6-c301-4e9d-add8-fbe332a48363.png">
+그 후 hdfs를 실행해준다.  
 
+```
+hadoop-3.3.4 $ sbin/start-dfs.sh
+Starting namenodes on [localhost]
+Starting datanodes
+//..
+```
+
+```
+# 네임노드, 데이터 노드 등을 확인 가능하다.  
+$ jps 
+```
+
+정상적으로 실행되었으면 hdfs에 파일을 아래와 같이 생성해보자.  
+
+```
+$ hadoop fs -ls /
+$ hadoop fs -mkdir /user
+$ hadoop fs -mkdir /user/kaven
+$ hadoop fs -ls /
+```
+
+> 참고로 start-dfs.sh 실행할때 아래와 같이 warning이 나올수 있는데, 이는 64비트 운영체제에서 32비트 하둡을 실행하기 때문에 발생하는 에러라고 한다.
+인터넷 검색해보니 해결방법이 없지는 않으나, 크게 중요한 문제는 아니라고 한다.
+해당 warning이 떠도 실행은 잘된다.    
+
+```
+"2018-12-16 09:22:37,400 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable"
+```
+
+
+마지막으로 HDFS UI를 확인하여, 방금 만든 파일을 확인해보자.   
+
+```
+localhost:9870
+```
+
+
+<img width="1000" alt="스크린샷 2023-01-12 오전 12 43 05" src="https://user-images.githubusercontent.com/26623547/211850395-537b93bf-560d-427b-bf54-aa6882c8e5bf.png">      
+
+
+### 3-5) yarn 실행   
+
+이제 yarn을 실행시켜 리소스 매니저와 노드 매니저를 실행시켜보자.   
+
+```
+hadoop-3.3.4 $ sbin/start-yarn.sh
+Starting resourcemanager
+Starting nodemanagers
+```
+
+```
+$ jps
+```
+
+아래 주소로 resource manage web ui를 확인할 수 있다.   
+
+
+```
+http://localhost:8088/
+```
 
 
 - - - 
