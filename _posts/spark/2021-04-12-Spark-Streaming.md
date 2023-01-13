@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "[Spark] 아파치 스파크(spark) 스트리밍 "
-subtitle: "DStream(Discretized Streams) / DynamicAllocation"    
+subtitle: "DStream(Discretized Streams) / stateful(window, state)"    
 comments: true
 categories : Spark
 date: 2021-04-12
 background: '/img/posts/mac.png'
 ---
-
-
-[이전글](https://wonyong-jang.github.io/bigdata/2021/02/22/BigData-Spark.html)에서 살펴본 내용은 
-데이터가 있을 때 이 데이터를 어떻게 처리할 것인가에 대한 
-내용이였으며, 이때 처리해야 할 데이터는 이미 어딘가에 준비돼 있던 것들이었다.   
-즉, 우리가 작성한 프로그램은 '사전에 준비된' 데이터를 읽어들이는 것으로부터 
-시작됐다고 할 수 있다.   
 
 이번에 살펴볼 내용은 단순히 주어진 데이터를 읽고 처리하는 것뿐만 아니라 
 시간의 흐름에 따라 꾸준히 변화하는 데이터를 다루기 위한 것이다. 
@@ -54,22 +47,33 @@ background: '/img/posts/mac.png'
 새로 생성된 데이터를 모아서 한번에 처리하는 방식이다.   
 
 > 이 때 데이터를 처리하는 주기가 짧아질수록 소위 리얼타임이라 불리는 
-실시간 처리에 가까운 상황이 되는데, 어느 정도의 주기로 데이터를 처리할지는 
-각 시스템의 요구사항에 따라 달라질수 있다.   
+실시간 처리에 가까운 상황이 되는데, 어느 정도의 주기(batch interval)로 데이터를 처리할지는 
+각 시스템의 요구사항에 따라 달라질수 있다.      
 
-`DStream의 경우에도 같은 방식으로 데이터스트림을 처리해서 일정 시간마다 
+`DStream의 경우에도 같은 방식으로 데이터 스트림을 처리한다. 일정 시간마다 
 데이터를 모아서 RDD를 만드는데 이러한 RDD로 구성된 시퀀스가 바로 DStream이라고 
 할 수 있다.`    
 
-<img width="839" alt="스크린샷 2023-01-04 오후 11 56 55" src="https://user-images.githubusercontent.com/26623547/210583050-61537d76-a3d5-42c6-b060-6c95aedbb918.png">    
+<img width="600" alt="스크린샷 2023-01-12 오후 5 57 34" src="https://user-images.githubusercontent.com/26623547/212022602-8d361b9c-723c-4c38-933f-bbad22c77bb5.png">   
 
 
+DStream을 transformation 연산을 적용하면, RDD와 마찬가지로 새로운 DStream이 
+생성되며, 동일하게 Immutable하다.    
 
+`여기서 주의할 점은 각 batch interval간에 쌓인 데이터를 RDD로 만들어서 처리하는데, 
+    이때 transformation과 action 작업이 모두 완료되고 난 이후 다음 배치 작업을 
+    진행한다는 것이다.`   
+
+보통 각 batch interval 작업이 완료되면 해당 RDD를 버리고 다음 batch interval에서 
+생성된 RDD를 작업한다.    
+
+> 물론, 이전 batch interval에서 사용한 RDD를 유지하기 위한 stateful한 함수도 제공한다.   
 
 - - - 
 
 ## 2. 실습하기     
 
+간단한 예제를 통해서 스파크 스트리밍 코드를 살펴보자.    
 먼저, 스파크 스트리밍을 위한 의존성을 추가해줘야 한다.   
 `그후 RDD와 데이터셋을 사용하기 위해 SparkContext와 SparkSession을 가장 먼저 생성해야 했듯이 스파크 
 스트리밍 모듈을 사용하기 위해서는 StreamingContext 인스턴스를 먼저 생성해야 한다.`    
@@ -78,8 +82,7 @@ background: '/img/posts/mac.png'
 
 또한, `StreamingContext는 명시적인 시작(start)와 종료(stop), 대기(awaitTermination) 메서드를 가지고 있다.`       
 즉, StreamingContext는 SparkSession이나 SparkContext와 달리 명시적으로 시작, 종료, 대기 등의 메서드를 
-호출해서 시작 혹은 종료시켜야 한다.   
-
+호출해서 시작 혹은 종료시켜야 한다.      
 
 
 ```groovy
@@ -91,6 +94,8 @@ implementation group: 'org.apache.spark', name: 'spark-streaming_2.11', version:
 아래 예제는 스파크 컨텍스트를 먼저 생성한 뒤 이를 스트리밍 컨텍스트의 인자로 전달해서 스트리밍 컨텍스트 인스턴스를 
 생성하고 있지만 `new StreamingContext(conf, Seconds(3))과 같이 직접 SparkConf를 이용해서 생성하는 
 것도 가능하다.`    
+
+> StreamingContext는 내부적으로 SparkContext를 가진다.    
 
 아래에서 사용한 RDD 큐는 RDD들을 구성하여 직접 DStream을 만들 수 있다.  
 이 방식은 테스트 데이터를 만들고 DStream의 다양한 연산을 테스트하고 학습하는 
@@ -115,7 +120,7 @@ ssc.start()  // 명시적으로 시작해야 스트리밍 시작
 ssc.awaitTermination() 
 ```
 
-위 예제를 보면, `awaitTermination() 메서드를 호출해서 어플리케이션이 종료되지 않게 했다.`       
+위 예제를 보면, `awaitTermination() 메서드를 호출해서 어플리케이션이 종료되지 않게 Block 하는 역할을 한다.`          
 즉, 한번 시작하면 명시적인 종료 또는 에러가 없다면 어플리케이션이 임의로 종료되지 않아야 하기 때문이다.   
 
 또한, 종료는 sparkStreamContext.stop() 메서드를 이용하면 된다.    
@@ -150,36 +155,15 @@ $ nc -lk 9000
 Hello, World!
 ```
 
-
-- - - 
-
-## 3. Spark 설정   
-
-#### 3-1) 동적 자원 할당 방식   
-
-[동적 자원 할당 방식](https://spark.apache.org/docs/latest/job-scheduling.html#dynamic-resources-allocation)으로 상황에 따라 자원을 할당 및 회수할 수 있다.   
-즉, executor 사용량이 적을땐 줄이고, 지연이 발생하거나 에러가 발생할 때 
-늘리는 방식이다.   
-dynamicAllocation 옵션을 사용할 때 항상 같이 사용하는 옵션이 spark.shuffle.service.enabled=true 옵션이다.   
-
-
-```
-spark.dynamicAllocation.enabled true
-spark.shuffle.service.enabled true
-spark.dynamicAllocation.minExecutors 50
-spark.dynamicAllocation.maxExecutors 100
-spark.dynamicAllocation.cachedExecutorIdleTimeout 600
-```
-
 - - - 
 
 
-## 4. 데이터 다루기(기본 연산)
+## 3. 데이터 다루기(기본 연산)
 
 데이터를 읽고 DStream을 생성했다면 이제 DStream이 제공하는 API를 사용해 
 원하는 형태로 데이터를 가공하고 결과를 도출해보자.   
 
-#### 4-1) print()   
+#### 3-1) print()   
 
 아래 예제를 통해 여러 api를 사용해보자.   
 
@@ -230,7 +214,7 @@ object main {
 기본적으로 각 RDD의 맨 앞쪽 10개의 요소를 출력하는데, print(20)과 같이 
 출력할 요소의 개수를 직접 지정해서 변경할 수 있다.   
 
-#### 4-2) map(), flatMap()    
+#### 3-2) map(), flatMap()    
 
 DStream의 RDD에 포함된 각 원소에 func 함수를 적용한 결과값으로 구성된 
 새로운 DStream을 반환한다.    
@@ -245,7 +229,7 @@ val result = ds2.flatMap(_.split(","))
 result.print()
 ```
 
-#### 4-3) count(), countByValue()    
+#### 3-3) count(), countByValue()    
 
 
 ```scala
@@ -256,8 +240,72 @@ ds1.countByValue()
 
 - - - 
 
+## 4. 데이터 다루기(고급 연산)   
+
+기본적인 DStream은 RDD의 연속된 작업이다. RDD는 각 마이크로 배치를 위해서 
+데이터가 담겨있다.   
+기본적으로 각 RDD는 정해진 batch interval 간의 개별적으로 작업이 이루어진다.     
+`하지만, 여러 RDD간의 stateful한 작업을 할 수 있는 연산도 제공한다.`   
+
+아래 stateful한 연산들을 살펴보자.   
+
+#### 4-1) window
+
+아래 예제는 트위터의 데이터를 2초 간격(batch interval)으로 스트림 데이터를 
+처리하고 있다.
+2초간 쌓인 데이터를 RDD로 만들고, transformation연산을 통해 
+해시태그만 추출 하여 다시 만든 RDD를 가지고 countByValue action연산을 진행한다.   
+
+```
+val tweets = TwitterUtils.createStream(ssc, None, filters)
+val hashTags = tweets.flatMap(status => getTags(status)) // 트위터 상태에서 해시태그만 추출   
+val tagCounts = hashTags.window(Seconds(8), Seconds(2)).countByValue() 
+```
+
+`위에서 window 연산이 8초로 되어 있는데, 2초 간격의 batch interval로 
+진행되기 때문에 전체 RDD 4개를 window에 넣어두고 연산을 진행한다.`   
+
+> window( window length, sliding interval )
+
+<img width="700" alt="스크린샷 2023-01-13 오후 8 26 25" src="https://user-images.githubusercontent.com/26623547/212309836-0f51509e-b8d4-4fa6-ae14-4db59fc4bee1.png">    
+
+즉, window의 연산의 첫번째 파라미터는 window 의 전체 크기이며, 두번째 파라미터는 
+얼마나 미끄러져 갈건지에 대한 크기이다.  
+
+<img width="700" alt="스크린샷 2023-01-13 오후 8 31 00" src="https://user-images.githubusercontent.com/26623547/212310640-07b01a1e-7580-477c-ba2f-0c0fff7c876e.png">    
+
+<img width="700" alt="스크린샷 2023-01-13 오후 8 40 24" src="https://user-images.githubusercontent.com/26623547/212312203-a6eeb26e-9b60-4559-8149-272697b481a4.png">
+
+`정리해보면, 2초 간격으로 RDD를 생성하여 해시태그를 추출하는 transformation 연산을 
+하여 새로운 RDD를 생성하고 window 연산으로 과거 8초간 쌓인 RDD를 이용하여 countByValue 연산 
+진행한다.`   
+
+비슷한 연산으로 reduceByKeyAndWindow, countByWindow 등이 있고, window를 이용하는 것은 동일하며 
+reduceByKey, countBy 등의 연산을 적용하는 것이다.  
+`이때, 파라미터로 window length(duration)은 필수 값으로 추가해야 하며, 두번째 파라미터를 
+넣지 않으면 default 값으로 DStream batch interval(SSC duration)로 적용된다.`   
+
+만약, SSC duration은 2초이고, window(Seconds(12), Seconds(4))로 연산을 적용한다면 
+아래와 같이 될 것이다.   
+결과가 2초가 아닌 4초마다 한번씩 출력된다.   
+
+<img width="800" alt="스크린샷 2023-01-13 오후 8 55 10" src="https://user-images.githubusercontent.com/26623547/212314805-3a1467b8-0c24-4b05-b9fc-f4c8af32c0d1.png">   
+
+#### 4-2) state
+
+
+```
+moods = tweets.updateStateByKey(updateMood)
+updateMood(newTweets, lastMood) => newMood
+```
+
+
+
+- - - 
+
 **Reference**    
 
+<https://fastcampus.co.kr/data_online_spkhdp>   
 <https://spark.apache.org/docs/latest/streaming-programming-guide.html>   
 
 {% highlight ruby linenos %}
