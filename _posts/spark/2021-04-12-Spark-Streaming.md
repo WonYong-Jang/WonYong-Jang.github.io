@@ -293,11 +293,32 @@ reduceByKey, countBy 등의 연산을 적용하는 것이다.
 
 #### 4-2) state
 
+Spark Streaming이 제공하는 state를 관리하는 api 중에서 
+updateStateByKey를 살펴보자.    
+
+`updateStateByKey는 key 별로 상태를 관리하는 api` 이며, User를 예로 들면 
+UserId 별로 state를 계속해서 관리할 수 있다.   
+
 
 ```
 moods = tweets.updateStateByKey(updateMood)
 updateMood(newTweets, lastMood) => newMood
 ```
+
+<img width="800" alt="스크린샷 2023-01-14 오후 4 57 59" src="https://user-images.githubusercontent.com/26623547/212462374-d6f4951e-2777-447b-9fcf-9ebeccfb4052.png">     
+
+즉 위 예시에서 트위터에서 userId 별로 mood(state)를 계속해서 업데이트하면서, 
+    지금 들어온 상태를 계속 유지한다.   
+
+아래 또 다른 예제를 살펴보자.   
+user 별로 요청 수를 확인한다고 할 때, updateStateByKey를 이용하여, 
+     상태는 계속해서 update할 수 있다.   
+
+t2 시점에 그 이전 시점에 유지하고 있던 RDD 데이터와 누적하여 상태값을 유지해 나간다.  
+
+<img width="900" alt="스크린샷 2023-01-14 오후 5 06 19" src="https://user-images.githubusercontent.com/26623547/212462654-721e1abd-5887-40d7-9b39-240ddd111847.png">   
+ 
+
 
 
 
