@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Spark] 아파치 스파크(spark) 스트리밍 "
-subtitle: "DStream(Discretized Streams) / stateful(window, state)"    
+title: "[Spark] Streaming 의 DStream과 주요 연산 "
+subtitle: "DStream(Discretized Streams) / stateful(window, state) / transform / Receiver Input Stream / Block Manager "    
 comments: true
 categories : Spark
 date: 2021-04-12
@@ -36,7 +36,7 @@ background: '/img/posts/mac.png'
 
 <img width="599" alt="스크린샷 2021-04-12 오후 9 12 10" src="https://user-images.githubusercontent.com/26623547/114394973-caa43d80-9bd6-11eb-9338-d26e10669ec2.png">   
 
-### 1-1) DStream(Discretized Streams)    
+## 2) DStream(Discretized Streams)    
 
 `스파크 스트리밍에서는 새로운 데이터 모델인 DStream을 사용하는데, 이름에 
 포함된 Stream이라는 단어를 통해 알 수 있듯이 고정되지 않고 끊임없이 
@@ -67,11 +67,85 @@ DStream을 transformation 연산을 적용하면, RDD와 마찬가지로 새로�
 보통 각 batch interval 작업이 완료되면 해당 RDD를 버리고 다음 batch interval에서 
 생성된 RDD를 작업한다.    
 
-> 물론, 이전 batch interval에서 사용한 RDD를 유지하기 위한 stateful한 함수도 제공한다.   
+> 물론, 이전 batch interval에서 사용한 RDD를 유지하기 위한 stateful한 함수도 제공한다.     
+
+
+### 2-1) DStream Type   
+
+DStream의 타입을 나누자면 아래와 같이 구분하여 나눌 수 있다. 
+
+- List of dependent(parent) DStream 
+    - 부모가 0개인 경우는 최초의 DStream(Input DStream)
+    - 부모가 1개인 경우는 transformation 연산을 적용한 경우 
+    - 부모가 2개 이상인 경우 여러 실시간 DStream을 조인한 경우    
+- Slide Interval (특정 시간 동안 쌓인 RDD를 얼마나 반복적으로 연산을 하는지)   
+    - 대부분의 DStream 연산은 SSC Duration과 동일   
+    - window 연산의 경우는 interval이 SSC Duration과 다를 수 있음   
+- Function to compute RDD at a time t 
+    - 특정 시간의 RDD만 연산을 적용한 경우    
+    - 이전 시간의 RDD까지 같이 연산하여 적용한 경우   
+
+아래 각 케이스에 대해서 DStream의 타입을 살펴보자.   
+
+#### 2-1-1) Mapped DStream      
+
+해당 케이스는 특정 DStream에 map 연산을 적용한 케이스 이다.   
+
+- transformation을 적용했기 때문에 하나의 부모 DStream을 가진다.   
+- 부모 DStream과 동일한 Slide Interval을 가진다.  
+- 부모의 특정 interval 간에 만들어진 RDD와 동일한 시간대에 연산이 적용된다.   
+
+#### 2-1-2) Windowed DStream   
+
+해당 케이스는 특정 DStream에 window 연산을 적용한 케이스이다.   
+
+> 해당 연산은 아래에서 더 자세히 다룰 예정이다.   
+
+- 부모 DStream은 join이 아니기 때문에 동일하게 1개이다.  
+- Slide Interval은 window 연산에서 명시적으로 지정할 수 있기 때문에 달라질 수 있다.   
+- 현재 기준으로 window 길이에 따라, 기존에 생성했던 RDD를 이용하여 연산 적용이 가능하다.   
+
+
+#### 2-1-3) Receiver Input DStream     
+
+`해당 케이스는 순서상으로는 맨 처음 오는 DStream이다.`   
+
+`외부에 있는(S3, HDFS 등) 데이터는 Receiver가 가져오며, 실질적으로 
+별도의 task를 차지하여 실행한다.`   
+
+`보통 Receiver 하나가 외부에 있는 데이터를 읽어 오고, 읽어온 데이터로 부터 
+최초로 형성된 DStream이 Receiver Input DStream이다.`   
+
+- 부모 DStream은 없으며, Input DStream 자체가 부모 역할을 한다.    
+- 부모가 없기 때문에, SSC Duration과 Interval과 동일하다.   
+- 최초에 만들어진 Input DStream이기 때문에 연산은 없으며, 하는 역할은 batch interval마다 
+Receiver로 부터 데이터를 가져와서 RDD를 만드는 역할을 한다.   
 
 - - - 
 
-## 2. 실습하기     
+## 3. Receiver   
+
+위에서 언급한 Receiver에 대해서 더 자세히 살펴보자. 
+
+`Receiver는 외부에 있는 데이터(센서 데이터 등)를 받아서 DStream으로 넘겨주기 위한 역할을 한다.`    
+더 자세히 살펴보면, 외부에 있는 데이터를 Block Manager에게 넘겨준다.  
+
+> Kafka, Flume 등을 통해 데이터를 받아 온다면, Receiver는 Consume하는 역할을 한다.   
+
+`Block Manager는 Receiver로 부터 넘겨받은 데이터를 block을 만들고, 
+      RDD를 만들게 하는 역할을 한다.`   
+`즉, Block Manager는 연산을 수행하는 게 아니라 데이터를 관리하는 역할을 한다.`   
+
+Spark에서 Receiver라는 클래스가 존재하며, onStart(Receiver가 시작할때 해야할 일) 
+    onStop(Receiver가 종료할 때 해야할 일) 인터페이스를 제공한다.  
+
+Spark 제공하는 built in Receiver(Kafka, Flume, Socket 등)은 
+이미 존재하며, custom receiver를 만들어야 한다면, 직접 구현해 주면 된다.   
+
+
+- - - 
+
+## 4. 실습하기     
 
 간단한 예제를 통해서 스파크 스트리밍 코드를 살펴보자.    
 먼저, 스파크 스트리밍을 위한 의존성을 추가해줘야 한다.   
@@ -89,7 +163,7 @@ DStream을 transformation 연산을 적용하면, RDD와 마찬가지로 새로�
 implementation group: 'org.apache.spark', name: 'spark-streaming_2.11', version: '2.3.0'
 ```
 
-#### 2-1) 예제 1    
+#### 4-1) 예제 1    
 
 아래 예제는 스파크 컨텍스트를 먼저 생성한 뒤 이를 스트리밍 컨텍스트의 인자로 전달해서 스트리밍 컨텍스트 인스턴스를 
 생성하고 있지만 `new StreamingContext(conf, Seconds(3))과 같이 직접 SparkConf를 이용해서 생성하는 
@@ -128,7 +202,7 @@ ssc.awaitTermination()
 참고하자.   
 
 
-#### 2-2) 예제 2     
+#### 4-2) 예제 2     
 
 아래와 같이 TCP 소켓을 이용해 데이터를 수신하는 경우 서버의 IP와 포트 번호를 
 지정해 스파크 스트리밍의 데이터 소스로 사용할 수 있다.   
@@ -158,12 +232,12 @@ Hello, World!
 - - - 
 
 
-## 3. 데이터 다루기(기본 연산)
+## 5. 데이터 다루기(기본 연산)
 
 데이터를 읽고 DStream을 생성했다면 이제 DStream이 제공하는 API를 사용해 
 원하는 형태로 데이터를 가공하고 결과를 도출해보자.   
 
-#### 3-1) print()   
+#### 5-1) print()   
 
 아래 예제를 통해 여러 api를 사용해보자.   
 
@@ -214,7 +288,7 @@ object main {
 기본적으로 각 RDD의 맨 앞쪽 10개의 요소를 출력하는데, print(20)과 같이 
 출력할 요소의 개수를 직접 지정해서 변경할 수 있다.   
 
-#### 3-2) map(), flatMap()    
+#### 5-2) map(), flatMap()    
 
 DStream의 RDD에 포함된 각 원소에 func 함수를 적용한 결과값으로 구성된 
 새로운 DStream을 반환한다.    
@@ -229,7 +303,7 @@ val result = ds2.flatMap(_.split(","))
 result.print()
 ```
 
-#### 3-3) count(), countByValue()    
+#### 5-3) count(), countByValue()    
 
 
 ```scala
@@ -240,7 +314,7 @@ ds1.countByValue()
 
 - - - 
 
-## 4. 데이터 다루기(고급 연산)   
+## 6. 데이터 다루기(고급 연산)   
 
 기본적인 DStream은 RDD의 연속된 작업이다. RDD는 각 마이크로 배치를 위해서 
 데이터가 담겨있다.   
@@ -249,7 +323,7 @@ ds1.countByValue()
 
 아래 stateful한 연산들을 살펴보자.   
 
-#### 4-1) window
+#### 6-1) window
 
 아래 예제는 트위터의 데이터를 2초 간격(batch interval)으로 스트림 데이터를 
 처리하고 있다.
@@ -291,7 +365,7 @@ reduceByKey, countBy 등의 연산을 적용하는 것이다.
 
 <img width="800" alt="스크린샷 2023-01-13 오후 8 55 10" src="https://user-images.githubusercontent.com/26623547/212314805-3a1467b8-0c24-4b05-b9fc-f4c8af32c0d1.png">   
 
-#### 4-2) state
+#### 6-2) state
 
 Spark Streaming이 제공하는 state를 관리하는 api 중에서 
 updateStateByKey를 살펴보자.    
@@ -319,7 +393,29 @@ t2 시점에 그 이전 시점에 유지하고 있던 RDD 데이터와 누적하
 <img width="900" alt="스크린샷 2023-01-14 오후 5 06 19" src="https://user-images.githubusercontent.com/26623547/212462654-721e1abd-5887-40d7-9b39-240ddd111847.png">   
  
 
+#### 6-3) transform    
 
+Spark Streaming은 기본적으로 실시간 데이터를 처리하지만, 
+      배치성 데이터와 결합하여 처리도 가능하다.   
+이때, 주로 DStream이 제공하는 transform 연산을 사용한다.   
+
+`즉, DStream 내부에 들어있는 RDD와 외부에 있는 배치성 데이터와 join, union 등의 결합을 
+하여 연산이 가능하다.`   
+
+transform 연산은 항상 DStream의 특정시간의 RDD를 파라미터로 입력받아 
+연산을 진행 후 새로운 RDD를 생성해 낸다.   
+
+아래 예시는 트위터 데이터를 실시간으로 받아오고 있고, 여기서 스팸성 트위터는 
+외부에 배치성으로 쌓이고 있는 경우이다.   
+이때, 이를 결합하여 연산하고 싶은 경우 아래와 같이 가능하다.   
+
+```
+tweets.transform(tweetsRDD => {
+        tweetsRDD.join(spamHDFSFileRDD).filter(...)
+})
+// tweetsRDD는 현재 batch interval에서 처리할 RDD이며, spamHDFSFileRDD는 
+외부에 배치성으로 쌓이고 있는 데이터를 RDD로 만든 것이다.   
+```
 
 
 - - - 
