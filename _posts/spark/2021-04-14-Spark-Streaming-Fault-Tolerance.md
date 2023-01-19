@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spark] Streaming 의 Fault Tolerance"
+title: "[Spark] Streaming 의 Fault Tolerance 와 Graph"
 subtitle: "장애 복구"    
 comments: true
 categories : Spark
@@ -55,6 +55,8 @@ RDD는 리니지(lineage)에 생성 작업들을 기록해두기 때문에,
 <img width="500" alt="스크린샷 2023-01-14 오후 6 21 40" src="https://user-images.githubusercontent.com/26623547/212465178-6254f3ef-75c4-44cd-8827-e65f90807745.png">   
 
 - - - 
+
+## 2. DStream Graph   
 
 
 

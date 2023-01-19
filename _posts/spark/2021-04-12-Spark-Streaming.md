@@ -110,7 +110,7 @@ DStream의 타입을 나누자면 아래와 같이 구분하여 나눌 수 있�
 
 `해당 케이스는 순서상으로는 맨 처음 오는 DStream이다.`   
 
-`외부에 있는(S3, HDFS 등) 데이터는 Receiver가 가져오며, 실질적으로 
+`외부에 있는 데이터는 Receiver가 가져오며, 실질적으로 
 별도의 task를 차지하여 실행한다.`   
 
 `보통 Receiver 하나가 외부에 있는 데이터를 읽어 오고, 읽어온 데이터로 부터 
@@ -136,7 +136,7 @@ Receiver로 부터 데이터를 가져와서 RDD를 만드는 역할을 한다.
       RDD를 만들게 하는 역할을 한다.`   
 `즉, Block Manager는 연산을 수행하는 게 아니라 데이터를 관리하는 역할을 한다.`   
 
-Spark에서 Receiver라는 클래스가 존재하며, onStart(Receiver가 시작할때 해야할 일) 
+Spark에서 Receiver라는 클래스가 존재하며, onStart(Receiver가 시작할때 해야할 일),  
     onStop(Receiver가 종료할 때 해야할 일) 인터페이스를 제공한다.  
 
 Spark 제공하는 built in Receiver(Kafka, Flume, Socket 등)은 
