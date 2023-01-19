@@ -8,9 +8,13 @@ date: 2020-06-03
 background: '/img/posts/spring.png'
 ---
 
-## 1. 순수 자바코드로 AOP 구현  
+이전 글에서
+[AOP 개념](https://wonyong-jang.github.io/spring/2020/06/02/Spring-AOP.html)를 살펴봤다.   
+이번글에서는 AOP를 자바 코드 및 스프링으로 직접 구현해보자.   
 
-[AOP 개념 링크](https://wonyong-jang.github.io/spring/2020/03/08/Spring-AOP.html)   
+- - -    
+
+## 1. 순수 자바코드로 AOP 구현  
 
 기존 개발자들은 total이라는 메소드 속도가 느리다고 전달받았을 때 아래와 같이 
 핵심로직 사이에 코드를 추가하여 시간을 확인하는 식으로 구현하였다.   
@@ -100,11 +104,10 @@ public class Program {
     }
 
 ```
-- - - 
-
+      
+- - -     
+   
 ## 2. 스프링으로 AOP 구현하기 
-
-
 
 **Advice 종류**  
 
@@ -116,8 +119,7 @@ public class Program {
 > 패키지 리스트    
 <img width="180" alt="스크린샷 2020-06-03 오후 11 43 37" src="https://user-images.githubusercontent.com/26623547/83651157-25066200-a5f4-11ea-92f5-1b0eb3df26f1.png">    
 
-- - -
-### AroundAdvice  
+#### 2-1) AroundAdvice     
 
 > Prgram.java    
 
@@ -184,9 +186,8 @@ public class LogAroundAdvice implements MethodInterceptor {
     </bean>
 
 ```
-- - - 
 
-### BeforeAdvice   
+#### 2-2) BeforeAdvice   
 
 > LogBeforeAdvice.java
 
@@ -228,9 +229,9 @@ public class LogBeforeAdvice implements MethodBeforeAdvice{
         스프링이 직접 알아서 맵핑  -->
     </bean>
 
-```
-- - -
-### After Returning Advice
+```   
+
+#### 2-3) After Returning Advice
 
 > LogAfterReturningAdvice.java    
 
@@ -250,9 +251,8 @@ public class LogAfterReturningAdvice implements AfterReturningAdvice{
 }
 
 ```
-- - -
 
-### After Throwing Advice   
+#### 2-4) After Throwing Advice   
 
 - 예외를 발생키기 위해서 국어 점수가 100점이 넘을 경우 IllegalArgumentException 발생시켜보기   
 
@@ -289,8 +289,10 @@ public class LogAfterThrowingAdvice implements ThrowsAdvice{
 Exception in thread "main" 예외가 발생하였습니다. :유효하지 않는 국어점수
 java.lang.IllegalArgumentException: 유효하지 않는 국어점수
 ```
-- - - 
-## 어노테이션을 이용하여 AOP 구현   
+
+- - -   
+
+## 3. 어노테이션을 이용하여 AOP 구현   
 
 - AOP 설정과 관련해서 가장 중요한 라이브러리는 AspectJ와 AspectJ Weaver라는 라이브러리이다. 메이븐 또는 그래들에 추가하기   
 - Advice 클래스에 @Aspect 어노테이션을 추가함으로써 Aspect를 구현한 것을 나타낸다.   

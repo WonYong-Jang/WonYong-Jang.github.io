@@ -177,7 +177,7 @@ Date클래스를 살펴보면 생성자가 deprecated가 존재한다는 것을 
 
 메타 어노테이션의 종류를 알아보자   
 
-#### 3-1) @Retention    
+### 3-1) @Retention    
 
 얼마나 오랫동안 어노테이션 정보가 유지되는지 설정할 수 있다.    
 
@@ -185,7 +185,7 @@ Date클래스를 살펴보면 생성자가 deprecated가 존재한다는 것을 
 
 > SOURCE -> CLASS -> RUNTIME   
 
-##### RetentionPolicy.SOURCE   
+#### RetentionPolicy.SOURCE   
 
 `어노테이션 정보가 컴파일시 사라진다. 바이트코드에서도 존재하지 않는다.
 즉, 소스 코드에만 유지하겠다는 것이고 컴파일 할때만 사용하고 어노테이션 정보를 
@@ -196,10 +196,10 @@ Date클래스를 살펴보면 생성자가 deprecated가 존재한다는 것을 
 
 > ex) @Override, @SuppressWarnings   
 
-##### RetentionPolicy.CLASS   
+#### RetentionPolicy.CLASS   
 
-`클래스 파일에 존재하고 컴파일러에 의해 사용가능하다. 가상머신(런타임)에서는 사라진다.   
-바이트코드에는 남겨놓겠다는 것이다.`   
+`.class 파일에 존재하고 컴파일러에 의해 사용가능하다. 런타임에서는 사라진다.`       
+`즉, 바이트 코드 레벨에서 어떤 작업을 해야할 때 유용하다.`      
 
 JVM 클래스 로더에 의해서 바이트 코드를 읽어 들이고 메모리에 적재 할때 
 해당 어노테이션 정보를 제외한다.    
@@ -237,12 +237,14 @@ invisible이라는 주석이 있는 것을 확인 할 수 있다.
 해당 주석이 붙은 정보는 런타임시 사라진다.   
 
 
-##### RetentionPolicy.RUNTIME   
+#### RetentionPolicy.RUNTIME   
 
 `런타임까지 해당 어노테이션 정보를 유지 하겠다는 것이다.   
 바이트 코드에 존재 하다가  
 실행시 어노테이션 정보가 JVM에 의해서 참조 가능해진다. 
 즉, 자바 리플렉션이 사용 가능하다.`   
+
+> @Component 어노테이션이 대표적으로 RetentionPolicy.RUNTIME이다.   
 
 커스텀하게 만든 어노테이션의 RetentionPolicy.RUNTIME일 경우 
 유지 정보가 런타임까지 모두 포함되므로 편하게 사용할 수 있지만 
@@ -306,7 +308,7 @@ public class HelloController {
 // **********
 ```
 
-#### 3-2) @Target    
+### 3-2) @Target    
 
 어노테이션이 적용할 위치를 선택한다. 명시하지 않는다면 
 어디든 적용이 가능해 진다.   
@@ -327,7 +329,7 @@ public class HelloController {
 @Target({ElementType.FIELD, ElementType.METHOD})
 ```
 
-#### 3-3) @Documented   
+### 3-3) @Documented   
 
 `어노테이션 정보가 javadoc으로 작성된 문서에 포함되도록 하는 메타 에노테이션이다.`      
 
@@ -339,7 +341,7 @@ Other Command line arguments에 -encoding UTF-8 -charset UTF-8 -docencoding UTF-
 지정해줘야 한글이 깨지지 않고 javadoc을 성공적으로 만들 수 있다.   
 
 
-#### 3-4) @Inherited   
+### 3-4) @Inherited   
 
 `상속받은 클래스에도 어노테이션이 유지된다는 뜻이다.`   
 
@@ -391,7 +393,7 @@ public class HelloController {
 가져올 수 있다.`   
 
 
-#### 3-5) @Repeatable   
+### 3-5) @Repeatable   
 
 자바8 부터 지원하며, 연속적으로 어노테이션을 선언할 수 있게 해준다.   
 
