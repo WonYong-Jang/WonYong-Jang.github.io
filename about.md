@@ -37,9 +37,9 @@ background: '/img/bg-index.jpg'
 
 ##### DevOps   
 
-- DocumentDB(MongoDB), Mysql, Oracle   
+- DocumentDB(MongoDB), RDS(Aurora), Mysql, Oracle   
 - Jenkins, CircleCI, Airflow   
-- Elastic Cache (Redis), S3, EC2, RDS(Aurora), Cloud Watch   
+- Elastic Cache (Redis), S3, EC2, Cloud Watch   
 - Nginx, Tomcat   
 - Spark, Kafka, Hive 
 - ELK Stack   
