@@ -1,14 +1,14 @@
 ---
 layout: post
 title: "[Spark] 아파치 스파크 Partitioning "
-subtitle: "Partiton 개수와 크기 정하기 / coalesce 와 repartition "    
+subtitle: "RDD on a Cluster / Partiton 개수와 크기 정하기 / coalesce 와 repartition "    
 comments: true
 categories : Spark
 date: 2021-06-21
 background: '/img/posts/mac.png'
 ---
 
-## Partitoning 이란?   
+## 1. Partitoning 이란?   
 
 `RDD의 데이터는 클러스터를 구성하는 여러 서버(노드)에 나누어 저장된다. 
 이때, 나누어진 데이터를 파티션이라는 단위로 관리한다.`   
@@ -86,11 +86,25 @@ task를 처리하는 시간 동안 아무런 처리를 하지 않게 된다.
 작업을 할 것인가. 파티셔닝을 잘해서 80분에 작업을 마칠것인가는 
 개발자의 역량이다.`    
 
+
 - - - 
 
-## 파티션과 관련된 연산
+## 2. 파티션과 관련된 연산
 
-#### coalesce와 repartition
+### 1. foreachPartition, mapPartitons
+
+RDD에서 제공하는 대부분의 연산들(map, filter..)등은 RDD 의 element 단위로 동작한다.   
+
+> 여기서 element란, 한건 한건을 의미하는 단위로써 text file을 rdd로 만들었을 경우 default로 
+한줄을 element로 지정한다.   
+
+하지만, 파티션 단위로 작업을 하고 싶을 경우 해당 연산들을 사용하면 된다.   
+
+- foreachPartiton, mapPartitions, mapPartitionsWithIndex   
+
+
+
+### 2. coalesce와 repartition
 
 `RDD를 생성한 뒤 filter() 연산을 비롯한 다양한 트랜스포메이션 연산을
 수행하다 보면 최초에 설정한 파티션 개수가 적합하지 않은 경우가
@@ -139,7 +153,6 @@ df.repartition(1).write.format('csv')
 .option("path", "s3a://my.bucket.name/location")
 .save(header = 'true')
 ```
-
 
 
 - - - 
