@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] 아파치 스파크 Persistence "
-subtitle: "RDD Persistence"    
+subtitle: "RDD Persistence / memory, disk cache"    
 comments: true
 categories : Spark
 date: 2021-06-23
