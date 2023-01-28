@@ -61,7 +61,7 @@ scala>
 
 위에서 제공하는 ui 주소로 접속해보면 아래와 같은 화면을 확인할 수 있다.   
 
-<img width="700" alt="스크린샷 2023-01-27 오후 10 47 53" src="https://user-images.githubusercontent.com/26623547/215103516-34f68046-4ac4-4e9e-adc3-e10e279e5784.png">    
+<img width="700" alt="스크린샷 2023-01-28 오후 9 05 00" src="https://user-images.githubusercontent.com/26623547/215265536-14c39b5f-8538-4511-8cb9-2c1c384d632e.png">   
 
 또한, 미리 생성된 sparkContext와 sparkSession 또한 아래와 같이 확인 가능하다.   
 
