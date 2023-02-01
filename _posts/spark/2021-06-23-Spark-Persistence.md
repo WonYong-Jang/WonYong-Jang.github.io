@@ -89,7 +89,30 @@ action 수행시마다 원본 데이터를 읽어 반복적으로 다시 처리�
 
 ## 3. Storage Level
 
-초장기 Spark은 메모리에만 캐싱을 진행했지만, 현재는 다양한 옵션을 제공한다.   
+초장기 Spark은 메모리에만 캐싱을 진행했지만, 현재는 다양한 옵션을 제공한다.  
+각 storage level은 아래와 같이 persist 함수를 통해 추가할 수 있다.   
+
+또는 `cache() 함수를 통해 가능하며, rdd의 default 값은 MEMORY_ONLY 이며, 
+    dataframe 또는 dataset의 경우는 default 값으로 MEMORY_AND_DISK이다.`      
+
+```scala
+import org.apache.spark.storage.StorageLevel
+val rdd = sc.makeRDD(1 to 10000, 10)
+rdd.setName("persistedRDD")         // rdd 의 이름을 주게 되면 web ui에서 확인이 편하다.   
+rdd.persist(StorageLevel.DISK_ONLY) // disk에 캐싱     
+
+// storageLevel 확인
+rdd.getStorageLevel 
+// Output : StorageLevel(disk, 1 replicas)  => disk 저장이며, 따로 copy하지 않았기 때문에 1개의 replica만 존재 
+```
+
+캐시된 내용을 제거하기 위해서는 아래와 같이 진행한다.  
+`unpersist() 메서드를 하게되면, 메모리 또는 디스크에 캐싱해 두었던 
+데이터를 제거하게 된다.`   
+
+```scala
+rdd.unpersist()
+```
 
 ### 3-1) MEMORY_ONLY   
 
@@ -128,7 +151,20 @@ java와 scala에서만 사용 가능하며,
 
 ### 3-5) DISK_ONLY
 
-오직 디스크에만 캐싱을 진행하며, 보통 데이터가 TB, PB 이상으로 큰 경우 사용을 고려해보자.  
+오직 디스크에만 캐싱을 진행하며, 보통 데이터가 TB, PB 이상으로 큰 경우 사용을 고려해보자.     
+
+`각 executor의 로컬 디스크에 캐싱을 진행한다.`    
+
+로컬 디스크의 저장 위치는 /conf/spark-env.sh 에서 아래와 같이 
+저장되며, 지정되어 있지 않은 경우는 /tmp 경로에 생성된다.   
+
+```
+SPARK_LOCAL_DIRS=/저장경로
+```
+
+web ui에서는 아래와 같이 disk에 저장된 것을 확인할 수 있다.   
+
+<img width="1110" alt="스크린샷 2023-01-29 오후 11 14 07" src="https://user-images.githubusercontent.com/26623547/215332328-436faa2d-ae40-4964-bc99-705f951f5c54.png">   
 
 ### 3-6) MEMORY_ONLY_2, MEMORY_AND_DISK_2   
 

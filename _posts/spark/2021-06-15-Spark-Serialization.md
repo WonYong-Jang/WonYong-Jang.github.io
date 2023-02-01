@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] 아파치 스파크 Serialization "
-subtitle: "Serialization challenges with Spark and Scala"    
+subtitle: "Serialization challenges with Spark and Scala / Passing function"    
 comments: true
 categories : Spark
 date: 2021-06-15
