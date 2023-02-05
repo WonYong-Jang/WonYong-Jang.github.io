@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Pipeline and Stage "
-subtitle: "Stage skip 되는 경우 / 셔플에 의한 stage 분리 / 셔플 발생시  "    
+subtitle: "Stage skip 되는 경우 / 셔플에 의한 stage 분리 / 셔플 발생시 write, read"    
 comments: true
 categories : Spark
 date: 2021-05-10

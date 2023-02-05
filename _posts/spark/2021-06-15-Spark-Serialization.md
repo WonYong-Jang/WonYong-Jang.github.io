@@ -262,7 +262,7 @@ Driver에 있는 변수를 사용할 경우 더 다양한 예제를 살펴보자
 아래 예제에서 partition 및 task를 출력하기 위한 코드를 
 먼저 간략하게 살펴보자.   
 
-```
+```scala
 val tc = org.apache.spark.TaskContext.get
 println(s"${tc.partitonId}")
 println(s"${tc.stageId}")
@@ -280,7 +280,7 @@ println(s"${tc.taskAttemptId}")
 > 로컬 환경의 경우 driver 자체가 executor 역할을 같이 하게 된다.    
 
 결과를 확인해보면, foreach에서 계산하여 누적한 결과값은 55이다.   
-하지만, 실제 counter 변수를 출력해보면 결과는 0 인것을 확인할 수 있다.   
+하지만, 실제 counter 변수를 출력해보면 결과는 0 인 것을 확인할 수 있다.   
 
 `로컬로 실행하더라도 driver가 executor의 역할을 같이하므로, 
     구분은 명확하게 한다.`   
@@ -317,7 +317,7 @@ println(s"Counter value: $counter ")
 이번에는 파티션 2개를 이용하여 테스트해보자.   
 
 TaskContext를 이용하여 task id를 같이 확인해보자.   
-파티션 1개당 하나의 task가 처리하기 때문에, task는 2개가 생성된다.    
+파티션 1개당 하나의 task를 처리하기 때문에, task는 2개가 생성된다.    
 
 예제 1과 동일하게 `counter 변수를 copy하여 executor에서 사용하는데 copy하는 단위는 task 별로 
 copy가 된다.`    
@@ -375,7 +375,11 @@ data2.count // action 실행
 // map #2 m.hashCode 1172463664 taskAttempId 18
 ```
 
-위에서 결과값을 확인해보면, `task 별로 변수가 copy` 됨을 확인했다.   
+위에서 결과값을 확인해보면, `task 별로 변수가 copy` 됨을 확인할 수 있다.  
+파티션은 2개로 지정했기 때문에 task가 2개가 생성되었고, 각 task 별로 
+같은 hashCode 임을 확인했다.      
+
+즉, 각 task 별로 동일한 변수(m)를 사용하는 것을 확인할 수 있다.  
 
 > 당연하게 driver 와 task 별로 다른 변수값이기 때문에 해시값이 다르다.   
 
@@ -385,9 +389,9 @@ data2.count // action 실행
 
 위 그림과 해시 코드를 통해서 확인할 수 있는 부분은 `동일한 stage에서는 하나의 task는 파이프라인 별로 수행된다는 것이다.`     
 
-> 해시코드에서 검증한것처럼, 2번의 map 함수가 하나의 task로 한번에 수행된다.   
+> 해시코드를 통해 검증한것처럼, 2번의 map 함수가 하나의 task로 한번에 수행된다.   
 
-이해를 위해 [링크](https://wonyong-jang.github.io/spark/2021/04/11/Spark.html)의 Stage 부분을 참고해보자.   
+더 자세한 설명은 [링크](https://wonyong-jang.github.io/spark/2021/04/11/Spark.html)의 Stage 부분을 참고해보자.   
 
 
 - - - 
