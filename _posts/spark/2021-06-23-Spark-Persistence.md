@@ -15,7 +15,7 @@ background: '/img/posts/mac.png'
 수 많은 transformation을 진행하는 것이 아니라, 캐싱되어 있는 RDD 부터 
 연산을 수행하게 된다.`      
 
-즉, 반복적으로 사용되는 RDD가 있다면 메모리 및 디스크에 캐싱을 해 놓는다면 
+즉, 반복적으로 사용되는 RDD가 있다면 메모리 및 디스크에 캐싱을 해 놓는게 
 여러 action 연산을 수행할 때 성능 향상을 할 수 있다.   
 
 `또한, cache는 fault-tolerant 하다.`   
@@ -33,7 +33,7 @@ driver 1대와 worker 노드 3대로 구성된 클러스터에서 log mining 작
 > 기본적으로 hdfs는 block 단위로 파일을 분산하여 저장한다.   
 
 우선 driver는 대상 데이터의 위치와 크기를 확인한다.   
-`위 예제에서 hdfs의 경우 block 단위로 3개가 저장되어 있는 것을 확인하고, 
+`위 예제의 hdfs의 경우 block 단위로 3개가 저장되어 있는 것을 확인하고, 
     block 당 1개의 task를 생성하여 각 executor에게 전달한다.`   
 
 최종적으로 executor마다 task를 처리하고 결과값을 driver에게 전달한다.    
@@ -184,7 +184,7 @@ recomputation 되는 것을 방지할 수 있다.
 
 ## 4. Web UI 을 통해 확인해보기   
 
-캐싱을 하고 모니터링을 위한 Spark Web UI에서 확인해보자.   
+캐싱을 하고 모니터링을 위해 Spark Web UI에서 확인해보자.     
 
 기본적으로 `캐시는 Storage 탭`에서 확인할 수 있다.   
 
@@ -224,7 +224,7 @@ jobs 탭에서 job의 DAG를 확인해보자.
 
 `Locality level이 PROCESS_LOCAL로 표기된 것은 task가 돌고 있는 같은 executor 메모리 캐시를 읽은 것이다.`   
 
-`RACK_LOCAL 은 메모리 읽지 않고, 같은 RACK 장비에 있는 다른 노드의 디스크를 읽었다는 의미이다.`    
+`RACK_LOCAL 은 메모리에서 읽지 않고, 같은 RACK 장비에 있는 다른 노드의 디스크를 읽었다는 의미이다.`    
 즉, 131.3MB는 hdfs에 다시 읽어서 연산했다는 의미이다.   
 
 추가적으로 `NODE_LOCAL은 같은 노드의 디스크에서 데이터를 읽었다는 의미이다.`     
