@@ -104,7 +104,7 @@ root
  |-- name: string (nullable = true)
  |-- age: integer (nullable = true)
  |-- job: string (nullable = true)
-```
+```   
 
 - - - 
 
@@ -175,7 +175,11 @@ import org.apache.spark.sql.functions.{col,when, count}
 Output
 
 ```
-
++----+---+---+
+|name|age|job|
++----+---+---+
+|   0|  0|  0|
++----+---+---+
 ```
 
 
