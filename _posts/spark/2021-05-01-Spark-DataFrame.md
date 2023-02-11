@@ -60,6 +60,8 @@ val result: DataFrame = data.toDF()
 
 result.show() // 행 과 레코드 확인   
 result.limit(10).show() // 출력 갯수 10개 제한
+
+result.show(truncate=false) // row 길이가 길어도 짤리지 않고 모두 표기   
 ```
 
 `위처럼 특별한 스키마 정의를 주지 않아도 컬렉션에 포함된 오브젝트 속성값으로부터 
