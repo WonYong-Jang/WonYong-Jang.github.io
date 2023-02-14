@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Machine Learning] 사이킷런의 주요 모듈 2"
+title: "[Machine Learning] 사이킷런의 데이터 전처리"
 subtitle: "데이터 전처리(Preprocessing) / 데이터 클린징, 결손값 처리(Null/NaN처리), 데이터 인코딩(레이블, 원 핫 인코딩), 데이터 스케일링, 이상치 제거" 
 comments: true
 categories : ML

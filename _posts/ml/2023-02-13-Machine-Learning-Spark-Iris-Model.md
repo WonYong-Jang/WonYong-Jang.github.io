@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Machine Learning] Spark ML로 iris 붓꽃 데이터 예측 모델 만들기"
-subtitle: "randomSplit, vectorAssembler, pipeline, crossValidator" 
+subtitle: "randomSplit, vectorAssembler, pipeline, crossValidator, trainValidationSplit" 
 comments: true
 categories : ML
 date: 2023-02-13
@@ -213,6 +213,8 @@ CrossValidator이 있다.
 
 `SparkML의 CrossValidator는 교차검증과 동시에 하이퍼 파라미터 튜닝 까지 진행해 준다.`       
 
+> Spark ML CrossValidator는 Stratified K fold 방식이 아닌 K fold 방식을 사용한다.   
+
 먼저 `ParamGridBuilder 클래스를 이용하여 하이퍼 파라미터 튜닝을 위한 
 그리드 서치(Grid Search)용 Param Grid를 생성`한다.   
 
@@ -263,6 +265,31 @@ def printCVResult(cvModel: CrossValidatorModel): Unit = {
       .sortBy(_._2)
       .foreach(println(_))}
 ```
+
+- - - 
+
+## 5. TrainValidationSplit 로 하이퍼 파라미터 튜닝    
+
+`CrossValidator는 k fold 방식의 교차검증을 진행하는 반면, TrainValidationSplit은 
+교차검증을 진행하지 않고 하이퍼 파라미터 튜닝만 진행한다.`   
+
+사용방법은 CrossValidator에서 사용한 파라미터와 동일하며, 학습 및 검증 비율을 
+파라미터로 넣어주면 된다.   
+
+```scala
+import org.apache.spark.ml.tuning.{CrossValidator, CrossValidatorModel, ParamGridBuilder, TrainValidationSplit}
+
+val trainValidationSplit = new TrainValidationSplit()
+      .setEstimator(dt)
+      .setEstimatorParamMaps(paramGridMap)
+      .setEvaluator(evaluator)
+      .setTrainRatio(0.75) // 학습 0.75, 검증 0.25
+      .setSeed(0)
+```
+
+`마지막으로 결과확인은 CrossValidator에서는 cvModel.avgMetrics로 확인 가능했으며, 
+    TrainValidationSplit은 tvsModel.validationMetrics 로 확인 가능하다.`   
+
 
 - - -
 Referrence 
