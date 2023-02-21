@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Machine Learning] Spark ML로 iris 붓꽃 데이터 예측 모델 만들기"
-subtitle: "randomSplit, vectorAssembler, pipeline, crossValidator, trainValidationSplit" 
+subtitle: "randomSplit, vectorAssembler, pipeline /  crossValidator, trainValidationSplit 교차검증 및 하이퍼 파라미터 튜닝" 
 comments: true
 categories : ML
 date: 2023-02-13
