@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Machine Learning] Spark ML 결정 트리"
-subtitle: "DecisionTreeClassifier, RandomForestClassifier, GBTClassifier" 
+subtitle: "DecisionTreeClassifier, RandomForestClassifier, GBTClassifier / MulticlassClassificationEvaluator, BinaryClassificationEvaluator" 
 comments: true
 categories : ML
 date: 2023-02-21
@@ -10,6 +10,9 @@ background: '/img/posts/mac.png'
 
 이번 글에서는 [결정트리](https://wonyong-jang.github.io/ml/2022/09/24/Machine-Learning-Classification-Decision-Tree.html) 알고리즘을 
 Spark ML로 어떻게 구현할 수 있는지 살펴볼 예정이다.   
+
+`단, Spark ML 3.2 버전 기준으로 GBTClassifier는 이진 분류만 가능하고, 다른 
+알고리즘에 비해 학습 속도가 느리기 때문에 제외한다.`       
 
 - - - 
 
@@ -200,7 +203,46 @@ Output
 (petal_width,0.3826618549356906)
 ```
 
+이제 위의 prediction을 이용하여 성능을 측정해보자.      
 
+Spark ML에서 분류 평가(Classification Evaluation)을 진행할 때 주의해야 할 점은 
+`BinaryClassificationEvaluator는 roc auc 지표만 제공하고, MulticlassClassificationEvaluator 클래스는 
+accuracy, precision, recall, f1 score를 제공한다.`      
+
+> 클래스 이름 의미와 관련이 없이 api 설계가 된 것 같다.   
+
+> 또한, MulticlassClassificationEvaluator로 얻어지는 precision, recall은 
+positive, negative 예측 데이터 건수를 반영한 weighted precision, weighted recall 값이다.  
+
+> 사이킷 런에서 기본적으로 weighted 옵션없이 제공하기 때문에 
+precision과 recall 계산 방식이 조금 다르다.   
+
+```scala
+val accuracyEvaluator = new MulticlassClassificationEvaluator()
+    .setLabelCol("target")
+    .setPredictionCol("prediction")
+    .setMetricName("accuracy")
+
+val accuracyPrecision = new MulticlassClassificationEvaluator()
+    .setLabelCol("target")
+    .setPredictionCol("prediction")
+    .setMetricName("weightedPrecision")
+
+val accuracyRecall = new MulticlassClassificationEvaluator()
+    .setLabelCol("target")
+    .setPredictionCol("prediction")
+    .setMetricName("weightedRecall")
+
+val accuracyF1 = new MulticlassClassificationEvaluator()
+    .setLabelCol("target")
+    .setPredictionCol("prediction")
+    .setMetricName("f1")
+
+println("accuracy: "+ accuracyEvaluator.evaluate(predictions))
+println("precision: "+ accuracyPrecision.evaluate(predictions))
+println("recall: "+ accuracyRecall.evaluate(predictions))
+println("f1: "+ accuracyF1.evaluate(predictions))
+```
 
 - - -    
 

@@ -130,7 +130,7 @@ Spock에서는 given, when, then 외에 추가로 3개가 더있어 총 6단계�
 <img width="400" alt="스크린샷 2022-08-15 오후 4 30 18" src="https://user-images.githubusercontent.com/26623547/184594360-e45e9e8e-1a37-472f-baec-5f3075f5c147.png">   
 
 
-#### 2-1) 첫 번째 테스트 클래스 작성하기   
+### 2-1) 첫 번째 테스트 클래스 작성하기   
 
 프로젝트의 src > test > groovy를 에 새로운 Groovy 클래스를 생성한다.   
 
@@ -176,7 +176,7 @@ class MainTest extends Specification{
 given, when, then 등의 블록들 간의 변수들은 공유되어 사용할 수 있다.  
 즉, given: 에서 선언한 변수는 then: 에서도 사용 가능하다.   
 
-#### 2-2) where 블록 이용하여 테스트하기   
+### 2-2) where 블록 이용하여 테스트하기   
 
 여기서 [where 블록](https://spockframework.org/spock/docs/1.3/all_in_one.html)에 대해서 
 생소할수 있는데, 아래 예제를 살펴보자.   
@@ -260,7 +260,7 @@ class MainTest extends Specification{
 <img width="549" alt="스크린샷 2022-05-01 오후 6 21 35" src="https://user-images.githubusercontent.com/26623547/166139953-b2a8d2f8-b8c7-4045-a7b0-3eeb7eb44642.png">   
 
 
-#### 2-3) 예외 테스트   
+### 2-3) 예외 테스트   
 
 Spock을 이용하여 예외가 발생하는지를 테스트 해보자.   
 아래는 입력값을 0으로 나눴을때 발생하는 에러를 확인하고 정상적으로 
@@ -301,7 +301,7 @@ class MainTest extends Specification{
 테스트 코드를 작성한 흐름에 따라 예외를 확인할 수 있으니, 
     처음 코드를 본 사람도 더 쉽게 이해가 가능하다.      
 
-#### 2-4) Mock 테스트    
+### 2-4) Mock 테스트    
 
 Spock의 강력한 기능 중 또 하나는 Mock이다.   
 
@@ -322,7 +322,7 @@ class MainTest extends Specification{
 
 ```
 
-#### 2-5) 다양한 호출 회수 검증   
+### 2-5) 다양한 호출 회수 검증   
 
 아래와 같이 사용하면 메소드의 호출 횟수를 
 확인해 볼 수 있고, buildNumber()가 한번도 호출되지 
@@ -350,7 +350,7 @@ then:
 (1..2) * numberBuilder.buildNumber()
 ```
 
-#### 2-6) 올인원 느낌의 편의성    
+### 2-6) 올인원 느낌의 편의성    
 
 Junit을 사용했을 때 assertThat 구문과 matcher, 그리고 
 여러 matcher를 제공해주는 Hamcrest라는 라이브러리를 알고 있을 것이다.   
@@ -363,7 +363,164 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;  
 ```
 
----
+- - - 
+
+## 3. Spock 사용시 주의사항    
+
+spock를 정확하게 이해하지 못하고 사용하게 되면 문제가 
+발생하는 경우가 있는데, 아래 예제를 통해서 살펴보자.   
+
+### 3-1) mocking에서 사용되는 변수의 위치를 주의하자   
+
+아래 코드는 requestAddressSearch 메서드의 retry 를 검증하는 테스트이다.  
+api 호출을 mockWebServer로 mocking 했고, 모두 504에러를 
+발생시키도록 했다.   
+모든 호출이 실패하면 null 리턴을 확인하는 테스트이며, 
+    문제가 없는 코드로 보일 수 있다.    
+
+```groovy
+def "requestAddressSearch retry fail "() {
+    given:
+    def uri = mockWebServer.url("/").uri()
+
+    when:
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+
+    def address = "서울 성북구 종암로 10길"
+    def result = kakaoAddressSearchService.requestAddressSearch(address) // 요청이 모두 실패하면 null 리턴   
+
+    then:
+    2 * kakaoUriBuilderService.buildUriByAddressSearch(address) >> uri
+    result == null
+}
+```
+
+`하지만 테스트를 실행하면 MissingPropertyException이 발생하게 된다.`      
+`그 이유는 spock는 구문을 분석할 때 then block에 존재하는 mocking 구문을 
+파악한 후 when block 앞으로 이동시키기 때문이다.`         
+
+즉 아래와 같이 코드가 구성될 것이다.   
+
+```groovy
+def "requestAddressSearch retry fail "() {
+    given:
+    def uri = mockWebServer.url("/").uri()
+    2 * kakaoUriBuilderService.buildUriByAddressSearch(address) >> uri
+
+    when:
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+
+    def address = "서울 성북구 종암로 10길"
+    def result = kakaoAddressSearchService.requestAddressSearch(address)
+
+    then:
+    result == null
+}
+```
+
+`따라서 address라는 변수는 실제 런타임 시 mocking 구문에서 찾을 수 없게 되어 에러가 발생한다.`    
+
+`위를 해결할 수 있는 방법은 첫번째로 address 변수를 given block에 명시하면 
+에러는 해결된다.`    
+
+```groovy
+def "requestAddressSearch retry fail "() {
+    given:
+    def uri = mockWebServer.url("/").uri()
+    def address = "서울 성북구 종암로 10길"
+
+    when:
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+
+    def result = kakaoAddressSearchService.requestAddressSearch(address)
+
+    then:
+    2 * kakaoUriBuilderService.buildUriByAddressSearch(address) >> uri
+    result == null
+}
+```
+
+`또 다른 해결책은 interaction block을 활용하는 것이다.`    
+
+```groovy
+def "requestAddressSearch retry fail "() {
+    given:
+    def uri = mockWebServer.url("/").uri()
+
+    when:
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+
+    def result = kakaoAddressSearchService.requestAddressSearch("서울 성북구 종암로 10길")
+
+    then:
+    interaction { // 해당 block을 활용하면 내부 코드가 함께 이동된다.    
+        def address = "서울 성북구 종암로 10길"
+        2 * kakaoUriBuilderService.buildUriByAddressSearch(address) >> uri
+    }
+    result == null
+}
+```
+
+더 자세한 내용은 [공식문서](https://spockframework.org/spock/docs/1.0/interaction_based_testing.html)를 참고하자.   
+
+### 3-2) stubbing과 mocking은 동시에 명시하자   
+
+`흔히 mockito에 테스트 코드를 작성할 때처럼 given 절에 stubbing, 
+    then 절에 mocking 관련 코드를 넣게 되면 spock에선 테스트가 실패할 수 있다.`    
+
+`그 이유는 mocking 구문을 when block 앞으로 이동시킬 때 동일한 대상으로 
+지정된 stubbing 구문은 정상 적용되지 않기 때문이다.`    
+
+
+```groovy
+def "requestAddressSearch retry fail "() {
+    given:
+    def uri = mockWebServer.url("/").uri()
+    def address = "서울 성북구 종암로 10길"
+
+    // stubbing 했지만 확인해보면 작동하지 않는다!
+    kakaoUriBuilderService.buildUriByAddressSearch(address) >> uri     
+
+    when:
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+
+    def result = kakaoAddressSearchService.requestAddressSearch(address)
+
+    then:
+    2 * kakaoUriBuilderService.buildUriByAddressSearch(address)
+    result == null
+}
+```
+
+위의 경우 uri를 stubbing 해주는 부분이 정상 작동 하지 않는 것을 확인할 수 있다.   
+
+따라서 이를 stubbing, mocking을 동시에 명시하면 문제는 해결된다.   
+
+```groovy
+def "requestAddressSearch retry fail "() {
+    given:
+    def uri = mockWebServer.url("/").uri()
+    def address = "서울 성북구 종암로 10길"
+
+    when:
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+    mockWebServer.enqueue(new MockResponse().setResponseCode(504))
+
+    def result = kakaoAddressSearchService.requestAddressSearch(address)
+
+    then:
+    2 * kakaoUriBuilderService.buildUriByAddressSearch(address) >> uri    
+    result == null
+}
+```
+
+
+- - -
 
 ## 마치며   
 
