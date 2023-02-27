@@ -43,7 +43,7 @@ background: '/img/bg-index.jpg'
 - Nginx, Tomcat   
 - Spark, Kafka, Hive 
 - ELK Stack   
-- Grafana, Graylog   
+- Grafana, Graylog, Prometheus   
 - Git/Github, Gerrit      
 
 ##### Frontend

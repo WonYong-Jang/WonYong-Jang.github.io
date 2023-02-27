@@ -465,6 +465,14 @@ def "requestAddressSearch retry fail "() {
 }
 ```
 
+```
+Explicit Interaction Blocks
+
+Internally, Spock must have full information about expected interactions before they take place. 
+So how is it possible for interactions to be declared in a then: block? The answer is that under the hood, Spock moves interactions declared in a then: block to immediately before the preceding when: block. 
+In most cases this works out just fine, but sometimes it can lead to problems:
+```
+
 더 자세한 내용은 [공식문서](https://spockframework.org/spock/docs/1.0/interaction_based_testing.html)를 참고하자.   
 
 ### 3-2) stubbing과 mocking은 동시에 명시하자   
@@ -519,6 +527,20 @@ def "requestAddressSearch retry fail "() {
 }
 ```
 
+```
+Combining Mocking and Stubbing
+
+As explained in Where to Declare Interactions, 
+the receive call will first get matched against the interaction in the then: block. 
+Since that interaction doesn’t specify a response, 
+the default value for the method’s return type (null in this case) will be returned. 
+(This is just another facet of Spock’s lenient approach to mocking.). 
+Hence, the interaction in the setup: block will never get a chance to match.
+
+Mocking and stubbing of the same method call has to happen in the same interaction.
+```
+
+더 자세한 내용은 [공식문서](https://spockframework.org/spock/docs/1.0/interaction_based_testing.html)를 참고하자.   
 
 - - -
 
