@@ -87,7 +87,7 @@ CLOSED, 실패하면 OPEN으로 되돌아 간다.`
 
 ##### 2-4) permittedNumberOfCallsInHalfOpenState(default 10)   
 
-HALF OPEN 상태일 때, 받아들일 요청의 개수를 지정한다.       
+`HALF OPEN 상태일 때, 받아들일 요청의 개수를 지정한다.`            
 
 ##### 2-5) maxWaitDurationInHalfOpenState(default 0)   
 
@@ -98,7 +98,7 @@ HALF OPEN 상태일 때, 받아들일 요청의 개수를 지정한다.
 
 ##### 2-6) slidingWindowType(default COUNT_BASED)    
 
-서킷 브레이커가 CLOSED 상태에서 호출 결과를 기록할 때 쓸 슬라이딩 윈도우 타입을 설정한다.    
+서킷 브레이커가 CLOSED 상태에서 호출 결과를 기록할 때 쓸 슬라이딩 윈도우 타입을 설정한다.        
 슬라이딩 윈도우는 카운트 기반과 시간 기반이 있다.    
 슬라이딩 윈도우가 COUNT BASED일 땐 마지막 
 slidingWindowSize 횟수 만큼 호출을 기록하고 집계한다.    
@@ -106,18 +106,19 @@ TIME BASED일 땐 마지막 slidingWindowSize 초 동안의 호출을 기록하�
 
 ##### 2-7) slidingWindowSize(default 100)
 
-서킷 브레이커가 CLOSED 상태에서 호출 결과를 기록할 때 쓸 슬라이딩 윈도우의 크기를 설정한다.   
+`서킷 브레이커가 CLOSED 상태에서 호출 결과를 기록할 때 쓸 슬라이딩 윈도우의 크기를 설정한다.`       
 
 ##### 2-8)  minimumNumberOfCalls(default 100)
 
-서킷브레이커가 실패 비율이나 느린 호출 비율을 계산할 때 
-필요한(슬라이딩 윈도우 주기마다) 최소 호출 수를 설정한다.    
-예를 들어서 minimumNumberOfCalls가 10이라면 최소한 호출을 10번을 기록해야 실패 비율을 계산할 수 있다. 
-기록한 호출 횟수가 9번 뿐이라면 9번 모두 실패했더라도 서킷 브레이커는 열리지 않는다.      
+`서킷브레이커가 실패 비율이나 느린 호출 비율을 계산할 때 
+필요한(슬라이딩 윈도우 주기마다) 최소 호출 수를 설정한다.`     
+
+`예를 들어서 minimumNumberOfCalls가 10이라면 최소한 호출을 10번을 기록해야 실패 비율을 계산할 수 있다.`    
+`기록한 호출 횟수가 9번 뿐이라면 9번 모두 실패했더라도 서킷 브레이커는 열리지 않는다.`          
 
 ##### 2-9) waitDurationInOpenState(default 60000ms)    
 
-서킷 브레이커가 OPEN에서 HALF OPEN으로 전환하기 전 기다리는 시간이다.    
+`서킷 브레이커가 OPEN에서 HALF OPEN으로 전환하기 전 기다리는 시간이다.`           
 
 
 ##### 2-10) automaticTransitionFromOpenToHalfOpenEnabled(default false)   
@@ -132,18 +133,26 @@ TIME BASED일 땐 마지막 slidingWindowSize 초 동안의 호출을 기록하�
 
 ##### 2-11) ringBufferSizeInClosedState(default 100) 
 
-닫힌 상태에서의 호출 수로 서킷을 열어야 할지 결정할 때 사용한다.    
+닫힌 상태에서의 호출 수로 서킷을 열어야 할지 결정할 때 사용한다.        
+
+> 현재 deprecated 되었고, slidingWindow 를 사용하자.     
 
 ##### 2-12) ringBufferSizeInHalfOpenState(default 10)   
 
 HALF OPEN 상태에서의 호출 수로, 서킷을 다시 열거나 닫힘 상태로 돌아갈지를 
-결정할 때 사용한다.   
+결정할 때 사용한다.        
 
-##### 2-13) registerHealthIndicator   
+> 현재 deprecated 되었고, permittedNumberOfCallsInHalfOpenState를 사용하자.    
 
-상태 정보 엔드포인트에 대한 구성 정보 노출 여부를 설정한다.   
+##### 2-13) registerHealthIndicator(default true)      
 
-##### 2-14) recordExceptions(default empty)
+actuator를 통해 서킷 브레이커 상태를 확인하기 위해 설정한다.              
+
+##### 2-14) eventConsumerBufferSize(default 10)    
+
+이벤트가 발행되면, 해당 버퍼에 저장되는데 그 크기를 지정한다.   
+
+##### 2-15) recordExceptions(default empty)
 
 실패로 기록해 실패 비율 계산에 포함시킬 예외 리스트이다. 
 ignoreException을 통해 무시하겠다고 명시하지 않았다면, 
@@ -151,7 +160,7 @@ ignoreException을 통해 무시하겠다고 명시하지 않았다면,
 예외 리스트를 지정하게 되면 나머지 예외는 ignoreException으로 무시하는 예외를 빼고 
                   전부 성공으로 계산한다.   
 
-##### 2-15) ignoreExceptions(default empty)
+##### 2-16) ignoreExceptions(default empty)
 
 `무시만 하고 실패나 성공으로 계산하지 않는 예외 리스트이다.`    
 `리스트에 일치하거나 상속한 예외가 있다면, recordException에 지정했더라도 실패나 
@@ -198,7 +207,32 @@ ignoreException을 통해 무시하겠다고 명시하지 않았다면,
 
 - - - 
 
-## 4. Create a CircuitBreakerRegistry   
+## 4. 서킷브레이커 구현   
+
+서킷 브레이커는 직접 객체를 사용하는 방법과 어노테이션을 이용해 AOP 방식으로 
+사용하는 방법으로 나뉘는데 `이 글에서는 직접 객체를 사용하는 
+방법을 사용한다.`   
+
+객체 사용을 선택한 이유는 다음과 같다.   
+
+- AOP 방식으로 사용하려면 application.yml에 지정한 서킷 브레이커를 비롯해 
+데코레이팅 할 기능의 어노테이션에 모두 동일하게 이름을 
+적어줘야 하는데 실수할 여지가 있다.   
+
+- 데코레이팅 할 기능의 순서를 지정하기 쉽다.   
+
+- 특정 exception을 블랙리스트, 화이트 리스트로 등록하는 기능을 
+사용하기 위해 AOP 방식을 사용하면 해당 exception의 풀 패키지 경로를 application.yml에 
+작성해야 하는데, 직접 객체를 사용하면 쉽게 구현이 가능하다.   
+
+- 서킷브레이커 테스트를 위한 스프링 컨텍스트가 필요 없다.   
+
+```gradle
+implementation 'io.github.resilience4j:resilience4j-spring-boot2:1.7.0'
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
+```
+
+### 4-1) Create a CircuitBreakerRegistry   
 
 Resilience4j는 thread safety와 원자성을 보장해주는 ConcurrentHashMap 기반 인 메모리 CircuitBreakerRegistry를 
 함께 제공한다.  
@@ -215,8 +249,12 @@ CircuitBreakerRegistry circuitBreakerRegistry =
 - - -
 Referrence 
 
+<https://github.com/resilience4j/resilience4j/blob/master/resilience4j-circuitbreaker/src/test/java/io/github/resilience4j/circuitbreaker/CircuitBreakerRegistryTest.java>    
+<https://github.com/resilience4j/resilience4j/issues/509>    
+<https://github.com/resilience4j/resilience4j/releases>    
 <https://resilience4j.readme.io/docs/circuitbreaker>    
-<https://godekdls.github.io/Resilience4j/circuitbreaker/>    
+<https://godekdls.github.io/Resilience4j/circuitbreaker/>   
+<https://bottom-to-top.tistory.com/57>    
 
 {% highlight ruby linenos %}
 {% endhighlight %}
