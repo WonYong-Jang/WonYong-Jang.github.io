@@ -336,7 +336,7 @@ Save Test 버튼을 클릭하여 저장한다.
 
 그 외에 대시보는 [링크](https://grafana.com/grafana/dashboards/)에서 검색하여 적용할 수 있다.   
 
-[JVM(Micrometer)](https://grafana.com/grafana/dashboards/11378-justai-system-monitor/)라는 
+[Spring Boot2 Statistic](https://grafana.com/grafana/dashboards/11378-justai-system-monitor/)라는 
 대시보드를 적용해보자.     
 
 `Dashboards -> New -> Import 접속하여, Import via grafana.com 에 "https://grafana.com/grafana/dashboards/11378-justai-system-monitor/"  
