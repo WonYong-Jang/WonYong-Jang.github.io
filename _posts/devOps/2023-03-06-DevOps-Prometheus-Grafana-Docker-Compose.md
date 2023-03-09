@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Prometheus] Grafana 와 Docker Compose를 이용한 모니터링 환경 구축하기"
-subtitle: "Spring boot 어플리케이션 연동하기 / Spring actuator"
+subtitle: "Spring boot 어플리케이션 모니터링 / Spring actuator"
 comments: true
 categories : DevOps
 date: 2023-03-06
