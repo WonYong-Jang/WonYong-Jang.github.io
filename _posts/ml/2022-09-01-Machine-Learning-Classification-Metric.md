@@ -191,16 +191,27 @@ precision이 높은 케이스이며, recall이 낮기 때문에 False Negative�
 
 ## 4. ROC 곡선과 AUC   
 
+<img width="500" alt="스크린샷 2023-03-18 오후 10 38 32" src="https://user-images.githubusercontent.com/26623547/226109634-d36b9b5d-eb71-4c7b-8308-8349de306e6d.png">    
 
-<img width="837" alt="스크린샷 2022-09-24 오후 4 09 01" src="https://user-images.githubusercontent.com/26623547/192085218-d1ad38f8-80c5-4549-9fcb-55e59d879ec5.png">   
+`ROC(Receiver Operating Characteristic) curve는 다양한 threshold에 대한 이진분류기의 
+성능을 한번에 표시한 것이다.`   
 
-TPR은 재현율을 나타내며, 민감도로도 불린다.   
+`이 커브 곡선으로부터 최적의 threshold를 찾을 수도 있다.`   
 
-> TPR은 TP / (FN + TP)   
+> threshold에 대한 개념은 아래 글에서 자세히 다룬다.    
+> 위 그림처럼 좌상단 1에 가까울 수록 좋은 수치이다.   
 
-FPR은 실제는 Negative인데, Positive로 잘못 예측한 비율이다.   
+ROC curve를 이해하기 위해 아래 특성에 대해 살펴보자.   
 
-> FPR은 FP / (FP + TN)    
+<img width="859" alt="스크린샷 2023-03-18 오후 10 57 05" src="https://user-images.githubusercontent.com/26623547/226110556-52ca51b6-b4c2-4564-9d66-59e5e77bdaff.png">     
+
+True Positive와 False Positive 내용은 위에서 자세히 살펴봤고, 
+     이를 그림으로 살펴보면 아래와 같다.   
+
+<img width="852" alt="스크린샷 2023-03-18 오후 11 02 37" src="https://user-images.githubusercontent.com/26623547/226110779-71dbd53b-122b-4241-a0aa-66e250bbb444.png">     
+
+
+
 
 사이킷런에서는 아래와 같이 함수로 제공한다.   
 
@@ -340,6 +351,7 @@ Referrence
 <https://www.youtube.com/watch?v=GIzIk1C-_yE>     
 <https://www.youtube.com/watch?v=Kb7LMWLZK0M>   
 <https://hleecaster.com/ml-accuracy-recall-precision-f1/>   
+<https://angeloyeo.github.io/2020/08/05/ROC.html>      
 
 
 {% highlight ruby linenos %}
