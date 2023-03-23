@@ -92,7 +92,7 @@ val dt: DecisionTreeClassifier = new DecisionTreeClassifier()
     .setMinInstancesPerNode(4)   // 분할 후에 자식 노드가 가지는 최소 sample 개수. 이 값보다 작아야 더 이상 분할하지 않음.   
                                  // 사이킷런의 min_samples_split과 유사 
 
-val model: DecisionTreeClassificationModel = dt.fit(testDf)
+val model: DecisionTreeClassificationModel = dt.fit(trainDf)
 val predictions: DataFrame = model.transform(testDf)
 
 predictions.show()
