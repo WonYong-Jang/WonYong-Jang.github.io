@@ -65,8 +65,8 @@ $ spark.sql("select distinct target from df_view").show()
 +------+
 ```
 
-그 이후에 `randomSplit으로 학습데이터와 테스트 데이터를 분리` 했고, 
-    `vectorAssembler 이용하여, feature들을 하나의 벡터로 묶어 주었다.`   
+그 이후에 `randomSplit으로 학습데이터와 테스트 데이터를 분리 했고, 
+    vectorAssembler 이용하여, feature들을 하나의 벡터로 묶어 주었다.`   
 
 ```
 $ val assembler = new VectorAssembler().setInputCols(columns).setOutputCol("features")

@@ -18,7 +18,11 @@ background: '/img/posts/mac.png'
 `사이킷런에서 제공하는 Label Encoding은 
 Spark ML에서는 StringIndexer 클래스로 제공한다.`   
 
-아래 예시로 실습해보자.   
+StringIndexer는 string 컬럼을 index 컬럼으로 인코딩을 진행한다.    
+인코딩에 대한 자세한 내용은 [공식문서](https://spark.apache.org/docs/latest/ml-features.html#stringindexer)를 
+살펴보자.   
+
+이제 아래 예시로 실습해보자.   
 
 ```scala
 import spark.implicits._
@@ -222,6 +226,140 @@ Output
 +---+--------------+--------------+---------------------+---------------------+--------------+--------------+
 ```
 
+
+`추가적으로 StringIndexer를 사용할 때, Unseen label에 주의해야 하며 이를 해결하기 위한 옵션을 제공한다.`   
+
+> Unseen label is a generic message which doesn't correcspond to a specific column.
+
+더 자세한 내용은 [링크](https://stackoverflow.com/questions/35224675/spark-ml-stringindexer-throws-unseen-label-on-fit)를 참고하자.   
+
+특히 아래와 같이 pipeline을 이용할 때 에러가 발생할 수 있다.   
+
+```scala
+val stage1 = columns.map(colName => {
+    new StringIndexer()
+    .setInputCol(colName)
+    .setOutputCol(colName + "LabelEncoded")
+    //.setHandleInvalid("keep") // https://stackoverflow.com/questions/57143187/failed-to-execute-user-defined-functionanonfun9-string-double-on-using
+})
+
+val stage2 = new OneHotEncoderEstimator()
+    .setDropLast(false) // 마지막 인자를 제외 여부 default: true
+    .setInputCols(labelEncodedColumns)
+    .setOutputCols(oneHotEncodedColumns)
+
+val stage3 = new VectorAssembler()
+    .setInputCols(oneHotEncodedColumns)
+    .setOutputCol("features")
+
+
+val stage4 = new RandomForestClassifier()
+    .setFeaturesCol("features")
+    .setLabelCol("Survived")
+    .setNumTrees(10)
+
+val pipeline = new Pipeline().setStages(stage1 ++ Array(stage2, stage3, stage4)) 
+val model = pipeline.fit(trainDf)
+val predictions = model.transform(testDf)
+```
+
+위처럼 파이프라인을 만들어 놓고 실행할 때 아래와 같은 에러가 발생할 수 있다.  
+
+```
+Caused by: org.apache.spark.SparkException: Unseen label: foobar.  To handle unseen labels, set Param handleInvalid to keep.
+```
+
+위 상황을 이해하기 쉽게 재현을 해보자.   
+
+```scala
+val train = List((1,"foo"),(2,"bar"))
+val test = List((3,"foo"),(4,"foobar"))
+
+val trainDf = spark.sparkContext.parallelize(train).toDF("k", "v")
+val testDf = spark.sparkContext.parallelize(test).toDF("k", "v")
+
+val indexer = new StringIndexer()
+    .setInputCol("v")
+    .setOutputCol("vi")
+
+indexer.fit(trainDf).transform(testDf).show()
+```
+
+위 예시를 실행해보면, 동일하게 에러가 재현이 된다.  
+`StringIndexer를 통해 trainDf 데이터를 인덱싱하기 위한 모델을 만들었고, 
+    이를 이용하여 testDf 데이터에 transform를 통해 적용을 시도했다.`     
+
+`하지만 trainDf에 없는 데이터는 foobar가 testDf에 존재하기 때문에 unseen label 에러를 발생시킨다.`   
+
+`StringIndexer는 default로 unseen label에 대해서 exception을 발생시키며, 이를 skip 할 수도 있고 
+keep 옵션을 통해 추가시킬수도 있다.`   
+
+```scala
+indexer.setHandleInvalid("skip").fit(train).transform(test).show()
+
+## +---+---+---+
+## |  k|  v| vi|
+## +---+---+---+
+## |  3|foo|1.0|
+## +---+---+---+
+```
+
+```scala
+indexer.setHandleInvalid("keep").fit(train).transform(test).show()
+
+## +---+------+---+
+## |  k|     v| vi|
+## +---+------+---+
+## |  3|   foo|0.0|
+## |  4|foobar|2.0|
+## +---+------+---+
+```
+
+각 옵션을 추가해주면, 위와 같은 결과를 확인할 수 있다.   
+
+또는 `파이프라인을 분리 하여 아래와 같이 해결할 수도 있다.`     
+인코딩 하는 파이프라인에는 train, test 데이터가 나뉜게 아닌 전체 데이터를 통해 
+인코딩을 진행시킨다.  
+그 이후 학습 및 검증 하는 파이프라인은 따로 추가하여 진행하였다.   
+
+```scala
+val stage1 = columns.map(colName => {
+    new StringIndexer()
+    .setInputCol(colName)
+    .setOutputCol(colName + "LabelEncoded")
+})
+
+val stage2 = new OneHotEncoderEstimator()
+    .setDropLast(false) // 마지막 인자를 제외 여부 default: true
+    .setInputCols(labelEncodedColumns)
+    .setOutputCols(oneHotEncodedColumns)
+
+val stage3 = new VectorAssembler()
+    .setInputCols(oneHotEncodedColumns)
+    .setOutputCol("features")
+
+
+val stage4 = new RandomForestClassifier()
+    .setFeaturesCol("features")
+    .setLabelCol("Survived")
+    .setNumTrees(10)
+
+
+val encodingPipeline = new Pipeline().setStages(stage1 ++ Array(stage2)) // 인코딩 파이프라인 
+val classifierPipeline = new Pipeline().setStages(Array(stage3, stage4)) // 학습 및 검증 파이프라인
+
+val encodingModel = encodingPipeline.fit(inputDf)
+val encodedDf = encodingModel.transform(inputDf)
+
+// randomSplit() 을 이용 하여 train 과 test 용 DataFrame 으로 분할
+val randomSplitArray = encodedDf.randomSplit(Array(0.8, 0.2), seed = 41)
+val trainDf = randomSplitArray(0).cache()
+val testDf = randomSplitArray(1).cache()
+
+val model = classifierPipeline.fit(trainDf)
+val predictions = model.transform(testDf)
+```
+
 - - - 
 
 ## 4. StandardScaler, MinMaxScaler     
@@ -324,6 +462,9 @@ val minMaxScaler = new MinMaxScaler()
 
 Referrence 
 
+
+<https://stackoverflow.com/questions/35224675/spark-ml-stringindexer-throws-unseen-label-on-fit>   
+<https://spark.apache.org/docs/latest/ml-features.html#stringindexer>   
 <https://www.inflearn.com/course/%ED%8C%8C%EC%9D%B4%EC%8D%AC-%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D-%EC%99%84%EB%B2%BD%EA%B0%80%EC%9D%B4%EB%93%9C/unit/25200>    
 
 {% highlight ruby linenos %}
