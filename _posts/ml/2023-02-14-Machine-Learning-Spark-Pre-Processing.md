@@ -240,7 +240,6 @@ val stage1 = columns.map(colName => {
     new StringIndexer()
     .setInputCol(colName)
     .setOutputCol(colName + "LabelEncoded")
-    //.setHandleInvalid("keep") // https://stackoverflow.com/questions/57143187/failed-to-execute-user-defined-functionanonfun9-string-double-on-using
 })
 
 val stage2 = new OneHotEncoderEstimator()
@@ -289,10 +288,10 @@ indexer.fit(trainDf).transform(testDf).show()
 `StringIndexer를 통해 trainDf 데이터를 인덱싱하기 위한 모델을 만들었고, 
     이를 이용하여 testDf 데이터에 transform를 통해 적용을 시도했다.`     
 
-`하지만 trainDf에 없는 데이터는 foobar가 testDf에 존재하기 때문에 unseen label 에러를 발생시킨다.`   
+`하지만 trainDf에 없는 데이터 foobar가 testDf에 존재하기 때문에 unseen label 에러를 발생시킨다.`   
 
 `StringIndexer는 default로 unseen label에 대해서 exception을 발생시키며, 이를 skip 할 수도 있고 
-keep 옵션을 통해 추가시킬수도 있다.`   
+keep 옵션을 통해 추가 시킬수도 있다.`   
 
 ```scala
 indexer.setHandleInvalid("skip").fit(train).transform(test).show()
@@ -318,7 +317,7 @@ indexer.setHandleInvalid("keep").fit(train).transform(test).show()
 각 옵션을 추가해주면, 위와 같은 결과를 확인할 수 있다.   
 
 또는 `파이프라인을 분리 하여 아래와 같이 해결할 수도 있다.`     
-인코딩 하는 파이프라인에는 train, test 데이터가 나뉜게 아닌 전체 데이터를 통해 
+인코딩 하는 파이프라인에는 train, test 데이터가 나뉜게 아닌 전체 데이터에 
 인코딩을 진행시킨다.  
 그 이후 학습 및 검증 하는 파이프라인은 따로 추가하여 진행하였다.   
 
@@ -344,11 +343,13 @@ val stage4 = new RandomForestClassifier()
     .setLabelCol("Survived")
     .setNumTrees(10)
 
+// 인코딩 파이프라인
+val encodingPipeline = new Pipeline().setStages(stage1 ++ Array(stage2))
 
-val encodingPipeline = new Pipeline().setStages(stage1 ++ Array(stage2)) // 인코딩 파이프라인 
-val classifierPipeline = new Pipeline().setStages(Array(stage3, stage4)) // 학습 및 검증 파이프라인
+// 학습 및 검증 파이프라인
+val classifierPipeline = new Pipeline().setStages(Array(stage3, stage4)) 
 
-val encodingModel = encodingPipeline.fit(inputDf)
+val encodingModel = encodingPipeline.fit(inputDf) // 전체 데이터를 인코딩  
 val encodedDf = encodingModel.transform(inputDf)
 
 // randomSplit() 을 이용 하여 train 과 test 용 DataFrame 으로 분할
@@ -356,8 +357,8 @@ val randomSplitArray = encodedDf.randomSplit(Array(0.8, 0.2), seed = 41)
 val trainDf = randomSplitArray(0).cache()
 val testDf = randomSplitArray(1).cache()
 
-val model = classifierPipeline.fit(trainDf)
-val predictions = model.transform(testDf)
+val model = classifierPipeline.fit(trainDf) // train data
+val predictions = model.transform(testDf)   // test data
 ```
 
 - - - 
