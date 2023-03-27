@@ -157,6 +157,7 @@ def printFeatureImportance(importances: Array[Double], colums: Array[String]): U
     val denseVector = new DenseVector(importances) // sparse 방식에서 보기 좋게 dense 방식으로 변경   
                                                    // (0.0 0.0 1.0 0.0)
     colums.zip(denseVector.values)
+        .sortBy(_._2)
         .foreach(println(_))
 }
 
