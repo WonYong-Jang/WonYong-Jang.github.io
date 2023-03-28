@@ -8,7 +8,7 @@ date: 2021-02-11
 background: '/img/posts/mac.png'
 ---
 
-# 1. 스칼라로 Consumer 구현하기   
+## 1. 스칼라로 Consumer 구현하기   
 
 `Consumer의 경우는 구독(subscribe)을 시작한 후 poll을 통해 레코드를 처리한다.`    
 topic의 경우 list로 설정 가능하다. 즉 여러 topic 처리가 가능하다.    
@@ -59,9 +59,7 @@ Output
 quickstart-events : success!
 ```
 
-- - - 
-
-## 1-1) 동기 오프셋 커밋    
+### 1-1) 동기 오프셋 커밋    
 
 poll() 메서드가 호출된 이후에 commitSync() 메서드를 호출하여 오프셋 커밋을 
 명시적으로 수행할 수 있다.    
@@ -93,9 +91,8 @@ while(true){
 commitSync() 메서드에 Map[TopicPartition, OffsetAndMetadata] 인스턴스를 파라미터로 
 넣으면 된다.     
 
-- - - 
 
-## 1-2) 비동기 오프셋 커밋    
+### 1-2) 비동기 오프셋 커밋    
 
 동기 오프셋 커밋을 사용할 경우 커밋 응답을 기다리는 동안 데이터 처리가 일시적으로 
 중단 되기 때문에 더 많은 데이터를 처리하기 위해서 비동기 오프셋 커밋을 
@@ -113,9 +110,8 @@ while(true){
   }
 ```
 
-- - - 
 
-## 1-3) Consumer 주요 옵션   
+### 1-3) Consumer 주요 옵션   
 
 Consumer 어플리케이션을 실행할 때 설정해야 할 필수 옵션과 선택 옵션이 있다.   
 필수 옵션은 사용자가 반드시 설정해야 하는 옵션이다. 선택 옵션은 사용자가 설정을 필수로 
@@ -188,7 +184,8 @@ Consumer 그룹이 특정 파티션을 읽을 때 저장된 Consumer 오프셋�
 poll()메서드를 호출하는 간격의 최대 시간을 지정한다. poll() 메서드를 
 호출한 이후에 데이터를 처리하는 데에 시간이 너무 많이 걸리는 경우 
 비정상으로 판단하고 리밸런싱을 시작한다.    
-기본값은 300000(5분)이다.    
+기본값은 300000(5분)이다.   
+
 
 ##### isolation.level    
 
@@ -200,7 +197,7 @@ read_commited, read_uncommitted로 설정할 수 있다. read_committed로 설�
 
 - - - 
 
-# 2. 스칼라로 Producer 구현하기   
+## 2. 스칼라로 Producer 구현하기   
 
 Producer는 카프카에서 메시지를 생산해서 카프카 토픽으로 보내는 역할을 한다.   
 아래와 같이 레코드를 생성해서 Producer를 통해 전송하게 된다.   
@@ -281,9 +278,8 @@ Producer 내부에 가지고 있다가 배치 형태로 묶어서 브로커에 �
 배치 전송이라고 부른다. 배치 전송을 통해 카프카는 타 메시지 플랫폼과 
 차별화된 전송 속도를 가지게 되었다.`   
 
-- - -     
 
-## 2-1) 동기, 비동기 방식 Producer     
+### 2-1) 동기, 비동기 방식 Producer     
 
 send()메서드는 Future객체를 반환한다. 이 객체는 RecordMetadata의 비동기 
 결과를 표현한 것으로 ProducerRecord가 카프카 브로커에 정상적으로 적재되었는지에 
@@ -305,9 +301,8 @@ send()의 결과값은 카프카 브로커로부터 응답을 기다렸다가 �
 `비동기 방식은 위의 예제처럼 
 Callback 인터페이스`를 이용하여 사용자 정의 클래스를 생성해서 사용 가능하다.   
 
-- - -     
 
-## 2-2) Custom Serializer 사용하기   
+### 2-2) Custom Serializer 사용하기   
 
 위의 예제에서는 브로커로 보낼 메시지를 StringSerializer를 사용하였는데, 
     이를 커스텀하게 사용하기 위해서는 Serializer 인터페이스를 사용하여 
@@ -363,11 +358,36 @@ producer.send(record, new ProducerCallback)
 producer.close()
 ```
 
-- - - 
 
-## 2-3) Producer 주요 옵션   
+### 2-3) Producer 주요 옵션   
 
 Producer 동작과 관련된 옵션 중에 필수 옵션과 선택 옵션이 있다.     
+`Producer의 설정값들은 데이터를 브로커에 발송할 때, 발송하는 
+데이터의 양, 주기 및 데이터를 받는 브로커와의 네트웍 연결 등을 
+조절하는데 사용한다.`    
+
+`이러한 설정들을 주의깊게 봐야하는 이유는 Producer가 비동기로 
+브로커에 데이터를 발송하기 때문이다.`   
+`Producer 코드에서 ProducerRecord를 생성해서 send()메서드를 보낼 때, 
+         바로 데이터가 브로커로 발송되지 않고 비동기로 데이터를 전송한다.`   
+그래서 실제로 브로커에 데이터를 발송하기 전까지 데이터를 모아둘 버퍼가 필요하며, 
+    얼마만큼 모아서 보내고, 보낸 데이터의 성공을 어떻게 체크할 지 등의 로직이 
+    설정값에 녹여져 있다.   
+
+> 설정값을 이해하게 되면 Producer의 아키텍처도 더 깊이 이해할 수 있다.   
+
+<img width="683" alt="스크린샷 2023-03-28 오후 11 14 17" src="https://user-images.githubusercontent.com/26623547/228267202-4b544962-eb63-45c2-8976-3fb37b486b05.png">   
+
+Producer의 아키텍처는 위와 같다.   
+
+- Accumulator   
+    - Accumulator는 레코드를 축적하는 역할을 한다.   
+
+- Sender   
+    - Sender는 레코드를 브로커에 전달하는 역할이다. Accumulator가 쌓아 놓은 
+    레코드를 비동기로 브로커에 계속 발송한다. 그래서 Sender와 연결된 컴포넌트를 
+    보면 Accumulator와 Kafka(브로커)가 있다.   
+
 
 #### 필수 옵션    
 
@@ -442,6 +462,10 @@ Producer가 데이터를 압축해서 보낼 수 있는데, 어떤 타입으로 
 배치로 전송할 레코드 최대 용량을 지정한다. 너무 작게 설정하면 Producer가 
 브로커로 더 자주 보내기 때문에 네트워크 부담이 있고 
 너무 크게 설정하면 메모리를 더 많이 사용하게 되는점을 주의해야 한다.   
+
+> producer는 레코드를 한번에 하나씩 발송하지 않고 묶어서 발송한다. 설정한 
+용량보다 크게 레코드를 묶지 않으며, 그렇다고 배치가 가득찰 때까지 기다린다는 것은 아니다.   
+
 default 값은 16384 이다.
 
 ##### linger.ms   
@@ -473,6 +497,7 @@ default 값은 2147483647 이다.
 
 **Reference**   
 
+<https://devidea.tistory.com/90>   
 <https://medium.com/@om.m.mestry/how-to-develop-kafka-consumer-with-customer-deserializer-from-scratch-using-scala-c659a9337ccd>     
 <https://www.learningjournal.guru/article/kafka/how-to-create-a-json-serializer-for-kafka-producer/>    
 <https://ooeunz.tistory.com/117>    
