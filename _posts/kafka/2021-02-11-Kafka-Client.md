@@ -8,6 +8,12 @@ date: 2021-02-11
 background: '/img/posts/mac.png'
 ---
 
+이번 글에서는 Kafka Client를 직접 구현해보고 실행해보려고 한다.   
+구현하면서 사용하는 주요 옵션은 [링크](https://wonyong-jang.github.io/kafka/2021/02/13/Kafka-Option.html)를 
+참고하자.   
+
+- - -
+
 ## 1. 스칼라로 Consumer 구현하기   
 
 `Consumer의 경우는 구독(subscribe)을 시작한 후 poll을 통해 레코드를 처리한다.`    

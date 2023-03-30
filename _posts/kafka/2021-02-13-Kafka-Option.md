@@ -1,12 +1,20 @@
 ---
 layout: post
 title: "[Kafka] Apache Kafka Producer, Consumer 주요 옵션"
-subtitle: ""    
+subtitle: "Producer와 Consumer의 필수 옵션 및 선택 옵션  "    
 comments: true
 categories : Kafka
 date: 2021-02-13
 background: '/img/posts/mac.png'
 ---
+
+이번글에서는 Kafka를 구현할 때, 사용하는 여러 옵션들에 대해서 살펴보자.   
+
+더 자세한 내용은 [Producer](https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#ssl-truststore-password)와 
+[Consumer](https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html)를 
+확인해보자.   
+
+- - - 
 
 ## 1. Consumer 주요 옵션   
 
