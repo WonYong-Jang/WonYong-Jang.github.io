@@ -8,6 +8,7 @@ date: 2021-06-21
 background: '/img/posts/mac.png'
 ---
 
+
 ## 1. Partitoning 이란?   
 
 `RDD의 데이터는 클러스터를 구성하는 여러 서버(노드)에 나누어 저장된다. 
