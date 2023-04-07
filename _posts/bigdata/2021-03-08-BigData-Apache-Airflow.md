@@ -126,7 +126,7 @@ default_args={
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2020, 5, 16, 14, 0),
-    'email': ['leeyh0216@gmail.com'],
+    'email': ['kaven@gmail.com'],
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
@@ -145,7 +145,7 @@ default_args={
 
 ### 3-4) DAG 정의    
 
-DAG 객체를 정의한다.    
+DAG 객체를 아래와 같이 정의할 수 있다.
 
 ```python
 dag = DAG(
@@ -155,8 +155,11 @@ dag = DAG(
     schedule_interval= '* * * * *'
 )
 ```
+`schedule_interval에 아래와 같이 DAG 스케줄링 간격(Cron 표현식 혹은 미리 정의된 속성 사용 가능)을 
+지정할 수 있다.`    
 
-- schedule_interval : DAG 스케줄링 간격(Cron 표현식 혹은 미리 정의된 속성 사용 가능)   
+<img width="717" alt="스크린샷 2023-04-07 오후 11 20 37" src="https://user-images.githubusercontent.com/26623547/230624830-c1d9fcda-b482-4936-994e-6484fd1e7217.png">     
+
 
 ### 3-5) Task 정의    
 
@@ -343,10 +346,12 @@ schedule_interval="31 15 * * *", #(한국 시간 00:31)
 ## 6. Backfill and Catchup    
 
 과거에 start_date를 설정하면 airflow는 과거의 task를 차례대로 실행하는 Backfill을 실행한다.   
-간혹 "과거 언베부터 데이터를 쭈욱 빌드해 주세요" 라는 요청을 받으면 과거 start_date를 
+간혹 "과거 언제부터 데이터를 쭈욱 빌드해 주세요" 라는 요청을 받으면 과거 start_date를 
 잘 설정하기만 하면 빌드는 자동으로 과거부터 실행되어 편리하게 데이터를 빌드할 수 있다.   
 하지만 이런 동작을 원하지 않는 경우도 있다.    
-그럴 때는 DAG를 선언할 때 Catchup 설정을 False로 해주면 backfill을 실행하지 않는다.   
+그럴 때는 DAG를 선언할 때 `Catchup 설정을 False`로 해주면 backfill을 실행하지 않는다.  
+즉, 과거의 작업은 중요하지 않고, 현재 시점의 이후 dag만 
+실행되어야 한다면, 설정을 아래와 같이 변경할 수 있다.   
 
 ```
 dag = DAG(
@@ -357,6 +362,8 @@ dag = DAG(
     catchUp=False,
 )
 ```
+
+
 
 - - - 
 
