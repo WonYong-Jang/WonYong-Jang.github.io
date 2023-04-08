@@ -78,9 +78,18 @@ db.tickets.find({"status":"closed", "requesterId":{"$ne": null} })
 db.tickets.find({"comments":{"$elemMatch": {"commentId": 1}} })
 ```
 
+아래와 같이 `$all 연산자`를 이용하여 쿼리값을 만족하는 document를 찾을 수 있다.   
+
 ```
-// ticket의 tags 배열에 모두 포함된 document 조회 
+// ticket의 tags 배열에 모두 포함된 document 조회(and 조건)   
 db.tickets.find({"tags": {"$all": ["111", "222"] } })
+```
+
+`$in 연산자는 아래와 같이 사용 가능하다.`   
+
+```
+// ticket의 tags 배열 속 값이 하나라도 속한 document 조회(or 조건)
+db.tickets.find({"tags": {"$in": ["111", "222"] } })
 ```
 
 또한, 아래와 같이도 배열을 조회할 수 있다.   
