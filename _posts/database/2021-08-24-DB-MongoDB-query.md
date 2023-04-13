@@ -140,6 +140,7 @@ db.tickets.find({}, {"_id": true, "status": true, "ticketUpdatedAt": true})
 
 **Reference**
 
+<https://www.mongodb.com/docs/manual/reference/operator/query/elemMatch/>   
 <https://velopert.com/479>    
 
 {% highlight ruby linenos %}
