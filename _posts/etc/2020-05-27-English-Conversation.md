@@ -24,6 +24,15 @@ background: '/img/posts/mac.png'
 - It's not a out of the box solution.  
 이건 바로 사용할 수 있는 솔루션이 아니다.   
 
+##### hit my breaking point    
+
+- I finally hit my breaking point   
+나는 결국 참지 못했다.  
+
+##### by accident   
+
+- I almost stole his ride by accident   
+하마터면 차를 훔칠 뻔 했어   
 
 - - -
 

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Airflow] 아파치 Airflow - Workflow "
-subtitle: "DAG(Directed Acyclic Graph) / 데이터 워크 플로우 관리 도구/ execution_date 의미  "    
+subtitle: "DAG(Directed Acyclic Graph) / 데이터 워크 플로우 관리 도구/ execution_date 의미 "    
 comments: true
 categories : BigData
 date: 2021-03-08
@@ -131,6 +131,7 @@ default_args={
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=1),
+    'on_failure_callback': SlackWebhook.airflow_failed_callback
 }
 ```
 
@@ -142,6 +143,11 @@ default_args={
 - email_on_retry : 작업 재시도 시 이메일 수신 여부    
 - retries : 작업 재시도 횟수   
 - retry_delay : 작업 재시도 간격    
+
+Callback을 사용하여 task가 성공하거나 실패했을 경우 알람을 보내는 등의 동작을 구성할 수있다.   
+
+<img width="754" alt="스크린샷 2023-04-18 오전 9 10 39" src="https://user-images.githubusercontent.com/26623547/232636709-b7282f5e-5dbb-4ffa-b2e5-a699dce93144.png">    
+
 
 ### 3-4) DAG 정의    
 
@@ -363,6 +369,9 @@ dag = DAG(
 )
 ```
 
+
+
+ 
 
 
 - - - 
