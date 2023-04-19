@@ -98,16 +98,83 @@ internal class MainKtTest : StringSpec(){
 
 #### 4-1) SingleInstance    
 
-기본 격리 모드는 SingleInstance으로 Spec클래스 하나의 인스턴스가 생성된 다음 
-모든 테스트가 완료될 때까지 각 테스트 케이스가 차례로 실행되는 방식이다.   
+`기본 격리 모드는 SingleInstance`으로 Spec클래스 하나의 인스턴스가 생성된 다음 
+모든 테스트가 완료될 때까지 각 테스트 케이스가 차례로 실행되는 방식이다.  
+
+아래 예시를 통해서 각 모드마다 결과값을 비교해보자.   
+
+```kotlin
+internal class MainKtTest : BehaviorSpec({
+    isolationMode = IsolationMode.InstancePerLeaf
+
+    Given("given") {
+
+        println("1")
+        When("When1") {
+
+            println("2")
+            Then("Then1") {
+
+                println("3")
+            }
+        }
+
+        When("When2") {
+
+            println("4")
+            Then("Then2") {
+
+                println("5")
+            }
+        }
+    }
+})
+```
+
+Output   
+
+```
+1
+2
+3
+4
+5
+```
 
 #### 4-2) InstancePerTest   
 
+IsolationMode.InstancePerTest모드는 내부 컨텍스트를 포함하여 
+모든 테스트 케이스에 대해 새 Spec이 생성된다.   
 
+
+Output   
+
+```
+1
+1
+2
+1
+2
+3
+1
+4
+1
+4
+5
+```
 
 #### 4-3) InstancePerLeaf   
 
+IsolationMode.InstancePerLeaf는 하위 테스트만 새 인스턴스가 생성된다.   
 
+```   
+1
+2
+3
+1
+4
+5
+```
 
 - - - 
 
