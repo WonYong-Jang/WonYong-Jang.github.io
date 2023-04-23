@@ -70,9 +70,9 @@ background: '/img/bg-index.jpg'
     - 지원자의 거주지를 위, 경도로 변환 후 버스 정류장의 위, 경도와 비교하여 거리 및 우선순위에 따라 추천   
     - Haversine formula 알고리즘을 이용하여 가까운 거리 계산      
     - Redis를 활용하여 버스 정류장 데이터를 캐싱하여 성능 개선   
-    - 상담사의 상담 준비시간(After Call Work)을 68.2% 개선    
-        - As-Is : 59sec (상담사의 셔틀버스 노선 확인 시간)       
-        - To-Be : 19sec      
+    - 상담사의 상담 준비시간(After Call Work)을 60% 개선    
+        - As-Is : 2.5 min   
+        - To-Be : 1 min (셔틀버스노선 확인 시간 감소)    
           
 
 - Build customer service data pipeline with Kafka, Spark streaming and DocumentDB       
@@ -80,7 +80,10 @@ background: '/img/bg-index.jpg'
     - Spark Streaming의 마이크로 배치(10초)를 통해 Data 수집 및 Kafka publishing 하여 타 도메인에서 사용할 수 있도록 제공     
     - API 기반의 데이터 처리 방식 대비 약 60배의 퍼포먼스 개선  
         - As-Is : 250/sec   
-        - To-Be : 15,000/sec      
+        - To-Be : 15,000/sec     
+    - API error로 인해 발생하던 exception 100% 감소   
+        - As-Is: 1000/day   
+        - To-Be: 0/day   
     - Airflow를 통해 3rd party domain의 장애 발생 및 Event bridge로 데이터 전달 누락, 이벤트 처리 실패에 대한 retry 프로세스 적용     
     - Data 저장을 위한 AWS storage cost 절감     
         - As-Is : $12,264 / Month (AuroraDB r5.12xlarge)      
