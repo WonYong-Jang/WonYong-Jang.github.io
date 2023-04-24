@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kotlin] Kotest 테스트 코드 작성하기"     
-subtitle: "Isolation Modes, Assertion, Mockk"    
+subtitle: "Isolation Modes, Assertion"    
 comments: true
 categories : Kotlin
 date: 2023-04-18

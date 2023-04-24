@@ -225,8 +225,9 @@ True Positive와 False Positive 내용은 위에서 자세히 살펴봤고,
 
 
 ```
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score   
+from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.metrics import precision_score, recall_score    
+from sklearn.metrics import f1_score, roc_auc_score   
 
 # 예측 결과인 pred와 실제 결과값인 y_test의 Confusion Metrix 출력
 print(confusion_matrix(y_test, pred)) 
@@ -250,15 +251,16 @@ print("재현율: ", recall_score(y_test, pred))
 위 코드를 함수화 하여 한번에 계산 될 수 있도록 리펙토링 해보자.   
 
 ```
-def get_clf_eval(y_test, pred):
+def get_clf_eval(y_test, pred=None, pred_proba=None):
     confusion = confusion_matrix(y_test, pred)
     accuracy = accuracy_score(y_test, pred)
     precision = precision_score(y_test, pred)
     recall = recall_score(y_test, pred)
     f1 = f1_score(y_test, pred)
+    roc_auc = roc_auc_score(y_test, pred_proba)   
     print('오차 행렬')
     print(confusion)
-    print('정확도: {0: .4f}, 정밀도: {1: .4f}, 재현율: {2: .4f}'.format(accuracy, precision, recall))
+    print('정확도: {0: .4f}, 정밀도: {1: .4f}, 재현율: {2: .4f}, F1: {3: .4f}, AUC: {4: .4f}'.format(accuracy, precision, recall, f1, roc_auc))
 ```
 
 Output   
@@ -267,7 +269,7 @@ Output
 오차 행렬
 [[109   9]
  [ 14  47]]
-정확도:  0.8715, 정밀도:  0.8393, 재현율:  0.7705
+정확도:  0.8715, 정밀도:  0.8393, 재현율:  0.7705, F1:  0.8034, AUC:  0.8937   
 ```
 
 - - - 
