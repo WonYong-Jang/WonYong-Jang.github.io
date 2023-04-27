@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[ELK] Elastic Search 2"
-subtitle: "Cluster 구성 이해하기, status(yellow, green, red), health check "    
+title: "[ELK] Elastic Search cluster health check"
+subtitle: "Cluster 구성 이해하기, status(yellow, green, red), health check / cat api를 통한 상태 확인"    
 comments: true
 categories : ELK
 date: 2021-02-07
@@ -9,7 +9,8 @@ background: '/img/posts/mac.png'
 ---
 
 
-[이전 글](https://wonyong-jang.github.io/elk/2021/02/05/ELK-Elastic-Search.html)에서 엘라스틱 서치 기본 개념과 아키텍터에 대해 알아 봤다.   
+[이전 글](https://wonyong-jang.github.io/elk/2021/02/05/ELK-Elastic-Search.html)에서 
+엘라스틱 서치 기본 개념과 아키텍처에 대해 살펴 봤다.   
 
 이번장에서는 엘라스틱 서치의 가장 큰 시스템 단위인 클러스터에 대해서 
 자세히 알아보자.   

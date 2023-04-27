@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[ELK] Elastic Search 1"
-subtitle: "Elastic Search와 Kibana 개념과 구조 및 용어 정리, 아키텍처"    
+title: "[ELK] Elastic Search 시작하기"
+subtitle: "Elastic Search와 Kibana 개념과 구조 및 용어 정리, 아키텍처 / 엘라스틱 서치, 키바나 설치"    
 comments: true
 categories : ELK
 date: 2021-02-05
@@ -248,6 +248,9 @@ primary shard만 존재하고 replica는 생성되지 않는다.
 $ brew install elasticsearch // http://localhost:9200
 
 $ brew install kibana        // http://localhost:5601
+
+$ brew services start elasticsearch
+$ brew services start kibana   
 ```
 
 엘라스틱 서치와 키바나를 설치했다면 Restful API로 document를 추가하는 간단한 예제를 

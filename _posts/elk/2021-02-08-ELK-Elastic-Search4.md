@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[ELK] Elastic Search 4"
+title: "[ELK] Elastic Search 여러 조건으로 검색하기"
 subtitle: "Search API / Bulk API / Query DSL"    
 comments: true
 categories : ELK

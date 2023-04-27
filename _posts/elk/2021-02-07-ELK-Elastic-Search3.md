@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[ELK] Elastic Search 3"
-subtitle: "기본 API (index, document CRUD) / Search API"    
+title: "[ELK] Elastic Search rest api 를 통한 CRUD"
+subtitle: "기본 API (index, document CRUD) "    
 comments: true
 categories : ELK
 date: 2021-02-07
@@ -9,7 +9,8 @@ background: '/img/posts/mac.png'
 ---
 
 
-[ES 기본 개념](https://wonyong-jang.github.io/elk/2021/02/05/ELK-Elastic-Search.html)에서 엘라스틱 서치 기본 개념과 아키텍터에 대해 알아 봤다.   
+[ES 기본 개념](https://wonyong-jang.github.io/elk/2021/02/05/ELK-Elastic-Search.html)에서 
+엘라스틱 서치 기본 개념과 아키텍처에 대해 알아 봤다.   
 또한, [클러스터](https://wonyong-jang.github.io/elk/2021/02/07/ELK-Elastic-Cluster2.html) 에 대해서도 자세하게 알아보았다.   
 
 `Cluster는 node들의 집합이고 노드는 shard로 구성되며, 데이터는 shard로 분산되어 저장한다.`        
@@ -20,7 +21,7 @@ background: '/img/posts/mac.png'
 Type은 RDBMS에서 database안에 table과 비슷한 개념이며,    
 Document는 RDBMS에서 row와 비슷한 개념이다. 즉, 실제로 검색 할 데이터를 의미한다.    
 
-`Restful API를 통해 index에 document를 추가할 수 있는데, 이를 문서를 색인화 한다고 말한다.`       
+`Restful API를 통해 index에 document를 추가할 수 있는데, 이를 문서 색인화 한다고 말한다.`       
 문서를 색인화(indexing)하기 위해서는 index가 어떤 type인지, 그리고 id를 지정해줘야 한다.   
 여기서 id는 RDBMS에서 table의 pk와 같다.     
 
