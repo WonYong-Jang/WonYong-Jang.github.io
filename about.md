@@ -31,7 +31,7 @@ background: '/img/bg-index.jpg'
 - Java, Kotlin, Scala   
 - Spring Boot/MVC 
 - JPA, Hibernate 
-- Junit4/5, Mockito, Spock   
+- Junit4/5, Mockito, Spock, Kotest     
 - Gradle, Maven   
 
 ##### DevOps   
@@ -86,8 +86,8 @@ background: '/img/bg-index.jpg'
         - To-Be: 0/day   
     - Airflow를 통해 3rd party domain의 장애 발생 및 Event bridge로 데이터 전달 누락, 이벤트 처리 실패에 대한 retry 프로세스 적용     
     - Data 저장을 위한 AWS storage cost 절감     
-        - As-Is : $12,264 / Month (AuroraDB r5.12xlarge)      
-        - To-Be : $3,901 / Month (DocumentDB r5.4xlarge)     
+        - As-Is : $12,264 /Month (AuroraDB r5.12xlarge)      
+        - To-Be : $3,901 /Month (DocumentDB r5.4xlarge)     
 
 
 <br>   
@@ -131,7 +131,7 @@ background: '/img/bg-index.jpg'
 
 ## 🛠 Problem Solving Experience     
 
-#### Spark streaming 시행착오   
+#### Spark streaming trouble shooting     
 
 - [Spark에서 Not Serializable Exception 해결(Driver와 Executor간의 데이터 전송)](https://wonyong-jang.github.io/spark/2021/06/15/Spark-Serialization.html)      
 

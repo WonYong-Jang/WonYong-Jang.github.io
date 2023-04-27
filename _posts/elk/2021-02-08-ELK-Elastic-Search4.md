@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[ELK] Elastic Search 여러 조건으로 검색하기"
-subtitle: "Search API / Bulk API / Query DSL"    
+subtitle: "Search API / Bulk API / Query DSL(query, filter)"    
 comments: true
 categories : ELK
 date: 2021-02-08
@@ -121,12 +121,13 @@ Query DSL에 대해 알아보기에 앞서 Query Context와 Filter Context에 �
 #### 5-1) Relevancy ( 정확도 )    
 
 RDBMS 같은 시스템에서는 쿼리 조건에 부합하는 지만 판단하여 결과를 가져올 뿐 
-각 결과들이 얼마나 정확한지에 대한 판단은 보통 불가능하다. ES 와 같은 
-풀 텍스트 검색엔진은 검색 결과과 입력된 검색 조건과 얼마나 일치하는 지를 
+각 결과들이 얼마나 정확한지에 대한 판단은 보통 불가능하다.    
+ES 와 같은 풀 텍스트 검색엔진은 검색 결과와 입력된 검색 조건과 
+얼마나 일치하는 지를 
 계산하는 알고리즘을 가지고 있어 이 정확도를 기반으로 사용자가 
 가장 원하는 결과를 먼저 보여줄 수 있다.     
 
-> 구글 또는 네이버 같은 웹 검색엔진들도 검색을 하면 찾은 결과들 중에 
+> 구글 또는 네이버 같은 웹 검색 엔진들도 검색을 하면 찾은 결과들 중에 
 어떤 것이 사용자가 입력한 검색어와 가장 연관성이 있는지를 계산하여 정확도가 
 가장 높은 결과들 부터 보여준다.   
 
@@ -186,7 +187,7 @@ curl -XGET 'localhost:9200/bank/account/_search?pretty' -H 'Content-Type: applic
 [공식문서](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-dsl-match-all-query.html) 를 참고하자.      
 
 
-#### 6-2) match ( Full text Queries )   
+#### 6-2) match, match_phase ( Full text Queries )   
 
 `match 쿼리는 기본 필드 검색 쿼리로써, 텍스트/숫자/날짜를 허용한다.`   
 아래는 address에 mill이라는 용어가 있는 모든 document를 조회하는 예제이다.   
