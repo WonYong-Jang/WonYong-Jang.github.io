@@ -8,7 +8,7 @@ date: 2021-02-14
 background: '/img/posts/mac.png'
 ---
 
-# High Level Rest Client 란?   
+## 1. High Level Rest Client 란?   
 
 `Elasticsearch를 사용하는 자바 어플리케이션을 만들기 위해서는 
 적절한 client api를 사용하는 방법을 찾아보게 될 것인데, 
@@ -19,18 +19,20 @@ Transport client는 곧 삭제될 예정이기 때문에 Rest client를 사용�
 
 이 중에서 High Level Rest Client를 사용할 예정이다. 
 
-- - - 
-
-### Compatibility 
+#### 1-1) Compatibility     
 
 Java High Level REST Client 는 최소 자바 8을 요구한다. Client와 엘라스틱 서치 버전도 
 동일하게 맞춰야 한다. 엘라스틱 서치 버전과 client 버전을 완전히 동일하게 맞출 필요는 없지만
 엘라스틱 버전이 client 버전 보다 높아야 한다.
 
 예를 들면 Client 버전이 6.0 이라면 엘라스틱 서치 버전은 6.x는 호환이 가능하다. 하지만 그렇지 
-않을 경우 호환이 되지 않을 수 있다. 
+않을 경우 호환이 되지 않을 수 있다.   
 
-### Initialization   
+```groovy
+implementation group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: '6.8.2'   
+```
+
+#### 1-2) Initialization      
 
 RestHighLevelClient는 내부적으로 제공된 builder를 이용한 request를 수행하기 위해 low-level client를 만든다.    
 low-level client는 커넥션 풀을 유지하고 스레드들을 시작하기 때문에 high-level client를 
@@ -38,15 +40,17 @@ low-level client는 커넥션 풀을 유지하고 스레드들을 시작하기 �
 
 
 ```java
-RestHighLevelClient client = new RestHighLevelClient(
-        RestClient.builder(
-                new HttpHost("localhost", 9200, "http"),
-                new HttpHost("localhost", 9201, "http")));
+@Configuration   
+public class ElasticSearchConfig {
+    
+    @Bean
+    public RestHighLevelClient restHighLevelClient() {
+        return new RestHighLevelClient(RestClient.builder(new HttpHost(host, port, protocal)));
+    }
+}
+// host: localhost, port: 9200, protocal: http
 ```
 
-```java
-client.close();   
-```
 
 - - - 
 
