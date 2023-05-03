@@ -32,7 +32,19 @@ background: '/img/posts/mac.png'
 ##### by accident   
 
 - I almost stole his ride by accident   
-하마터면 차를 훔칠 뻔 했어   
+하마터면 차를 훔칠 뻔 했어    
+
+
+##### streamline   
+
+- 유선형으로 하다.   
+- (시스템, 조직 등을) 간소화하다. 능률화 하다.   
+
+- The production process is to be streamline   
+생산 과정이 간소화 되어야 한다.   
+
+- You need to streamline your bulk ingest   
+bulk ingest 과정을 간소화 해야 한다.   
 
 - - -
 
