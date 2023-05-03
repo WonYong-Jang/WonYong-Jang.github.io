@@ -8,7 +8,7 @@ date: 2021-03-25
 background: '/img/posts/mac.png'
 ---
 
-# ElasticSearch의 인덱스 별명 활용    
+## 1. ElasticSearch의 인덱스 별명 활용    
 
 엘라스틱 서치를 안정적으로 운영하기 위해 인덱스 별명(Index Aliases)에 대해 
 설명하고 활용 사례를 공유한다.   
@@ -25,7 +25,7 @@ background: '/img/posts/mac.png'
 
 - - - 
 
-## Index Aliases     
+## 2. Index Aliases     
 
 유닉스 명령어 중에 별명을 붙여주는 alias 라는 명령어가 있다.   
 
@@ -98,7 +98,7 @@ POST /_aliases
 
 - - - 
 
-## 인덱스 이중화   
+## 3. 인덱스 이중화   
 
 검색 서비스 운영 중에 실수로 인덱스를 잘못 만들어 검색결과에 일부 데이터가 누락된 일이 있었다. 다행히 
 미리 만들어 두었던 2차 인덱스로 교체하여 장애를 빠르게 복구할 수 있었다.    
@@ -127,7 +127,7 @@ POST /_aliases
 
 - - - 
 
-## Log Rotation    
+## 4. Log Rotation    
 
 서비스를 운영하다보면 각종 로그 뿐만 아니라 수없이 쏟아져 나오는 데이터를 
 수집, 가공, 분석하는 일이 반드시 필요하게 된다.    
@@ -261,9 +261,9 @@ $ curl -X POST "localhost:9200/_aliases" -H 'Content-Type: application/json' -d'
     최근 일주일 간의 로그, 최근 한달 간의 로그 등등의 별명을 얼마든지 
     붙여두고 사용할 수 있다.    
 
+- - -    
 
-
-## 자동화    
+## 5. 자동화    
 
 엘라스틱서치에는 [Curator](https://www.elastic.co/guide/en/elasticsearch/client/curator/current/about.html) 라는 자동화 도구가 있다. 
 날짜 형식을 (%Y-%m-%d, N일 전)을 표현할 수 있어서 날짜 단위의 반복 작업에 유용하니 참고해보자.   

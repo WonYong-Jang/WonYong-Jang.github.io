@@ -74,11 +74,7 @@ PUT _template/member_template
     "index_patterns": ["member*"],
     "settings": {
         "max_result_window": "50000",
-        "mapping" : {
-            "total_fields": {
-                "limit:": "50000"
-            }
-        },
+        "index.mapping.total_fields.limit": 50000,
         "number_of_shards": "5"
     }
 }

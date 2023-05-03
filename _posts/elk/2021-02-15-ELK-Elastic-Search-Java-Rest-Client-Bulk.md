@@ -199,6 +199,21 @@ bulkProcessor.close();
 완료되기 까지 기다리지 않고, 즉시 
 종료 시킨다.`    
 
+- - - 
+
+## 4. Bulk error handling 주의사항   
+
+Elasticsearch에서 단건으로 요청하는 것이 아닌, bulk로 요청하는 경우 
+error handling에서 주의사항을 살펴보자.   
+요청 중에 실패건이 존재했을 때
+
+```java
+try {
+    client.bulk(request, RequestOptions.DEFAULT);
+} catch (IOException e) {
+    log.error("Bulk request fail");
+}
+```
 
 
 - - - 
