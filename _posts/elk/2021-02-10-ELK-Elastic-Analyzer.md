@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[ELK] Elastic Search 6 애널라이저"
+title: "[ELK] Elastic Search 애널라이저"
 subtitle: "Custom Analyzer, termvectors / term, match 쿼리 애널라이저에 의한 검색 결과 비교"    
 comments: true
 categories : ELK

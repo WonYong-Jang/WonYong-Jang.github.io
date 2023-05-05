@@ -19,6 +19,9 @@ DB 사용시에도 insert 성능을 높이기 위해서 작은 여러 연산을
 `Elasticsearch 또한 같은 개념을 가지고 있으며, 단건 request 수행 보다 
 bulk request의 효능이 큰 것은 여러 벤치마킹을 통해서도 입증이 되었다.`      
 
+> 너무 큰 대량 요청은 클러스터의 부하를 초래할 수 있기 때문에 
+다양한 테스트를 통해 최적화된 사이즈를 찾아야 한다.   
+
 Elasticsearch의 restHighLevelClient java api에서 [BulkProcessor](https://www.elastic.co/guide/en/elasticsearch/client/java-rest/6.8/java-rest-high-document-bulk.html)라는 
 기능을 사용하여 request를 모아서 업데이트 하는 방법을 살펴보자.   
 
@@ -115,9 +118,21 @@ public class ESBulkProcessorUtils {
 이벤트 갯수를 확인할 수 있다.`    
 
 `첫번째 오버라이드된 afterBulk는 response.hasFailures()로 실패한 요청을 
-확인할 수 있다.`   
+확인할 수 있다.`    
+
+`또한, 아래와 같이 실행 시간도 확인 할 수 있다.`    
+
+```java
+ @Override
+public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+    System.out.println("Bulk executed successfully in " + response.getTook().getMillis() + " ms");
+}
+```
 
 `두번째 오버라이드된 afterBulk는 요청이 실패했을 때, Throwable 과 함께 통해 호출된다.`    
+
+> afterBulk를 통해 에러 핸들링을 할 때, 주의사항이 있는데 이 부분은 아래 글에서 자세히 
+살펴보자.   
 
 아래와 같이 Spring bean으로 생성하여 사용할 수 있다.   
 
@@ -205,7 +220,8 @@ bulkProcessor.close();
 
 Elasticsearch에서 단건으로 요청하는 것이 아닌, bulk로 요청하는 경우 
 error handling에서 주의사항을 살펴보자.   
-요청 중에 실패건이 존재했을 때
+`요청 중에 실패건이 존재했을 때 아래와 같이 try catch를 
+사용했고, 이때 예상한 것처럼 에러 메시지가 출력 될까?`      
 
 ```java
 try {
@@ -214,6 +230,42 @@ try {
     log.error("Bulk request fail");
 }
 ```
+
+정답은 No 이다. 
+
+`catch 문에서 에러 로그를 확인하기 위해서는 elasticsearch 서버가 다운되거나, 
+      network 커넥션에 문제가 있을 경우 가능하다.`       
+
+bulk 요청으로 2건중 1건이 정해진 타입과 다른 타입으로 입력하여 요청한 경우를 예로 들어보자.     
+
+1건은 정상적으로 색인이 되지만, 나머지 1건은 인덱싱에 실패할 것이다.  
+`하지만 bulk api는 일부 요청이 실패하더라도 2xx status를 반환하기 때문에 
+위 try catch에서 실패를 할 수 없다.`      
+
+따라서, response body를 파싱하여, error가 있는지 직접 확인해 주어야 한다.   
+
+`위에서 작성한 afterBulk에서 Throwable 파라미터를 포함한 메서드는 
+elasticsearch의 서버가 다운되거나, network 커넥션 문제가 있는경우 실행되며, 
+    그외에는 BulkResponse 파라미터가 포함한 메서드가 실행된다.`   
+ 
+`response.hasFailures() 을 통해 bulk 요청 중에 실패가 존재하는지 확인할 수 있고, 
+    for문을 돌면서, 각 요청에 대해 확인할 수 있다.`        
+
+`아래 코드에서 실패가 존재한다면, c.getFailureMessage()에서 에러 메시지가 출력된다.`      
+
+```java
+@Override
+public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+    Arrays.stream(response.getItems())
+            .forEach(c -> log.info("[{}] bulk after process id: {}, message: {}", tag, c.getId(), c.getFailureMessage()));
+}
+
+@Override
+public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+    log.error("[{}] bulk process failed message: {} ", tag, failure.getStackTrace());
+}
+```
+
 
 
 - - - 

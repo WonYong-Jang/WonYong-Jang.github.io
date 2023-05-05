@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[ELK] Elastic Search 5 텍스트 분석"
+title: "[ELK] Elastic Search 텍스트 분석"
 subtitle: "Inverted Index, Text Analysis, Analyzer"    
 comments: true
 categories : ELK
