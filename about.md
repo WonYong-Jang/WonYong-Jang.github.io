@@ -40,7 +40,7 @@ background: '/img/bg-index.jpg'
 - Jenkins, CircleCI, Airflow   
 - Elastic Cache (Redis), S3, EC2, Cloud Watch   
 - Nginx, Tomcat   
-- Spark, Kafka, Hive 
+- Spark Streaming/Batch, Kafka, Hive 
 - ELK Stack   
 - Grafana, Graylog, Prometheus   
 - Git/Github, Gerrit      
