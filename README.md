@@ -1,14 +1,8 @@
-# [Start Bootstrap - Clean Blog Jekyll](https://startbootstrap.com/template-overviews/clean-blog-jekyll/) - Official Jekyll Version
+# [Start Bootstrap - Clean Blog Jekyll](https://jekyllthemes.io/theme/startbootstrap-clean-blog-jekyll) - Official Jekyll Version
 
-[Clean Blog Jekyll](http://startbootstrap.com/template-overviews/clean-blog-jekyll/) is a stylish, responsive blog theme for [Bootstrap](http://getbootstrap.com/) created by [Start Bootstrap](http://startbootstrap.com/). This theme features a blog homepage, about page, contact page, and an example post page along with a working contact form powered by [Formspree](https://formspree.io/).
+[Clean Blog Jekyll](https://github.com/StartBootstrap/startbootstrap-clean-blog-jekyll) is a stylish, responsive blog theme for [Bootstrap](http://getbootstrap.com/) created by [Start Bootstrap](http://startbootstrap.com/). This theme features a blog homepage, about page, contact page, and an example post page along with a working contact form powered by [Formspree](https://formspree.io/).
 
 This repository holds the official Jekyll version of the Clean Blog theme on Start Bootstrap!
-
-## Preview
-
-[![Clean Blog (Jekyll) Preview](https://startbootstrap.com/assets/img/screenshots/themes/clean-blog-jekyll.png)](http://blackrockdigital.github.io/startbootstrap-clean-blog-jekyll/)
-
-**[View Live Preview](http://blackrockdigital.github.io/startbootstrap-clean-blog-jekyll/)**
 
 ## Installation & Setup
 
@@ -136,7 +130,19 @@ Start Bootstrap was created by and is maintained by **[David Miller](http://davi
 * https://twitter.com/davidmillerskt
 * https://github.com/davidtmiller
 
-Start Bootstrap is based on the [Bootstrap](http://getbootstrap.com/) framework created by [Mark Otto](https://twitter.com/mdo) and [Jacob Thorton](https://twitter.com/fat).
+Start Bootstrap is based on the [Bootstrap](http://getbootstrap.com/) framework created by [Mark Otto](https://twitter.com/mdo) and [Jacob Thorton](https://twitter.com/fat).   
+
+## Security Vulnerability  
+
+run the command in package.json file directory as shown below.   
+
+```
+$ npm audit fix   
+
+or 
+
+$ npm audit fix --force
+```
 
 ## Copyright and License
 
