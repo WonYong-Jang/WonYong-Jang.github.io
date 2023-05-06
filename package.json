@@ -1,0 +1,23 @@
+{
+  "name": "wonyong-jang.github.io",
+  "version": "1.0.0",
+  "description": "[Clean Blog Jekyll](http://startbootstrap.com/template-overviews/clean-blog-jekyll/) is a stylish, responsive blog theme for [Bootstrap](http://getbootstrap.com/) created by [Start Bootstrap](http://startbootstrap.com/). This theme features a blog homepage, about page, contact page, and an example post page along with a working contact form powered by [Formspree](https://formspree.io/).",
+  "main": "gulpfile.js",
+  "dependencies": {
+    "d": "^1.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WonYong-Jang/WonYong-Jang.github.io.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WonYong-Jang/WonYong-Jang.github.io/issues"
+  },
+  "homepage": "https://github.com/WonYong-Jang/WonYong-Jang.github.io#readme"
+}
