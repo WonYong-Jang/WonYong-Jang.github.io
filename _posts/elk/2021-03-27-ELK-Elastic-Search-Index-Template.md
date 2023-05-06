@@ -84,7 +84,7 @@ PUT _template/summary-template
     "settings": {
         "max_result_window": 50000,
         "index.mapping.total_fields.limit": 10000,
-        "number_of_shards": "5"
+        "number_of_shards": 5
     },
     "mappings" : {
       "_doc" : {
