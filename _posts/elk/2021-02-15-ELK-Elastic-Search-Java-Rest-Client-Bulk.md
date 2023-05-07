@@ -266,6 +266,11 @@ public void afterBulk(long executionId, BulkRequest request, Throwable failure) 
 }
 ```
 
+`마지막으로 Elasticsearch 에는 커밋이나 롤백 등의 트랜잭션 개념이 없다.`   
+`bulk 작업 중 연결이 끊어지거나 시스템이 다운되는 등의 이유로 동작이 
+중단 된 경우에는 어느 동작까지 실행되었는지 확인이 불가능하다.`   
+`따라서 보통 이런 경우는 전체 bulk 요청을 처음 부터 다시 하는 것이 
+안전하다.`   
 
 
 - - - 

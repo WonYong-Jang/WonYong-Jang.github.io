@@ -32,16 +32,31 @@ bank index에 1000개의 데이터가 추가되었으면 성공적으로 bulk �
 
 ## 2. search API   
 
-search API는 이전 글에서 모든 document를 검색할 때 사용했다.   
+search API는 아래와 같이 모든 document를 검색할 수 있다.   
 
 ```
 curl -XGET 'localhost:9200/_all/_search?pretty'
 ```
 
+> all 지정자를 사용하면 클러스터에 있는 모든 인덱스를 대상으로 검색이 
+가능하지만, 불필요한 작업 부하를 초래하므로, all 지정자 대신 index를 지정하여 
+조회하자.    
+
 search 키워드는 검색 작업을 하겠다는 것이고, 어떻게 검색을 할 것인지에 
 대한 조건(쿼리)들을 명시를 해줘야 원하는 정보를 얻을 수 있다.   
 
-조건 전달 방법은 2가지가 있다.    
+Elasticsearch는 여러 개의 인덱스를 한꺼번에 묶어서 검색할 수 있는 
+멀티테넌시(Multitenancy)를 지원한다.   
+
+```
+# 쉼표로 나열해서 여러 인덱스 검색   
+GET logs-2018-01,2018-02,2018-03/_search
+
+# 와일드 카드 * 를 이용해서 여러 인덱스 검색   
+GET logs-2018-*/_search    
+```
+
+search api 조건 전달 방법은 2가지가 있다.    
 
 - URL에 파라미터를 넘기는 방법( URI Search )   
 - json 파일에 쿼리를 작성하여 POST 방식으로 넘기는 방법( Query DSL )    
@@ -51,9 +66,7 @@ search 키워드는 검색 작업을 하겠다는 것이고, 어떻게 검색을
 
 먼저 URL을 호출하는 방법부터 간단하게 살펴보자.   
 
-- - - 
-
-## 3. URI Search    
+### 2-1) URI Search    
 
 URI Search 방식은 모든 검색 옵션을 노출하지 않지만, 빠른 curl 테스트에 
 유용한 방법이다.   
@@ -73,11 +86,11 @@ curl -XGET 'localhost:9200/bank/account/_search?q=age:39&pretty'
 - offset과 유사한 from : 기본값 0   
 - document를 몇 개를 반환할 것인지에 대한 size : 기본 값 10 개   
 
-등 다양한 파라미터를 전달할 수 있다. 더 많은 파라미터 정보는 [링크](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-uri-request.html#_parameters_3)를 참고하자.     
+등 다양한 파라미터를 전달할 수 있다. 더 많은 파라미터 정보는 [링크](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-uri-request.html#_parameters_3)를 참고하자.    
 
-다음은 위의 검색 결과를 분석해보자.   
+다음은 search api 응답 결과를 분석해보자.   
 
-## 4. Response 분석   
+### 2-2) Search API Response 분석     
 
 Search API를 요청하니 응답을 json으로 주고 있다.     
 
@@ -98,33 +111,38 @@ response의 각 의미는 다음과 같다.
             노출되지 않음)   
 ```
 
-- - - 
 
-## 5. Query DSL    
+### 2-3) Query DSL    
 
 이제 본격적으로 `json 포맷으로 쿼리를 만들어서 검색을 하는 Query DSL(Domain Specific Language)`에 대해 알아보자.     
 
-Query DSL에 대해 알아보기에 앞서 Query Context와 Filter Context에 대한 개념이 필요하다.( [참고](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-filter-context.html) )   
+Query DSL에 대해 알아보기에 앞서 Query Context와 Filter Context에 대한 개념이 필요하다. ( [참고](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-filter-context.html) )   
 `앞으로 소개 할 query 절은 Query Context 또는 Filter Context에서 
-사용되는지 여부에 따라 다르게 동작한다.`    
+사용되는지 여부에 따라 다르게 동작한다.`   
 
-- Query Context   
-    - Query Context에서 사용되는 query 절은 '해당 document가 query 절과 얼마나 
-    잘 일치하는가?' 라는 질문에 해당하는데, `document가 얼마나 잘 일치하는지를 _score(관련성 점수, relevance score)로 표현한다.`     
+<img width="529" alt="스크린샷 2023-05-06 오후 11 16 18" src="https://user-images.githubusercontent.com/26623547/236629562-c67a91c7-9c3f-40b4-82de-65c4c746522d.png">    
 
-- Filter Context   
-    - Filter Context에서 사용되는 query 절은 '해당 document가 query절과 일치하는가?' 라는 질문에 해당하는데, 그 `대답은 
-    true 또는 false이며 점수(score)는 계산하지 않는다.`   
 
-쿼리(Query)와 필터(Filter)의 자세한 내용은 [참고 링크](https://m.blog.naver.com/tmondev/220292262363) 를 참고하자.   
+#### 2-3-1) Filter Context
 
-#### 5-1) Relevancy ( 정확도 )    
+Filter Context에서 사용되는 query 절은 '해당 document가 query절과 일치하는가?' 라는 
+질문에 해당하는데, 그 `대답은 true 또는 false이며 점수(score)는 계산하지 않는다.`    
+
+또한, Filter Context는 캐싱(caching)을 사용할 수 있으며, Query Context는 캐싱을 사용할 수 없다.    
+
+쿼리(Query)와 필터(Filter)의 자세한 내용은 [참고 링크](https://m.blog.naver.com/tmondev/220292262363) 를 참고하자.    
+
+#### 2-3-2) Query Context     
+
+Query Context에서 사용되는 query 절은 '해당 document가 query 절과 얼마나 
+잘 일치하는가?' 라는 질문에 해당하는데, 
+    `document가 얼마나 잘 일치하는지를 _score(관련성 점수, relevance score)로 표현한다.`     
 
 RDBMS 같은 시스템에서는 쿼리 조건에 부합하는 지만 판단하여 결과를 가져올 뿐 
 각 결과들이 얼마나 정확한지에 대한 판단은 보통 불가능하다.    
-ES 와 같은 풀 텍스트 검색엔진은 검색 결과와 입력된 검색 조건과 
+`ES 와 같은 풀 텍스트 검색엔진은 검색 결과와 입력된 검색 조건과 
 얼마나 일치하는 지를 
-계산하는 알고리즘을 가지고 있어 이 정확도를 기반으로 사용자가 
+계산하는 알고리즘을 가지고 있어 이 정확도(relevancy)`를 기반으로 사용자가 
 가장 원하는 결과를 먼저 보여줄 수 있다.     
 
 > 구글 또는 네이버 같은 웹 검색 엔진들도 검색을 하면 찾은 결과들 중에 
@@ -151,21 +169,15 @@ ES 와 같은 풀 텍스트 검색엔진은 검색 결과와 입력된 검색 �
     - 'lazy'를 포함하고 있는 2개 document 들이 나타나지만, 'The quick brown fox jumps over the lazy dog' 보다 
     'Lazy jumping dog'가 점수가 더 높게 나타난다.     
 
+이제 여러가지 Query DSL 방식의 Search API를 사용한 예제를 살펴보자.    
 
 - - - 
 
-## 6. Query DSL 예제    
+## 3. Query Context 검색    
 
 ElasticSearch의 API 중 자주 사용하는 API에 대해 살펴보자.   
 
-아래의 예제들을 실행하기 위해서는 query.json 파일을 만들어서 
-각 예제마다 수정을 하고, 명령어는 모두 아래와 같이 실행하면 된다.    
-
-```
-curl -XGET 'localhost:9200/bank/account/_search?pretty' -H 'Content-Type: application/json' -d @query.json   
-```
-
-#### 6-1) match_all / match_none
+### 3-1) match_all / match_none
 
 `match_all 쿼리는 지정된 index의 모든 document를 검색하는 방법이다.`   
 즉, 특별한 검색어 없이 모든 document를 가져오고 싶을 때 사용한다. SQL로 
@@ -175,8 +187,7 @@ curl -XGET 'localhost:9200/bank/account/_search?pretty' -H 'Content-Type: applic
 사용한다.   
 
 ```
-# vi query.json
-
+GET my_index/_search
 {  
    "query":{  
       "match_all":{}
@@ -187,9 +198,10 @@ curl -XGET 'localhost:9200/bank/account/_search?pretty' -H 'Content-Type: applic
 [공식문서](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-dsl-match-all-query.html) 를 참고하자.      
 
 
-#### 6-2) match, match_phase ( Full text Queries )   
+### 3-2) match, match_phase     
 
-`match 쿼리는 기본 필드 검색 쿼리로써, 텍스트/숫자/날짜를 허용한다.`   
+`match 쿼리는 풀 텍스트 검색에 사용되는 가장 일반적인 
+쿼리이며, 텍스트/숫자/날짜를 허용한다.`   
 아래는 address에 mill이라는 용어가 있는 모든 document를 조회하는 예제이다.   
 
 ```
@@ -271,17 +283,53 @@ slop의 크기를 1로 했기 때문에 '288' 과 'street' 사이에 있는 '288
 
 [공식문서](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-dsl-match-query.html) 를 참고하자.   
 
+- - - 
 
-#### 6-3) bool ( Filter Context )    
+## 4. Filter Context 검색   
 
-`bool 쿼리는 bool(true/false) 로직을 사용하는 쿼리이며, 그 종류는 다음과 같다.`   
+검색에서 여러 쿼리를 조합하기 위해서는 상위에 bool 쿼리를 사용하고 그 안에 다른 
+쿼리들을 넣는 식으로 사용이 가능하다.    
+
+`bool 쿼리는 다음과 같이 4개의 인자를 가지고 있으며, 
+     filter의 경우만 score 계산을 하지 않는 Filter Context에 해당 된다.`        
+
+### 4-1) bool 
 
 - must : bool must 절에 지정된 모든 쿼리가 일치하는 document를 조회    
 - should : bool should 절에 지정된 모든 쿼리 중 하나라도 일치하는 document를 조회   
 - must_not : bool must_not 절에 지정된 모든 쿼리가 모두 일치하지 않는 document를 조회   
-- filter : 쿼리가 참인 document를 검색하지만 score를 계산하지 않는다. must 보다 검색 속도가 빠르고 캐싱이 가능하다.       
+- filter : 쿼리가 참인 document를 검색하지만 `score를 계산하지 않는다. must 보다 검색 속도가 빠르고 캐싱이 가능`하다.      
 
-bool 쿼리 내에 위의 각 절들을 조합해서 사용할 수 있다.   
+> 풀 텍스트 검색은 스코어 점수 기반으로 relevancy가 높은 결과부터 가져온다. 이와 
+상반되는 특성을 Exact Value 라고 하는데, 값이 정확히 일치 하는지의 여부 만을 따지는 검색이다.   
+> Exact Value에는 term, terms, range와 같은 쿼리들이 이 부분에 속하며, 스코어를 계산하지 않기 때문에 보통 
+bool 쿼리의 filter 내부에서 사용된다.   
+
+bool 쿼리 내에 위의 각 절들을 조합해서 사용할 수 있다.  
+
+사용방법은 아래와 같다.    
+
+```
+GET my_index/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { <쿼리> }, …
+      ],
+      "must_not": [
+        { <쿼리> }, …
+      ],
+      "should": [
+        { <쿼리> }, …
+      ],
+      "filter": [
+        { <쿼리> }, …
+      ]
+    }
+  }
+}
+```
 
 아래는 나이가 40세이지만, ID 지역에 살고 있지 않은 document를 조회하는 예제이다.   
 
@@ -300,7 +348,7 @@ bool 쿼리 내에 위의 각 절들을 조합해서 사용할 수 있다.
 }
 ```
 
-`bool 쿼리의 should 는 검색 점수를 조정하기 위해 사용할 수 있다.`    
+`bool 쿼리의 should 는 검색 점수(score)를 조정하기 위해 사용할 수 있다.`    
 아래 예제를 보면, address가 'street'을 포함하는 도큐먼트를 검색하는데 
 그 결과들 중 'mill' 이 포함된 결과에 가중치를 줘서 상위로 올리고 싶으면 
 should 안에 찾는 검색을 추가 하면된다.
@@ -333,20 +381,18 @@ should 안에 찾는 검색을 추가 하면된다.
 그 중 스키 장갑을 가장 상위에 표시할 수 있다. 여기서 slop : 1 을 이용하면 '스키 보드 장갑', 
     '스키 벙어리 장갑' 같이 스키와 장갑 사이에 다른 값이 들어간 결과에도 가중치를 부여할 수 있다.   
 
-
-
-
 [공식문서](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-dsl-bool-query.html) 를 참고하자.   
 
 
-#### 6-4) filter   
+### 4-2) filter   
 
 `filter 쿼리는 document가 검색 쿼리와 일치하는지 나타내는 _score 값을 계산하지 
 않도록 쿼리 실행을 최적화 한다.`    
 
 bool 쿼리의 filter 안에 하위 쿼리를 사용하면 스코어에 영향을 주지 않는다.   
 
-
+`filter 안에 넣은 검색 조건들은 스코어를 계산하지 않지만 캐싱이 되기 때문에 
+쿼리가 더 가볍고 빠르게 실행된다.`    
 
 `문자열 데이터는 keyword 형식으로 저장하여 정확한 검색이 가능하다.`    
 `아래와 같이 문자열과 공백, 대소문자까지 정확히 일치하는 데이터만을 결과로 리턴한다.`   
@@ -371,7 +417,7 @@ keyword 타입으로 저장된 필드는 스코어를 계산하지 않고 정확
 
 
 
-#### 6-5) range    
+### 4-3) range    
 
 `range 쿼리는 범위를 지정하여 범위에 해당하는 값을 갖는 document를 조회한다.`    
 `Filter Context이며, 정수, 날짜를 비교할 수 있다.`   
@@ -405,11 +451,31 @@ range 쿼리에서 범위를 지정하는 파라미터는 다음과 같다.
 }
 ```
 
+`날짜도 숫자와 마찬가지로 range 쿼리 사용이 가능하다.   
+elasticsearch는 ISO8601 형식을 사용`하며, 2023-01-01 또는 
+2023-01-01T10:15:30 과 같이 사용 가능하다.   
+
+```
+{
+  "query": {
+    "bool": {
+      "must": { "match_all": {} },
+      "filter": {
+        "range": {
+          "date": {
+            "gt": "2023-01-01"
+          }
+        }
+      }
+    }
+  }
+}
+```
 
 [공식문서](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-dsl-range-query.html) 를 참고하자.    
 
 
-#### 6-6) term ( Term Level Queries )
+### 4-4) term ( Term Level Queries )    
 
 `term 쿼리는 역색인에 명시된 토큰 중 정확한 키워드가 포함된 document를 조회한다.`     
 
@@ -439,7 +505,7 @@ term 쿼리 사용법은 아래와 같다.
 `term 쿼리 사용시 주의사항은 역색인에 명시된 문자열을 찾으므로 Bristol 문자열에 대해선 찾을 수 없다. ES에서 
 분석기를 거쳐 역색인 될 때 lowercase 처리를 하기 때문이다.`   
 
-#### 6-7) terms   
+### 4-5) terms   
 
 `terms 쿼리는 배열에 나열된 키워드 중 하나와 일치하는 document를 조회한다.`   
 
@@ -459,7 +525,7 @@ document를 조회하는 예제이다.
 최소 몇 개의 검색어가 포함되기를 원하다면 [링크](https://stackoverflow.com/questions/40837678/terms-query-does-not-support-minimum-match-in-elasticsearch-2-3-3)를 참고하자.   
 
 
-#### 6-8) regexp     
+### 4-6) regexp     
 
 regexp 쿼리는 정규 표현식 term 쿼리를 사용할 수 있다.    
 `regexp 쿼리는 Term Level 쿼리인데, 이는 정확한 검색을 한다는 의미이다.`       
@@ -493,7 +559,6 @@ regexp 쿼리는 정규 표현식 term 쿼리를 사용할 수 있다.
 
 위에서 Query DSL을 통해 조회된 document들에 대해서 결과를 가공하는 방법에 대해 살펴보자.    
 
-- - - 
 
 #### 7-1) from / size    
 
@@ -518,7 +583,7 @@ from과 size 필드는 pagination 개념과 관련이 있다.
 `from 과 size는 index setting인 index.max_result_window에 설정된 값을 
 초과할 수 없다.`    
 해당 설정은 기본값이 10,000이며 즉, 최대 10,000개의 document를 
-호출할 수 있고 그 이상을 호출 하려면 [scroll API](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/search-request-scroll.html)를 사용해야 한다.    
+호출할 수 있고 그 이상을 호출 하려면 [링크](https://wonyong-jang.github.io/elk/2022/11/29/ELK-Elastic-Search-Max-Result-Window.html)를 참고하자.       
 
 - - - 
 
@@ -595,6 +660,7 @@ SQL에서 SELECT 쿼리를 날릴 때 특정 컬럼들을 명시하는 것과 �
 <https://esbook.kimjmin.net/05-search/5.1-query-dsl>    
 <https://bakyeono.net/post/2016-08-20-elasticsearch-querydsl-basic.html>   
 <https://victorydntmd.tistory.com/313?category=742451>    
+<https://m.blog.naver.com/tmondev/220292262363>     
 
 {% highlight ruby linenos %}
 
