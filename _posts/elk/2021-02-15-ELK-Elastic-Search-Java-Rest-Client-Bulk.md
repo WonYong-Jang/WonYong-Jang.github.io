@@ -31,7 +31,7 @@ Elasticsearch의 restHighLevelClient java api에서 [BulkProcessor](https://www.
 
 `BulkProcessor는 하나의 독립적인 프로세스를 실행시키고 request를 buffer에 
 모아서 정해진 시간, 크기 등에 맞게 Elasticsearch에 데이터를 Bulk request로 
-만들어서 flush 하도록 동작하고 있다.`   
+만든 후 flush 하도록 동작하고 있다.`   
 
 <img width="914" alt="스크린샷 2023-04-29 오전 10 01 34" src="https://user-images.githubusercontent.com/26623547/235274367-e3b8872e-03be-4ed0-898b-ed40d11fe9b2.png">   
  
@@ -73,6 +73,8 @@ public class ESBulkProcessorUtils {
         BulkProcessor.Listener listener = new BulkProcessor.Listener() {
             @Override
             public void beforeBulk(long executionId, BulkRequest request) {
+                log.info("[{}] bulk before bulk size: {}.", tag, request.numberOfActions());
+
                 request.requests().forEach(r -> log.info("[{}] bulk before process id: {}", tag, r.id()));
             }
 
@@ -246,7 +248,7 @@ bulk 요청으로 2건중 1건이 정해진 타입과 다른 타입으로 입력
 
 `위에서 작성한 afterBulk에서 Throwable 파라미터를 포함한 메서드는 
 elasticsearch의 서버가 다운되거나, network 커넥션 문제가 있는경우 실행되며, 
-    그외에는 BulkResponse 파라미터가 포함한 메서드가 실행된다.`   
+    그 외에는 BulkResponse 파라미터가 포함한 메서드가 실행된다.`   
  
 `response.hasFailures() 을 통해 bulk 요청 중에 실패가 존재하는지 확인할 수 있고, 
     for문을 돌면서, 각 요청에 대해 확인할 수 있다.`        
@@ -256,14 +258,27 @@ elasticsearch의 서버가 다운되거나, network 커넥션 문제가 있는�
 ```java
 @Override
 public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
-    Arrays.stream(response.getItems())
-            .forEach(c -> log.info("[{}] bulk after process id: {}, message: {}", tag, c.getId(), c.getFailureMessage()));
+    if(response.hasFailures()) {
+        Arrays.stream(response.getItems())
+                .forEach(c -> log.info("[{}] bulk after process id: {}, isFail: {}, message: {}", tag, c.getId(), c.isFailed(), c.getFailureMessage()));
+    }
+    else {
+        log.info("Bulk executed successfully in " + response.getTook().getMillis() + " ms");
+    }
 }
 
 @Override
 public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
     log.error("[{}] bulk process failed message: {} ", tag, failure.getStackTrace());
 }
+```
+
+Output
+
+
+```
+INFO ESBulkProcessorUtils - [myBulkProcessor] bulk after process id: 12, isFail: true, message: ElasticsearchException[Elasticsearch exception [type=mapper_parsing_exception, reason=failed to parse field [count] of type [long] in document with id '12']]; nested: ElasticsearchException ...
+INFO ESBulkProcessorUtils - [myBulkProcessor] bulk after process id: 7, isFail: false, message: null
 ```
 
 `마지막으로 Elasticsearch 에는 커밋이나 롤백 등의 트랜잭션 개념이 없다.`   

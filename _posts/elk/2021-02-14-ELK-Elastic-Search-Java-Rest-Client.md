@@ -17,7 +17,7 @@ background: '/img/posts/mac.png'
 Transport client는 곧 삭제될 예정이기 때문에 Rest client를 사용하는 코드를 
 작성하려고 한다. 
 
-이 중에서 High Level Rest Client를 사용할 예정이다. 
+High Level Rest Client를 사용하여 여러 연산을 구현해보자.    
 
 #### 1-1) Compatibility     
 
@@ -236,6 +236,9 @@ for (ShardSearchFailure failure : countResponse.getShardFailures()) {
     // failures should be handled here
 }
 ```
+
+
+
 
 
 
