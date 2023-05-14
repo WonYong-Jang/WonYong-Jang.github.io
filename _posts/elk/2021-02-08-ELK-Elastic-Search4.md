@@ -481,10 +481,10 @@ elasticsearch는 ISO8601 형식을 사용`하며, 2023-01-01 또는
 
 term 쿼리를 사용할 때 document가 조회되지 않는 이슈가 있을 수 있다.   
 `string 필드는 text타입( 이메일 본문과 같은 전문(full text)) 또는 keyword 타입(전화번호, 우편번호 등..)을 갖는다.`   
-`text타입은 ES 분석기를 통해 역색인이 되는 반면, keyword 타입은 역색인이 되지 않는 
-특징이 있다.`   
+`text타입은 analyzer를 통해 역색인이 되는 반면, keyword 타입은 
+들어온 값 그대로 역색인이 되는 특징이 있다.`       
 
-예를 들어, 'Quick Foxes'라는 문자열이 있을 때, text 타입은 [quick, foxes]으로 역색인이 된다.
+예를 들어, 'Quick Foxes'라는 문자열이 있을 때, text 타입은 [quick, foxes]으로 역색인이 된다.    
 
 이런 상황에서 term 쿼리로 'quick' 문자열을 검색했다면 해당 document를 찾을 수 있지만, 
     'quick foxes' full text를 검색했을 경우에는 document를 찾을 수 없다.    

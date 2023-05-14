@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[ELK] ElasticSearch에서 fielddata, doc_values에 대한 이해"
-subtitle: "text필드와 keyword 차이점과 fielddata, doc_values "    
+title: "[ELK] ElasticSearch에서 text 타입과 keyword 타입 차이"
+subtitle: "fielddata, doc_values 에 대한 이해와 주의사항"    
 comments: true
 categories : ELK
 date: 2021-07-06
@@ -12,12 +12,31 @@ background: '/img/posts/mac.png'
 elasticsearch 에서 선언이 가능한 문자열 타입에는 text, keyword 두가지 가 있다.   
 2.x 버전 이전에는 문자열은 string이라는 하나의 타입만 있었고 텍스트 분석 여부, 즉 
 애널라이저 적용을 할 것인지 아닌지를 구분하는 설정이 있었다.   
-5.0버전 부터는 텍스트 분석 적용 여부를 text 타입과 keyword 타입으로 구분한다. 인덱스를 
-생성할 때 매핑에 필드를 미리 정의하지 않으면 동적 문자열 필드가 생성 될때 text 필드와 
-keyword 필드가 다중 필드로 같이 생성된다.   
 
-keyword type의 경우 exact매칭에서 사용되고, text type의 경우 
-analyzed 매칭에 사용된다.   
+`5.0버전 부터는 텍스트 분석 적용 여부를 text 타입과 keyword 타입으로 구분한다. 인덱스를 
+생성할 때 매핑에 필드를 미리 정의하지 않으면 동적 문자열 필드가 생성 될때 text 필드와 
+keyword 필드가 다중 필드로 같이 생성된다.`        
+
+> keyword 타입에서 ignore above 옵션은 설정된 길이 이상의 문자열은 색인을 무시한다.   
+> 단, source에는 남아 있기 때문에 다른 필드 값을 쿼리해서 나온 
+결과로 가져오는 것은 가능하다.   
+
+```
+"line" : {
+    "type" : "text",
+    "fields" : {
+        "keyword" : {
+        "type" : "keyword",
+        "ignore_above" : 256
+        }
+    }
+}
+```    
+
+
+
+keyword type의 경우 exact 매칭에서 사용되고, text type의 경우 
+anlyzed 매칭에 사용된다.   
 text type의 경우 형태소 분석을 통해 field를 여러 terms로 나눠서 역인덱싱 과정을 
 거치게 되고, keyword type은 그대로 역인덱싱 된다.   
 
@@ -28,7 +47,7 @@ text type 과 keyword type에 대해 각각 알아보고 fielddata, doc_values �
 
 - - - 
 
-## Text type   
+## 1. Text type   
 
 검색(search)이라는 것은 '어떤 문서가 이 키워드를 포함하는지가 궁금'하므로 
 역인덱스된 정보를 통해 빠른 검색이 가능하다.   
@@ -99,7 +118,48 @@ $ curl -XGET 'localhost:9200/_nodes/stats/indices/fielddata?fields=*&pretty'
 
 - - - 
 
-## keyword type   
+## 2. keyword type   
+
+`텍스트 타입에는 standard analyzer가 사용되는 반면에 키워드 타입에는 
+keyword analyzer가 사용된다.`   
+
+`단, 아래 내용은 keyword 타입이 analyzer를 실제로 사용하여 
+텍스트 분석을 하는 것이 아니라 어떻게 저장되는지 
+테스트 하기 위한 방법일 뿐이다.`   
+
+즉, keyword 타입은 analyzer를 사용하지 않는 대신 normalizer의 
+적용은 가능하다.   
+자세한 내용은 [링크](https://esbook.kimjmin.net/07-settings-and-mappings/7.2-mappings/7.2.1)를 
+참고하자.   
+
+```
+POST _analyze
+{
+  "text": "My name is Kaven",
+  "analyzer": "keyword"
+}
+```
+
+Output   
+
+```
+{
+  "tokens" : [
+    {
+      "token" : "My name is Kaven",
+      "start_offset" : 0,
+      "end_offset" : 16,
+      "type" : "word",
+      "position" : 0
+    }
+  ]
+}
+```
+
+위의 응답 값에서 토큰이 하나로 묶여 있는 것을 확인할 수 있다.   
+`즉 keyword 타입은 대소문자를 모두 구분하며, 정확한 값을 입력해야만 
+검색이 가능하다.`       
+
 
 `keyword field에서는 fielddata의 in memory에서 동작하는 구조를 개선하여 
 on-disk data structure인 doc_values 사용이 가능하다.   
