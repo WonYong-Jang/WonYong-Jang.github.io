@@ -238,10 +238,6 @@ for (ShardSearchFailure failure : countResponse.getShardFailures()) {
 ```
 
 
-
-
-
-
 - - - 
 
 **Reference**    
