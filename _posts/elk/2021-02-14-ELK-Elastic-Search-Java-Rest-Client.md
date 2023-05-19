@@ -57,9 +57,9 @@ public class ElasticSearchConfig {
 
 ## 1. Search API   
 
-여러가지 Search API에 대해 알아보자.   
+여러가지 [Search API](https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-search.html)에 대해 알아보자.   
 
-#### Search Request   
+### 1-1) Search Request   
 
 아래는 SearchReqeust의 기본적인 형태이다.  
 
@@ -95,7 +95,9 @@ sourceBuilder.query(QueryBuilders.termQuery("user", "mike"));
 sourceBuilder.from(0);  // default 0 
 sourceBuilder.size(5);  // default 10 
 sourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS)); 
-```
+```   
+
+
 
 #### Building queries   
 
@@ -107,7 +109,73 @@ QueryBuilder matchQueryBuilder = QueryBuilders.matchQuery("user", "kimchy")
                                                 .fuzziness(Fuzziness.AUTO)
                                                 .prefixLength(3)
                                                 .maxExpansions(10);
+```   
+
+### 1-2) Aggregation    
+
+아래 예제를 통해 집계 값도 구현해보자.
+이름이 kaven 인 document들을 찾고, quantity 값의 합계와
+id의 갯수를 집계하는 예제이다.
+
 ```
+GET summary/_search
+{
+  "query": {
+   "bool": {
+     "filter": [
+       {
+         "term" : {
+           "name": "kaven"
+         }
+       }
+     ]
+   }
+  },
+  "aggs": {
+    "aggs-quantity": {
+      "sum": {
+        "field": "quantity"
+      }
+    },
+    "aggs-value-count": {
+      "value_count": {
+        "field": "id"
+      }
+    }
+  }
+}
+```
+
+이를 자바로 구현해보면, 아래와 같이 구현할 수 있다.
+
+```java
+SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+searchSourceBuilder.query(
+        QueryBuilders.boolQuery()
+                .filter(QueryBuilders.termQuery("name", "kaven"))
+);
+
+searchSourceBuilder.aggregation(AggregationBuilders.sum("aggs-quantity").field("quantity"));
+searchSourceBuilder.aggregation(AggregationBuilders.count("aggs-count-value").field("id"));
+
+// 집계 결과값만 필요한 경우 fetchSource 또는 document size를 0으로 주면, 검색 속도를 향상시킬 수 있다.
+searchSourceBuilder.fetchSource(false);
+//searchSourceBuilder.size(0);
+
+SearchRequest searchRequest = new SearchRequest("summary");
+searchRequest.source(searchSourceBuilder);
+
+SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+
+Sum quantitySumAgg = searchResponse.getAggregations().get("aggs-quantity");
+ValueCount countValueAgg = searchResponse.getAggregations().get("aggs-count-value");
+
+System.out.println("aggs-quantity: " + quantitySumAgg.getValue());
+System.out.println("aggs-count-value: " + countValueAgg.getValue());
+```
+
+
 
 - - - 
 
@@ -242,8 +310,7 @@ for (ShardSearchFailure failure : countResponse.getShardFailures()) {
 
 **Reference**    
 
-<https://www.elastic.co/guide/en/elasticsearch/client/java-rest/master/java-rest-high-search.html>   
-<https://www.elastic.co/guide/en/elasticsearch/client/java-rest/6.8/java-rest-overview.html>   
+<https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-search.html>    
 <https://velog.io/@jakeseo_me/%EB%B2%88%EC%97%AD-%EC%97%98%EB%9D%BC%EC%8A%A4%ED%8B%B1%EC%84%9C%EC%B9%98%EC%99%80-%ED%82%A4%EB%B0%94%EB%82%98-%EC%8B%A4%EC%9A%A9%EC%A0%81%EC%9D%B8-%EC%86%8C%EA%B0%9C%EC%84%9C>   
 <https://medium.com/@sourav.pati09/how-to-use-java-high-level-rest-client-with-spring-boot-to-talk-to-aws-elasticsearch-2b6106f2e2c>    
 
