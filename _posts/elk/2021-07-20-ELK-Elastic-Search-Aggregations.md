@@ -55,16 +55,19 @@ PUT my_stations/_bulk
 
 - - - 
 
-# 1. Metrics Aggregations   
+## 1. Metrics Aggregations   
 
-### 1-1) min, max, sum, avg   
+### 1-1) min, max, sum, avg
 
 가장 흔하게 사용되는 metrics aggregations은 min, max, sum, avg aggregation이다.   
 순서대로 명시한 필드의 최소, 최대, 합, 평균 값을 가져오는 aggregation 이다.    
 다음은 sum aggregation을 이용해서 my_stations에 있는 전체 데이터의 
 passangers 필드값의 합계를 가져오는 예제이다.   
 
-> min, max, avg 들도 사용 방법은 동일하다.   
+> min, max, avg 들도 사용 방법은 동일하다.      
+
+그 외에도 다양한 연산을 제공하고 있고 [공식문서](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-valuecount-aggregation.html)를 
+참고하자.   
 
 `aggregations만 사용하는 경우에는 아래와 같이 "size":0 을 지정하면 "hint":[]에
 불필요한 도큐먼트 내용이 나타나지 않아 보기에도 편하고
@@ -214,7 +217,7 @@ Output
 
 - - - 
 
-# 2. Bucket Aggregations   
+## 2. Bucket Aggregations   
 
 `Bucket aggregation 은 주어진 조건으로 분류된 버킷 들을 만들고, 
        각 버킷에 소속되는 도큐먼트들을 모아 그룹으로 
@@ -423,7 +426,7 @@ date_histogram의 결과에서는 버킷별로 key에 시작 날짜가 epoch_mil
 
 ### 2-4) terms   
 
-terms aggregation은 keyword 필드의 문자열 별로 버키시을 나누어 집계가 
+terms aggregation은 keyword 필드의 문자열 별로 버켓을 나누어 집계가 
 가능하다. keyword 필드 값으로만 사용이 가능하며, 
     분석된 text 필드는 일반적으로는 사용이 불가능하지만 
     fielddata 옵션을 true를 추가하면 가능하다.  
@@ -497,7 +500,7 @@ size 옵션이 있으며 디폴트 값은 10이다.
 
 - - - 
 
-# 3. Sub aggregations      
+## 3. Sub aggregations      
 
 `Bucket Aggregation 으로 만든 버킷들 내부에 다시 "aggs" : { } 를 선언해서 
 또다른 버킷을 만들거나 Metrics Aggregation을 만들어 사용이 가능하다.`     
@@ -679,7 +682,7 @@ Output
 
 - - - 
 
-# 4. Pipeline Aggregations   
+## 4. Pipeline Aggregations   
 
 Aggregation 중에는 다른 metrics aggregation의 결과를 새로운 입력으로 하는 
 pipeline aggregation이 있다. `pipeline 에는 다른 버킷의 결과들을 다시 

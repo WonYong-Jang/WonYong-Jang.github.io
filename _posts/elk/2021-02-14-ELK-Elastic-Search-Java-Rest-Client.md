@@ -51,9 +51,7 @@ public class ElasticSearchConfig {
 // host: localhost, port: 9200, protocal: http
 ```
 
-
 - - - 
-
 
 ## 1. Search API   
 
@@ -70,7 +68,7 @@ searchSourceBuilder.query(QueryBuilders.matchAllQuery());  // SearchSourceBuilde
 searchRequest.source(searchSourceBuilder); 
 ```
 
-#### Optional arguments   
+#### 1-1-1) Optional arguments   
 
 SearchRequest에 optional arguments를 추가하여 검색의 범위를 지정할 수 있다.   
 
@@ -79,12 +77,7 @@ SearchRequest searchRequest = new SearchRequest("animal");
 // 인덱스 animal만 검색 하도록 설정   
 ```
 
-```java
-searchRequest.routing("routing"); // set a routing parameter   
-```
-
-
-#### Using the SearchSourceBuilder   
+#### 1-1-2) Using the SearchSourceBuilder   
 
 검색 동작을 제어하는 대부분의 옵션은 SearchSourceBuilder에서 설정 할 수 있다.   
 
@@ -97,18 +90,58 @@ sourceBuilder.size(5);  // default 10
 sourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS)); 
 ```   
 
+`만약 집계 값만 필요한 경우, size를 0으로 설정하거나, fetchSource 를 false로 
+설정하면 불필요한 응답값을 가져오지 않아도 되어서 검색 성능을 향상시킬 수 있다.`   
+
+```java
+// java
+sourceBuilder.size(0);
+
+// kibana
+GET my-index/_search
+{
+  "size": 0
+}
+```   
+
+```java
+// java
+sourceBuilder.fetchSource(false);
+
+// kibana
+GET my-index/_search
+{
+  "_source": false
+}
+```
 
 
-#### Building queries   
+#### 1-1-2) Building queries   
 
 `검색 쿼리는 QueryBuilder 객체로 만들어진다. QueryBuilder는 엘라스틱 서치의 Query DSL에서 
 제공되는 검색 쿼리 타입을 모두 가지고 있다.`   
 
 ```java
-QueryBuilder matchQueryBuilder = QueryBuilders.matchQuery("user", "kimchy")
-                                                .fuzziness(Fuzziness.AUTO)
-                                                .prefixLength(3)
-                                                .maxExpansions(10);
+SearchRequest searchRequest = new SearchRequest("summary-20230503");
+SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+// QueryBuilder를 이용하여 Query DSL 생성   
+BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+
+boolQueryBuilder.filter(QueryBuilders.termQuery("name", "kaven"));
+boolQueryBuilder.filter(QueryBuilders.termsQuery("category", "a", "b", "c"));
+boolQueryBuilder.filter(QueryBuilders.rangeQuery("createdAt").gte("2023-05-01").lte("2023-05-04"));   
+
+searchSourceBuilder.query(boolQueryBuilder);
+searchSourceBuilder.size(0); // Set size to 0 since we only care about count
+
+searchRequest.source(searchSourceBuilder);
+
+SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+
+long count = searchResponse.getHits().getTotalHits();
+
+System.out.println("Count: " + count);
 ```   
 
 ### 1-2) Aggregation    
@@ -159,9 +192,7 @@ searchSourceBuilder.query(
 searchSourceBuilder.aggregation(AggregationBuilders.sum("aggs-quantity").field("quantity"));
 searchSourceBuilder.aggregation(AggregationBuilders.count("aggs-count-value").field("id"));
 
-// 집계 결과값만 필요한 경우 fetchSource 또는 document size를 0으로 주면, 검색 속도를 향상시킬 수 있다.
-searchSourceBuilder.fetchSource(false);
-//searchSourceBuilder.size(0);
+searchSourceBuilder.size(0);
 
 SearchRequest searchRequest = new SearchRequest("summary");
 searchRequest.source(searchSourceBuilder);
@@ -183,7 +214,7 @@ System.out.println("aggs-count-value: " + countValueAgg.getValue());
 
 Count Api에 대해 살펴보자.   
 
-#### Count Request   
+### 2-1) Count Request   
 
 `CountRequest는 쿼리에 매치되는 갯수를 가져오는데 사용된다.`    
 위에서 언급한 SearchSourceBuilder를 사용해서 SearchReqeust을 사용하는 방법과 
@@ -202,7 +233,7 @@ searchSourceBuilder.query(QueryBuilders.matchAllQuery());
 countRequest.source(searchSourceBuilder);
 ```
 
-#### Count Request optional arguments   
+#### 2-1-1) Count Request optional arguments   
 
 `CountReqeust는 또한, optional arguments를 아래와 같이 사용할 수 있다.`      
 
@@ -215,7 +246,7 @@ CountRequest countRequest = new CountRequest("blog")
 ```
 
 
-#### Using the SearchSourceBuilder in CountReqeust   
+#### 2-1-2) Using the SearchSourceBuilder in CountReqeust   
 
 SearchSourceBuilder를 이용한 쿼리를 생성하여 CountReqeust를 실행해보자.    
 
@@ -233,13 +264,11 @@ countRequest.indices("blog", "author");  // index : blog, author 지정
 countRequest.source(sourceBuilder);
 ```
 
-
-
 더 자세한 쿼리는 [Building Queries](https://www.elastic.co/guide/en/elasticsearch/client/java-rest/master/java-rest-high-query-builders.html)를 
 참조해보자.   
 
 
-#### Synchronous execution   
+#### 2-1-3) Synchronous execution   
 
 `CountReqeust를 실행했을 때, client는 CountResponse를 반환 될 때까지 
 기다리게 된다.`
@@ -249,7 +278,7 @@ CountResponse countResponse = client
                 .count(countRequest, RequestOptions.DEFAULT);
 ```
 
-#### Asynchronous execution    
+#### 2-1-4) Asynchronous execution    
 
 `CountReqeust는 위의 방법과는 다르게 비동기적으로 실행할 수도 있다. 아래와 같이 
 요청과 리스너를 비동기 카운트 메서드에 전달하여 응답 또는 
@@ -279,7 +308,7 @@ ActionListener<CountResponse> listener =
 ```
 
 
-#### CountResponse    
+#### 2-1-5) CountResponse    
 
 `count API 호출을 실행하여 반환되는 CountResponse는 HTTP 상태 코드 또는 hits의 수(적중 수), 카운트 실행 
 자체에 대한 세부 정보를 제공한다.`     
