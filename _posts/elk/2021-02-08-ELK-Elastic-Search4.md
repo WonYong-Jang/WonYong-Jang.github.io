@@ -14,11 +14,11 @@ background: '/img/posts/mac.png'
 
 ## 1. 검색하기 전 샘플 데이터 셋팅   
 
-검색을 하려면 대량의 데이터가 필요하다. ES 공식 문서에 
-이를 제공해주는데, [링크](https://raw.githubusercontent.com/elastic/elasticsearch/master/docs/src/test/resources/accounts.json) 를 복사해서 
-json 파일을 만들고 아래 명령어를 실행해서 bulk API를 호출해보자.   
+검색을 하려면 대량의 데이터가 필요하다. 공식 문서에 
+이를 제공해주는데, [링크](https://www.elastic.co/guide/kr/kibana/current/tutorial-load-dataset.html) 에 
+접속하여 json파일을 다운 받고 json 파일을 bulk API로 색인해보자.   
 
-bulk API는 [링크](https://esbook.kimjmin.net/04-data/4.3-_bulk)에서 더 자세하게 확인 할 수 있다.   
+bulk API는 [링크](https://esbook.kimjmin.net/04-data/4.3-_bulk)에서 더 자세하게 확인 할 수 있다.     
 
 ```
 vi test.json   
@@ -26,7 +26,6 @@ curl -XPOST 'localhost:9200/bank/account/_bulk?pretty' -H 'Content-Type: applica
 curl -XGET 'localhost:9200/_cat/indices?v' // 데이터 확인 
 ```
 
-bank index에 1000개의 데이터가 추가되었으면 성공적으로 bulk 가 되었다.   
 
 - - - 
 
@@ -78,15 +77,9 @@ age가 39살인 document만 조회하는 예제이다.
 curl -XGET 'localhost:9200/bank/account/_search?q=age:39&pretty'
 ```
 
-파라미터 q는 쿼리 스트링으로 [Query String Query](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html) 로 변환된다.   
+파라미터 q는 쿼리 스트링으로 [Query String Query](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html) 로 변환된다.      
 
-그 밖에,   
-
-- 정렬 옵션 sort   
-- offset과 유사한 from : 기본값 0   
-- document를 몇 개를 반환할 것인지에 대한 size : 기본 값 10 개   
-
-등 다양한 파라미터를 전달할 수 있다. 더 많은 파라미터 정보는 [링크](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-uri-request.html#_parameters_3)를 참고하자.    
+이외에 다양한 파라미터를 전달할 수 있다. 더 많은 파라미터 정보는 [링크](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-uri-request.html#_parameters_3)를 참고하자.    
 
 다음은 search api 응답 결과를 분석해보자.   
 
@@ -128,7 +121,24 @@ Query DSL에 대해 알아보기에 앞서 Query Context와 Filter Context에 �
 Filter Context에서 사용되는 query 절은 '해당 document가 query절과 일치하는가?' 라는 
 질문에 해당하는데, 그 `대답은 true 또는 false이며 점수(score)는 계산하지 않는다.`    
 
-또한, Filter Context는 캐싱(caching)을 사용할 수 있으며, Query Context는 캐싱을 사용할 수 없다.    
+또한, Filter Context는 [캐싱(caching)](https://www.elastic.co/kr/blog/elasticsearch-caching-deep-dive-boosting-query-speed-one-cache-at-a-time)을 
+사용할 수 있으며, Query Context는 캐싱을 사용할 수 없다.   
+
+캐싱된 결과는 아래와 같이 확인 가능하다.   
+
+```
+// Shard Request Cache
+// size = 0 인 request 결과만 cache (aggregation, suggestions 등)
+// https://www.elastic.co/guide/en/elasticsearch/reference/current/shard-request-cache.html
+GET /_nodes/stats/indices/request_cache?human
+
+
+// Node Query Cache
+// https://www.elastic.co/guide/en/elasticsearch/reference/current/query-cache.html   
+// Filter Context를 사용했을 경우에만 동작   
+GET /_nodes/stats/indices/query_cache?human
+```
+
 
 쿼리(Query)와 필터(Filter)의 자세한 내용은 [참고 링크](https://m.blog.naver.com/tmondev/220292262363) 를 참고하자.    
 
@@ -400,7 +410,7 @@ bool 쿼리의 filter 안에 하위 쿼리를 사용하면 스코어에 영향�
 ```
 "query": {
     "bool": {
-      "filter": {"match":{
+      "filter": {"term":{
         "address.keyword":"891 Elton Street"
       }}
     }
@@ -414,6 +424,30 @@ keyword 타입으로 저장된 필드는 스코어를 계산하지 않고 정확
 > filter 안에 넣은 검색 조건들은 스코어를 계산하지 않지만 캐싱이 되기 때문에 
 쿼리가 더 가볍고 빠르게 실행된다. keyword 뒤에 설명할 range 쿼리와 같이 
 스코어 계산이 필요하지 않은 쿼리들은 모두 filter 안에 넣어서 실행하는 것이 좋다.   
+
+또한, 아래와 같이 filter 쿼리 내에 여러 조건을 추가하고 싶다면, 
+    아래와 같이 작성할 수 있다.     
+
+```
+GET summary/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        { "term" : {"name": "kaven" }},
+        { "terms" : {"category": ["a", "b"] }},
+        { "range": { "createdAt": {"gte": "2023-05-01", "lte": "2023-05-04"}}}
+      ]
+    }
+  }
+}
+```   
+
+> 위 쿼리는 name은 kaven이며, category는 나열된 배열 중 일치하는 것을 
+검색하며, createdAt 날짜 사이에 있는 document를 검색한다.   
+
+> filter 쿼리 내에 term, terms, range 는 relevance score를 계산하지 
+않기 때문에 캐싱이 된다.   
 
 
 
@@ -585,7 +619,6 @@ from과 size 필드는 pagination 개념과 관련이 있다.
 해당 설정은 기본값이 10,000이며 즉, 최대 10,000개의 document를 
 호출할 수 있고 그 이상을 호출 하려면 [링크](https://wonyong-jang.github.io/elk/2022/11/29/ELK-Elastic-Search-Max-Result-Window.html)를 참고하자.       
 
-- - - 
 
 #### 7-2) sort 
 
@@ -613,7 +646,6 @@ sort 쿼리로 특정 필드마다 하나 이상의 정렬을 추가 할 수 있
 
 [공식문서](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/search-request-sort.html)를 참고하자.   
 
-- - - 
 
 #### 7-3) source filtering    
 
@@ -660,7 +692,8 @@ SQL에서 SELECT 쿼리를 날릴 때 특정 컬럼들을 명시하는 것과 �
 <https://esbook.kimjmin.net/05-search/5.1-query-dsl>    
 <https://bakyeono.net/post/2016-08-20-elasticsearch-querydsl-basic.html>   
 <https://victorydntmd.tistory.com/313?category=742451>    
-<https://m.blog.naver.com/tmondev/220292262363>     
+<https://m.blog.naver.com/tmondev/220292262363>    
+<https://jjeong.tistory.com/1392>   
 
 {% highlight ruby linenos %}
 

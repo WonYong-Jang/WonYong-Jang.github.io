@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[ELK] ElasticSearch에서 text 타입과 keyword 타입 차이"
-subtitle: "fielddata, doc_values 에 대한 이해와 주의사항 / keyword 필드 검색시 주의사항"    
+subtitle: "fielddata, doc_values 에 대한 이해와 주의사항 / keyword 필드 검색시 주의사항 및 normalizer 적용"    
 comments: true
 categories : ELK
 date: 2021-07-06
@@ -100,7 +100,7 @@ field를 모두 적재해 놓으면, 그 다음에 수행되는 query에도 사�
 `text field를 사용하게 되면 fielddata 데이터 구조를 사용할 수 있는데 
 위의 설명과 같이 높은 비용 때문에 default 는 false로 되어 있다.`    
 
-#### Fielddata Monitoring    
+### 1-1) Fielddata Monitoring    
 
 fielddata에 의해서 어느정도 메모리가 사용되고 있는지 모니터링 할 수 있다.   
 
@@ -123,14 +123,9 @@ $ curl -XGET 'localhost:9200/_nodes/stats/indices/fielddata?fields=*&pretty'
 `텍스트 타입에는 standard analyzer가 사용되는 반면에 키워드 타입은 
 anlyzer를 사용하지 않는다.`        
 
-따라서 아래 예제는 keyword 타입이 analyzer를 실제로 사용하여 
+따라서 아래 예제는 keyword 타입에 analyzer를 실제로 사용하여 
 텍스트 분석을 하는 것이 아니라 어떻게 저장되는지 
 테스트 하기 위한 방법일 뿐이다.     
-
-즉, keyword 타입은 analyzer를 사용하지 않는 대신 normalizer의 
-적용은 가능하다.   
-자세한 내용은 [링크](https://esbook.kimjmin.net/07-settings-and-mappings/7.2-mappings/7.2.1)를 
-참고하자.   
 
 ```
 POST _analyze
@@ -158,9 +153,69 @@ Output
 
 위의 응답 값에서 토큰이 하나로 묶여 있는 것을 확인할 수 있다.   
 `즉 keyword 타입은 대소문자를 모두 구분하며, 정확한 값을 입력해야만 
-검색이 가능하다.`       
+검색이 가능하다.`      
 
-#### keyword 타입 검색    
+`keyword 타입은 analyzer를 사용하지 않는 대신 normalizer의
+적용은 가능하다.`     
+
+아래와 같이 keyword 타입 name필드에 normalizer를 적용한 템플릿 예시이다.   
+
+
+```
+PUT _template/summary-template
+{
+    "index_patterns": ["summary*"],
+    "settings": {
+      "analysis": {
+        "normalizer": {
+          "lowercase_normalizer": {
+            "type": "custom",
+            "filter": ["lowercase"]
+          }
+        }
+      }
+    },
+    "mappings" : {
+      "_doc" : {
+        "properties" : {
+          "id" : {
+            "type" : "keyword"
+          },
+          "name" : {
+            "type" : "keyword",
+            "normalizer": "lowercase_normalizer"
+          },
+        }
+      }
+    }
+}
+```
+
+Output   
+
+```
+GET summary-20230503/_search
+{
+  "query": {
+    "bool": {
+      "filter": {
+        "term": {
+          "name": "KAVEN"
+        }
+      }
+    }
+  }
+}
+```   
+
+위와 같이 템플릿을 생성하여 인덱스가 색인될 때, normalizer가 적용되도록 적용했다.  
+이제 대소문자 구분 없이 keyword 타입을 검색할 수 있다.   
+
+자세한 내용은 [링크](https://esbook.kimjmin.net/07-settings-and-mappings/7.2-mappings/7.2.1)를
+참고하자.
+
+
+### 2-1) keyword 타입 검색    
 
 keyword 타입으로 검색하기 위해서는 아래와 같이 검색이 가능하다.   
 
@@ -210,7 +265,7 @@ keyword 타입으로 검색하기 위해서는 아래와 같이 검색이 가능
   }
 ```
 
-#### doc values
+### 2-2) doc values     
 
 `keyword field에서는 fielddata의 in memory에서 동작하는 구조를 개선하여 
 on-disk data structure인 doc_values 사용이 가능하다.   
