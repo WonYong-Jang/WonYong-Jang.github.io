@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[ELK] ElasticSearch의 인덱스 템플릿(Template) 설정하기 "
-subtitle: "mapping, setting 정보를 template으로 설정 후 인덱스에 적용하기"    
+subtitle: "mapping, setting 및 alias 정보를 template으로 설정 후 인덱스에 자동으로 적용하기"    
 comments: true
 categories : ELK
 date: 2021-03-27
@@ -40,20 +40,25 @@ GET index-name/_mapping
     템플릿을 하나 설정해 놓으면, 해당 템플릿에 설정 해놓은 필드 mappings 및 settings 정보들을 
     동일하게 적용할 수 있다.   
 
+
 ```
+// 아래는 'summary*' 패턴으로 생성된 인덱스의 예이다.   
+
 summary-20230503   
 summary-20230504   
 summary-20230505   
 ```
 
 `위와 같이 인덱스를 생성할 때 설정해놓은 템플릿의 mapping 및 settings 정보를 
-이용하여 인덱스를 생성할 수 있는 기능이 바로 template이다.`      
+이용하여 인덱스를 생성할 수 있는 기능이 바로 template이다.`     
 
 참고로 [dynamic template](https://www.elastic.co/guide/en/elasticsearch/reference/current/dynamic-templates.html)도 
 제공하며, 해당 내용은 공식문서를 참고하자.   
 
-이제 직접 template을 생성하여, 인덱스가 생성될 때 설정한 mapping 및 설정 
-정보들이 적용 되도록 적용해보자.   
+또한 `template을 이용하여 생성된 인덱스에 자동으로 alias를 매핑해 줄 수도 있다.`
+
+이제 직접 template을 생성하여, 인덱스가 생성될 때 설정한 mapping, settings 및 alias  
+정보들이 적용 되는지 확인해보자.   
 
 - - - 
 
@@ -103,6 +108,9 @@ PUT _template/summary-template
           }
         }
       }
+    },
+    "aliases": {
+      "summary": {}
     }
 }
 ```
@@ -126,6 +134,21 @@ GET summary-20230503
 GET summary-20230503/_settings
 GET summary-20230503/_mapping
 ```
+
+`또한, aliases 하위에 summary라는 alias를 지정해 주었다.`   
+해당 인덱스 패턴에 매칭되는 인덱스가 생성될 때, summary라는 alias와 매핑되는 것을 확인 할 수 있다.   
+
+> alias 이름과 index 이름과 동일하게 지정하면, 에러를 발생시킨다.   
+
+```
+GET _cat/aliases?v
+
+alias      index            filter routing.index routing.search
+summary    summary-20230503 -      -             -
+```
+
+더 자세한 내용은 [공식문서](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-put-template.html)를 
+참고해보자.   
 
 
 - - - 
