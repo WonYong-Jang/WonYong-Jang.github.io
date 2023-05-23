@@ -396,7 +396,6 @@ POST nori-analyzer-temp/_analyze
 terms aggregation을 통해 가장 많이 등장한 단어별로 내림차순 되어 있는 것을 
 볼 수 있다.   
 
-
 <img width="1256" alt="스크린샷 2021-06-28 오전 9 43 14" src="https://user-images.githubusercontent.com/26623547/123564721-6e27e600-d7f5-11eb-9737-21f6f69cd610.png">   
 
 - - - 
