@@ -432,7 +432,7 @@ terms aggregation은 keyword 필드의 문자열 별로 버켓을 나누어 집�
     fielddata 옵션을 true를 추가하면 가능하다.  
 
 자세한 내용은 
-[링크](https://wonyong-jang.github.io/elk/2021/07/06/ELK-Elastic-Search-fielddata.html) 를 참조하자.   
+[링크](https://wonyong-jang.github.io/elk/2021/07/06/ELK-Elastic-Search-Text-Keyword-Type.html) 를 참조하자.   
 
 다음은 my_stations 인덱스에서 station.keyword 필드를 기준으로 버킷들을 만드는 
 예제이다.   
