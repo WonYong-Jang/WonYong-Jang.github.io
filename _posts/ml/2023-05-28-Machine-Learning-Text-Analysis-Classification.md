@@ -244,6 +244,15 @@ print('TF-IDF Vectorized Logistic Regression 의 예측 정확도는 {0:.3f}'.fo
 
 ## 4. GridSearchCV 및 파이프라인   
 
+사이킷런에서 제공하는 파이프라인을 적용해보고 
+GridSearchCV를 이용하여 하이퍼 파라미터 튜닝을 진행해보자.   
+
+`파이프라인을 사용하게 되면, 앞에서 진행했던 중복코드를 제거하여 
+간결하게 코드를 작성할 수 있다.`     
+
+아래 파이프라인은 전처리, 학습, 예측까지 하나의 
+파이프라인으로 연결하여 실행시켜 준다.   
+
 
 ```
 from sklearn.pipeline import Pipeline
@@ -261,7 +270,13 @@ pred = pipeline.predict(X_test)
 print('Pipeline을 통한 Logistic Regression 의 예측 정확도는 {0:.3f}'.format(accuracy_score(y_test ,pred)))
 ```
 
-GridSearchCV에서 verbose는 iteration시 마다 수행 결과 메시지를 출력한다.   
+이제 위에서 만든 파이프라인 객체를 
+GridSearchCV를 사용하여 하이퍼 파라미터 튜닝을 해보자.    
+
+> GridSearchCV에서 estimator 객체 외에 파이프라인 객체도 
+파라미터로 넣을 수 있다.   
+
+또한, GridSearchCV에서 verbose는 iteration시 마다 수행 결과 메시지를 출력한다.   
 
 - verbose=0(default) : 메시지 출력 안함   
 - verbose=1 : 간단한 메시지 출력   
@@ -277,7 +292,7 @@ pipeline = Pipeline([
 ])
 
 # Pipeline에 기술된 각각의 객체 변수에 언더바(_)2개를 연달아 붙여 GridSearchCV에 사용될
-# 파라미터/하이퍼 파라미터 이름과 값을 설정. .
+# 파라미터/하이퍼 파라미터 이름과 값을 설정.
 params = { 'tfidf_vect__ngram_range': [(1,1), (1,2), (1,3)],
            'tfidf_vect__max_df': [100, 300, 700],
            'lr_clf__C': [1,5,10]
@@ -290,9 +305,9 @@ print(grid_cv_pipe.best_params_ , grid_cv_pipe.best_score_)
 
 pred = grid_cv_pipe.predict(X_test)
 print('Pipeline을 통한 Logistic Regression 의 예측 정확도는 {0:.3f}'.format(accuracy_score(y_test ,pred)))
-
-
 ```
+
+
 
 - - -    
 
