@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "[Machine Learning] LightGBM 알고리즘 Spark로 구현하기"
+title: "[Spark ML] LightGBM 알고리즘 Spark로 구현하기"
 subtitle: "주요 하이퍼 파라미터 / 조기 중단 기능(Early Stopping)" 
 comments: true
-categories : ML
-date: 2023-03-18
+categories : Spark
+date: 2023-04-08
 background: '/img/posts/mac.png'
 ---
 

@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "[Machine Learning] Spark ML로 iris 붓꽃 데이터 예측 모델 만들기"
+title: "[Spark ML] Spark ML로 iris 붓꽃 데이터 예측 모델 만들기"
 subtitle: "randomSplit, vectorAssembler, pipeline /  crossValidator, trainValidationSplit 교차검증 및 하이퍼 파라미터 튜닝" 
 comments: true
-categories : ML
-date: 2023-02-13
+categories : Spark
+date: 2023-04-01
 background: '/img/posts/mac.png'
 ---
 
@@ -204,7 +204,7 @@ val predictions = pipelineModel.transform(testDf)
 ## 4. CrossValidator 교차검증 및 하이퍼 파라미터 튜닝    
 
 Spark ML은 직접적으로 K Fold 기반으로 데이터를 선택하게 만드는 
-[사이킷런의 KFold 클래스](https://wonyong-jang.github.io/ml/2022/09/12/Machine-Learning-Sklearn-Api.html)나 
+[사이킷런의 KFold 클래스](https://wonyong-jang.github.io/ml/2022/09/12/Machine-Learning-Sklearn-Data-Set.html)나 
 교차 검증 성능 결과만 반환해주는 
 cross val scroe는 지원하지 않는다.      
 

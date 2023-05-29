@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "[Machine Learning] Spark ML 데이터 전처리"
+title: "[Spark ML] Spark ML 데이터 전처리"
 subtitle: "Label Encoding(StringIndexer, IndexToString) / OneHotEncoderEstimator / Scaling(StandardScaler, MinMaxScaler)" 
 comments: true
-categories : ML
-date: 2023-02-14
+categories : Spark
+date: 2023-04-02
 background: '/img/posts/mac.png'
 ---
 

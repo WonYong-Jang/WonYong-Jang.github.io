@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "[Machine Learning] Spark ML 결정 트리"
+title: "[Spark ML] Spark ML 결정 트리"
 subtitle: "DecisionTreeClassifier, RandomForestClassifier, GBTClassifier / MulticlassClassificationEvaluator, BinaryClassificationEvaluator" 
 comments: true
-categories : ML
-date: 2023-02-21
+categories : Spark
+date: 2023-04-05
 background: '/img/posts/mac.png'
 ---
 
