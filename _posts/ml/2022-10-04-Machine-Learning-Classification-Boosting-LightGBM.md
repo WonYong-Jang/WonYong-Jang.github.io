@@ -1,15 +1,15 @@
 ---
 layout: post
-title: "[Machine Learning] 분류 알고리즘 - 앙상블(Ensemble) 기법의 부스팅(Boosting) / XGBoost"
-subtitle: "XGBoost(eXtra Gradient Boost) / Early Stopping(조기 중단 기능)" 
+title: "[Machine Learning] 분류 알고리즘 - 앙상블(Ensemble) 기법의 부스팅(Boosting) / LightGBM"
+subtitle: "" 
 comments: true
 categories : ML
-date: 2022-10-03
+date: 2022-10-04
 background: '/img/posts/mac.png'
 ---
 
 
-## 2. XGBoost 설치   
+## 2. LightGBM 설치   
 
 ```
 $ brew install lightgbm
