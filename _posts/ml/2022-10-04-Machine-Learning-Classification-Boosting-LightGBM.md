@@ -62,7 +62,7 @@ print(xgboost._version_) # 버전 확인
 실습했던 위스콘신 유방암 예측 실습을 LightGBM으로 진행해보자.   
 
 > LightGBM은 XGBoost와 동일하게 파이썬 Wrapper와 사이킷런 Wrapper를 제공하며 
-여기서 사이킷런 Wrapper를 이용해서 실습해보자   
+이 글에서는 사이킷런 Wrapper를 이용해서 실습해보자.      
 
 ```
 # LightGBM의 파이썬 패키지인 lightgbm에서 LGBMClassifier 임포트
@@ -139,7 +139,7 @@ Output
 정확도: 0.9561, 정밀도: 0.9615, 재현율: 0.9740,    F1: 0.9677, AUC:0.9877
 ```
 
-> 대체적으로 LightGBM이 성능이 XGBoost 보다 좋지만, 학습 데이터 건수가 작을 경우는 XGBoost가 
+> 대체적으로 LightGBM의 성능이 XGBoost 보다 좋지만, 학습 데이터 건수가 작을 경우는 XGBoost가 
 좋을 수 있다.   
 
 마지막으로 동일하게 Feature Importance를 확인해보자.   

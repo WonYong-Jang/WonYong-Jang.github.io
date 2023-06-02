@@ -16,7 +16,7 @@ background: '/img/posts/mac.png'
 
 부스팅의 대표적인 구현은 AdaBoost(Adaptive boosting)와 XGBoost, LightGBM 등이 있다.     
 
-> 사이킷에서 1.X 버전 기준으로 GBM(Gradient Boosting Machine)은 학습 속도가 현저하게 저하되는 
+> 사이킷런에서 1.X 버전 기준으로 GBM(Gradient Boosting Machine)은 학습 속도가 현저하게 저하되는 
 문제가 있기 때문에 이 글에서는 다루지 않는다.   
 
 이번 글에서는 XGBoost에 대해서 살펴보자.   
@@ -73,9 +73,9 @@ XGBoost는 부스팅 계열 알고리즘 중 하나이며, 아래와 같은 장�
 `반복 횟수를 너무 짧게 하는 경우 예측 성능 최적화가 안된 상태에서 학습이 종료 될 수 있으므로 
 유의할 필요가 있다.`       
 
-또한, 조기 중단 설정은 학습 데이터가 아닌, 검증 데이터로 해야 한다.   
+또한, 조기 중단 설정은 학습 데이터가 아닌 검증 데이터로 해야 한다.   
 
-> 아래 실습 예제를 보면, 학습 데이터는 계속 loss 값이 줄어즐어 
+> 아래 실습 예제를 보면, 학습 데이터는 계속 loss 값이 줄어들어 
 오버피팅이 발생하지만 검증 데이터는 어느 순간 loss 값이 줄지 않는 
 부분을 확인할 수 있다.   
 > 해당 지점이 best model 될 것이다.   
@@ -100,7 +100,7 @@ early stopping rounds를 10으로 설정한 경우 10번 반복 모두 비용 �
 
 <img width="1300" alt="스크린샷 2023-06-01 오전 10 57 06" src="https://github.com/WonYong-Jang/ToyProject/assets/26623547/0933755b-f50b-4866-847d-13c64c4f9353">   
 
-`XGBosst는 Regularization(규제)를 제공하며, 이는 오차를 줄이기 위해서 
+`XGBoost는 Regularization(규제)를 제공하며, 이는 오차를 줄이기 위해서 
 계속 학습에만 몰두하다 보면 오히려 오버피팅이 발생할 가능성이 있다.`   
 
 Regularization은 너무 오차를 줄이는 데에만 몰두하지 않도록 제어 해주는 하이퍼 파라미터이다.   
