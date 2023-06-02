@@ -33,7 +33,7 @@ $ conda install -c anaconda py-xgboost
 $ pip install xgboost   
 ```
 
-```
+```python   
 import xgboost   
 
 print(xgboost._version_) # 버전 확인  
@@ -114,7 +114,7 @@ Regularization은 너무 오차를 줄이는 데에만 몰두하지 않도록 �
 
 아래와 같이 데이터 세트를 로딩하자.   
 
-```
+```python
 import pandas as pd
 import numpy as np
 from sklearn.datasets import load_breast_cancer
@@ -135,7 +135,7 @@ cancer_df['target']= labels
 cancer_df.head(3)
 ```
 
-```
+```python
 print(dataset.target_names)
 print(cancer_df['target'].value_counts())
 ```
@@ -156,7 +156,7 @@ Name: target, dtype: int64
 아래는 먼저, 학습 데이터와 테스트 데이터로 분리했고, 그 후 다시 
 학습 데이터에서 10%는 검증용 데이터 세트로 분리했다.   
 
-```
+```python   
 # cancer_df에서 feature용 DataFrame과 Label용 Series 객체 추출
 # 맨 마지막 칼럼이 Label이므로 Feature용 DataFrame은 cancer_df의 첫번째 칼럼에서 맨 마지막 두번째 컬럼까지를 :-1 슬라이싱으로 추출.
 X_features = cancer_df.iloc[:, :-1]
@@ -187,7 +187,7 @@ Output
 
 ### 6-1) 파이썬 Wrapper 구현   
 
-```
+```python   
 # 만약 구버전 XGBoost에서 DataFrame으로 DMatrix 생성이 안될 경우 X_train.values로 넘파이 변환. 
 # 학습, 검증, 테스트용 DMatrix를 생성. 
 dtr = xgb.DMatrix(data=X_tr, label=y_tr)        # 학습 
@@ -197,7 +197,7 @@ dtest = xgb.DMatrix(data=X_test , label=y_test) # 테스트
 
 위와 같이 파이썬 Wrapper를 이용하여 구현하기 위해서는 DMatrix를 생성해야 한다.   
 
-```
+```python   
 params = { 'max_depth':3,
            'eta': 0.05,        
            'objective':'binary:logistic',
@@ -212,7 +212,7 @@ eta의 경우 learning rate(학습률)을 뜻하며, objective는 결정 함수(
 eval metirc은 loss값에 log를 취하라고 지정했다.   
 
 
-```
+```python   
 # 학습 데이터 셋은 'train' 또는 평가 데이터 셋은 'eval' 로 명기합니다. 
 eval_list = [(dtr,'train'),(dval,'eval')] # 또는 eval_list = [(dval,'eval')] 만 명기해도 무방(dtrain 파라미터로 이미 전달 했기 때문에)   
 
@@ -323,7 +323,7 @@ early stopping은 검증 데이터로 진행해야 한다.
 파이선 Wrapper의 predict는 확률 값이 나오기 때문에 아래와 같이 
 0.5(threshold)기준으로 분류를 직접 해주어야 한다.   
 
-```
+```python   
 pred_probs = xgb_model.predict(dtest)
 print('predict( ) 수행 결과값을 10개만 표시, 예측 확률 값으로 표시됨')
 print(np.round(pred_probs[:10],3))
@@ -343,7 +343,7 @@ predict( ) 수행 결과값을 10개만 표시, 예측 확률 값으로 표시�
 
 `정확도, 정밀도, 재현율` 등을 함수화 하여 확인해보자.   
 
-```
+```python   
 from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.metrics import precision_score, recall_score
 from sklearn.metrics import f1_score, roc_auc_score
@@ -377,7 +377,7 @@ Output
 
 마지막으로 Feature Importance를 시각화 해보자.   
 
-```
+```python   
 from xgboost import plot_importance
 
 import matplotlib.pyplot as plt
@@ -394,7 +394,7 @@ plot_importance(xgb_model, ax=ax)
 파이썬 Wrapper와의 차이점은 Dmatrix 를 사용할 필요가 없고, 
     아래와 같이 XGBClassifier를 이용하여 학습 및 예측한다.    
 
-```
+```python    
 # 사이킷런 래퍼 XGBoost 클래스인 XGBClassifier 임포트
 from xgboost import XGBClassifier
 
@@ -409,7 +409,7 @@ get_clf_eval(y_test , w_preds, w_pred_proba)
 
 early stopping을 50으로 설정하고 재 학습 및 예측을 해보자.   
 
-```
+```python   
 from xgboost import XGBClassifier
 
 xgb_wrapper = XGBClassifier(n_estimators=400, learning_rate=0.05, max_depth=3)

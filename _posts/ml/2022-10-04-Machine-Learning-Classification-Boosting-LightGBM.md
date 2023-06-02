@@ -37,7 +37,7 @@ $ conda install lightgbm
 $ pip install lightgbm
 ```
 
-```
+```python   
 import xgboost   
 
 print(xgboost._version_) # 버전 확인  
@@ -64,7 +64,7 @@ print(xgboost._version_) # 버전 확인
 > LightGBM은 XGBoost와 동일하게 파이썬 Wrapper와 사이킷런 Wrapper를 제공하며 
 이 글에서는 사이킷런 Wrapper를 이용해서 실습해보자.      
 
-```
+```python   
 # LightGBM의 파이썬 패키지인 lightgbm에서 LGBMClassifier 임포트
 from lightgbm import LGBMClassifier
 
@@ -85,7 +85,7 @@ cancer_df.head()
 
 
 
-```
+```python  
 X_features = cancer_df.iloc[:, :-1]
 y_label = cancer_df.iloc[:, -1]
 
@@ -108,7 +108,7 @@ preds = lgbm_wrapper.predict(X_test)
 pred_proba = lgbm_wrapper.predict_proba(X_test)[:, 1]
 ```
 
-```
+```python   
 from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.metrics import precision_score, recall_score
 from sklearn.metrics import f1_score, roc_auc_score
@@ -144,7 +144,7 @@ Output
 
 마지막으로 동일하게 Feature Importance를 확인해보자.   
 
-```
+```python   
 # plot_importance( )를 이용하여 feature 중요도 시각화
 from lightgbm import plot_importance
 import matplotlib.pyplot as plt
