@@ -43,7 +43,7 @@ background: '/img/posts/mac.png'
 ## 3. HyperOpt    
 
 베이지안 최적화를 구현하기 위한 주요 패키지는 HyperOpt, Bayesian optimization, Optuna 등이 있다.   
-이 글에서는 HyperOpt를 설치해보고 실습해볼 예정이다.   
+이 글에서는 HyperOpt를 설치해보고 실습해 볼 예정이다.   
 
 > HyperOpt 는 TPE(Tree-structured Parzen Estimator) 알고리즘을 사용한다.  
 
@@ -59,7 +59,7 @@ import hyperopt
 print(hyperopt.__version__)
 ```
 
-주요 구성 요소는 아래와 같다.   
+주요 구성 요소는 아래와 같으며 실습을 진행하면서 자세히 살펴보자.     
 
 <img width="1000" alt="스크린샷 2023-06-02 오전 11 43 17" src="https://github.com/WonYong-Jang/ToyProject/assets/26623547/0389e916-807c-4274-b565-668077b6f3cb">   
 
@@ -87,11 +87,13 @@ def objective_func(search_space):
     y = search_space['y']
     retval = x**2 - 20*y
     
+    # retval 만 리턴해도 되고 아래 주석처럼 리턴해도 된다.   
     return retval # return {'loss': retval, 'status':STATUS_OK}
 ```
 
 > 참고로 위의 목적 함수에서 리턴하는 식은 이해를 돕기 위한 예이며, 
-    실제 사용 방법은 아래에서 다루려고 한다.  
+    실제 사용 방법은 아래에서 다루려고 한다.    
+
 
 그 후 `목적함수의 최소값을 찾는 함수로 fmin`을 사용한다.   
 
@@ -116,7 +118,8 @@ Output
 best: {'x': -4.0, 'y': 12.0}
 ```
 
-> 일반적으로 베이지안 최적화는 가우시안 최적화를 많이 사용하지만, HyperOpt는 TPE 알고리즘을 사용한다.  
+> 일반적으로 베이지안 최적화는 가우시안 최적화를 많이 사용하지만, HyperOpt는 TPE 알고리즘을 사용한다.     
+> 따라서, algo=tpe.suggest 는 고정 값으로 넣어주면 된다.   
 
 `위의 결과값은 x 가 -4.0, y 가 12.0 일 때 목적함수가 최소가 된다 라는 뜻이다.`   
 
@@ -176,7 +179,7 @@ Output
 [이전글](https://wonyong-jang.github.io/ml/2022/10/03/Machine-Learning-Classification-Boosting-XGBoost.html)에서 
 진행 했던 실습으로 하이퍼 파라미터 튜닝을 진행해보자.    
 
-`아래는 search space를 설정하는 부분이다.`   
+`데이터 로딩 후 search space를 아래와 같이 설정해보자.`       
 
 ```python
 from hyperopt import hp
@@ -190,7 +193,7 @@ xgb_search_space = {'max_depth': hp.quniform('max_depth', 5, 20, 1),
                }
 ```
 
-`이제 목적 함수를 생성할 때 주의해야 할 점은 정수형 하이퍼 파라미터는 명시적으로 
+`아래와 같이 목적 함수를 생성할 때 주의해야 할 점은 정수형 하이퍼 파라미터는 명시적으로 
 정수형 변환을 해줘야 한다.`   
 
 `명시적으로 변환해야 하는 이유는 search space는 5.0, 6.0 과 같이 실수형으로 들어오기 때문이다.`       
@@ -220,7 +223,7 @@ def objective_func(search_space):
 
 `위에서 하나 더 주의사항은 분류 모델을 생성할 때는 결과값에 -1 을 반드시 곱해줘야 한다.`   
 
-fmin은 가장 최소인 값을 찾아주는 것인데, 분류의 성능지표(정확도, 정밀도, 재현율) 등 
+fmin은 가장 최소인 값을 찾아주는 것인데, 분류의 성능지표(정확도, 정밀도, 재현율)는  
 값이 높을 수록 성능이 좋다.   
 
 `따라서 결과값에 -1 을 곱해야 가장 성능이 높은 하이퍼 파라미터를 찾을 수 있다.`    
@@ -293,6 +296,15 @@ preds = xgb_wrapper.predict(X_test)
 pred_proba = xgb_wrapper.predict_proba(X_test)[:, 1]
 
 get_clf_eval(y_test, preds, pred_proba)
+```
+
+Output
+
+```
+오차 행렬
+[[35  2]
+ [ 2 75]]
+정확도: 0.9649, 정밀도: 0.9740, 재현율: 0.9740, F1: 0.9740, AUC:0.9944
 ```
 
 최종적으로 아래와 같이 입력값과 결과값을 데이터 프레임으로 보기 좋게 변환한 코드이다.   
