@@ -52,7 +52,15 @@ print(xgboost._version_) # 버전 확인
 <img width="1000" alt="스크린샷 2023-06-01 오후 12 47 34" src="https://github.com/WonYong-Jang/ToyProject/assets/26623547/bc578e90-9f8c-48a0-b24b-d934b21b3748">
 
 `균형 트리의 경우 max_depth 을 중심으로 튜닝을 했지만, LightGBM의 경우 num_leaves가 가장 중요한 
-하이퍼 파라미터 중 하나이다.`   
+하이퍼 파라미터 중 하나이다.`    
+
+`num_leaves, min_child_samples, subsample, colsample_bytree, max_depth, learning_rate 등을 
+주로 변경해가면서 최적화 화는 것을 추천한다.`   
+
+> 너무 많은 하이퍼 파라미터들을 튜닝하려는 것은 오히려 최적값을 
+찾는데 방해가 될 수 있기 때문에 적당한 수준의 하이퍼 파라미터 개수 설정이 필요하다.   
+> 대체적으로 하이퍼 파라미터 갯수는 6~7개 정도가 적당하다.     
+
 
 - - - 
 

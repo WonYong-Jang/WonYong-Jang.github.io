@@ -16,7 +16,9 @@ background: '/img/posts/mac.png'
 $ pip install scikit-learn==1.0.2
 $ conda install -c anaconda py-xgboost
 $ conda install -c conda-forge lightgbm
+```
 
+```python
 import sklearn
 import xgboost
 import lightgbm
@@ -40,23 +42,23 @@ Numpy 모듈의 array() 함수로 생성이 가능하며,
 아래와 같이 import해서 사용가능하며, 대용량 데이터를 사용할 때 
 [1,2,3]와 같이 `파이썬의 list 보다 ndarray를 생성해서 사용하는게 성능에서 유리하다.`       
 
-```
-list1 = [1,2,3] // 파이썬의 list    
+```python
+list1 = [1,2,3] # 파이썬의 list    
 array3 = np.array(list1)    
 print(type(array3))
-output: <class 'numpy.ndarray'>    
+# output: <class 'numpy.ndarray'>    
 
 array1 = np.array([1,2,3])
 array2 = np.array([[1,2,3],[2,3,4]])     
 
 array2.shape
-output: (2,3)  // 행, 열 
+# output: (2,3)  // 행, 열 
 
 array2.ndim
-output: 2     // 2 차원   
+# output: 2     // 2 차원   
 
 array1.shape
-output: (3,)
+# output: (3,)
 ```
 
 위처럼 ndarray의 shape는 ndarray.shape 속성으로 알 수 있고, 
@@ -72,26 +74,22 @@ ndarray내에 데이터값은 숫자 값, 문자열 값, 불 값 등 모두 가�
 
 > 즉, 한 개의 ndarray 객체에 int와 float가 함께 있을 수 없다.  
 
-```
-//ndarray내에 다른 타입이 들어오면, 큰 쪽으로 자동 형변환을 해준다.    
+```python   
+# ndarray내에 다른 타입이 들어오면, 큰 쪽으로 자동 형변환을 해준다.    
 array1 = np.array([1,2,'test'])
-print(array1, array1.dtype)   
-output: ['1' '2' 'test'] <U21   
+print(array1)
+print(array1.dtype)        # 타입 확인 
+# Output: ['1' '2' 'test']
+# Output: <U21             # 유니코드 문자열 타입을 뜻한다.   
 ```
 
 `대용량 데이터 다룰 시 메모리 절약을 위해서 형변환을 특히 고려해 주어야한다.`    
 
 `타입을 변경할 수 있는데, astype()에 인자로 입력한다.`   
 
+```python
+array1.astype(np.int32) # 타입 변환   
 ```
-array1.astype(np.int32)
-
-array1.dtype
-output: dtype('int64')
-```
-
-`ndarray.dtype으로 데이터 타입을 확인 가능하다.`      
-
 
 #### 2-3) ndarray를 편리하게 생성하기   
 
@@ -102,17 +100,17 @@ output: dtype('int64')
 > 주로 테스트 용으로 데이터를 만들거나 데이터를 일괄적으로 초기화해야 
 할 경우에 사용 된다.   
 
-```
-np.arange(5) // array([0, 1, 2, 3, 4])
+```python   
+np.arange(5) # array([0, 1, 2, 3, 4])
 np.zeros((3,2), dtype='int32')
-// array([[0, 0],
-       [0, 0],
-       [0, 0]], dtype=int32)
+# array([[0, 0],
+#      [0, 0],
+#      [0, 0]], dtype=int32)
 
-np.ones((3,2))   // default float 64
-// array([[1., 1.],
-       [1., 1.],
-       [1., 1.]])
+np.ones((3,2))   # default float 64
+# array([[1., 1.],
+#      [1., 1.],
+#      [1., 1.]])
 ```
 
 #### 2-4) 차원의 크기를 변경하는 reshape   
