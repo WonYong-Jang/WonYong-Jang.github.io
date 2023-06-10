@@ -35,7 +35,13 @@ Output
 1     3008
 ```
 
-데이터를 확인해보면, TARGET 값 0이 만족한 고객이고, 1이 불만족한 고객이다.     
+데이터를 확인해보면, TARGET 값 0이 만족한 고객이고, 1이 불만족한 고객이다.    
+
+이제 학습 전 데이터 전처리를 진행해보자.   
+
+- - - 
+
+## 2. 데이터 전처리   
 
 또한, describe 메서드를 통해 데이터를 확인했을 때 var3 피처의 값이 null 인 경우,  
     -999999 값으로 넣어 준 것으로 보인다.   
@@ -107,7 +113,7 @@ X_tr, X_val, y_tr, y_val = train_test_split(X_train, y_train,
 
 - - -   
 
-## 2. XGBoost    
+## 3. XGBoost    
 
 먼저 [베이지안 최적화](https://wonyong-jang.github.io/ml/2022/10/10/Machine-Learning-Bayesian-Optimization.html)를 위해 
 아래와 같이 준비하자.   
@@ -223,7 +229,7 @@ plot_importance(xgb_clf, ax=ax , max_num_features=20,height=0.4)
 
 - - - 
 
-## 3. LightGBM   
+## 4. LightGBM   
 
 이번에는 LightGBM을 이용하여 구현해보자.    
 하이퍼 파라미터 튜닝 전에 아래와 같이 먼저 실행해서 ROC AUC 값을 확인해보고, 
