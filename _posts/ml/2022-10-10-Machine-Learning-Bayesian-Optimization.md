@@ -10,7 +10,7 @@ background: '/img/posts/mac.png'
 
 ## 1. GridSearchCV 하이퍼 파라미터 튜닝 문제   
 
-[이전글](https://wonyong-jang.github.io/ml/2022/09/12/Machine-Learning-Sklearn-Data-Set.html) 에서 
+먼저, [이전글](https://wonyong-jang.github.io/ml/2022/09/12/Machine-Learning-Sklearn-Data-Set.html) 에서 
 살펴봤던 GridSearchCV 를 이용한 하이퍼 파라미터 튜닝을 진행할 때 
 문제점에 대해 먼저 살펴보자.   
 
@@ -18,7 +18,8 @@ background: '/img/posts/mac.png'
 튜닝할 때 GridSearchCV를 이용한다면 튜닝해야 할 하이퍼 파라미터 개수가 
 많고 범위가 넓어서 튜닝에 너무 오랜 시간 소요 되는 문제가 있다.`   
 
-따라서 위의 문제를 해결하기 위해 베이지안 최적화를 살펴보자.   
+따라서 위의 문제를 해결하기 위해 베이지안 최적화를 사용하여 해결할 수 있는데, 
+    이번글에서는 베이지안 최적화에 대해 자세히 살펴보자.   
 
 - - - 
 
@@ -101,7 +102,7 @@ def objective_func(search_space):
 from hyperopt import fmin, tpe, Trials
 import numpy as np
 
-# 입력 결괏값을 저장한 Trials 객체값 생성.
+# 입력 결과값을 저장한 Trials 객체값 생성.
 trial_val = Trials()
 
 # 목적 함수의 최솟값을 반환하는 최적 입력 변숫값을 5번의 입력값 시도(max_evals=5)로 찾아냄.
@@ -198,6 +199,11 @@ xgb_search_space = {'max_depth': hp.quniform('max_depth', 5, 20, 1),
 
 `명시적으로 변환해야 하는 이유는 search space는 5.0, 6.0 과 같이 실수형으로 들어오기 때문이다.`       
 
+> 아래에서 n_estimators를 100으로 축소 후 베이지안 최적화를 통해 최적의 하이퍼 파라미터를 찾았다.   
+> 그 후 최적의 하이퍼 파라미터를 이용해서 n_estimator=400 으로 최종 학습 시키려고 한다.  
+> 물론, n_estimator=100에서 찾은 최적의 하이퍼 파라미터가 n_estimator=400 에서도 정확하게 최적의 하이퍼 파라미터 일 수 없다.   
+> 하지만, n_estimator가 커지면 최적화 하는데 너무 오랜 시간이 걸리며, n_estimator가 어느 정도 (적정) 횟수 이상 일 때 찾은 최적 하이퍼 파라미터에 
+> 기반한 모델 성능은 전반적으로 높은 성능을 가지기 때문이다.    
 
 ```python
 from sklearn.model_selection import cross_val_score
