@@ -62,12 +62,19 @@ joblib.dump(model, './model.pkl')
 다음으로 저장한 모델을 로드 후 사용해보자.   
 
 ```python
+# 모델 로드 
 loaded_model = joblib.load('./model.pkl')
+
+# 예측   
 result = loaded_model.predict(X_test)
+
+# list = np.array([[6.8, 3.1 , 5.5, 2.1]])
+# result = loaded_model.predict(list)    
+
+# 성능 측정    
 accuracy = accuracy_score(y_test, result)
 ```
 
-- - - 
 
 - - -
 Referrence 
