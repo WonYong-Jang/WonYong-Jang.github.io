@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spark] 아파치 스파크 Partitioning "
+title: "[Spark] 아파치 스파크 Partitioning"
 subtitle: "RDD on a Cluster / Partiton 개수와 크기 정하기 / coalesce 와 repartition "    
 comments: true
 categories : Spark
