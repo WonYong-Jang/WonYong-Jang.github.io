@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Redis] Jedis Pool 최적화(레디스 커넥션 풀)"
-subtitle: ""       
+subtitle: " "       
 comments: true
 categories : BigData
 date: 2021-05-14
