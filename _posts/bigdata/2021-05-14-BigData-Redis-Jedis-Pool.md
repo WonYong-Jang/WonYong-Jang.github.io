@@ -116,6 +116,7 @@ maxTotal을 올바르게 설정하려면 다음 요소를 고려해야 한다.
 <https://theserverside.tistory.com/302>   
 <https://github.com/RedisLabs/spark-redis/tree/master/doc>   
 <https://docs.jdcloud.com/en/jcs-for-redis/jedispool-connct>    
+<https://d2.naver.com/helloworld/5102792>   
 
 {% highlight ruby linenos %}
 
