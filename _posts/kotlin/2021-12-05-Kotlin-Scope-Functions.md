@@ -243,7 +243,8 @@ val author = author.also {
 
 **Reference**    
 
-<https://blog.yena.io/studynote/2020/04/15/Kotlin-Scope-Functions.html>   
+<https://blog.yena.io/studynote/2020/04/15/Kotlin-Scope-Functions.html>  
+<https://kotlinlang.org/docs/scope-functions.html>   
 
 {% highlight ruby linenos %}
 
