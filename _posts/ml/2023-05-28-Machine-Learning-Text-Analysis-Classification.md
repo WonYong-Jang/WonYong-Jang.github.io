@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Machine Learning] 텍스트 분석(Text Analysis)의 Classification"
-subtitle: "Newsgroup 분류하기 / CountVectorizer, TfidfVectorizer" 
+subtitle: "Newsgroup 분류하기 / CountVectorizer, TfidfVectorizer / n gram, stop words" 
 comments: true
 categories : ML
 date: 2023-05-28
@@ -225,9 +225,23 @@ print('TF-IDF Logistic Regression 의 예측 정확도는 {0:.3f}'.format(accura
 
 ## 3. stop words 필터링 및 ngram 추가   
 
-아래와 같이 stop words를 추가했고, ngram을 (1, 2) 로 변경한 예이다.   
+아래와 같이 stop words를 추가했고, ngram을 (1, 2) 로 변경한 예이다.     
 
-```
+`ngram은 n의 개수에 따라 여러 토큰을 사용할 수 있는데, 몇개의 토큰을 사용할지는 
+ngram_range 를 통해 정할 수 있다.`   
+지정한 n개 숫자만큼의 토큰을 묶어서 사용한다.   
+예를 들어 기본값인 (1, 1)이라면 1개의 토큰을 사용하고 (2, 3) 이라면 
+2 ~ 3개의 토큰을 사용한다.     
+
+> n gram의 기본 값은 (1, 1) 이다.   
+
+또한, `불용어(stop words)는 문장에 자주 등장하지만 문장 안에서 
+큰 의미를 갖지 않는 단어이다.`    
+
+> 보통 "우리, 그, 은, 는, 그리고, 그래서" 와 같은 대명사, 조사, 접속사 등을 
+불용어 리스트에 넣어서 처리한다.    
+
+```python
 # stop words 필터링을 추가하고 ngram을 기본(1,1)에서 (1,2)로 변경하여 Feature Vectorization 적용.
 tfidf_vect = TfidfVectorizer(stop_words='english', ngram_range=(1,2), max_df=300)
 tfidf_vect.fit(X_train)
@@ -238,6 +252,13 @@ lr_clf = LogisticRegression(solver='liblinear')
 lr_clf.fit(X_train_tfidf_vect , y_train)
 pred = lr_clf.predict(X_test_tfidf_vect)
 print('TF-IDF Vectorized Logistic Regression 의 예측 정확도는 {0:.3f}'.format(accuracy_score(y_test ,pred)))
+```
+
+아래와 같이 직접 불용어를 지정하여 넣어줄 수도 있다.   
+
+```python
+stop_words=["코로나", "문의입니다"]
+tfidf_vect = TfidfVectorizer(stop_words=stop_words)
 ```
 
 - - -

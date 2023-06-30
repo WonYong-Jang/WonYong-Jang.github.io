@@ -115,13 +115,19 @@ BOW 피처 벡터화 유형에는 두가지로 나눠볼 수 있는데 아래와
 > 참고로, 사이킷런에서 카운트 벡터화와 TF-IDF 사용방법은 거의 유사하며, 
     파라미터로 카운터 벡터화를 사용할 것인지 TF-IDF를 사용할 것인지만 다르다.   
 
-<img width="900" alt="스크린샷 2023-05-27 오후 12 13 54" src="https://github.com/WonYong-Jang/Spring-Jquery-Project/assets/26623547/6b944275-92ac-47fc-8689-2c9e3fd9cef7">    
+<img width="900" alt="스크린샷 2023-05-27 오후 12 13 54" src="https://github.com/WonYong-Jang/Spring-Jquery-Project/assets/26623547/6b944275-92ac-47fc-8689-2c9e3fd9cef7">     
+
+- min_df: 오타 또는 희귀 단어 등을 제거 하는 효과가 있다.   
+
+- max_df: 너무 자주 등장하지만 큰 의미가 없는 불용어 제거하는 효과가 있다.   
+
+- max_features: 기본값은 None이며, 빈도수가 가장 높은 순으로 지정한 개수만큼 단어 사전을 만들어서 벡터라이저가 학습할 어휘의 양을 제한한다.     
 
 <img width="900" alt="스크린샷 2023-05-27 오후 12 18 45" src="https://github.com/WonYong-Jang/Spring-Jquery-Project/assets/26623547/1187d199-d929-4ddb-9a1a-dbe12a9f0e4a">  
 
 아래 코드로 확인해보자.   
 
-```
+```python
 text_sample_01 = 'The Matrix is everywhere its all around us, here even in this room. \
                   You can see it out your window or on your television. \
                   You feel it when you go to work, or go to church or pay your taxes.'
@@ -136,14 +142,16 @@ print(text,"\n", len(text))
 생성했다.  
 그 후 `fit()과 transform()을 통해 feature vectorization을 수행했다.`    
 
-```
+```python
 from sklearn.feature_extraction.text import CountVectorizer
 
 # Count Vectorization으로 feature extraction 변환 수행. 
 cnt_vect = CountVectorizer()
-cnt_vect.fit(text)
+cnt_vect.fit(text) # 문서에 있는 모든 토큰의 단어 사전을 학습   
 
-ftr_vect = cnt_vect.transform(text)
+# 문서를 단어와 문서 행렬로 변환.
+# transform() 이후에는 행렬로 변환되어 숫자 형태로 변경   
+ftr_vect = cnt_vect.transform(text) 
 ```
 
 Output
@@ -168,9 +176,9 @@ Output
 > 행은 각 문서 또는 문장의 인덱스를 나타내며, 열은 단어의 인덱스를 뜻한다.   
 
 
-결과를 더 자세히 보려면 아래처럼 확인 가능하다.   
+`vocabulary를 통해 단어 사전을 볼 수 있다.`    
 
-```
+```python
 print(cnt_vect.vocabulary_)
 ```
 
@@ -185,7 +193,60 @@ Outout
 몇번 count 되었는지 확인할 수 있다.   
 
 > (0,2), (1,2), (2,2) ...
-> 참고로 count가 0인 경우는 노출하지 않는다.     
+> 참고로 count가 0인 경우는 노출하지 않는다.   
+
+또한, 아래와 같이 각 단어 사전을 확인 할 수도 있다.   
+
+```python
+print(cnt_vect.get_feature_names_out())
+```
+
+Output   
+
+```
+['all' 'and' 'around' 'bed' 'believe' 'blue' 'can' 'church' 'deep' 'ends'
+ 'even' 'everywhere' 'feel' 'go' 'goes' 'here' 'hole' 'how' 'in' 'is' 'it'
+ 'its' 'matrix' 'on' 'or' 'out' 'pay' 'pill' 'rabbit' 'red' 'room' 'see'
+ 'show' 'stay' 'story' 'take' 'taxes' 'television' 'the' 'this' 'to' 'us'
+ 'wake' 'want' 'whatever' 'when' 'window' 'wonderland' 'work' 'you' 'your']
+```
+
+위 결과를 판다스로 보기 좋게 표로 나타내보자.   
+아래는 각 문서마다 단어의 빈도수를 나타낸다.   
+
+```python
+result = pd.DataFrame(ftr_vect.toarray(), columns=cnt_vect.get_feature_names_out())
+result
+```
+
+> 희소 행렬에 toarray() 메서드를 사용하면, 넘파이 배열로 변환해준다.  
+
+<img width="600" alt="스크린샷 2023-06-30 오후 10 52 40" src="https://github.com/WonYong-Jang/algorithm/assets/26623547/acff7d7f-1a76-4fe6-a89e-bf001be9dbae">   
+
+전체 문서별 빈도수도 확인해보자.   
+
+```python
+result.sum()
+```
+
+Output
+
+```
+all            1
+and            4
+around         1
+bed            1
+believe        2
+blue           1
+can            1
+church         1
+deep           1
+ends           1
+even           1
+everywhere     1
+# ...
+```
+
 
 이번에는 파라미터를 추가해서 실습해보자.     
 `max features 옵션을 5개로 주어서 가장 많은 빈도수를 가지는 5개만 추출하도록 했다.`   
@@ -193,7 +254,7 @@ Outout
 단어가 추출되므로 필수로 넣어주어야 한다.`   
 
 
-```
+```python
 cnt_vect = CountVectorizer(max_features=5, stop_words='english')
 cnt_vect.fit(text)
 ftr_vect = cnt_vect.transform(text)
