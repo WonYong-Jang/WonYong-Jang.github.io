@@ -324,7 +324,8 @@ print('Logistic Regression 정확도: ',accuracy_score(test_df['label'],preds))
 Referrence 
 
 <https://www.nltk.org/>    
-<https://www.inflearn.com/course/lecture?courseSlug=%ED%8C%8C%EC%9D%B4%EC%8D%AC-%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D-%EC%99%84%EB%B2%BD%EA%B0%80%EC%9D%B4%EB%93%9C&unitId=25263&tab=curriculum>    
+<https://www.inflearn.com/course/lecture?courseSlug=%ED%8C%8C%EC%9D%B4%EC%8D%AC-%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D-%EC%99%84%EB%B2%BD%EA%B0%80%EC%9D%B4%EB%93%9C&unitId=25263&tab=curriculum>   
+<https://wikidocs.net/92961>   
 
 {% highlight ruby linenos %}
 {% endhighlight %}
