@@ -113,7 +113,12 @@ public void save(Long key) {
 
 따라서, DB 부하가 발생함에 따라 해당 코드에서 계속 커넥션을 잡고 있었던 
 것이 또 하나의 root cause 이기 때문에 
-다른 코드와 동일하게 timeout을 설정해 주었다.   
+다른 코드와 동일하게 timeout을 설정해 주었다.  
+
+```scala
+Await.result(query, Duration.Inf)
+```
+
 
 - - - 
 
@@ -174,18 +179,16 @@ public void save(Long key) {
 이번 장애로 인해 Spark Streaming에서 전달 받은 데이터로 빠르게 처리 되어야 하는 도메인들이 영향을 받았다.   
 또한, 잘못된 설계로 인하여 장애가 redis까지 전파가 되었다.   
 
-> 물론 그 당시에는 Best solution 이였을 수 있지만 현재 기준으로는 개선해야 하는 구조이다.   
+> 물론 그 당시에는 최선의 선택 이였을 수 있지만 현재 기준으로는 개선해야 하는 구조이다.   
 
 따라서, 위에서 언급한 root cause와 이에 따른 action item들을 정리했고  
     action item을 하나씩 작업하여 개선해 나갸야 될 것 같다.   
 
 - - - 
 
-<https://aws.amazon.com/ko/blogs/big-data/monitor-spark-streaming-applications-on-amazon-emr/>   
+**Reference**   
 
-
-**Reference**    
-
+<https://aws.amazon.com/ko/blogs/big-data/monitor-spark-streaming-applications-on-amazon-emr/>    
 
 {% highlight ruby linenos %}
 
