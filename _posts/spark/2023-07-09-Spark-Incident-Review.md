@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Spark streaming delay (Incident Review)"   
-subtitle: "StreamingListener"    
+subtitle: "Monitor Spark streaming applications on Amazon EMR"    
 comments: true
 categories : Spark
 date: 2023-07-09
@@ -10,7 +10,7 @@ background: '/img/posts/mac.png'
 
 이번 글에서는 Spark Streaming을 이용하여 서비스 하면서 
 최근 처리 지연 장애가 발생했고, 해당 장애에 대해 리뷰해 보면서 root cause와 
-action item에 대해 살펴보자.     
+action item에 대해 살펴보려고 한다.    
 
 
 - - - 
@@ -24,7 +24,7 @@ Incident review를 진행하기 전에 현재 서비스되고 있는 구조에 �
 수집하여 Spark Streaming에서 가공 후 documentDB에 저장한다.`     
 그 후 여러 도메인들이 사용할 수 있도록 kafka를 통해 데이터를 publishing 한다.    
 
-> Spark Streaming 처리 중 실패 데이터는 redis에 저장 후 배치를 통해 재처리를 진행한다.   
+> Spark Streaming 처리 중 실패 데이터는 redis에 저장 후 배치를 통해 재처리를 진행하고 있다.    
 
 <img width="633" alt="스크린샷 2023-07-09 오후 12 28 04" src="https://github.com/WonYong-Jang/Development-Process/assets/26623547/cf67eb03-2def-4d20-b300-4ea89143f117">   
 
@@ -32,7 +32,7 @@ Incident review를 진행하기 전에 현재 서비스되고 있는 구조에 �
 Spark Streaming 인스턴스를 1대만 표시했지만 실제로 6 대의 인스턴스가 
 도메인 별로 각각 수집되고 있다.   
 
-이때, `Spark 인스턴스 별로 하나의 DB를 사용하고 있었고, 논리적으로 database만 다르게 구분`하여 사용하고 있었다.  
+이때, `6대의 Spark 인스턴스들이 하나의 DB를 사용하고 있었고, 논리적으로 database만 다르게 구분`하여 사용하고 있었다.  
 
 그 당시 물리적으로 데이터 베이스를 모두 나누지 않은 이유는 비용과 데이터 건수에 있었다.     
 6대 인스턴스 중 1대의 인스턴스만 요청 데이터가 많고, 나머지 인스턴스들은 
@@ -90,8 +90,8 @@ DB 부하가 심해진 것이 원인이였다.`
 그 중 하나는 아래와 같이 건 바이 건으로 데이터 조회 및 저장을 
 하는 코드였다.   
 
-데이터 건수가 적었을 때 foreach를 돌면서 처리시 아래 코드에서는 
-문제가 없었지만 대량의 데이터를 처리할 때 처리가 지연됨을 확인했다.   
+아래와 같이 데이터 건수가 적었을 때 foreach를 돌면서 처리시 
+문제가 없었지만 대량의 데이터를 처리할 때 처리가 지연됨을 확인했다.     
 
 ```java
 @Transactional
@@ -109,14 +109,20 @@ public void save(Long key) {
 ### 2-2) DB 조회시 timeout 설정   
 
 다른 코드에서는 모두 DB 조회시 timeout을 최대 10초로 지정했었지만, 
-    delay가 발생한 곳에서는 해당 설정이 누락되어 있었다.   
+    delay가 발생한 곳에서는 해당 설정이 누락되어 있었다.    
 
-따라서, DB 부하가 발생함에 따라 해당 코드에서 계속 커넥션을 잡고 있었던 
-것이 또 하나의 root cause 이기 때문에 
-다른 코드와 동일하게 timeout을 설정해 주었다.  
+> 아래와 같이 Infinite duration으로 설정되어 있었다.   
 
 ```scala
 Await.result(query, Duration.Inf)
+```
+
+DB 부하가 발생함에 따라 해당 코드에서 계속 커넥션을 잡고 있었던 
+것이 또 하나의 root cause 였다.   
+따라서, 다른 코드와 동일하게 timeout을 설정해 주었다.  
+
+```scala
+Await.result(query, Duration.create(10, TimeUnit.SECONDS)
 ```
 
 
@@ -134,6 +140,23 @@ Await.result(query, Duration.Inf)
 
 따라서, [Monitor Spark streaming applications on Amazon EMR](https://aws.amazon.com/ko/blogs/big-data/monitor-spark-streaming-applications-on-amazon-emr/)에서 
 가이드 해준 것처럼 SparkListeners를 추가하여 delay가 있는지에 대한 알람도 추가해야 한다.   
+
+```scala
+class StreamingCustomListener extends StreamingListener {
+    override def onBatchCompleted(batchCompleted: StreamingListenerBatchCompleted): Unit = {
+
+        val totalDelay: Long = batchCompleted.batchInfo.totalDelay.getOrElse(0)
+    }
+}
+```
+
+```scala
+val conf = new SparkConf().setAppName(appName)
+val batchInterval = Milliseconds(10000)
+val ssc = new StreamingContext(conf, batchInterval)
+
+ssc.addStreamingListener(new StreamingCustomLister)     
+```
 
 
 ### 3-2) 데이터 베이스 region 분리  

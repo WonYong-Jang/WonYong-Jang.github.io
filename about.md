@@ -137,13 +137,9 @@ background: '/img/bg-index.jpg'
 
 - [AWS EMR에서 실행되는 Spark 라이브러리 버전 충돌 해결](https://wonyong-jang.github.io/spark/2021/07/08/Spark-override-dependency.html)       
 
-- [Spark Streaming graceful shutdown 적용](https://wonyong-jang.github.io/spark/2021/06/29/Spark-graceful-shutdown.html)          
+- [Spark Streaming 에서 데이터 손실을 방지하기 위한 graceful shutdown 적용](https://wonyong-jang.github.io/spark/2021/06/29/Spark-graceful-shutdown.html)          
 
-
-<br>      
-#### Apache Airflow execution date 해결        
-
-- [<u>Airflow에서 execution date에 대한 오해와 한국시간에 대한 고려</u>](https://wonyong-jang.github.io/bigdata/2021/03/08/BigData-Apache-Airflow.html)    
+- [Spark Streaming 처리 지연 장애 리뷰](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Incident-Review.html)    
 
 
 
