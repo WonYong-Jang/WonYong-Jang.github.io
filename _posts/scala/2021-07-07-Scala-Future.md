@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Scala] 동시성을 위한 Future와 Promise"
-subtitle: "Concurrency"    
+title: "[Scala] 동시성을 위한 Future"
+subtitle: "Concurrency / Await.ready 와 Await.result 차이"    
 comments: true
 categories : Scala
 date: 2021-07-07
@@ -86,17 +86,123 @@ Try의 계층 구조는 아래의 그림과 같다.
 
 ## 2. Future의 사용   
 
+스칼라에서 Future 를 제공하여 비동기 코드를 쉽게 작성할 수 있도록 도와준다.   
+
+아래와 같이 Future 를 생성할 수 있다.   
+
+`Future는 별도의 스레드에서 실행되며, 다른 스레드에서 실행할 수 있는 
+기능을 제공하는 추상화는 ExecutionContext가 제공한다.`    
+따라서, ExecutionContext 를 import 해줘야 한다.   
 
 
+```scala
+import scala.concurrent.ExecutionContext.Implicits.global
+
+def fetchDataFrom(url : String, waitTime : Long = 0L) : Future[String] = Future {
+  Thread.sleep(waitTime)
+  s"Mock response from $url"
+}
+
+fetchDataFrom("https://www.baeldung.com")
+```
+
+`주의해야 할 점은 main 스레드에서 실행되지 않기 때문에 다른 스레드에서 
+처리하는 동안 main 스레드가 먼저 종료될 수도 있다.`   
+
+따라서, `main 스레드에서 결과를 기다리기 위한 방법으로 Await를 
+사용할 수 있다.`       
+
+### 2-1) Await.ready   
+
+Await.ready는 2개의 파라미터를 가진다.    
+첫번째 파라미터는 Future 객체이며, 두번째 파라미터는 
+호출 스레드가 대기할 수 있는 최대 시간을 정의한다.   
+Future가 해당 시간 내에 완료되지 않으면 java.util.concurrent 예외를 
+던진다.   
 
 
+```scala
+val fut = fetchDataFrom("https://www.baeldung.com")
+fut.isCompleted shouldBe true
+
+val completedFuture: Future[String] = Await.ready(fut, 2.seconds)
+
+fut shouldBe completedFuture
+completedFuture.isCompleted shouldBe true
+completedFuture.isInstanceOf[Future[String]] shouldBe true
+val assertion = completedFuture.value match {
+ case Some(result) => result.isSuccess
+ case _ => false
+}
+assertion shouldBe true
+```
+
+반환값이 Future 객체이지만, 실제 반환값은 아래와 같이 사용할 수 있다.   
+
+```scala
+val result: String = Await.ready(fut, 5.seconds).value.get.get
+```
+
+### 2-2) Await.result   
+
+`Await.ready와 유사하며, 가장 큰 차이점은 Future 객체가 아닌 실제 반환값을 
+리턴한다.`   
+
+```scala
+val completedFutureResult: String = Await.result(fut, 2.seconds)
+completedFutureResult.isInstanceOf[String] shouldBe true
+```
+
+### 2-3) Await.ready vs Await.result   
+
+두 api 모두 최대 주어진 시간동안 결과를 기다리는 역할을 한다.    
+
+`아래와 같은 이유로 특별한 이유가 없다면 Await.ready를 사용하는 것이 권장된다.`   
+
+Await.result는 실패가 발생했을 때 timeout이 발생해서 실패한 것인지 실제 
+연산과정에서 실패한 것인지 확인하기가 어렵다.   
+
+아래 예제를 보자.   
+두 메서드 모두 Future 객체를 반환하며, 
+실제 결과값으로 String과 NullPointerException을 
+각각 반환할 것이다.     
+
+```scala
+def futureWithoutException(): Future[String] = Future {
+  "Hello"
+}
+def futureWithException(): Future[String] = Future {
+  throw new NullPointerException()
+}
+```   
+
+아래 테스트 케이스를 보면 Await.ready는 
+연산이 실패한 것인지 timeout이 발생한 것인지 명확하게 
+확인이 가능하다.   
+
+```scala
+// Await.readyd의 경우   
+val f1 = Await.ready(futureWithoutException, 2.seconds)
+assert(f1.isInstanceOf[Future[String]] && f1.value.get.get.contains("Hello"))
+
+val f2 =  Await.ready(futureWithException, 2.seconds)
+assert(f2.isInstanceOf[Future[String]] && f2.value.get.failed.get.isInstanceOf[NullPointerException])
+
+
+// Await.result의 경우 
+val f3 = Await.result(futureWithoutException, 2.seconds)
+assert(f3.isInstanceOf[String] && f3.contains("Hello"))
+
+assert (intercept[Exception] { Await.result(futureWithException, 2.seconds)}.isInstanceOf[NullPointerException]) 
+```
 
 - - - 
 
 **Reference**    
 
 <https://seamless.tistory.com/46>    
-<https://hamait.tistory.com/763>    
+<https://hamait.tistory.com/763>   
+<https://www.baeldung.com/scala/synchronous-handling-of-futures>    
 
 {% highlight ruby linenos %}
 
