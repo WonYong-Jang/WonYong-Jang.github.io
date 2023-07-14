@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Spark streaming delay (Incident Review)"   
-subtitle: "Monitor Spark streaming applications on Amazon EMR"    
+subtitle: "Monitor Spark streaming applications on Amazon EMR / StreamingListener"    
 comments: true
 categories : Spark
 date: 2023-07-09
@@ -11,7 +11,6 @@ background: '/img/posts/mac.png'
 이번 글에서는 Spark Streaming을 이용하여 서비스 하면서 
 최근 처리 지연 장애가 발생했고, 해당 장애에 대해 리뷰해 보면서 root cause와 
 action item에 대해 살펴보려고 한다.    
-
 
 - - - 
 
@@ -139,16 +138,72 @@ Await.result(query, Duration.create(10, TimeUnit.SECONDS)
 문제였다.    
 
 따라서, [Monitor Spark streaming applications on Amazon EMR](https://aws.amazon.com/ko/blogs/big-data/monitor-spark-streaming-applications-on-amazon-emr/)에서 
-가이드 해준 것처럼 SparkListeners를 추가하여 delay가 있는지에 대한 알람도 추가해야 한다.   
+가이드 해준 것처럼 `SparkListeners`를 추가하여 delay가 있는지에 대한 알람도 추가해야 한다.      
+
+`아래 StreamingListener를 상속받아 오버라이드 할 수 있다.`   
+
+```scala
+trait StreamingListener {
+    // Called when the streaming has been started
+    def onStreamingStarted(streamingStarted: StreamingListenerStreamingStarted) { }   
+
+    // Called when a receiver has been started 
+    def onReceiverStarted(receiverStarted: StreamingListenerReceiverStarted) { }
+
+    // Called when a receiver has reported an error
+    def onReceiverError(receiverError: StreamingListenerReceiverError) { }
+
+    // Called when a receiver has been stopped 
+    def onReceiverStopped(receiverStopped: StreamingListenerReceiverStopped) { }
+
+    // Called when a batch of jobs has been submitted for processing 
+    def onBatchSubmitted(batchSubmitted: StreamingListenerBatchSubmitted) { }
+
+    // Called when processing of a batch of jobs has started.
+    def onBatchStarted(batchStarted: StreamingListenerBatchStarted) { }
+
+    // Called when processing of a batch of jobs has completed.
+    def onBatchCompleted(batchCompleted: StreamingListenerBatchCompleted) { }
+
+    // Called when processing of a job of a batch has started.
+    def onOutputOperationStarted(
+      outputOperationStarted: StreamingListenerOutputOperationStarted) { }
+
+    // Called when processing of a job of a batch has completed. 
+    def onOutputOperationCompleted(
+      outputOperationCompleted: StreamingListenerOutputOperationCompleted) { }
+}
+```
+
+`알람을 추가하기 위해 onBatchCompleted와 onReceiverError에 대해 살펴보자.`   
+
+##### onBatchCompleted   
+
+- Total delay: The sum of the processing delay and scheduling delay   
+
+- Scheduling delay: The delay from when the batch was scheduled to run until when it actually ran   
+
+- Processing delay: How long the batch execution took   
+
+- Records: The number of records per batch    
+
+
 
 ```scala
 class StreamingCustomListener extends StreamingListener {
     override def onBatchCompleted(batchCompleted: StreamingListenerBatchCompleted): Unit = {
 
         val totalDelay: Long = batchCompleted.batchInfo.totalDelay.getOrElse(0)
-    }
+    } 
+
+    override def onReceiverError(receiverError: StreamingListenerReceiverError): Unit = {
+    val executorId = receiverError.receiverInfo.executorId
+    val lastError = receiverError.receiverInfo.lastError
+    val lastErrorMessage = receiverError.receiverInfo.lastErrorMessage
+
+  }
 }
-```
+```   
 
 ```scala
 val conf = new SparkConf().setAppName(appName)
@@ -157,6 +212,7 @@ val ssc = new StreamingContext(conf, batchInterval)
 
 ssc.addStreamingListener(new StreamingCustomLister)     
 ```
+
 
 
 ### 3-2) 데이터 베이스 region 분리  
@@ -212,6 +268,7 @@ ssc.addStreamingListener(new StreamingCustomLister)
 **Reference**   
 
 <https://aws.amazon.com/ko/blogs/big-data/monitor-spark-streaming-applications-on-amazon-emr/>    
+<https://github.com/apache/spark/blob/v2.4.4/streaming/src/main/scala/org/apache/spark/streaming/scheduler/StreamingListener.scala#L70>    
 
 {% highlight ruby linenos %}
 
