@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spark] Spark streaming delay (Incident Review)"   
+title: "[Spark] Spark streaming processing delay (Incident Review)"   
 subtitle: "Monitor Spark streaming applications on Amazon EMR / StreamingListener"    
 comments: true
 categories : Spark
@@ -140,7 +140,7 @@ Await.result(query, Duration.create(10, TimeUnit.SECONDS)
 따라서, [Monitor Spark streaming applications on Amazon EMR](https://aws.amazon.com/ko/blogs/big-data/monitor-spark-streaming-applications-on-amazon-emr/)에서 
 가이드 해준 것처럼 `SparkListeners`를 추가하여 delay가 있는지에 대한 알람도 추가해야 한다.      
 
-`아래 StreamingListener를 상속받아 오버라이드 할 수 있다.`   
+`아래와 같이 StreamingListener를 상속받아 오버라이드 할 수 있다.`   
 
 ```scala
 trait StreamingListener {
@@ -175,25 +175,34 @@ trait StreamingListener {
 }
 ```
 
-`알람을 추가하기 위해 onBatchCompleted와 onReceiverError에 대해 살펴보자.`   
+`알람을 추가하기 위해 onBatchCompleted와 onReceiverError를 적용한 예제를 살펴보자.`      
 
 ##### onBatchCompleted   
 
-- Total delay: The sum of the processing delay and scheduling delay   
+- Total delay: 데이터를 전달 받고 처리가 완료될 때까지 걸린 총 시간이다.  
+따라서, totalDelay는 배치를 처리하는데 걸린 시간(processingDelay)와 배치가 대기열에서 대기하는데 걸린시간(SchedulingDelay)의 합이다.   
+    ```
+    totalDelay = schedulingDelay + processingDelay
+    ```
 
-- Scheduling delay: The delay from when the batch was scheduled to run until when it actually ran   
+- Scheduling delay: 이전 배치 처리가 완료될 때까지 배치가 대기열에서 대기하는 시간이다. 즉 배치 처리가 준비된 시점과 
+실제로 처리가 시작될 때까지 경과된 시간이다.    
 
-- Processing delay: How long the batch execution took   
+- Processing delay: 실제로 배치를 처리하는데 걸린 시간이다.    
 
 - Records: The number of records per batch    
 
 
+`배치가 지연을 모니터링 및 알람을 추가하기 위해서 schedulingDelay와 totalDelay를 이용하여 확인할 수 있다.`   
+`totalDelay에서 schedulingDelay가 많은 비중을 차지하고 있다면, 배치가 지연되고 있음을 알 수 있다.`   
 
 ```scala
 class StreamingCustomListener extends StreamingListener {
     override def onBatchCompleted(batchCompleted: StreamingListenerBatchCompleted): Unit = {
 
         val totalDelay: Long = batchCompleted.batchInfo.totalDelay.getOrElse(0)
+        val schedulingDelay = batchInfo.schedulingDelay.getOrElse(0L)
+
     } 
 
     override def onReceiverError(receiverError: StreamingListenerReceiverError): Unit = {
