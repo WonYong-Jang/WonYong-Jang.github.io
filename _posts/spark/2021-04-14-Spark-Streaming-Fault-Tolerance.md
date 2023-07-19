@@ -1,19 +1,24 @@
 ---
 layout: post
 title: "[Spark] Streaming 의 Fault Tolerance 와 Graph"
-subtitle: "장애 복구"    
+subtitle: "장애 복구 / Dstream의 Graph / Network Input Tracker, Job Scheduler, Job Manager"    
 comments: true
 categories : Spark
 date: 2021-04-14   
 background: '/img/posts/mac.png'
 ---
 
-이번 글에서는 Spark Streaming의 Fault Tolerance 에 대해서 살펴보자.   
+이번 글에서는 Spark Streaming의 Fault Tolerance 와 Graph에 대해 살펴보자.    
 
-기본적으로 Spark 엔진은 RDD의 Fault Tolerance를 지원하며, 
-    Spark Streaming 또한, RDD의 시퀀스이다.   
-`따라서, Spark Streaming은 
-    RDD의 Fault Tolerance를 그대로 상속받아 처리하게 된다.`   
+기본적으로 Spark 엔진은 RDD의 Fault Tolerance를 지원하며 
+    Spark Streaming 에서 사용하는 상위 레벨의 추상화된 Dstream 또한, RDD의 시퀀스이다.   
+따라서 Spark Streaming은 
+    RDD의 Fault Tolerance를 그대로 상속받아 처리하게 된다.   
+
+또한 Spark RDD 베이스 코드를 작성하면 DAG의 lineage를 생성 및 실행 계획을 기록하여 실행하는데 
+Spark Streaming도 마찬가지로 진행된다.  
+
+해당 내용들을 자세히 살펴보자.   
 
 - - -    
 
@@ -56,7 +61,27 @@ RDD는 리니지(lineage)에 생성 작업들을 기록해두기 때문에,
 
 - - - 
 
-## 2. DStream Graph   
+## 2. DStream Graph      
+
+이번에는 Dstream의 그래프에 대해 살펴보자.   
+
+Spark는 기본적으로 RDD 베이스로 실행을 할 경우 lineage를 생성하여 실행 계획을 기록해 두었다.   
+`Spark Streaming도 마찬가지로 Dstream Graph로 변경되고, 실행 계획을 세우고 이에 따라 실행된다.`         
+
+<img width="771" alt="스크린샷 2023-07-19 오후 10 29 32" src="https://github.com/WonYong-Jang/Development-Process/assets/26623547/b9569e15-acad-4d16-bf1c-c00bf0bb4eca">   
+
+위 코드에서 socketTextStream을 만들면, Input Receiver Dstream을 리턴할 것이며 해당 Dstream을 통해 
+변경작업(map 연산)을 한 후 최종적으로 output 작업(foreachRDD)을 하였다.   
+
+> 여기서 output 작업은 action 작업과 유사하다.   
+
+`그 후 아래와 같이 Dstream 의 batch interval 마다 Dstream Graph를 RDD graph로 변경한다.`      
+
+> Dstream 은 RDD의 시퀀스이며, 상위 레벨의 추상화된 모델이기 때문이다.   
+
+<img width="800" alt="스크린샷 2023-07-19 오후 10 43 21" src="https://github.com/WonYong-Jang/Development-Process/assets/26623547/33f9fac6-6f92-4e15-a6fd-fca19d33bfbf">    
+
+`위와 같이 각각의 output이 spark action으로 변경되며, action 1개는 보통 job 1개를 생성하기 때문에 총 3개의 spark job이 생성되었다.`      
 
 
 
