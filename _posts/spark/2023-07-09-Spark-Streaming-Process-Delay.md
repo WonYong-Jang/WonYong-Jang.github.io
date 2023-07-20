@@ -203,6 +203,12 @@ class StreamingCustomListener extends StreamingListener {
         val totalDelay: Long = batchCompleted.batchInfo.totalDelay.getOrElse(0)
         val schedulingDelay = batchInfo.schedulingDelay.getOrElse(0L)
 
+        val delayRatio = (schedulingDelay.toDouble / totalDelay.toDouble) * 100
+        if (delayRatio > THRESHOLD) {
+            // Trigger your alarm here
+            println(s"ALARM: Scheduling Delay Ratio Exceeded: $delayRatio%")
+      }
+
     } 
 
     override def onReceiverError(receiverError: StreamingListenerReceiverError): Unit = {
