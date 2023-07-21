@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Streaming 의 Fault Tolerance 와 Graph"
-subtitle: "장애 복구 / Dstream의 Graph / Network Input Tracker, Job Scheduler, Job Manager"    
+subtitle: "장애 복구 / Dstream의 Graph / Network Input Tracker, Job Scheduler, Job Manager, Block manager"    
 comments: true
 categories : Spark
 date: 2021-04-14   
@@ -82,6 +82,95 @@ Spark는 기본적으로 RDD 베이스로 실행을 할 경우 lineage를 생성
 <img width="800" alt="스크린샷 2023-07-19 오후 10 43 21" src="https://github.com/WonYong-Jang/Development-Process/assets/26623547/33f9fac6-6f92-4e15-a6fd-fca19d33bfbf">    
 
 `위와 같이 각각의 output이 spark action으로 변경되며, action 1개는 보통 job 1개를 생성하기 때문에 총 3개의 spark job이 생성되었다.`      
+
+- - -    
+
+## 3. Spark Streaming Components   
+
+이제 위에서 살펴봤던 job들을 실행하기 위한 Spark Streaming Component를 살펴보자.     
+
+아래 코드를 예시로 살펴보면, 
+    StreamingContext는 내부에 Spark Context를 항상 가지고 있으며, 
+    해당 코드는 Dstream graph를 통해 실행계획을 세우고 이에 따라 실행된다.   
+
+<img width="1000" alt="스크린샷 2023-07-20 오후 11 45 52" src="https://github.com/WonYong-Jang/algorithm/assets/26623547/cfc399de-50fd-476c-a5de-3acbe09ea84e">    
+
+
+### 3-1) Network Input Tracker   
+
+`Network Input Tracker는 외부에서 네트워크를 통해 가져온 
+데이터를 트래킹하기 위한 용도의 Component이다.`   
+`즉, 외부에서 Receiver가 가져온 데이터를 트래킹하기 위한 Component이다.`    
+Receiver가 가져온 데이터의 Block마다 어떻게 유지가 되고, 어떤 곳에서 
+처리하고 있는지 등을 트래킹한다.   
+
+### 3-2) Job Scheduler   
+
+위에서 Dstream graph가 RDD graph로 바뀌고, 
+    RDD graph에서 각 action마다 job으로 변경됨을 확인했다.    
+
+`Job Scheduler는 해당 job을 관리하는 Component이며, 주기는 
+batch interval마다 가동될 것이다.`   
+
+> batch interval 마다 들어온 데이터를 RDD의 시퀀스로 만들고 이를 순서대로 Job Manager에게 넘긴다.    
+
+`언제 어떠한 job들이 실행되어야 하는지 스케줄하며, 스케줄된 job들은 
+Job Manager에게 넘긴다.`      
+
+
+### 3-3) Job Manager   
+
+`Job Manager는 job들을 queue에 넣어두고 실행하게 된다.`     
+
+> 이때, 비지니스 로직이 복잡하거나 데이터 양이 많을 경우, queue에 쌓이게 되어 지연이 발생할 수 있다.   
+
+`Job Manager는 job들이 어떻게 만들어지고 언제 실행될지는 모르지만, 
+    Job Scheduler에 넘겨 받은 순서대로 처리한다.`     
+
+`최종적으로 Job Manager는 Job을 Spark 클러스터 내에 실행하는 역할을 한다.`    
+
+### 3-4) Spark Context
+
+`각각의 job은 spark context를 통해서 실행된다.`   
+
+위의 그림에서 `Block manager는 RDD에 들어있는 데이터 맵핑 정보를 관리한다.`   
+따라서 job은 클러스터 내에 있는 executor에서 task라는 단위로 처리될 것이며, 
+    보통 파티션은 task 1개로 할당되어 처리된다.   
+파티션의 정보는 block manger가 가지고 있다.   
+
+- - - 
+
+## 4. Execution Model   
+
+위의 내용을 도식화하여 이해해보자.    
+
+### 4-1) Receiving Data   
+
+<img width="860" alt="스크린샷 2023-07-21 오후 9 47 19" src="https://github.com/WonYong-Jang/algorithm/assets/26623547/da92759f-773f-4b4a-9ac7-04d58d3063d4">     
+
+`먼저, 외부에서 데이터를 가져오는 부분부터 시작해야 하며 
+이때 Driver가 아닌 클러스터내에 executor 중 1개가 데이터를 가져온다.`   
+
+`StreamingContext.start() 하게 되면 스트리밍이 시작 되며, 
+    Network Input Tracker가 Receiver를 띄우게 된다.`      
+
+> Receiver는 하나의 task로 실행되며, core 1개를 사용하게 된다.    
+> 이때, receiver가 core를 쓰고 다른 task를 수행할 core가 부족할 수 있기 때문에 적절하게 리소스 할당을 해야한다.     
+
+해당 Receiver는 executor 내에서 실행될 것이며 스트리밍이 시작하고 종료될 때까지 끊임 없이 계속 
+실행된다.   
+
+`Receiver가 받아들인 데이터를 Block 단위로 Block Manager에게 넘긴다.   
+해당 block을 이용하여 rdd로 만들며, 유실되면 안되기 때문에 block을 replication 해 놓는다.`       
+
+복제 후 Receiver는 Network Input Tracker에게 block 의 id 등을 알려주게 된다.    
+
+> ex) t1 batch interval 마다 속하는 block id들을 Network Input Tracker가 관리한다.      
+
+`각각의 executor 마다 block manager가 있고, driver에는 
+Block Manager Master가 존재하며 block id가 각각 어느 노드에 위치해 있는지 정보를 가지고 있다.`     
+
+
 
 
 
