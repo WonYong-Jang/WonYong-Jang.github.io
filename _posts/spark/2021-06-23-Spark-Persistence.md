@@ -89,7 +89,7 @@ action 수행시마다 원본 데이터를 읽어 반복적으로 다시 처리�
 
 ## 3. Storage Level
 
-초장기 Spark은 메모리에만 캐싱을 진행했지만, 현재는 다양한 옵션을 제공한다.  
+초창기 Spark은 메모리에만 캐싱을 진행했지만, 현재는 다양한 옵션을 제공한다.  
 각 storage level은 아래와 같이 persist 함수를 통해 추가할 수 있다.   
 
 또는 `cache() 함수를 통해 가능하며, rdd의 default 값은 MEMORY_ONLY 이며, 
@@ -117,6 +117,10 @@ rdd.unpersist()
 ### 3-1) MEMORY_ONLY   
 
 `default로 spark는 역직렬화된 형태로 RDD 데이터를 메모리에 캐싱하게 된다.`   
+
+> 단, Spark Streaming의 Dstream은 default로 StorageLevel.MEMORY_ONLY_SER 로 설정되어 있다.     
+
+
 만약 메모리가 부족하다면 메모리에 캐싱을 하지 않는다.   
 
 만약 RDD내에 파티션이 10개로 나뉘어져 있다고 가정해보고 예를 들어보자.   
@@ -142,12 +146,16 @@ java와 scala에서만 사용 가능하며,
 위에서 역직렬화 형태로 RDD를 저장하는 것보다 효율적인 공간을 사용할 수 있게 되는 장점이 있다.   
 단지, 캐싱된 데이터를 다시 연산을 할 때 역직렬화를 해주어야 함으로 더 많은 CPU를 쓰게 된다.      
 
+`직렬화는 GC의 시간을 줄이는데 유용하기 때문에 
+Spark Streaming의 Dstream은 default StorageLevel은 MEMORY_ONLY_SER로 설정되어 있다.`    
+
 > 메모리 공간을 훨씬 적게 사용하므로 상황에 따라 유용하게 사용 될 수 있다.   
 
 ### 3-4) MEMORY_AND_DISK_SER (Java and Scala)   
 
 위와 마찬가지로 직렬화 형태로 RDD 데이터를 저장하며, 
     부족할 경우 디스크에 저장한다.   
+
 
 ### 3-5) DISK_ONLY
 
@@ -173,7 +181,23 @@ web ui에서는 아래와 같이 disk에 저장된 것을 확인할 수 있다.
 따라서 이를 방지하기 위해 처음부터 캐싱 데이터를 copy 하여서 장애 발생시 
 recomputation 되는 것을 방지할 수 있다.   
 
-### 3-7) OFF_HEAP (experimental)   
+### 3-7) MEMORY_AND_DISK_SER_2    
+
+`Spark Streaming의 Input DStream은 해당 StorageLevel을 사용한다.`       
+
+> 외부에서 Receiver가 데이터를 받아온 데이터를 Input DStream이라고 한다.   
+
+직렬화 후 메모리에 저장하게 되면 메모리도 적게 사용하고 GC 시간도 단축시킬 수 있다고 언급했다.    
+
+그럼 왜 디스크에 저장하며 copy까지 해서 사용할까?   
+
+`스트리밍 데이터가 갑작스럽게 증가하여 메모리가 부족하는 경우 데이터 유실이 발생할 수 있기 때문에, 
+    외부에서 최초 받아온 데이터는 안전하게 디스크에 저장한다.`   
+
+`이렇게 디스크에 저장하더라도 장애로 인해 데이터 유실이 발생할 수 있기 때문에 copy까지 해서 
+fault tolerance를 보장한다.`      
+
+### 3-8) OFF_HEAP (experimental)   
 
 `보통 캐싱되는 곳은 executor의 메모리를 사용한다.`
 
