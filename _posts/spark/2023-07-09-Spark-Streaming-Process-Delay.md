@@ -200,8 +200,8 @@ trait StreamingListener {
 class StreamingCustomListener extends StreamingListener {
     override def onBatchCompleted(batchCompleted: StreamingListenerBatchCompleted): Unit = {
 
-        val totalDelay: Long = batchCompleted.batchInfo.totalDelay.getOrElse(0)
-        val schedulingDelay = batchInfo.schedulingDelay.getOrElse(0L)
+        val totalDelay: Long = batchCompleted.batchInfo.totalDelay.getOrElse(0L)
+        val schedulingDelay: Long = batchInfo.schedulingDelay.getOrElse(0L)
 
         val delayRatio = (schedulingDelay.toDouble / totalDelay.toDouble) * 100
         if (delayRatio > THRESHOLD) {

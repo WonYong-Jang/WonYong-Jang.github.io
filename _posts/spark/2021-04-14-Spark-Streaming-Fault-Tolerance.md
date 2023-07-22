@@ -170,8 +170,33 @@ Job Manager에게 넘긴다.`
 `각각의 executor 마다 block manager가 있고, driver에는 
 Block Manager Master가 존재하며 block id가 각각 어느 노드에 위치해 있는지 정보를 가지고 있다.`     
 
+- - -    
+
+### 4-2) Job Scheduling   
+
+이번엔 Job Scheduling에 대해 살펴보자.   
+
+<img width="900" alt="스크린샷 2023-07-22 오후 2 17 05" src="https://github.com/WonYong-Jang/algorithm/assets/26623547/d21b4cb1-e228-449c-aa03-dbdd6bcdf625">
 
 
+우리가 Spark Streaming 코드를 작성하게 되면 Dstream graph로 해석되고, 
+    RDD graph로 변환된다고 언급했다.  
+따라서, 각 action 마다 job으로 해석될 것이며 
+실제 실행 단위는 task로 실행된다.   
+
+`여기서 실행 대상 데이터들은 Network Input Tracker가 block 단위로 관리하게 
+되므로 Dstream Graph와 Network Input Tracker가 공조하여 job을 만들어 낸다.`      
+
+> job에는 어떤 데이터(Network Input Tracker에서 참조)를 수행할지 
+어떤 연산(Dstream graph 참조)을 할지에 대한 정보가 담겨있다.     
+
+`Job Scheduler 는 job을 생성하여 Job Manager가 관리하는 queue에 
+순서대로 넣는다.`       
+
+`그 후 Job Manager는 직접 스케줄하는게 아니라, 스케줄러에 의해 
+넘겨 받은 job들을 순서대로 실행시킨다.`      
+
+최종적으로 각 executor에게 job 들을 전달하여 연산할 수 있도록 한다.    
 
 
 
