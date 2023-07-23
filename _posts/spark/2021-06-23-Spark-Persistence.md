@@ -118,7 +118,7 @@ rdd.unpersist()
 
 `default로 spark는 역직렬화된 형태로 RDD 데이터를 메모리에 캐싱하게 된다.`   
 
-> 단, Spark Streaming의 Dstream은 default로 StorageLevel.MEMORY_ONLY_SER 로 설정되어 있다.     
+> 단, Spark Streaming의 DStream은 default로 StorageLevel.MEMORY_ONLY_SER 로 설정되어 있다.     
 
 
 만약 메모리가 부족하다면 메모리에 캐싱을 하지 않는다.   
@@ -146,8 +146,8 @@ java와 scala에서만 사용 가능하며,
 위에서 역직렬화 형태로 RDD를 저장하는 것보다 효율적인 공간을 사용할 수 있게 되는 장점이 있다.   
 단지, 캐싱된 데이터를 다시 연산을 할 때 역직렬화를 해주어야 함으로 더 많은 CPU를 쓰게 된다.      
 
-`직렬화는 GC의 시간을 줄이는데 유용하기 때문에 
-Spark Streaming의 Dstream은 default StorageLevel은 MEMORY_ONLY_SER로 설정되어 있다.`    
+`직렬화하여 메모리에 저장하게 되면 GC의 시간을 줄이는데 유용하기 때문에 
+Spark Streaming의 DStream은 default StorageLevel은 MEMORY_ONLY_SER로 설정되어 있다.`    
 
 > 메모리 공간을 훨씬 적게 사용하므로 상황에 따라 유용하게 사용 될 수 있다.   
 
@@ -191,8 +191,8 @@ recomputation 되는 것을 방지할 수 있다.
 
 그럼 왜 디스크에 저장하며 copy까지 해서 사용할까?   
 
-`스트리밍 데이터가 갑작스럽게 증가하여 메모리가 부족하는 경우 데이터 유실이 발생할 수 있기 때문에, 
-    외부에서 최초 받아온 데이터는 안전하게 디스크에 저장한다.`   
+`스트리밍 데이터가 갑작스럽게 증가하여 메모리가 부족한 경우 데이터 유실이 발생할 수 있기 때문에, 
+    외부에서 최초 받아온 데이터를 저장할 때 메모리가 부족한 경우 디스크에 저장하여 유실을 방지한다.`      
 
 `이렇게 디스크에 저장하더라도 장애로 인해 데이터 유실이 발생할 수 있기 때문에 copy까지 해서 
 fault tolerance를 보장한다.`      

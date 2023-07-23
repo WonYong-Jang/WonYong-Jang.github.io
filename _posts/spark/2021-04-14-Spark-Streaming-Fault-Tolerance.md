@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Streaming 의 Fault Tolerance 와 Graph"
-subtitle: "장애 복구 / Dstream의 Graph / Network Input Tracker, Job Scheduler, Job Manager, Block manager"    
+subtitle: "장애 복구 / Dstream의 Graph / Receiver, Network Input Tracker, Job Scheduler, Job Manager, Block manager"    
 comments: true
 categories : Spark
 date: 2021-04-14   
@@ -152,7 +152,9 @@ Job Manager에게 넘긴다.`
 이때 Driver가 아닌 클러스터내에 executor 중 1개가 데이터를 가져온다.`   
 
 `StreamingContext.start() 하게 되면 스트리밍이 시작 되며, 
-    Network Input Tracker가 Receiver를 띄우게 된다.`      
+    Network Input Tracker가 Receiver를 띄우게 된다.`    
+
+
 
 > Receiver는 하나의 task로 실행되며, core 1개를 사용하게 된다.    
 > 이때, receiver가 core를 쓰고 다른 task를 수행할 core가 부족할 수 있기 때문에 적절하게 리소스 할당을 해야한다.     
@@ -168,7 +170,10 @@ Job Manager에게 넘긴다.`
 > ex) t1 batch interval 마다 속하는 block id들을 Network Input Tracker가 관리한다.      
 
 `각각의 executor 마다 block manager가 있고, driver에는 
-Block Manager Master가 존재하며 block id가 각각 어느 노드에 위치해 있는지 정보를 가지고 있다.`     
+Block Manager Master가 존재하며 block id가 각각 어느 노드에 위치해 있는지 정보를 가지고 있다.`    
+
+
+
 
 - - -    
 
