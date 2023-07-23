@@ -154,8 +154,6 @@ Job Manager에게 넘긴다.`
 `StreamingContext.start() 하게 되면 스트리밍이 시작 되며, 
     Network Input Tracker가 Receiver를 띄우게 된다.`    
 
-
-
 > Receiver는 하나의 task로 실행되며, core 1개를 사용하게 된다.    
 > 이때, receiver가 core를 쓰고 다른 task를 수행할 core가 부족할 수 있기 때문에 적절하게 리소스 할당을 해야한다.     
 
@@ -163,7 +161,9 @@ Job Manager에게 넘긴다.`
 실행된다.   
 
 `Receiver가 받아들인 데이터를 Block 단위로 Block Manager에게 넘긴다.   
-해당 block을 이용하여 rdd로 만들며, 유실되면 안되기 때문에 block을 replication 해 놓는다.`       
+해당 block을 이용하여 rdd로 만들며, 유실되면 안되기 때문에 block을 replication 해 놓는다.`      
+
+> block들은 rdd의 파티션으로 각각 생성된다.    
 
 복제 후 Receiver는 Network Input Tracker에게 block 의 id 등을 알려주게 된다.    
 
@@ -171,8 +171,6 @@ Job Manager에게 넘긴다.`
 
 `각각의 executor 마다 block manager가 있고, driver에는 
 Block Manager Master가 존재하며 block id가 각각 어느 노드에 위치해 있는지 정보를 가지고 있다.`    
-
-
 
 
 - - -    
