@@ -39,7 +39,7 @@ rdd를 순서대로 처리하게 된다.
 receiver는 별도의 task로 실행되며, executor 안에서 core 1개(thread)를 잡고 
 지속적으로 데이터를 받아온다.    
 
-`중요한 것은 receiver는 읽어온 데이터를 rdd의 분산된 파티션으로 데이터를 
+`중요한 것은 receiver는 읽어온 데이터를 rdd의 분산된 파티션(block 과 동일한 개념)으로 데이터를 
 밀어 넣는다.`     
 
 > rdd는 데이터 구분 단위는 파티션 단위이다.   
@@ -54,7 +54,8 @@ receiver는 별도의 task로 실행되며, executor 안에서 core 1개(thread)
 
 ## 2. Receiver Based Fault Tolerance   
 
-만약 receiver 또는 receiver의 노드가 장애가 발생한다면 어떻게 장애를 복구 할까?   
+만약 receiver 또는 receiver가 실행 중인 노드에 장애가 발생한다면 
+어떻게 장애를 복구 할까?   
 
 <img width="1000" alt="스크린샷 2023-07-23 오후 12 46 31" src="https://github.com/WonYong-Jang/ToyProject/assets/26623547/36a810ec-b409-430a-988e-7e137982ab2f">    
 
@@ -95,15 +96,44 @@ batch interval 당 처리할 수 있는 데이터만 읽어와서 처리한다.`
 `따라서, queue에 계속해서 job들이 쌓이는 것을 방지할 수 있다.`      
 
 > queue에 계속 job이 쌓인 다는 것은 spark 메모리에 계속해서 데이터를 저장하며, 
-    다른 executor 메모리에 replication 까지 진행하게 된다.    
+    다른 executor 메모리에 replication 까지 진행하게 되어 OOM이 발생할 수도 있다.    
 
+- - - 
+
+## 4. Spark Streaming with Kafka   
+
+`Spark Streaming에서 kafka를 데이터 소스를 사용할 때 
+아래와 같이 2가지 방식을 통해 데이터를 읽어 올 수 있다.`   
+
+- Receiver based 
+- Direct(receiverless)
+
+### 4-1) Receiver based   
+
+`위에서 설명한 것처럼 동일하게 receiver라는 별도의 task(thread)를 이용하여 
+kafka topic에서 데이터를 읽어 온다.`   
+
+<img width="1000" alt="스크린샷 2023-07-24 오후 11 46 20" src="https://github.com/WonYong-Jang/ToyProject/assets/26623547/83a695fc-0f9a-49cf-81c0-45ed2650b142">    
+
+카프카는 토픽에 여러 파티션을 지원하며, receiver based 스트리밍은 여러 receiver를 
+그림과 같이 설정할 수 있다.   
+
+> 카프카는 여러 파티션을 통해 병렬로 전달해주는데, 스트리밍에서 receiver 1대로 
+받아 오게 되면 병목이 발생할 수 있다.   
+> receiver는 core 1개인 task로 실행되기 때문이다.   
+
+`단, 중요한 것은 receiver 1대에서 하나의 rdd가 생성되며 receiver 2대를 사용하게 되면 
+batch interval 마다 2개의 rdd가 생성된다.`   
+`카프카의 토픽 파티션마다 receiver를 실행했기 때문에 batch interval에 여러 rdd가 
+생성되며, 이를 한번에 처리하기 위해서는 dstream의 rdd들을 union 작업을 따로 해주어야 한다.`   
 
 
 - - - 
 
 **Reference**    
 
-<https://fastcampus.co.kr/data_online_spkhdp>    
+<https://fastcampus.co.kr/data_online_spkhdp>   
+<https://spark.apache.org/docs/latest/streaming-kinesis-integration.html>   
 
 {% highlight ruby linenos %}
 
