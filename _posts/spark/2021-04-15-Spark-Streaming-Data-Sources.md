@@ -65,15 +65,12 @@ receiver는 별도의 task로 실행되며, executor 안에서 core 1개(thread)
 `여기서 중요한 것은 receiver가 죽고나서 다른 executor에 새로운 receiver가 생성될 때까지 들어온 데이터는 
 잠재적으로 손실 가능성이 있다.`    
 
-> receiver는 기본적으로 spark 메모리가 부족하지 않는 이상 메모리에 데이터를 저장하고 다른 executor의 
-메모리에도 복제해 놓는다.   
-> 하지만 복제 전에 receiver가 장애가 발생한다면, 데이터 손실이 발생할 수 있다.   
 
 하지만, 데이터 소스에 따라(kafka, kinesis) 이러한 경우 장애를 복구할 수 있도록 제공하며, 
     해당 내용은 아래에서 더 자세히 살펴보자.   
 
 > 또한, Spark Streaming에서 제공하는 Write Ahead Logs(WAL) 메카니즘을 통해 모든 데이터들을 HDFS 같은 파일 시스템에 
-저장하여 데이터 손실을 막을 수도 있다.   
+저장하여 데이터 손실을 막을 수도 있다.    
 
 - - - 
 
@@ -102,7 +99,7 @@ batch interval 당 처리할 수 있는 데이터만 읽어와서 처리한다.`
 
 ## 4. Spark Streaming with Kafka   
 
-`Spark Streaming에서 kafka를 데이터 소스를 사용할 때 
+`Spark Streaming에서 kafka를 데이터 소스로 사용할 때 
 아래와 같이 2가지 방식을 통해 데이터를 읽어 올 수 있다.`   
 
 - Receiver based 
@@ -125,7 +122,36 @@ kafka topic에서 데이터를 읽어 온다.`
 `단, 중요한 것은 receiver 1대에서 하나의 rdd가 생성되며 receiver 2대를 사용하게 되면 
 batch interval 마다 2개의 rdd가 생성된다.`   
 `카프카의 토픽 파티션마다 receiver를 실행했기 때문에 batch interval에 여러 rdd가 
-생성되며, 이를 한번에 처리하기 위해서는 dstream의 rdd들을 union 작업을 따로 해주어야 한다.`   
+생성되며, 이를 한번에 처리하기 위해서는 DStream의 rdd들을 union 작업을 따로 해주어야 한다.`   
+
+### 4-2) Direct(also called receiverless)   
+
+receiver를 사용하지 않는 방법은 아래와 같다.   
+
+<img width="1000" alt="스크린샷 2023-07-25 오전 12 01 07" src="https://github.com/WonYong-Jang/ToyProject/assets/26623547/7432c628-e278-4268-bc83-415f2c9c461e">    
+
+`executor 별로 task를 띄우는데, 이때 카프카 토픽의 파티션 갯수와 동일하게 
+설정하여 각 task가 카프카 토픽의 파티션을 처리하도록 하는 방식이다.`          
+즉, 카프카 토픽의 파티션마다 task가 맡아서 처리를 한다.   
+
+예를 들면 위처럼 rdd 0번째 파티션은 카프카 토픽의 0번 파티션과 맵핑되어 처리되며, 
+    1번 파티션 또한 동일하게 맵핑되어 처리된다.   
+
+> rdd 내에 파티션 1개는 1개의 task로 처리된다.    
+> hdfs에서 데이터를 rdd로 읽어올 때, hdfs에서 10개의 block이 있다면 10개의 파티션으로 
+이루어진 rdd가 생성되는 것과 동일하다.     
+
+`이렇게 처리하다보니 자연스럽게 병렬로 처리가 되며 receiver가 필요없게 된다.`   
+
+receiver 방식은 데이터를 읽어 와서 다른 executor 에 데이터를 replication 해놓는다.  
+하지만, `해당 방식은 replication 하지 않고도 데이터 손실을 막을 수 있다.`   
+
+> 카프카는 기본적으로 default 7일 정도 데이터를 저장하고 있기 때문에 장애가 발생했을 때 
+spark에서 카프카에 저장된 이전 데이터를 다시 읽어 올 수 있다.   
+
+`장애 발생시 task가 직접 다시 카프카 토픽의 파티션에서 이전 데이터를 가져온다.`   
+
+
 
 
 - - - 
