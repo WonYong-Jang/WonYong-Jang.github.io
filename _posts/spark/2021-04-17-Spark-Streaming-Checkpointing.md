@@ -60,6 +60,9 @@ checkpointing 에 대해 자세히 살펴보자.
 
 `두번째는 실제로 rdd에 들어있는 데이터이다.`   
 
+DStream 
+
+
 
 
 - - - 
