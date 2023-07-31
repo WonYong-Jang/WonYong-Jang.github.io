@@ -74,7 +74,7 @@ Spark Streaming은 micro batch 개념을 통해 설정된 batch interval 마다 
 `위 그림처럼 지속적으로 연산을 진행하며 동시에 트랜잭션을 엔진차원에서 보장해준다.`    
 `즉, exactly once를 개발자가 고려하는게 아니라 엔진이 보장해준다.`     
 
-`또한, 늦게 들어온 데이터 있다면 특정 시간 동안 기다려 주는 기능도 제공한다.`   
+`또한, 늦게 들어온 데이터 있다면 특정 시간 동안 기다려 주는 기능도 제공한다.`     
 
 - - - 
 
@@ -139,7 +139,7 @@ Output에 대해 더 자세히 살펴보면,
 
 `아래 그림과 같이 update 된 것만 리턴한다.`  
 
-> 예를들면 t=1 에서 집계결과와 t=2에서 집계 결과가 다른 값만 리턴한다.   
+> 예를들면 t=1 에서 집계 결과와 t=2 에서 집계 결과가 다른 값만 리턴한다.   
 
 <img width="1138" alt="스크린샷 2023-07-29 오후 12 07 58" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/ce5859ef-c899-4a8c-8ad2-7ad19d03e0df">
 
@@ -154,6 +154,31 @@ Output에 대해 더 자세히 살펴보면,
 `즉, 위에서 update output은 앞으로 바뀔 수도 있는 값을 의미하며 append output은 
 절때 바뀌지 않을 최종적인 결과값이다.`   
 
+- - - 
+
+## 4. Continuous Aggregation   
+
+Continuous Aggregation의 하나의 예를 살펴보자.
+
+아래와 같이 카프카에서 데이터를 읽어 온 후 집계한다고 가정해보자.    
+
+<img width="700" alt="스크린샷 2023-07-31 오후 10 18 56" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/a9be99b0-1788-40e8-9387-dfe10af69999">
+
+카프카에서 해당 오프셋으로 읽어온 데이터를 집계하여 메모리에 저장한다.
+이때 fault tolerance를 위해 WAL(write ahead logs) 방식으로 hdfs에 저장해둔다.
+
+<img width="700" alt="스크린샷 2023-07-31 오후 10 24 28" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/f12bad80-0ca6-4839-8eb1-cde1db368476">
+
+그 이후 들어온 데이터도 동일한 방식으로 진행하며,
+    위에서 언급한 unbounded table에 대해 쿼리를 실행하면
+    결과를 리턴해 줄 것이다.
+
+만약 메모리에 결과값을 쌓아서 가지고 있다면 모든 데이터를 계속 메모리에 가지고 있는 것은 불가능 할 것이다.   
+`따라서 unbounded table이라는 것은 논리적인 개념이며, 무한한 전체 테이블 처럼 보이지만 
+실제로는 각각 나뉘어져 있다.`      
+
+따라서, 위 그림처럼 Incremental Execution 1의 결과값을 Incremental Execution 2에 전달하여 전체 집계하면 
+무한한 테이블에서 전체 쿼리한 것과 같은 결과값을 확인할 수 있다.   
 
 - - - 
 
