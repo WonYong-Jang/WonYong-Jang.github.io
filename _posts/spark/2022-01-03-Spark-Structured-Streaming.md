@@ -165,7 +165,7 @@ Continuous Aggregation의 하나의 예를 살펴보자.
 <img width="700" alt="스크린샷 2023-07-31 오후 10 18 56" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/a9be99b0-1788-40e8-9387-dfe10af69999">
 
 카프카에서 해당 오프셋으로 읽어온 데이터를 집계하여 메모리에 저장한다.
-이때 fault tolerance를 위해 WAL(write ahead logs) 방식으로 hdfs에 저장해둔다.
+이때 fault tolerance를 위해 WAL(write ahead log) 방식으로 hdfs에 저장해둔다.
 
 <img width="700" alt="스크린샷 2023-07-31 오후 10 24 28" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/f12bad80-0ca6-4839-8eb1-cde1db368476">
 
