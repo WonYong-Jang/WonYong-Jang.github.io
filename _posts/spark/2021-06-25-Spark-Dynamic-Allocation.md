@@ -74,6 +74,7 @@ spark.dynamicAllocation.initialExecutors
 
 **Reference**    
 
+<https://aws.amazon.com/ko/blogs/korea/best-practices-for-successfully-managing-memory-for-apache-spark-applications-on-amazon-emr/>   
 <https://mallikarjuna_g.gitbooks.io/spark/content/spark-dynamic-allocation.html>   
 <https://fastcampus.co.kr/data_online_spkhdp>     
 
