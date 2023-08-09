@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Structured Streaming Fault Tolerance"   
-subtitle: ""    
+subtitle: "Planner, Source, State, Sink"    
 comments: true
 categories : Spark
 date: 2022-01-05
@@ -23,7 +23,8 @@ Structured Streaming의 Fault Tolerance는 아래와 같이 각각
 
 ### 1-1) Planner    
 
-`planner는 항상 실행 전에 데이터 소스로부터 데이터를 어디에서 부터 어디까지 읽었는지에 대한 오프셋 정보를 write ahead log(WAL)을 통해 hdfs에 
+`planner는 항상 실행 전에 데이터 소스로부터 데이터를 어디에서 부터 어디까지 읽었는지에 대한 오프셋 정보를 
+write ahead log(WAL) 방식을 통해 hdfs에 
 저장해둔다.`      
 `따라서, 각 Incremental Execution 정보들을 트래킹하고 있다.`   
 
@@ -45,7 +46,7 @@ Structured Streaming의 Fault Tolerance는 아래와 같이 각각
 
 ### 1-2) Sources     
 
-`Sources는 대표적으로 Kafka, Kinesis, file 등이 있으며 중요한 것은 replayable해야 한다.`   
+`Sources는 대표적으로 Kafka, Kinesis, File 등이 있으며 중요한 것은 replayable해야 한다.`   
 
 <img width="800" alt="스크린샷 2023-07-31 오후 11 20 23" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/3cc91ad0-1a2d-4d88-ad08-dc3a1e945701">    
 

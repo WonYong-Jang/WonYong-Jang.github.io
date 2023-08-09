@@ -1,14 +1,14 @@
 ---
 layout: post
 title: "[Spark] Dynamic Allocation"
-subtitle: "Dynamic하게 executor 증가 또는 제거하기"    
+subtitle: "Spark에서 Dynamic하게 executor를 scale out 또는 scale in"    
 comments: true
 categories : Spark
 date: 2021-06-25
 background: '/img/posts/mac.png'
 ---
 
-## 1. Dynamic Allocation   
+## Dynamic Allocation   
 
 `Spark의 Resource를 dynamic하게 할당하기 위해서는 아래와 같이 
 옵션을 추가해야 한다.`      
@@ -27,13 +27,17 @@ shuffle write하여 쓰고, 뒤에 stage가 해당 데이터를 shuffle read하�
 필요하다면 과거의 shuffle 데이터를 읽어야 하는데 
 그렇지 못한 경우도 발생할 것이다.   
 
-> executor가 사라진 경우   
+> ex) executor가 Idle 시간이 초과 되어 제거 된 경우 
 
 `따라서, dynamicAllocation의 경우 
 shuffle 데이터를 tracking하여 필요하다면 읽을 수 있는 옵션이다.`   
 
 ```
+// spark 3.0 이상 
 spark.dynamicAllocation.shuffleTracking.enabled=true
+
+// spark 2.x
+spark.shuffle.service.enabled=true
 ```
 
 `또한, 아래 옵션과 같이 executor는 default로 60초 동안 작업을 
@@ -55,6 +59,17 @@ spark.dynamicAllocation.maxExecutors
 
 // sets the initial number of executors for dynamic allocation.
 spark.dynamicAllocation.initialExecutors
+
+
+// default infinity   
+// If an executor with cached blocks has been idle for longer than this duration, 
+// it will be removed.
+// this configuration helps manage executors holding cached data and defaults to infinity, meaning that by default, executor with cached blocks won't be removed.   
+spark.dynamicAllocation.cachedExecutorIdleTimeout
+
+
+// If there's backlog in the scheduler(tasks are waiting to be scheduled) for longer than this duration, new executors will be requested.
+spark.dynamicAllocation.schedulerBacklogTimeout   
 ```
 
 그럼 어떤 기준을 통해 executor를 늘리고 줄일까?   
