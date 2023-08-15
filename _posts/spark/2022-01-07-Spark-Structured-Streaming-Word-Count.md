@@ -12,7 +12,6 @@ background: '/img/posts/mac.png'
 예정이며, 늦게 들어온 데이터에 대한 핸들링을 어떻게 
 할 수 있는지 자세히 살펴보자.   
 
-
 - - -   
 
 ## 1. Word Count   
