@@ -49,6 +49,7 @@ val query = wordCount.writeStream
     .format("console")
     .start()
 
+// DStream 과 마찬가지로 스트리밍이 중지 되지 않고 지속적으로 처리 되도록   
 query.awaitTermination()
 ```   
 
@@ -76,6 +77,10 @@ processing time 기반으로 window가 만들어진다.
 
 코드는 아래와 같다.   
 
+아래 코드에서 사용한 window 메소드의 timestamp는 이벤트가 발생한 시간이며, 
+    window 크기는 10분 sliding 간격은 5분으로 지정한 것을 확인할 수 있다.   
+또한, window 메소드와 각 단어에 대해 groupBy 하였고, 위의 그림과 
+같은 결과가 나올 것이다.  
 
 ```scala
 import spark.implicits._
@@ -89,7 +94,7 @@ val windowedCounts=words.groupBy(
 ).count()   
 ```   
 
-그럼 `Late Data Processing`에 대해 살펴보자.   
+그럼 `Late Data Processing`에 대해 살펴보자.      
 아래와 같이 12:04에 발생한 이벤트가 12:15분에 늦게 들어 온 경우이다.     
 
 Structured Streaming의 경우 기다려 줄 수 있는 기능을 제공한다.   
@@ -97,13 +102,15 @@ Structured Streaming의 경우 기다려 줄 수 있는 기능을 제공한다.
 <img width="900" alt="스크린샷 2023-08-09 오후 4 00 37" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/409c86e7-5a76-446a-afc2-2fdd1c88f613">    
 
 `하지만 계속해서 기다릴 순 없고, watermarking이라는 기능을 이용하여 
-threshold 만큼 기다리고 그 외에는 무시하는 기능이다.`   
+threshold 만큼 기다리고 그 외에는 무시하는 기능이다.`      
 
 그럼, watermarking에 대해 자세히 살펴보자.   
 
 - - - 
 
 ## 3. Handling Watermarking      
+
+### 3-1) Update Mode   
 
 `watermarking은 지정한 threshold 만큼 늦은 데이터에 대해 기다리게 된다.`   
 아래는 triggering 시간은 5분이며 watermarking의 
@@ -135,7 +142,29 @@ event time이 12:11보다 작다면 제외시킨다.`
 `또한, watermark가 12:11이라는 것은 그 이전 데이터들은 메모리에 가지고 
 있을 필요가 없다는 뜻이다.`   
 
+`즉, watermark를 사용함으로써, 더 이상 변경이 발생하지 않으며 
+    불필요한 데이터를 정리하여 
+    메모리 효율을 높힐 수 있다는 뜻이다.`   
 
+### 3-2) Append Mode   
+
+동일하게 append mode일 때를 자세히 살펴보자.   
+
+<img width="1200" alt="스크린샷 2023-08-16 오전 11 07 22" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/eb1fee2c-2c86-4168-b1ec-a8c40d5e9b22">
+
+`update mode 일 때와 비교해보면 12:10분과 12:15분에 결과값이 없는 것을 확인할 수 있다.`      
+`append mode 일 때는 데이터가 들어와도 결과가 늦게 나올 수 있다.`   
+
+append mode는 앞으로 절 때 바뀌지 않는 데이터만 결과값으로 나타낸다.   
+
+`12:25에 처음으로 결과값이 나타난 이유는, watermamrk가 12:11 분이였을 때 
+그 이전 데이터는 더 이상 바뀌지 않기 때문에 메모리에 들고 있을 필요가 없다.`   
+`즉, 12:11분 이전 데이터들은 절 때 바뀌지 않음이 확인 되었기 때문에 
+결과값으로 노출 되었다.`   
+
+`주의해야할 점은 집계 연산을 사용할 때 
+append mode로 하기 위해서는 반드시 watermark를 설정해야 한다.`     
+`그렇지 않으면 무한히 결과를 리턴하지 않고 가지고 있게 된다.`      
 
 
 - - - 
