@@ -56,11 +56,7 @@ checkpointing 에 대해 자세히 살펴보자.
 처리하기 시작한다.`   
 
 
-##### Data(RDD) checkpointing   
 
-`두번째는 실제로 rdd에 들어있는 데이터이다.`   
-
-DStream 
 
 
 
