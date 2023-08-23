@@ -152,7 +152,7 @@ object Example extends Serializable {
 
 Example object 전체를 직렬화를 피하기 위해서 아래와 같이 시도를 해보자.  
 
-이 경우 myFunc의 scope에 enclosednum 변수를 생성했고, 이 값을 
+이 경우 myFunc의 scope에 enclosedNum 변수를 생성했고, 이 값을 
 참조하면 myFunc 범위에 필요한 모든 항목에 access 할 수 있으므로 
 전체 object를 직렬화 하는 것을 피할 수 있지 않을까?   
 하지만, enclosedNum이 lazy val 이기 때문에 여전히 num에 대한 정보를 필요로 
@@ -352,7 +352,7 @@ val data = sc.makeRDD(1 to 4, 2)
 val data1 = data.map{r => println(s"map #1 m.hashCode ${m.hashCode} taskAttempId ${org.apache.spark.TaskContext.get.taskAttemptId}"); r}   
 val data2 = data1.map{r => println(s"map #2 m.hashCode ${m.hashCode} taskAttempId ${org.apache.spark.TaskContext.get.taskAttemptId}"); r}
 
-m.hashCode // Int = 670629371
+m.hashCode 
 
 data2.count // action 실행
 // map #1 m.hashCode 34667591 taskAttempId 16
