@@ -9,10 +9,7 @@ background: '/img/posts/mac.png'
 ---
 
 
-
-- - -
-
-# DataSet   
+## 1. DataSet   
 
 `데이터셋은 Spark 1.6 버전에서 처음 소개되었으며, Spark SQL에서 
 사용하는 분산 데이터 모델이다.`            
@@ -22,8 +19,7 @@ background: '/img/posts/mac.png'
 
 하지만, Spark 2.0부터는 데이터 프레임 클래스가 데이터 셋 클래스로 통합되면서 
 변화가 생겼다.   
-Spark 2.0부터는 스칼라 언어를 사용하는 경우 DataFrame과 DataSet을 사용 할 수 있고 
-자바를 사용하는 경우 DataSet을, 파이썬과 R을 사용하는 경우는 
+DataSet은 자바와 스칼라 언어에서만 사용 가능하며, 파이썬과 R을 사용하는 경우는 
 DataFrame 만을 사용할 수 있게 되었다.   
 
 `RDD와 데이터프레임이라는 훌륭한 데이터 모델이 있음에도 또 다른 데이터 
