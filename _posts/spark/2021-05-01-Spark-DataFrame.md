@@ -114,7 +114,7 @@ val spark = SparkSession
 
 다음으로 DataFrame을 생성하는 2가지 방법에 대해 살펴보자.    
 
-### 1-1) 리플렉션을 통한 데이터 프레임 생성    
+### 2-1) 리플렉션을 통한 데이터 프레임 생성    
 
 앞에서 언급한 대로 데이터프레임은 데이터베이스의 테이블과 유사한 로우와 컬럼 구조를 띠고 있다. 따라서 
 RDD를 비롯해 로우와 컬럼 형태로 만들 수 있는 컬렉션 객체만 있다면 이를 이용해 
@@ -141,7 +141,7 @@ result.show(truncate=false) // row 길이가 길어도 짤리지 않고 모두 �
 이용한 데이터프레임 생성방법이라고 한다.`     
 
 
-### 1-2) 명시적 타입 지정을 통한 데이터프레임 생성      
+### 2-2) 명시적 타입 지정을 통한 데이터프레임 생성      
 
 리플렉션 방식을 통한 데이터프레임 생성 방법은 스키마 정보를 일일이 지정하지 않아도 된다는 점에서 사용하기에 편리 하다는 
 장점이 있다. 하지만 이 경우 데이터프레임 생성을 위한 케이스 클래스 같은 것들을 따로 정의해야 하는 불편함이 있고 
@@ -180,9 +180,9 @@ root
  |-- job: string (nullable = true)
 ```   
 
-### 1-3) Load data in DataFrame   
+### 2-3) Load data in DataFrame   
 
-데이터 소스로 부터 데이터를 읽어와서 DataFrame으로 만드는 방법은 아래와 같다.   
+데이터 소스(Hive table, Parquet, Json 등)로 부터 데이터를 읽어와서 DataFrame으로 만드는 방법은 아래와 같다.   
 
 ```scala
 val df = spark.read.json("/people.json")  
@@ -194,7 +194,8 @@ val df = spark.sql("SELECT * FROM parquet `/users.parquet`")
 읽어온 DataFrame을 이용하여 DataFrame 에서 제공하는 여러 api를 사용할 수 있다.   
 
 ```scala
-// Write Programmatic Queries against DataFrame   
+// Write Programmatic Queries against DataFrame  
+// $는 컬럼을 나타낸다.   
 df.select($"name", $"age").filter($"age">21).groupBy("age").count()  
 
 // Apply Functional Transformations to DataSet
@@ -213,22 +214,52 @@ val sqlDf = spark.sql("SELECT * FROM people")
 
 - - - 
 
-지금부터 데이터셋이 제공하는 주요 연산을 살펴보면서 이 가운데 데이터프레임에 
-특화된 것들은 어떤 것들이 있는지 하나씩 살펴보자.    
+## 3. Spark SQL 기본 연산     
 
-## 2. 기본 연산     
+Spark SQL에서 사용할 수 있는 기본 연산들에 대해 살펴보자.   
 
-`스파크에서 제공하는 연산은 크게 기본 연산, 타입 트랜스포메이션, 
-    비타입 트랜스포메이션 연산, 액션 연산으로 나눌 수 있다.`    
+### 2-1) dtypes, printSchema, explain   
 
-이  가운데 비타입 트랜스포메이션 연산은 데이터셋의 구성요소가 
-org.apache.spark.Row 타입인 경우, 즉 데이터프레임인 경우에만 
-사용 가능하고 타입 트랜스포메이션 연산은 데이터프레임이 아닌 데이터셋인 
-경우에만 가능하며, 그 밖의 나머지 기본 연산과 액션 연산은 데이터셋의 
-구성요소 타입과 무관하게 항상 사용 가능하다.    
+아래 코드에서 avro 포맷의 형태 데이터를 load 했다.   
+`이때까지는 DataFrame은 데이터를 읽어 오진 않은 상태이며, 
+    스키마 정보를 읽어와서 실행 계획을 세워 둔다.`   
+
+따라서, dtypes, printSchema 함수를 통해 스키마 정보를 확인할 수 있다.   
+
+```scala
+val df=spark.read
+    .format("avro")
+    .load("/users.avro")
+
+df.dtypes
+
+df.printSchema
+```
+
+실행 계획을 보려면 아래와 같이 실행하면 된다.   
+
+```scala   
+df.explain(true)
+```
+
+Output   
 
 
-#### 2-1) cache(), persist()    
+```
+== Parsed Logical Plan ==   
+// 
+
+== Analyzed Logical Plan == 
+//...
+
+== Optimized Logical Plan ==   
+//...
+
+== Physical Plan ==
+//
+```
+
+#### 2-2) cache(), persist()    
 
 RDD에서 마찬가지로 작업 중인 데이터를 메모리에 저장한다.    
 `스파크SQL의 기본값인 MEMORY_AND_DISK 타입을 사용한다.`   
@@ -259,7 +290,7 @@ RDD에서 마찬가지로 작업 중인 데이터를 메모리에 저장한다.
 
 - - - 
 
-## 3. 여러 연산을 통한 전처리 
+## 4. 여러 연산을 통한 전처리 
 
 파이썬의 판다스를 사용했을 때 info라는 메서드를 사용하면 
 각 컬럼마다 null 갯수가 몇개인지 확인이 가능했다.   
