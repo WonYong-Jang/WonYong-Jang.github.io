@@ -115,6 +115,21 @@ while(true){
   }
 ```
 
+### 1-3) Custom Deserializer 사용하기  
+
+위 예제에서 Consume 받을 메시지를 StringSerializer를 사용하였는데, 
+이를 커스텀하게 사용하기 위해서는 Desializer 인터페이스를 사용하여 
+사용자 정의 클래스를 생성하면 된다.   
+
+```scala
+class JsonDeserializer[T](t: Class[T]) extends Deserializer[T] {
+    private val objectMapper = new ObjectMapper().registerModule(DefaultScalaModule)
+
+    override def deserialize(topic: String, bytes: Array[Byte]): T = {
+      objectMapper.readValue(bytes, t)
+    }
+}
+```
 
 - - - 
 
