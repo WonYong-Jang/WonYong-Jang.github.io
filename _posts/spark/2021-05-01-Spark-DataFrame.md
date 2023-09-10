@@ -188,7 +188,7 @@ root
 val df = spark.read.json("/people.json")  
 
 // parquet 파일을 직접 FROM 절을 통해 바로 읽어 올 수도 있다.   
-val df = spark.sql("SELECT * FROM parquet `/users.parquet`")
+val df = spark.sql("SELECT * FROM parquet.`/users.parquet`")
 ```
 
 읽어온 DataFrame을 이용하여 DataFrame 에서 제공하는 여러 api를 사용할 수 있다.   
@@ -209,7 +209,10 @@ df.map(row => row.getAs[Long]("age") + 10)
 ```scala
 df.createOrReplaceTempView("people")
 
-val sqlDf = spark.sql("SELECT * FROM people")  
+val sqlDf = spark.sql("SELECT * FROM people") 
+
+// 또는   
+val sqlDf = spark.sql(""" SELECT * FROM json.`/people.json` WHERE name LIKE "A%" """)   
 ```
 
 - - - 
@@ -259,7 +262,30 @@ Output
 //
 ```
 
-#### 2-2) cache(), persist()    
+#### 2-2) Join    
+
+기본적으로 타입을 지정하지 않으면 inner join으로 실행되며, 
+    그외에 모든 join 들도 제공 하고 있다.   
+
+> inner, outer, left_outer, right_outer 등   
+
+```scala
+df.join(df2, "id").show // inner join
+
+
+// 조인 조건에 해당하는 컬럼 하나 이상일 때 Array를 사용한다.
+// ex) Array("age", "name")
+df.join(df2, Array("age"), "left_outer").show // left_outer 조인 
+```
+
+컬럼명 다르지만 조인이 필요한 경우 아래와 같이 가능하다.   
+
+```scala
+df.join(df3, $"age" === $"age3").show
+```
+
+
+#### 2-3) cache(), persist()    
 
 RDD에서 마찬가지로 작업 중인 데이터를 메모리에 저장한다.    
 `스파크SQL의 기본값인 MEMORY_AND_DISK 타입을 사용한다.`   
@@ -289,6 +315,25 @@ RDD에서 마찬가지로 작업 중인 데이터를 메모리에 저장한다.
     세우는 것이 중요하다.   
 
 - - - 
+
+## 3. DataFrame 과 RDD      
+
+DataFrame은 기본적으로 RDD 위에서 구현되어 있다.   
+
+`즉, DataFrame은 RDD의 각 element의 타입이 Row object로 구성되어 있다.`   
+
+> Row objects는 컬럼들을 가지고 있으며, 해당 컬럼은 이름 및 타입 등을 가지고 있다.   
+
+따라서, 모든 DataFrame은 기본적으로 RDD 위에서 구현되어 있기 때문에 RDD로 변경할 수 있다.   
+
+```scala
+val rdd = peopleDF.rdd
+// org.apache.spark.rdd.RDD[org.apache.spark.sql.Row]
+```
+
+
+- - -    
+
 
 ## 4. 여러 연산을 통한 전처리 
 
@@ -321,7 +366,6 @@ Output
 
 - - - 
 
-
 `이러한 DataFrame은 RDD에 비해 풍부한 API와 옵티마이저를 기반으로 한 
 높은 성능으로 복잡한 데이터 처리를 더욱 수월하게 수행할 수 있다는 
 장점이 있었지만 처리해야하는 작업의 특성에 따라서는 직접 프로그래밍이 
@@ -332,10 +376,7 @@ Output
 같은 장점들을 유지하면서 RDD에서만 가능했던 컴파일 타임 
 오류 체크 등의 기능을 사용할 수 있게 되었다.       
 
-다음 장에서는 DataSet에 대해 알아보자.    
-
-
-
+다음 장에서는 [DataSet](http://localhost:4000/spark/2021/05/07/Spark-DataSet.html)에 대해 알아보자.    
 
 
 - - - 
