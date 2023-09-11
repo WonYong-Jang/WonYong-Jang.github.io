@@ -1,15 +1,21 @@
 ---
 layout: post
 title: "[Spark] 아파치 스파크(spark) DataFrame 구현하기"
-subtitle: "DataFrame 주요 연산"    
+subtitle: "DataFrame 주요 연산 / groupBy / UDF(User Define Function) / join "    
 comments: true
 categories : Spark
 date: 2021-05-02
 background: '/img/posts/mac.png'
 ---
 
+이번 글에서는 Spark DataFrame에서 제공하는 여러 연산에 대해서 자세히 살펴보자.   
 
-## 1. Spark SQL 구현하기   
+DataFrame에 대한 이론은 [링크](https://wonyong-jang.github.io/spark/2021/05/01/Spark-DataFrame.html)를 
+참고하자.   
+
+- - - 
+
+## 1. Spark SQL 시작하기    
 
 `Spark SQL을 구현하기 위해서는 가장 먼저 SparkSession을 생성해야 한다.`   
 
@@ -233,11 +239,51 @@ RDD에서 마찬가지로 작업 중인 데이터를 메모리에 저장한다.
 또 다른 문제가 발생할 위험이 커지게 된다. 따라서 무조건 
 캐시하고 보자는 생각보다는 처리하고자 하는 데이터의 특성과 용량, 
     사용 가능한 클러스터 자원을 신중히 고려해서 캐시 정책을 
-    세우는 것이 중요하다.   
+    세우는 것이 중요하다.  
+
+
+- - -   
+
+## 3. GroupBy - Now safe!   
+
+RDD를 이용하여 groupBy를 사용할 때, 성능 및 메모리 이슈가 있을 수 있기 때문에 
+가급적 reduceByKey 등을 사용할 것을 권장하고 있다.   
+
+DataFrame을 사용할 때 groupBy는 안정적으로 동작하기 때문에 이러한 걱정을 할 필요가 없다.   
+
+`groupBy를 사용했을 때 RelationalGroupedDataset 클래스를 리턴한다.`   
+
+> RelationalGroupedDataset은 다양한 집계와 관련된 api 들을 제공한다.    
+
+```scala
+ticketDf.groupBy("ticketId").max("occurredAt")
+
+// OR   
+import org.apache.spark.sql.functions._
+df.groupBy("age").agg(max("occurredAt"))
+```
+- - - 
+
+## 4. UDF(User Define Function)   
+
+DataFrame을 사용할 때 커스텀하게 함수를 생성하여 사용할 수도 있다.    
+사용방법은 아래와 같다.   
+
+
+```scala
+spark.udf.register("myUDF", (arg1: Int, arg2: String) => arg2 + arg1)    
+```
+
+
+```scala
+import org.apache.spark.sql.functions._
+
+```
+
 
 - - - 
 
-## 3. DataFrame 과 RDD      
+## 5. DataFrame 과 RDD      
 
 DataFrame은 기본적으로 RDD 위에서 구현되어 있다.   
 

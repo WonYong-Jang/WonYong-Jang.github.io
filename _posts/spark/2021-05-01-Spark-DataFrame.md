@@ -29,7 +29,9 @@ RDD를 사용함으로써 얻을 수 있는 장점은 분산환경에서 메모�
 
 - - - 
 
-## 1. DataFrame      
+## 1. DataFrame     
+
+<img width="560" alt="스크린샷 2023-09-10 오후 2 43 03" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/a5999f92-0ada-4e43-a71b-695ffd8a04ed">   
 
 Spark 1.3.X 부터 릴리즈된 DataFrame은 
 RDB Table 처럼 Schema를 가지고 있고 SparkSQL 에서 사용하는 데이터 모델이다.   
@@ -42,7 +44,10 @@ DataFrame은 Spark 엔진에서 최적화 할 수 있도록 하는 기능들이 
 `RDD를 사용할 때는 각 연산들을 함수로 생성하여 전달하면, Spark 엔진은 각 함수를 
 파싱하지 않고 전달 받은 함수를 처리하기만 한다.`   
 `반면, DataFrame 기반 코드는 Spark 엔진이 실행 전에 이를 파싱 및 실행 계획을 
-세우게 된다.`   
+세우게 된다.`     
+
+> RDD는 functional code를 사용하며, DataFrame은 relational code를 사용한다.   
+
 `즉, 실행 계획에 따라 내부적으로 최적화를 진행하기 때문에 RDD에 비해 성능이 빠르다(Catalyst Optimizer)`       
 
 <img width="1198" alt="스크린샷 2023-09-03 오후 6 29 12" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/d363f001-9300-4090-897a-b68845a2000d">    
@@ -50,7 +55,13 @@ DataFrame은 Spark 엔진에서 최적화 할 수 있도록 하는 기능들이 
 또한, `RDD에 비해 직렬화, 역직렬화 하는 방식도 다르며, 성능도 빠르다.`   
 `RDD를 사용할 때 java serialization 또는 kryo(크라이오) 를 사용했지만 DataFrame은 Encoder를 사용한다.`     
 보통 데이터를 filter, sorting, hashing 하는 경우 당연하게 데이터가 메모리에 역직렬화 되어 있어야 한다.   
-하지만, DataFrame은 Encoder를 사용하기 때문에, byte code 형태(직렬화) 그대로 연산 처리가 가능하다.   
+하지만, DataFrame은 Encoder를 사용하기 때문에, byte code 형태(직렬화) 그대로 연산 처리가 가능하다.    
+
+> 정확하게 말하면 Encoder는 DataSet 모델이 사용하지만, Spark 2.0 부터는 DataFrame과 DataSet은 
+통합되었다.   
+
+<img width="801" alt="스크린샷 2023-09-10 오후 8 40 50" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/84b81d0b-e6ec-4260-8d76-eaca16172ff5">
+
 
 > 데이터를 처음 읽어 오거나, 메모리에 캐싱 또는 네트워크를 타고 데이터가 이동했을 때 직렬화 상태일 것이다.   
 > 해당 데이터를 연산하기 위해 반드시 역직렬화를 해야 한다 (object 형태)   

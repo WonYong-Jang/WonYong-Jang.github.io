@@ -1,68 +1,72 @@
 ---
 layout: post
-title: "[Spark] 아파치 스파크(spark) DataSet "
-subtitle: "DataSet 의 주요 연산 사용법  "    
+title: "[Spark] 아파치 스파크(spark) DataSet"
+subtitle: "DataSet 의 주요 연산 사용법 / Encoder"    
 comments: true
 categories : Spark
 date: 2021-05-07
 background: '/img/posts/mac.png'
 ---
 
-
 ## 1. DataSet   
 
-`데이터셋은 Spark 1.6 버전에서 처음 소개되었으며, Spark SQL에서 
+`DataSet은 Spark 1.6 버전에서 처음 소개되었으며, Spark SQL에서 
 사용하는 분산 데이터 모델이다.`            
-자바와 스칼라 언어에서만 
-사용할 수 있었고 그 이전에는 DataFrame이라는 클래스를 구현 언어와 
-상관없이 사용하고 있었다.   
 
-하지만, Spark 2.0부터는 데이터 프레임 클래스가 데이터 셋 클래스로 통합되면서 
-변화가 생겼다.   
-DataSet은 자바와 스칼라 언어에서만 사용 가능하며, 파이썬과 R을 사용하는 경우는 
-DataFrame 만을 사용할 수 있게 되었다.   
+DataFrame은 relational code만 작성할 수 있는 반면, `DataSet은 relational code와 functional code 모두 
+사용할 수 있다는 장점이 있다.`      
 
-`RDD와 데이터프레임이라는 훌륭한 데이터 모델이 있음에도 또 다른 데이터 
-모델을 제시하게 된 가장 큰 이유는 데이터 프레임과 RDD간의 
-데이터 타입(Type)을 다루는 방식의 차이 때문이다.`    
+> 물론, UDF(User Define Function)을 이용하여 DataFrame도 함수형으로 작성할 수 있지만, 
+    매번 직접 작성하여 등록해줘야 하는 불편함이 있다.   
 
-위의 예시를 한가지 들어보면, 
-    rdd의 경우 아래와 같이 함수 내부에서 charAt과 같은 
-    String 클래스의 메서드를 직접 사용할 수 있다.   
+<img width="500" alt="스크린샷 2023-09-10 오후 9 12 18" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/3d61871b-ca18-4033-b199-931edd03dd85">    
 
-```scala 
-rdd.map { v => v.charAt(0) }
-```   
-
-`하지만 데이터 프레임의 경우에는 모든 데이터가 Row 타입으로만 
-처리되기 때문에 비록 데이터프레임에 포함된 데이터가 모두 문자열이라고 
-할지라도 String 클래스의 메서드를 직접 호출할 방법이 없다.`       
-
-즉, 데이터 프레임은 Row 타입을 지닌 배열이고 Row 타입은 내부의 값에 
-대한 타입을 알지 못한다는 것이다.   
-
-물론 데이터프레임의 이런 특징은 RDD 보다 더 뛰어난 성능을 얻기 위한 
-최적화 과정에서 발생하는 것이다. 하지만 개발 과정에서의 
-불편함이 남아 있기 때문에 스파크에서는 `데이터 프레임 고유의 
-성능 최적화 특성을 유지하면서도 IDE를 통한 개발 편의성과 
-컴파일 타입 오류 검증이 가능한 새로운 모델을 제공하게 되는데 
-그것이 바로 데이터 셋 모델이다.`      
-
-또한, 데이터 셋은 join 연산을 수행할 때 High-level API를 사용하면 
-가능한 경우에 자동으로 broadcast join 등으로 바꿔 shuffle이 
-일어나지 않게 해주는 최적화가 이루어 진다.      
-
-> 위에서 설명했듯이 데이터 프레임은 데이터 셋과 다르지 않은 
-완전히 동일한 클래스이다. 즉, 데이터셋과 데이터프레임은 동일한 
-데이터를 서로 다른 방식으로 표현하기 위한 모델이지 서로 다른 것이 아니다.   
-> 그렇기 때문에 데이터 프레임과 데이터셋은 자유롭게 변환이 가능하다.    
-
-`데이터 셋을 정리해보면 타입이 있는 데이터 집합이며, 데이터 프레임과 RDD를 
-합친 것이다. 그렇기 때문에 RDD 처럼 groupByKey를 사용할 수 있고 또한 
-agg와 같은 데이터 프레임관련 메서드를 사용 할 수 있다.`     
+[DataFrame](https://wonyong-jang.github.io/spark/2021/05/01/Spark-DataFrame.html)에서 설명한 것처럼 
+Spark 엔진은 functional code를 파싱하지 않기 때문에 catalyst optimizer가 최적화 하지 않는다.     
+하지만, RDD를 이용하여 코드를 작성하는 것보다는 빠른 성능을 보장 받을 수 있다.     
 
 
-아래와 같이 List를 데이터셋으로 생성할 수 있다.    
+> DataSet은 자바와 스칼라 언어에서만 사용 가능하며, 
+    파이썬과 R을 사용하는 경우는 DataFrame 만을 사용할 수 있다.    
+> 물론, 자바와 스칼라는 DataSet, DataFrame 모두 사용 가능하다.   
+
+> Spark 1.6 버전에서는 DataFrame과 DataSet이 별도로 존재했다.   
+
+하지만, `Spark 2.0부터는 데이터 프레임 클래스가 데이터 셋 클래스로 통합`되면서 
+변화가 생겼다.    
+
+Spark 2.0부터 DataSet 과 DataFrame은 동일한
+데이터를 서로 다른 방식으로 표현하기 위한 모델이지 서로 다른 것이 아니다.     
+
+즉 [RDD](https://wonyong-jang.github.io/spark/2021/04/11/Spark.html)와 [DataFrame](https://wonyong-jang.github.io/spark/2021/05/01/Spark-DataFrame.html) 의 장점들을 
+모두 DataSet에 적용된다.   
+
+<img width="600" alt="스크린샷 2023-09-10 오후 8 16 46" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/25aa6139-aec6-46ce-9bc5-3c298dfc4fca">   
+
+그럼에도 불구하고 DataFrame, DataSet 타입은 분명하게 구분된다.   
+`DataFrame이 DataSet이 될 수는 없지만, Encoder를 지정하면 DataSet이 될 수 있다.`   
+
+Spark SQL은 이미 기본적인 Encoder는 제공하고 있기 때문에 따로 지정할 필요가 없지만, 
+      커스텀한 타입 같은 경우는 아래와 같이 직접 만들 수 있다.   
+
+> 스칼라의 case class를 만들면 스키마 정보들을 암묵적으로 Encoder로 지정한다.  
+
+```scala
+// DataFrame to DataSet
+val ds: Dataset[Ticket] = df.as[Ticket]    
+
+// def as[U](implicit arg0: Encoder[U]): Dataset[U]
+```
+
+아래와 같이 RDD 안에 들어있는 element가 case class라면, Dataset으로 바로 변경 가능하다.   
+
+```scala
+// rdd: RDD[Ticket]
+
+rdd.toDS
+```
+
+또한, 아래와 같이 List를 데이터셋으로 생성할 수 있다.    
 이를 조회할 때 show()를 이용 할 수 있으며, 출력을 위한 println() 메서드를 
 사용하지 않았는데도 데이터의 내용을 보기 좋게 표시해준다.   
 
@@ -302,9 +306,6 @@ scala> ds.groupByKey(_.job).agg(sum("age").as[Int], first("name").as[String], fi
 DataFrame, DataSet을 고려해 볼 수 있다.       
 데이터 엔지니어냐 데이터 분석가냐에 따라 사용하기 편한 언어와 환경은 
 다를 수 있다.      
-Scala/Java 개발자라면 Encoder의 장점을 활용하는 DataSet을 추천한다.   
-
-
 
 
 
