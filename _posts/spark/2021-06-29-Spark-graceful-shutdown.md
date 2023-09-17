@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spark] 아파치 스파크 graceful shutdown"   
+title: "[Spark] 아파치 스파크 graceful shutdown "   
 subtitle: "How to do graceful shutdown of spark streaming job"    
 comments: true
 categories : Spark

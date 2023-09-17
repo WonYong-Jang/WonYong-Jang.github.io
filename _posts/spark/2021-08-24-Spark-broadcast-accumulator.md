@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spark] Broadcast, Accumulator 공유변수"   
+title: "[Spark] Broadcast, Accumulator 공유변수 "   
 subtitle: "braodcast, accumulator, closure"    
 comments: true
 categories : Spark

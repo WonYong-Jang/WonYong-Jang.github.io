@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spark] How to override a spark dependency in cluster mode(AWS EMR)"   
+title: "[Spark] How to override a spark dependency in cluster mode(AWS EMR) "   
 subtitle: "라이브러리 버전 충돌이 발생할 때 shadowJar를 사용하여 package relocate"    
 comments: true
 categories : Spark
