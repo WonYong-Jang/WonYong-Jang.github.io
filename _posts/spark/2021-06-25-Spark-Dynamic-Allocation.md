@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Dynamic Allocation in AWS EMR Cluster"
-subtitle: "Spark에서 Dynamic하게 executor를 scale out 또는 scale in / ec2기반 aws emr 5.x 트러블 슈팅"    
+subtitle: "Spark에서 Dynamic하게 executor를 scale out 또는 scale in / ec2기반 aws emr 5.x auto scaling 트러블 슈팅"    
 comments: true
 categories : Spark
 date: 2021-06-25
@@ -136,9 +136,9 @@ spark.dynamicAllocation.executorIdleTimeout
 ```
 spark.dynamicAllocation.cachedExecutorIdleTimeout
 ```
+- - -    
 
-
-## 4. AWS EMR Cluster에서 Dynamic allocation 
+## 4. AWS EMR Cluster auto scaling   
 
 AWS EMR Cluster에서 스파크를 사용하고 있다면, EMR Cluster 에 대해서 먼저 이해해야 한다.   
 
@@ -158,28 +158,28 @@ EMR은 기존 Hadoop에서의 Computing 부분을 그대로 구현해 놓은 플
 - Master Node: 1개 이상 노드가 필요하고, 
     다른 노드들 간의 작업 트래킹 및 리소스 분배를 진행하며 전반적인 클러스터의 상태를 모니터링하고 관리한다.    
 
-> NameNode, ResourceManager, Hive Server 등이 이에 속한다.    
+    > NameNode, ResourceManager, Hive Server 등이 이에 속한다.    
 
 - Core Node: 1개 이상 노드가 필요하며, 클러스터의 HDFS(Hadoop Distributed File System)에 작업을 실행하고 데이터를 
 저장할 수 있는 노드이다.    
 
-> DataNode, NodeManager가 실행된다고 이해하면 된다.   
+    > DataNode, NodeManager가 실행된다고 이해하면 된다.   
 
 - Task Node: HDFS에 데이터를 저장하지 않고 작업들만 처리하는 노드이다.    
 
-> 선택사항이며, 반드시 필요한 노드는 아니다.   
+    > 선택사항이며, 반드시 필요한 노드는 아니다.   
 
 클러스터를 구성할 때 작업의 성격에 따라 각 Node들에 해당하는 리소스를 
 적절히 설정하여야 하며, NameNode, ResourceManager를 포함하고 있는 Master Node 그리고 
 DataNode를 포함하고 있는 Core Node는 On demand로 설정해야 한다.   
 
 > on demand 옵션은 ec2 비용 그대로를 할인 없이 지불하는 대신 안전하게 사용할 수 있다.   
-> Master Node와 HDFS를 사용하는 Core Node는 보통 on demand를 사용한다.  
-> spot 옵션은 on demand 요금보다 70~90% 절감된 비용으로 사용할 수 있는 instance   
+> spot 옵션은 on demand 요금보다 70~90% 절감된 비용으로 사용할 수 있는 instance 이지만, 경우에 따라서 
+리소스를 뺏길 수도 있다.   
 
 #### 4-2) Core / Task Node 분리되어 있는 이유   
 
-기존 하둡의 경우 Master에 Resource Manager, NameNode가 있고, Workerdp Node Manager, DataNode가 
+기존 하둡의 경우 Master에 Resource Manager, NameNode가 있고, Worker에 Node Manager, DataNode가 
 설치되어 있었다.   
 하지만 `EMR에서는 Worker를 DataNode가 있는 Node(Core)와 DataNode가 없는 Node(Task)로 
 분리하여 제공한다.`     
@@ -188,6 +188,32 @@ DataNode를 포함하고 있는 Core Node는 On demand로 설정해야 한다.
 DataNode에 대한 부담이 없으므로 정말 Job들을 처리하는 Worker로써 쉽고 빠르게 
 늘리고 줄일 수 있다.   
 
+정리해 보면 EMR의 관건은 비용 효율적이면서 안정성 있는 클러스터를 구성하는 것이다.   
+`적절한 Instance type 설정 및 on demand 와 spot instance의 적절한 구성이 중요하다.`   
+비용 절약을 위해 인스턴스 타입들을 모두 spot instance로 활용한 경우 부족한 
+resource로 인해 실행되던 job들이 죽는 경우도 발생할 수 있다.   
+반대로 모두 on demand로 구성한다면, 비용 차이가 두배 가까이 나기 때문에  
+그 중간의 타협점을 찾아야 한다.   
+
+#### 4-3) Dynamic Allocation in aws emr cluster(5.33x)   
+
+현재 업무에서 AWS EMR Cluster 버전은 5.33x 버전을 사용하고 있고, 
+    auto scaling 적용하던 과정에서 발생한 문제는 아래와 같다.   
+
+`AWS EMR 6.x 버전은 Spark driver가 Core Node 또는 Task Node에서 실행이 가능하지만, 
+    5.x 버전은 Core Node에서만 실행된다.`   
+
+즉, Spark executor들이 Core Node의 리소스를 먼저 선점해버리면 Spark를 실행할 때 driver가 실행할 
+리소스가 없어서 job을 실행하지 못하고 계속 대기하는 경우가 생길 수 있다.   
+
+따라서, executor를 core node가 아닌, task node로만 실행할 수 있다면 문제는 해결 된다.  
+
+> 보통 emr cluster의 auto scaling은 task 노드들을 이용하며, core 노드에는 driver 가 실행되게 하고 
+task 노드에 executor를 실행하게 하여 많은 데이터를 처리할 때 task 노드를 증가시켜 scaling을 한다.   
+
+```
+--conf spark.yarn.am.nodeLabelExpression=core --conf spark.yarn.executor.nodeLabelExpression=task
+```
 
 - - - 
 
