@@ -13,7 +13,6 @@ checkpointing 에 대해 자세히 살펴보자.
 
 - - -    
 
-
 ## 1. What is RDD checkpointing?   
 
 `체크포인트란 rdd에 있는 데이터를 디스크에 기록하는 것이며 
