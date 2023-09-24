@@ -204,21 +204,35 @@ resource로 인해 실행되던 job들이 죽는 경우도 발생할 수 있다.
     5.x 버전은 Core Node에서만 실행된다.`   
 
 즉, Spark executor들이 Core Node의 리소스를 먼저 선점해버리면 Spark를 실행할 때 driver가 실행할 
-리소스가 없어서 job을 실행하지 못하고 계속 대기하는 경우가 생길 수 있다.   
+리소스가 없어서 job을 실행하지 못하고 계속 대기하는 경우가 생길 수 있다.     
 
-따라서, executor를 core node가 아닌, task node로만 실행할 수 있다면 문제는 해결 된다.  
+> EMR Cluster 내에 여러 Spark job을 실행할 때 발생할 수 있는 문제이다.   
 
-> 보통 emr cluster의 auto scaling은 task 노드들을 이용하며, core 노드에는 driver 가 실행되게 하고 
-task 노드에 executor를 실행하게 하여 많은 데이터를 처리할 때 task 노드를 증가시켜 scaling을 한다.   
+이러한 문제를 해결할 수 있는 방법에 대해서 살펴보자.   
+
+- `첫번째로, executor를 core node가 아닌, task node로만 실행할 수 있다면 문제는 해결 된다.`         
+
+> 보통 emr cluster의 auto scaling은 task 노드들을 증가 또는 감소시켜서 진행하며, core 노드에는 driver 가 실행되게 하고 
+task 노드에 executor를 실행하게 하여 많은 데이터를 처리할 때 task 노드를 증가시켜 scaling을 한다.      
+> 아래 am은 AM(Application Master) 즉, driver를 뜻한다.  
 
 ```
---conf spark.yarn.am.nodeLabelExpression=core --conf spark.yarn.executor.nodeLabelExpression=task
+--conf spark.yarn.am.nodeLabelExpression=core 
+--conf spark.yarn.executor.nodeLabelExpression=task
+```
+
+위 옵션을 사용하기 위해서는 yarn 에서 node label을 활성화 해주어야 한다.   
+자세한 내용은 [링크](https://docs.aws.amazon.com/ko_kr/emr/latest/ManagementGuide/emr-plan-instances-guidelines.html)를 확인하자.   
+
+```
+
 ```
 
 - - - 
 
 **Reference**    
 
+<https://docs.aws.amazon.com/ko_kr/emr/latest/ManagementGuide/emr-plan-instances-guidelines.html>   
 <https://yeo0.tistory.com/entry/AWS-EMR-MasterCoreTaskAutoScalingSpotInstance>   
 <https://aws.amazon.com/ko/blogs/korea/best-practices-for-successfully-managing-memory-for-apache-spark-applications-on-amazon-emr/>   
 <https://mallikarjuna_g.gitbooks.io/spark/content/spark-dynamic-allocation.html>   
