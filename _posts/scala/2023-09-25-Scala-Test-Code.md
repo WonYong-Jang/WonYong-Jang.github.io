@@ -43,7 +43,7 @@ class NameServiceTest extends FunSpec {
   describe("NameServiceTest") {
     val service = new NameService("kaven")
 
-    assert("kaven" == service.printName())
+    assert("kaven" === service.printName())
   }
 }
 ```
@@ -134,7 +134,7 @@ object NameService extends ConfigSupport {
 ```
 
 또는 ConfigSupport가 object로 구성되어 아래와 같이 외부 dependency가 
-있는 메서드를 mocking 테스트가 가능할까?   
+있는 메서드를 테스트 할 경우 mock 테스트가 가능할까?   
 
 `scala 에서 많은 singleton object 를 생성하여 아래와 같이 코드를 작성한다면 
 외부 의존성(외부 api, 라이브러리 등)을 mocking 하지 못하여 
