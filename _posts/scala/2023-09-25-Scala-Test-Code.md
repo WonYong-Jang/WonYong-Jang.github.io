@@ -71,7 +71,7 @@ testImplementation group: 'org.scalatestplus', name: 'mockito-3-4_2.11', version
 implementation group: 'com.typesafe', name: 'config', version: '1.0.2'
 ```
 
-`따라서, 단위 테스트 진행을 할 경우 외부 의존성을 mocking해야 하며,
+`따라서 단위 테스트 진행을 할 경우 외부 의존성을 mocking해야 하며,
      아래와 같이 가능하다.`      
 
 ```scala
@@ -98,10 +98,9 @@ import org.mockito.Mockito.when
 import org.scalatest.FunSpec
 import org.scalatest.mock.MockitoSugar
 
-
 class NameServiceTest extends FunSpec with MockitoSugar {
 
-  describe("ConsistencyServiceTest") {
+  describe("NameServiceTest") {
 
     val configService = mock[ConfigService]
 
@@ -113,6 +112,133 @@ class NameServiceTest extends FunSpec with MockitoSugar {
   }
 }
 
+```
+
+- - - 
+
+## 3. singleton object 테스트 코드   
+
+아래와 같이 singleton object를 사용하여 mocking 테스트가 가능할까?
+
+```scala
+trait ConfigSupport {
+  val config: Config = ConfigFactory.load()
+}
+
+object NameService extends ConfigSupport {
+
+  def printName(): String = {
+    config.getString("domain")
+  }
+}
+```
+
+또는 ConfigSupport가 object로 구성되어 아래와 같이 외부 dependency가 
+있는 메서드를 mocking 테스트가 가능할까?   
+
+`scala 에서 많은 singleton object 를 생성하여 아래와 같이 코드를 작성한다면 
+외부 의존성(외부 api, 라이브러리 등)을 mocking 하지 못하여 
+단위테스트가 불가능해질 것이다.`   
+
+> scala object는 생성자를 가질 수 없다.    
+
+```scala
+object ConfigSupport {
+  val config: Config = ConfigFactory.load()
+}
+
+object NameService {
+
+  def printName(): String = {
+    ConfigSupport.config.getString("domain")
+  }
+}
+```   
+
+따라서 object 를 사용할 때 단위 테스트가 가능한 구조로 작성 해야 한다.   
+
+`아래와 같이 class 를 통해 로직들을 분리 함으로써 mocking이 가능해진다.`   
+
+```scala
+trait ConfigSupport {
+  val config: Config = ConfigFactory.load()
+}
+
+class NameServiceLogic(config: Config) {
+
+  def printName(): String = {
+    config.getString("domain")
+  }
+}
+
+object NameService extends ConfigSupport {
+
+  val logic = new NameServiceLogic(config)
+  def printName(): String = logic.printName()
+}
+```
+
+`class로 로직을 분리했기 때문에 외부 의존성인 Config 클래스를 mocking 및 stubbing이 
+가능해진 것을 확인 할 수 있다.`   
+
+```scala
+import com.typesafe.config.{Config, ConfigFactory}
+import org.mockito.Mockito.when
+import org.scalatest.FunSpec
+import org.scalatest.mock.MockitoSugar
+
+class NameServiceTest extends FunSpec with MockitoSugar {
+
+  describe("NameServiceTest") {
+
+    val config = mock[Config]
+
+    when(config.getString("domain")).thenReturn("kaven")
+
+    val service = new NameServiceLogic(config)
+
+    assert("kaven" === service.printName())
+  }
+}
+```
+
+`또한, singleton object를 사용할 때 trait 또는 class를 이용하여 companion object를 
+만들어 파라미터로 사용하게 되면 mocking 하여 
+테스트 하기 좋은 구조가 된다.`   
+
+```scala
+trait ConfigSupport {
+  val config: Config = ConfigFactory.load()
+}
+
+object ConfigSupport extends ConfigSupport {
+
+}
+
+class NameService(configSupport: ConfigSupport) {
+
+  def printName(): String = {
+    configSupport.config.getString("domain")
+  }
+}
+```
+
+```scala
+class NameServiceTest extends FunSpec with MockitoSugar {
+
+  describe("NameServiceTest") {
+
+    val configSupport = mock[ConfigSupport]
+    val config = mock[Config]
+
+    when(configSupport.config).thenReturn(config)
+    when(config.getString("domain")).thenReturn("kaven")
+
+    val service = new NameService(configSupport)
+
+    assert("kaven" === service.printName())
+  }
+}
 ```
 
 - - - 
