@@ -72,7 +72,7 @@ scalatet 테스트 하기 위해 제공하는 여러 기능들에 대해 살펴�
 `각 테스트 시작 전, 후에 실행될 메서드를 before, after 키워드로 정의할 수 있으며, 
     BeforeAndAfter traite를 상속받으면 된다.`  
 
-> BeforeAndAfterAll 클래스도 제공하므로 참고하자.  
+> BeforeAndAfterAll trait도 제공하므로 참고하자.  
 
 ```scala
 class NameServiceTest extends FunSpec with BeforeAndAfter  {
@@ -92,7 +92,7 @@ class NameServiceTest extends FunSpec with BeforeAndAfter  {
 각 테스트를 `pending 상태로 표기`해 둘 수 있다.   
 
 ```scala
-it("The name should be kaven2) (pending)
+it("The name should be kaven") (pending)
 ```
 
 또는 아래와 같이 `해당 테스트를 disable` 시켜 둘 수 있다.   
@@ -162,7 +162,7 @@ class NameService(config: ConfigService) {
 }
 ```
 
-`따라서 단위 테스트 진행을 할 경우 외부 의존성을 mocking해야 하며,
+`따라서 단위 테스트 진행을 할 경우 외부 의존성을 mocking 해야 하며,
      아래와 같이 가능하다.`
 
 
