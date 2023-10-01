@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Scala] 테스트 코드 작성하기"
-subtitle: "scalatest 셋팅 / 단위 테스트를 하기 위한 구조 / singleton object mock 테스트"    
+subtitle: "scalatest, scalacheck 셋팅 / 단위 테스트를 하기 위한 구조 / singleton object mock 테스트"    
 comments: true
 categories : Scala
 date: 2023-09-25
@@ -321,12 +321,129 @@ class NameServiceTest extends FunSpec {
     }
   }
 }
+```  
+
+- - - 
+
+## 5. ScalaCheck 함께 사용하기   
+
+`scalacheck와 scalatest 모두 scala에서 테스트를 위한 라이브러리이며, 
+    scalacheck는 property based testing 이다.`  
+
+아래 의존성을 추가하면 되며, 
+    [링크](https://www.baeldung.com/scala/scalacheck)를 통해 
+    자세한 내용 확인해보자.
+
+```gradle
+// https://mvnrepository.com/artifact/org.scalacheck/scalacheck
+testImplementation group: 'org.scalacheck', name: 'scalacheck_2.11', version: '1.15.2'
+```
+
+`테스트 하기 위한 Input data를 직접 정의하지 않고, random test data를 generate 해준다.`      
+
+테스트를 진행하기 위한 메서드를 아래와 같이 생성하였다.   
+
+```scala
+case class User(username: String, age: Int)
+
+trait UserDao {
+  def save(user: User): Boolean
+}
+
+class UserService(userDao: UserDao) {
+  def createUser(username: String, age: Int): Boolean = {
+    val user = User(username, age)
+    userDao.save(user)
+  }
+}
+```
+
+`ScalaCheckPropertyChecks trait를 상속받은 후 forAll 사용하면, 여러 random input data를 
+생성하여 검증해 준다.`   
+
+```scala
+import org.mockito.Mockito.{verify, when}
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest.FunSpec
+import org.scalatest.Matchers.{be, convertToAnyShouldWrapper}
+import org.scalatestplus.mockito.MockitoSugar.mock
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+
+class UserServiceTest extends FunSpec with ScalaCheckPropertyChecks  {
+
+  describe("UserServiceTest") {
+    it("User should be saved successfully") {
+
+      val mockUserDao = mock[UserDao]
+      val userService = new UserService(mockUserDao)
+
+      forAll(arbitrary[String], arbitrary[Int]) { (username, age) =>
+        when(mockUserDao.save(User(username, age))).thenReturn(true)
+        
+        userService.createUser(username, age) should be (true)
+
+        verify(mockUserDao).save(User(username, age))
+      }
+    }
+  }
+}
+```
+
+`User를 직접 전달 할 수도 있으며, 아래와 같이 각 필드에 대해서 Gen 키워드를 통해서 
+random하게 생성해준다.`   
+
+더 자세한 사용방법은 [링크](https://www.baeldung.com/scala/scalacheck)를 참고하자.   
+
+```scala
+import org.scalacheck.{Arbitrary, Gen}
+
+class UserServiceTest extends FunSpec with ScalaCheckPropertyChecks  {
+
+  describe("UserServiceTest") {
+    it("User should be saved successfully") {
+
+      val mockUserDao = mock[UserDao]
+      val userService = new UserService(mockUserDao)
+
+      implicit val userArbitrary: Arbitrary[User] = Arbitrary(
+        for {
+          username <- Gen.alphaStr
+          age <- Gen.choose(0, 100)
+        } yield User(username, age)
+      )
+
+      forAll { user: User =>
+        when(mockUserDao.save(user)).thenReturn(true)
+
+        userService.createUser(user.username, user.age) should be (true)
+
+        verify(mockUserDao).save(user)
+      }
+    }
+  }
+}
+```
+
+Output
+
+```
+generated user: User(,84)
+generated user: User(IdCoJoac,19)
+generated user: User(XeWYkqajuxeB,1)
+generated user: User(s,4)
+generated user: User(rIabCyVFEWoWKjcDCgtdsoeTkn,11)
+generated user: User(RabkPHymk,48)
+generated user: User(YkRtusKeJwJuoUSzMXhZk,6)
+generated user: User(dCvDImrKBemzwgjvlFapenZaeFXmLdomYXcWUhvEVijRsZ,71)
+generated user: User(HjhZeugzXuzKxlUmIamQpHdOyYaDMMMfNxmdPKcTgAvnD,18)
+generated user: User(OLNVDZbaY,14)
 ```
 
 - - - 
 
 **Reference**    
 
+<https://www.baeldung.com/scala/scalacheck>    
 <https://www.scalatest.org/scaladoc/3.0.7/org/scalatest/FunSpec.html>   
 <https://www.scalatest.org/>    
 <https://alvinalexander.com/scala/scalatest-bdd-examples-describe-given-when-then-assert/>   
