@@ -20,7 +20,8 @@ background: '/img/posts/mac.png'
 scalatest 의존성을 추가하고 기본적인 단위 테스트를 진행해보자.   
 
 ```gradle
-testImplementation group: 'org.scalatest', name: 'scalatest_2.11', version: '2.1.3'
+// https://mvnrepository.com/artifact/org.scalatest/scalatest
+testImplementation group: 'org.scalatest', name: 'scalatest_2.11', version: '3.0.8'
 ```
 
 아래와 같이 NameService 클래스를 생성 후 테스트를 위한 
@@ -36,32 +37,102 @@ class NameService(name: String) {
 }
 ```
 
+scalatest에는 여러가지 스타일로 테스트를 작성할 수 있도록 제공하며, 
+아래는 [FunSpec 스타일](https://alvinalexander.com/scala/scalatest-bdd-examples-describe-given-when-then-assert/)로 
+작성했다.  
+
+[공식문서](https://www.scalatest.org/user_guide/selecting_a_style)에서 더 많은 테스트 style 을 살펴보자.   
+
 ```scala  
 import org.scalatest.FunSpec
 class NameServiceTest extends FunSpec {
 
   describe("NameServiceTest") {
-    val service = new NameService("kaven")
+    it("The name should be kaven") {
 
-    assert("kaven" === service.printName())
+      val service = new NameService("kaven")
+
+      assert("kaven" === service.printName())
+    }
+  }
+}
+```  
+
+`위에서 describe 키워드는 하나의 테스트 집합이며, it 메소드는 하나의 테스트이고 여러 
+테스트로 정의 가능하다.`    
+
+- - - 
+
+## 2. scalatest 기본 사용 방법    
+
+scalatet 테스트 하기 위해 제공하는 여러 기능들에 대해 살펴보자.   
+
+### 2-1) BeforeAndAfter   
+
+`각 테스트 시작 전, 후에 실행될 메서드를 before, after 키워드로 정의할 수 있으며, 
+    BeforeAndAfter traite를 상속받으면 된다.`  
+
+> BeforeAndAfterAll 클래스도 제공하므로 참고하자.  
+
+```scala
+class NameServiceTest extends FunSpec with BeforeAndAfter  {
+
+  before {
+    println("before")
+  }
+
+  after {
+    println("after")
   }
 }
 ```
 
+### 2-2) Pending 또는 Ignore 상태로 표기
+
+각 테스트를 `pending 상태로 표기`해 둘 수 있다.   
+
+```scala
+it("The name should be kaven2) (pending)
+```
+
+또는 아래와 같이 `해당 테스트를 disable` 시켜 둘 수 있다.   
+
+```scala
+ignore("The name should be kaven") {
+    // ...
+}
+```
+
+### 2-3) Testing expected exceptions
+
+`exception을 테스트 하기 위해서 intercept 메서드를 이용하여 검증할 수 있다.`   
+
+```scala
+val service = new NameService()
+val thrown = intercept[Exception] {
+    service.printName()
+}
+
+assert("error" === thrown.getMessage)
+```
+
 - - - 
 
-## 2. mock 을 이용한 단위 테스트   
+## 3. mock 을 이용한 단위 테스트   
 
 scala에서 mock 테스트를 하기 위한 방법은 ScalaMock, EasyMock, JMock, Mockito 등을 이용 할 수 있으며, 
     자세한 내용은 [공식문서](https://www.scalatest.org/user_guide/testing_with_mock_objects#scalamock)를 참고하자.   
 
-아래는 mockito를 이용한 단위테스트 예시이다.   
+여기서는 mockito를 이용한 단위테스트를 살펴 볼 것이며, 의존성을 추가해주자.    
 
 ```gradle
-testImplementation group: 'org.scalatestplus', name: 'mockito-3-4_2.11', version: '3.2.9.0'
+// https://mvnrepository.com/artifact/org.scalatestplus/mockito-3-4
+testImplementation group: 'org.scalatestplus', name: 'mockito-3-4_2.11', version: '3.2.9.0', {
+    exclude group: 'org.scalatest'
+}
 ```
 
-이번에는 NameService에서 ConfigService를 파라미터로 받아서 이름을 
+아래 예시는 NameService에서 ConfigService를 파라미터로 받아서 이름을 
 출력하는 예이다.  
 
 > 여기서 ConfigFactory는 외부에 있는 property를 읽어 올 수 있는 
@@ -69,10 +140,9 @@ testImplementation group: 'org.scalatestplus', name: 'mockito-3-4_2.11', version
 
 ```gradle
 implementation group: 'com.typesafe', name: 'config', version: '1.0.2'
-```
+```   
 
-`따라서 단위 테스트 진행을 할 경우 외부 의존성을 mocking해야 하며,
-     아래와 같이 가능하다.`      
+NameService를 테스트 할 때, ConfigService 외부 의존성이 있음을 확인 할 수 있다.   
 
 ```scala
 class ConfigService {
@@ -92,31 +162,39 @@ class NameService(config: ConfigService) {
 }
 ```
 
+`따라서 단위 테스트 진행을 할 경우 외부 의존성을 mocking해야 하며,
+     아래와 같이 가능하다.`
+
 
 ```scala
-import org.mockito.Mockito.when
-import org.scalatest.FunSpec
-import org.scalatest.mock.MockitoSugar
-
-class NameServiceTest extends FunSpec with MockitoSugar {
+class NameServiceTest extends FunSpec with GivenWhenThen {
 
   describe("NameServiceTest") {
+    it("The name should be kaven") {
 
-    val configService = mock[ConfigService]
+      Given("Given in FunSpec BDD Test")
 
-    when(configService.getConfig()).thenReturn("kaven")
+      When("When in FunSpec BDD Test")
+      val configService = mock[ConfigService]
 
-    val service = new NameService(configService)
+      when(configService.getConfig()).thenReturn("kaven")
 
-    assert("kaven" === service.printName())
+      val service = new NameService(configService)
+
+      Then("Then in FunSpec BDD Test")
+      assert("kaven" === service.printName())
+    }
   }
 }
-
 ```
+
+`이때 GivenWhenThen trait를 상속받아 BDD 스타일로 테스트를 작성할 수 있다.`   
+
+> Given, When, Then, And 키워드를 사용할 수 있다.   
 
 - - - 
 
-## 3. singleton object 테스트 코드   
+## 4. singleton object 테스트 코드   
 
 아래와 같이 singleton object를 사용하여 mocking 테스트가 가능할까?
 
@@ -134,7 +212,7 @@ object NameService extends ConfigSupport {
 ```
 
 또는 ConfigSupport가 object로 구성되어 아래와 같이 외부 dependency가 
-있는 메서드를 테스트 할 경우 mock 테스트가 가능할까?   
+있는 메서드를 테스트 할 경우 단위 테스트가 가능할까?   
 
 `scala 에서 많은 singleton object 를 생성하여 아래와 같이 코드를 작성한다면 
 외부 의존성(외부 api, 라이브러리 등)을 mocking 하지 못하여 
@@ -185,21 +263,24 @@ object NameService extends ConfigSupport {
 import com.typesafe.config.{Config, ConfigFactory}
 import org.mockito.Mockito.when
 import org.scalatest.FunSpec
-import org.scalatest.mock.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar.mock
 
-class NameServiceTest extends FunSpec with MockitoSugar {
+class NameServiceTest extends FunSpec {
 
   describe("NameServiceTest") {
 
-    val config = mock[Config]
+    it("The name should be kaven") {
+      val config = mock[Config]
 
-    when(config.getString("domain")).thenReturn("kaven")
+      when(config.getString("domain")).thenReturn("kaven")
 
-    val service = new NameServiceLogic(config)
+      val service = new NameServiceLogic(config)
 
-    assert("kaven" === service.printName())
+      assert("kaven" === service.printName())
+    }
   }
 }
+
 ```
 
 `또한, singleton object를 사용할 때 trait 또는 class를 이용하여 companion object를 
@@ -224,19 +305,20 @@ class NameService(configSupport: ConfigSupport) {
 ```
 
 ```scala
-class NameServiceTest extends FunSpec with MockitoSugar {
+class NameServiceTest extends FunSpec {
 
   describe("NameServiceTest") {
+    it("The name should be kaven") {
+      val configSupport = mock[ConfigSupport]
+      val config = mock[Config]
 
-    val configSupport = mock[ConfigSupport]
-    val config = mock[Config]
+      when(configSupport.config).thenReturn(config)
+      when(config.getString("domain")).thenReturn("kaven")
 
-    when(configSupport.config).thenReturn(config)
-    when(config.getString("domain")).thenReturn("kaven")
+      val service = new NameService(configSupport)
 
-    val service = new NameService(configSupport)
-
-    assert("kaven" === service.printName())
+      assert("kaven" === service.printName())
+    }
   }
 }
 ```
@@ -246,7 +328,8 @@ class NameServiceTest extends FunSpec with MockitoSugar {
 **Reference**    
 
 <https://www.scalatest.org/scaladoc/3.0.7/org/scalatest/FunSpec.html>   
-<https://www.scalatest.org/>   
+<https://www.scalatest.org/>    
+<https://alvinalexander.com/scala/scalatest-bdd-examples-describe-given-when-then-assert/>   
 
 {% highlight ruby linenos %}
 
