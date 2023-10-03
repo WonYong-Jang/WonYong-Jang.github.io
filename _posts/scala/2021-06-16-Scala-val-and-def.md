@@ -8,13 +8,21 @@ date: 2021-06-16
 background: '/img/posts/mac.png'
 ---
 
-스칼라에서 function과 method 를 각각 구분하여 사용하고 있고 이에 대한 
-차이를 이해하는 것은 중요하다.   
+스칼라에서 val과 def 를 각각 구분하여 사용하고 있고 이에 대한 
+차이를 이해하는 것은 중요하다.  
 
-기본 개념은 [링크](https://wonyong-jang.github.io/scala/2021/02/24/Scala.html)를 
+기본적으로 val은 Immutable 하기 때문에 한번만 초기화 되며, 재할당 될 수 없다.    
+반면, def 는 호출 될 때마다 실행되어 값이 변경될 수 있다.   
+
+```scala
+val pi = 3.14  // constant value, will always be 3.14
+def getCurrentTimeMillis: Long = System.currentTimeMillis()
+```
+
+scala 전반적인 기본 개념은 [링크](https://wonyong-jang.github.io/scala/2021/02/24/Scala.html)를 
 참고하자.   
 
-이번 글에서는 function과 method를 사용할 때 주의사항과 
+이번 글에서는 val과 def를 사용할 때 주의사항과 
 언제 사용해야 하는지 자세히 살펴보자.   
 
 - - - 
@@ -84,7 +92,7 @@ Unapplied methods are only converted to functions when a function type is expect
 You can make this conversion explicit by writing `toUpper _` or `toUpper(_)` instead of `toUpper`.
 ```
 
-물론, 아래와 같이 def를 val로 변환하여 해결할 수 있지만 
+물론, 아래와 같이 `def를 val로 변환하여 해결`할 수 있지만 
 이에 대해 아래에서 자세히 살펴보자.   
 
 
@@ -144,7 +152,15 @@ strLen("abc") // 출력 : 3
 
 ### 1-2) def 함수    
 
-def는 클래스나 object안에 정의해야 하는 method이다.   
+def는 클래스나 object안에 정의해야 하는 method이다.  
+
+
+```scala
+def toUpper(value: String) = value.toUpperCase // method
+
+// 아래 예시는 method가 아닌, function임을 주의하자.   
+def toUpper: String => String = _.toUpperCase // function
+```
 
 `위에서 확인했던 udf 예시에서 def로 생성한 메서드를 이용했을 때 에러가 발생했던 이유는 udf가 아래와 같이 
 Function type의 인자를 받도록 되어 있기 때문이다.`   
@@ -237,6 +253,7 @@ class CustomGreeting extends Greeting {
   val name: String = "User"
 }
 ```
+
 
 
 
