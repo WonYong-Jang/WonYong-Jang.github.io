@@ -122,7 +122,10 @@ kafka topic에서 데이터를 읽어 온다.`
 `단, 중요한 것은 receiver 1대에서 하나의 rdd가 생성되며 receiver 2대를 사용하게 되면 
 batch interval 마다 2개의 rdd가 생성된다.`   
 `카프카의 토픽 파티션마다 receiver를 실행했기 때문에 batch interval에 여러 rdd가 
-생성되며, 이를 한번에 처리하기 위해서는 DStream의 rdd들을 union 작업을 따로 해주어야 한다.`   
+생성되며, 이를 한번에 처리하기 위해서는 DStream의 rdd들을 union 작업을 따로 해주어야 한다.`  
+
+[Structured Streaming](https://wonyong-jang.github.io/spark/2022/01/03/Spark-Structured-Streaming.html)을 
+사용하게 되면, 이러한 작업은 따로 고려하지 않아도 된다.   
 
 ### 4-2) Direct(also called receiverless)   
 
