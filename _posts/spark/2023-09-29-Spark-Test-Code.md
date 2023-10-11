@@ -8,7 +8,6 @@ date: 2023-09-29
 background: '/img/posts/mac.png'
 ---
 
-
 Apache Spark는 분석 및 빅데이터 처리를 위한 
 Large scale distributed computing framework 이다.  
 
