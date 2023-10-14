@@ -418,6 +418,16 @@ tweets.transform(tweetsRDD => {
 외부에 배치성으로 쌓이고 있는 데이터를 RDD로 만든 것이다.   
 ```
 
+#### 6-4) union   
+
+```scala
+val unionDStream = streamingContext.union(DStream1, DStream2)
+```
+
+`위의 streamingContext.union 메소드는 여러 DStream들을 하나의 DStream으로 합친다.`   
+`즉, 각 micro batch interval에서 생성한 RDD들이 하나의 RDD로 합쳐진다.`    
+
+> 여러 데이터 소스를 사용하여 집계 등을 할 때 유용하다.   
 
 - - - 
 
