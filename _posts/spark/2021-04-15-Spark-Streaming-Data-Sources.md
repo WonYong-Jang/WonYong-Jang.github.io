@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Streaming Data Sources "
-subtitle: "Kafka, Kinesis / Receiver Based Data Sources, Fault Tolerance"    
+subtitle: "Kafka, Kinesis / Direct, Receiver Based Data Sources, Fault Tolerance"    
 comments: true
 categories : Spark
 date: 2021-04-15
