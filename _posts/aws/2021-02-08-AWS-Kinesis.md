@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kinesis] AWS Kinesis"
-subtitle: "Amazon Kinesis Data Streams, Kafka와의 차이점"    
+subtitle: "Amazon Kinesis Data Streams, Kafka와의 차이점, Kinesis 모니터링 지표"    
 comments: true
 categories : AWS
 date: 2021-02-08
@@ -9,39 +9,7 @@ background: '/img/posts/mac.png'
 ---
 
 
-## Batch VS Streaming   
-
-과거 이야기를 먼저 해보면, 과거에도 데이터를 분석해내는 방법이 있었다. 첫번째로는 데이터를 
-모으는 것이다. 그리고 그것을 특정한 저장소에 저장을 한다. 대부분 데이터베이스 시스템에 
-저장을 했다. 그리고 그것을 이용해서 쿼리문을 이용해서 데이터를 뽑아 냈다.   
-
-그런데 데이터를 모으고 데이터베이스에 저장하고 하는 부분은 특정 시간에 서버에 작업을 
-걸어놓아야 하는 경우가 많았다. 간단하게는 리눅스 시스템에서 크론(Cron)을 이용해서 
-특정 배치 프로그램을 돌려서 데이터를 모으고 데이터베이스에 집어 넣는 방법을 이용했다. 
-
-하지만 Big Data 시대에 이 방법이 과연 유용한가 하는 문제가 있다. 몇분, 몇시간, 몇일간격으로 배치 
-작업을 돌리는건 쏟아지는 데이터 속도보다 빠르지 못하다보니 데이터 분석을 할 수 없는 경우가 
-많다.   
-
-그래서 등장한 것이 스트리밍(Streaming)이다. 스트리밍, 물 흐르듯 그때 그때 데이터를 분석해내면 
-유용한 정보를 얻기 위해서 기다릴 필요가 없다. 그때 그때 분석한 데이터를 데이터 베이스에 저장하거나 
-파일로 저장하는것도 가능하다.   
-
-그래서 현대의 Big Data 분석 소프트웨어들은 전부다 Streaming을 지원하도록 발전되어 왔다.   
-
-<img width="875" alt="스크린샷 2021-02-08 오후 9 33 58" src="https://user-images.githubusercontent.com/26623547/107220474-b9637700-6a55-11eb-8d10-0079d6fcb7b2.png">   
-
-
-많은 소프트웨어들이 이렇게 데이터 수집, 분석처리, 저장, 분석 및 리포트 영역으로 나뉘어 발전되고 있다.   
-
-
-`위 그림에서 문제가 하나 있다. 데이터 수집 부분과 데이터 처리부분이다. 이 부분이 문제가 되는 이유는 
-데이터 수집하는 소프트웨어와 처리하는 소프트웨어간의 데이터 교환을 맞춰줘야 하고 둘이 동기화 되어 처리되어야 한다. 
-어느 한쪽이 병목이 생기면 문제가 생길 수도 있다.`     
-
-- - - 
-
-## AWS Kinesis   
+## 1. AWS Kinesis   
 
 `AWS Kinesis 는 데이터 수집구간과 데이터 처리구간 중간에 위치한다. 이렇게 중간에 위치하는 소프트웨어를 
 만든 이유는 다양한 데이터들을 수집하고 이것을 다양한 포맷으로 만들어 주기 때문이다.`        
@@ -63,23 +31,23 @@ Consumer는 Amazon DynamoDB, Amazon Redshift 또는 Amazon S3와 같은 AWS 서�
 사용하여 결과를 저장할 수 있다.
 
 
-### Kinesis Data Streams 용어   
+### 1-1) Kinesis Data Streams 용어   
 
 Kinesis Data Steams 용어들을 정리 해보자.   
 
-#### 1. Producer ( 생산자 ) 
+#### 1-1-1) Producer ( 생산자 ) 
 
 생산자는 Amazon Kinesis Data Streams에 레코드를 넣는다. 예를 들면 스트림에 로그 데이터를 
 보내는 웹 서버가 생산자이다.   
 
-#### 2. Consumer ( 소비자 )   
+#### 1-1-2) Consumer ( 소비자 )   
 
 소비자는 Amazon Kinesis Data Streams 에서 레코드를 가져와서 처리한다. 이 소비자를 
 Amazon Kinesis Data Streams Application이라고 한다.   
 
 - - - 
 
-## Kafka와의 차이점   
+## 2. Kafka와의 차이점   
 
 <img width="750" alt="스크린샷 2021-07-26 오후 11 40 03" src="https://user-images.githubusercontent.com/26623547/127007955-637cd05e-6c2f-4ade-9b4e-570d7257b8a4.png">   
 
@@ -88,7 +56,7 @@ Amazon Kinesis Data Streams Application이라고 한다.
 
 위 표에서 인상 깊은 차이점만 알아보자.   
 
-#### 1) Partiton vs Shard   
+#### 2-1) Partiton vs Shard   
 
 Kafka에서의 Partiton은 분산의 기준으로서 중요하다. 각 Partiton의 
 리더들을 통해 데이터가 처리되고, 팔로워들이 리더에 접근해 
@@ -106,7 +74,7 @@ Partition으로 분산된 데이터들을 줄어든 숫자로 다시
 없다면 계속 많은 금액을 내야 하기에 꼭 Shard 숫자를 줄일 수 있어야 한다고 
 생각한 듯 하다.`   
 
-#### 2) Data Size   
+#### 2-1) Data Size   
 
 Kafka에서는 설정에 의해 들어오는 데이터의 크기를 조절할 수 있다.   
 Default 값이 1MB이기는 하나 들어오는 데이터 크기에 따라 조절할 수 
@@ -114,7 +82,7 @@ Default 값이 1MB이기는 하나 들어오는 데이터 크기에 따라 조�
 만약 실시간 처리하려는 데이터의 크기가 1MB를 넘는 경우라면 KDS를 
 사용할 수 없다.   
 
-#### 3) Partiton/Shard Limitation   
+#### 3-1) Partiton/Shard Limitation   
 
 Shard의 숫자는 region에 따라 다르지만 최대 500개까지 사용이 가능하다.   
 경험상 Kafka Partion과 비교할 수 있는 Shard 숫자를 500개까지 늘려야 
@@ -123,11 +91,15 @@ Shard의 숫자에 따라 속도도 제한하니 Kinesis는 일단 최대
 성능을 유추할 수 있을 듯하다.   
 반면에 Kafka는 Partion 숫자의 제한은 없다.   
 
-#### 4) Data Retention   
+#### 4-1) Data Retention   
 
 카프카의 데이터 보관 주기는 maximum이 없고 설정에 의해 
 변경 가능하지만 KDS는 1일에서 7일까지만 보관 가능하며 
 default는 24시간이다.    
+
+
+
+- - -   
 
 ## 정리    
 
