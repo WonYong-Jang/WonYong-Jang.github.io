@@ -74,7 +74,7 @@ Partition으로 분산된 데이터들을 줄어든 숫자로 다시
 없다면 계속 많은 금액을 내야 하기에 꼭 Shard 숫자를 줄일 수 있어야 한다고 
 생각한 듯 하다.`   
 
-#### 2-1) Data Size   
+#### 2-2) Data Size   
 
 Kafka에서는 설정에 의해 들어오는 데이터의 크기를 조절할 수 있다.   
 Default 값이 1MB이기는 하나 들어오는 데이터 크기에 따라 조절할 수 
@@ -82,7 +82,7 @@ Default 값이 1MB이기는 하나 들어오는 데이터 크기에 따라 조�
 만약 실시간 처리하려는 데이터의 크기가 1MB를 넘는 경우라면 KDS를 
 사용할 수 없다.   
 
-#### 3-1) Partiton/Shard Limitation   
+#### 2-3) Partiton/Shard Limitation   
 
 Shard의 숫자는 region에 따라 다르지만 최대 500개까지 사용이 가능하다.   
 경험상 Kafka Partion과 비교할 수 있는 Shard 숫자를 500개까지 늘려야 
@@ -91,15 +91,29 @@ Shard의 숫자에 따라 속도도 제한하니 Kinesis는 일단 최대
 성능을 유추할 수 있을 듯하다.   
 반면에 Kafka는 Partion 숫자의 제한은 없다.   
 
-#### 4-1) Data Retention   
+#### 2-4) Data Retention   
 
 카프카의 데이터 보관 주기는 maximum이 없고 설정에 의해 
 변경 가능하지만 KDS는 1일에서 7일까지만 보관 가능하며 
 default는 24시간이다.    
 
+- - - 
+
+## 3. Kinesis Monitoring Metrics   
+
+다음은 Kinesis를 사용할 때 주의 깊게 모니터링 해야할 지표는 아래와 같다.   
+
+#### 3-1) GetRecords 
+
+#### 3-2) PutRecords  
+
+#### 3-3) ReadProvisionedThroughputExceeded    
 
 
-- - -   
+
+#### 3-4) WriteProvisionedThroughputExceeded     
+
+- - - 
 
 ## 정리    
 
@@ -118,7 +132,7 @@ Kafka를 클러스터링을 구성해서 제공하는 MSK[https://aws.amazon.com
 
 완전 관리형 서비스로서 Streaming 서비스를 위해 Kinesis는 선택 가능한
 옵션 중 하나다. 다만 운영/성능/가격 측면에서
-장단점은 무엇인지 비교하고 적용해야 한다.
+장단점은 무엇인지 비교하고 적용해야 한다.   
 
 - - - 
 
