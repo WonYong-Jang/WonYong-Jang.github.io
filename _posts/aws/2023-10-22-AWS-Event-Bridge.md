@@ -71,10 +71,28 @@ Failedinvocations 가 증가했음을 확인했다.`
 `관련하여 실제 3rd 파트너에서 발생한 이벤트가 이벤트 버스로 수신되지 않았음을 판단하기 위해서는 
 Event Bridge로 수신된 이벤트를 확인해야 하는데, 이때 추가적인 로깅 활성화를 진행할 수 있다.`     
 
-[문서](https://docs.aws.amazon.com/ko_kr/eventbridge/latest/userguide/eb-logging-monitoring.html)에서 Event Bridge 규칙의 대상으로 사용할 CloudWatch Log Group 생성하는 가이드 참고하자.    
+[문서](https://docs.aws.amazon.com/ko_kr/eventbridge/latest/userguide/eb-logging-monitoring.html)에서 Event Bridge 규칙의 대상으로 사용할 CloudWatch Log Group 생성하는 가이드 참고하자.   
 
+또한, [링크](https://www.boyney.io/blog/2021-04-15-debug-eventbridge-events-with-cloudwatch)를 참고하여 
 CloudWatch Log Group을 대상으로 지정하게 되면, Event Bridge로 수신되는 이벤트들이 CloudWatch Log Group에 
-로깅되며 이를 통해 수신 된 이벤트 로그들을 검사 할 수 있다.   
+로깅되며 이를 통해 수신 된 이벤트 로그들을 검사 할 수 있다.      
+
+<img width="765" alt="스크린샷 2023-10-26 오후 10 18 54" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/6e781acd-30ec-491a-847f-b4e16c5ff5a0">    
+
+위와 같이 log insights를 통해 수집된 이벤트들을 쿼리할 수도 있다.   
+
+```
+fields @timestamp, msg, `detail-type`
+| stats count(*) as events by `detail-type`
+| sort events desc
+```
+
+```
+fields @timestamp, @message
+| filter `detail-type` = 'UserCreated'
+| filter `detail.firstName` = "Matthew"
+| sort @timestamp desc
+```
 
 - - -   
 
