@@ -126,10 +126,22 @@ AWS SDK는 kinesis와 연동할 때 사용되는 json을 직렬화 하기 위해
 
 <img width="576" alt="스크린샷 2023-10-15 오후 8 08 10" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/bea5a470-47a1-42b8-b5be-69ce2120c4b2">   
 
-아래와 같이 jackson 의존성을 2.6.7을 사용하도록 고정했다.   
+[링크](https://docs.gradle.org/current/userguide/resolution_rules.html)를 
+참고하여 아래와 같이 jackson 의존성을 2.6.7을 사용하도록 고정했다.   
+
+> build.gradle   
 
 ```groovy
-// === 2.6.7
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if(details.requested.group == 'com.fasterxml.jackson.core') {
+            details.useVersion '2.6.7'
+        }
+        if(details.requested.group == 'com.fasterxml.jackson.dataformat') {
+            details.useVersion '2.6.7'
+        }
+    }
+}
 ```
 
 따라서, 현재 프로젝트 버전을 2.6.7로 downgrade 하여 해결했다. 
@@ -140,11 +152,28 @@ strucutred streaming과 kinesis 연동은 정상적으로 되었지만, 테스�
 side effect 가 발생했다.   
 
 jackson deserialize 하는 과정에서 date 컬럼 중에 nano second를 사용하는 컬럼이 
-실제 날짜와 다른 결과값을 리턴했다.   
+실제 날짜와 다른 결과값을 리턴했다.  
+
+> 해당 버전에서 java8을 지원하는 jackson-datatype-jsr310이 포함되어 있지 않는 것 같다.      
+
 따라서, 해당 컬럼은 custom deserialize를 이용하여 해결하였다.   
 
 ```scala
+case class Meta
+{
+    @JsonDeserialize(using = classOf[ISODateDeserializer]   
+    occurredAt: Timestamp
+}
+```
 
+```scala
+class ISODateDeserializer extends JsonDeserializer[Timestamp] {
+    override def deserialize(parser: JsonParser, ctxt: DeserializationContext): Timestamp = {
+        val stringDate = parser.getText.trim
+        val time = DateTime.parse(stringDate)
+        new Timestamp(time.getMillis)
+    }
+}
 ```
 
 
@@ -163,7 +192,6 @@ resultDF
   .format("console")
   .start()
   .awaitTermination()
-.option("checkpointLocation", "/usr/checkpoint")
 ```   
 
 이때 주로 HDFS 또는 S3에 checkpoint를 저장한다.  
@@ -208,7 +236,7 @@ org.apache.spark.network .client.ChunkFetchFailureException: Failure while fetch
 [ERROR ShuffleBlockFetcherIterator: Failed to get block](https://repost.aws/ko/knowledge-center/emr-troubleshoot-failed-spark-jobs) 링크를 참고해보니, 워커 노드가 비정상 상태일 때 
 발생할 수 있음을 확인했다.   
 
-또한, [Amazon EMR 클러스터 탄력성에 따른 Spark 노드 손실 문제 해결 방법](https://aws.amazon.com/ko/blogs/korea/spark-enhancements-for-elasticity-and-resiliency-on-amazon-emr/)링크도 
+또한, [Amazon EMR 클러스터 탄력성에 따른 Spark 노드 손실 문제 해결 방법](https://aws.amazon.com/ko/blogs/korea/spark-enhancements-for-elasticity-and-resiliency-on-amazon-emr/) 도  
 참고해보자.   
 
 
