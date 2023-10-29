@@ -10,7 +10,7 @@ background: '/img/posts/mac.png'
 
 이번 글에서는 현재 업무에서 사용하던 Spark Streaming을 
 Structured Streaming 으로 전환 하는 과정에서 
-trouble shooting을 정리해 보려고 한다.   
+Trouble shooting을 정리해 보려고 한다.   
 
 [Incident Review](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)에서 
 공유한 것처럼 잘못된 구조로 설계되어 있는 부분을 개선하면서 
@@ -72,6 +72,8 @@ val kinesisStream = KinesisInputDStream.builder
 
 `여러 shard로 부터 데이터를 로드 할지라도 KinesisInputDStream은, 
     각 batch interval마다 하나의 RDD로 생성된다.`    
+
+
 
 > Spark Streaming이 Kafka 등에서 여러 파티션을 통해 
 데이터를 로드하게 되면, 각 batch interval 마다 파티션 개수만큼 RDD가 
@@ -146,12 +148,30 @@ jackson deserialize 하는 과정에서 date 컬럼 중에 nano second를 사용
 ```
 
 
-### 2-2) Checkpoint   
+### 2-2) Checkpoint    
+
+위의 코드와 같이 Spark Streaming 에서 
+사용하던 KCL(Kinesis Client Library)은 DynamoDB에 checkpoint를 저장하도록 지원했다.   
+
+`Spark Structured Streaming은 streaming query에서 checkpoint를 지정하기 위해 checkpointLocation 옵션을 사용 함으로써 저장할 수 있다.`     
+
+```
+resultDF
+  .writeStream
+  .outputMode("complete") 
+  .option("checkpointLocation", "/usr/checkpoint")
+  .format("console")
+  .start()
+  .awaitTermination()
+.option("checkpointLocation", "/usr/checkpoint")
+```   
+
+이때 주로 HDFS 또는 S3에 checkpoint를 저장한다.  
 
 
-### 2-3) EMR Cluster 배포 시 에러    
+### 2-3) EMR Cluster 배포 시 에러(HiveExternalCatalog)   
 
-로컬 테스트를 진행할 때 이상이 없었기 때문에 최종적으로 emr cluster에 structured streaming을 배포하였지만, 
+로컬 테스트를 진행할 때 이상이 없었기 때문에 최종적으로 emr cluster에 structured streaming을 배포 하였지만, 
     아래와 같은 에러가 발생 했다.   
 
 ```
@@ -173,6 +193,23 @@ spark.sql.catalogImplementation 옵션은 hive와 in-memory 옵션이 존재한�
 ```
 --conf "spark.sql.catalogImplementation=hive"
 ```
+
+### 2-4) 간헐적 에러 발생(ShuffleBlockFetcherIterator)    
+
+Strucutred Streaming 실행은 성공했지만, 간헐적으로 특정 노드에 대해서만 아래와 같은 에러가 발생했다.   
+
+```
+ERROR shuffle.RetryingBlockFetcher: Failed to fetch block shuffle and will not retry ( 0 retries)
+ERROR ShuffleBlockFetcherIterator: Failed to get block(s) from ip-192-168-14-250.us-east-2.compute.internal:7337
+
+org.apache.spark.network .client.ChunkFetchFailureException: Failure while fetching StreamChunkId[streamId=842490577174,chunkIndex=0]: java.lang.RuntimeException: Failed to open file
+```
+
+[ERROR ShuffleBlockFetcherIterator: Failed to get block](https://repost.aws/ko/knowledge-center/emr-troubleshoot-failed-spark-jobs) 링크를 참고해보니, 워커 노드가 비정상 상태일 때 
+발생할 수 있음을 확인했다.   
+
+또한, [Amazon EMR 클러스터 탄력성에 따른 Spark 노드 손실 문제 해결 방법](https://aws.amazon.com/ko/blogs/korea/spark-enhancements-for-elasticity-and-resiliency-on-amazon-emr/)링크도 
+참고해보자.   
 
 
 - - - 

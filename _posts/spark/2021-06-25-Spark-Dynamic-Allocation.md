@@ -8,7 +8,7 @@ date: 2021-06-25
 background: '/img/posts/mac.png'
 ---
 
-## 1. Dynamic Allocation   
+## 1. Spark Dynamic Allocation   
 
 `Spark의 Resource를 dynamic하게 할당하기 위해서는 아래와 같이 
 옵션을 추가해야 한다.`      
@@ -42,7 +42,7 @@ spark.shuffle.service.enabled=true
 
 - - - 
 
-## 2. Dynamic Allocation 여러 옵션  
+## 2. Spark Dynamic Allocation 여러 옵션  
 
 Dynamic Allocation 에서 제공하는 여러 옵션들에 대해 살펴보자.   
 
@@ -85,7 +85,7 @@ spark.dynamicAllocation.schedulerBacklogTimeout
 
 - - -    
 
-## 3. Dynamic Allocation 의 기준    
+## 3. Spark Dynamic Allocation 의 기준    
 
 그럼 어떤 기준을 통해 executor를 늘리고 줄일까?   
 
