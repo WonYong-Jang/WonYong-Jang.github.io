@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Streaming Data Sources "
-subtitle: "Kafka, Kinesis / Direct, Receiver Based Data Sources, Fault Tolerance"    
+subtitle: "Kafka, Kinesis / Direct, Receiver Based Data Sources, Fault Tolerance / Backpressure"    
 comments: true
 categories : Spark
 date: 2021-04-15
@@ -87,6 +87,11 @@ receiver는 별도의 task로 실행되며, executor 안에서 core 1개(thread)
 따라서, queue에 job들이 계속 쌓이지 않게 해야 하며 기본적인 방법은 리소스를 추가해야 한다.   
 즉, executor 갯수를 늘리거나 cpu 또는 메모리를 증가 해야 한다.  
 
+하지만, 무한히 리소스를 늘릴 수 없기 때문에 폭발적인 데이터가 발생했을 때 
+데이터를 안정적으로 처리할 수 있어야 한다.   
+
+### 3-1) Backpressure   
+
 `만약 리소스를 더 늘리기 어렵다면 spark.streaming.backpressure.enabled=true 옵션을 추가하면 
 batch interval 당 처리할 수 있는 데이터만 읽어와서 처리한다.`    
 
@@ -94,6 +99,30 @@ batch interval 당 처리할 수 있는 데이터만 읽어와서 처리한다.`
 
 > queue에 계속 job이 쌓인 다는 것은 spark 메모리에 계속해서 데이터를 저장하며, 
     다른 executor 메모리에 replication 까지 진행하게 되어 OOM이 발생할 수도 있다.    
+
+처리 시간이 배치 간격보다 커지면 다음 배치 잡에서는 지연이 생기고 불안정해 진다.   
+`따라서 불안정 상태가 지속되면 backpressure에 의해 입력율(input rate)를 줄여 
+처리량과 처리 시간을 줄인다.`      
+따라서 지연이 0이 될 것이다.    
+
+```
+spark.streaming.backpressure.enabled=true
+spark.streaming.backpressure.initialRate=100000
+spark.streaming.receiver.maxRate=100000
+spark.streaming.kafka.maxRatePerPartition=20000
+```   
+
+하나의 예를 들어보면, 서버 부하 또는 하둡 클러스터 네트워크 문제로 클러스터에서 
+레코드 처리가 굉장히 느려져서 배치 간격 보다 처리 시간이 길어져 레코드가 무한정 쌓이는 경우가 
+발생할 수 있다.   
+이때, backpressure 옵션을 true로 설정하면 클러스터의 배치간격과 처리시간에 따라 받아오는 
+레코드의 수를 동적으로 조절하여 받아들인다.  
+
+> 아래 사진을 보면 하둡 클러스터의 네트워크 문제로 인하여 스트리밍 어플리케이션이 영향을 받아 지연이 발생한 상태이다.   
+> 지연이 발생되자 input size가 줄었다가 지연이 해소되자 다시 늘어나는 것을 볼 수 있다.   
+
+<img width="1200" alt="스크린샷 2023-10-29 오후 10 50 06" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/7d548a32-d062-4ff9-a7e3-3bafd66686db">      
+
 
 - - - 
 
@@ -163,6 +192,9 @@ spark에서 카프카에 저장된 이전 데이터를 다시 읽어 올 수 있
 
 <https://fastcampus.co.kr/data_online_spkhdp>   
 <https://spark.apache.org/docs/latest/streaming-kinesis-integration.html>   
+<https://velog.io/@och5351/%EB%8D%B0%EC%9D%B4%ED%84%B0-%ED%94%8C%EB%9E%AB%ED%8F%BC-%EC%9A%B4%EC%98%81-%EA%B0%9C%EB%B0%9C-Spark4-Pull-based-backpressure>   
+<https://lucaskim.tistory.com/15>   
+
 
 {% highlight ruby linenos %}
 

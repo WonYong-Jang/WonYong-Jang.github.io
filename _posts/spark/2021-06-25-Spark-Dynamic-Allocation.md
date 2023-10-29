@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Dynamic Allocation in AWS EMR Cluster"
-subtitle: "Spark에서 Dynamic하게 executor를 scale out 또는 scale in / ec2기반 aws emr 5.x auto scaling 트러블 슈팅"    
+subtitle: "Spark (Streaming) 에서 Dynamic하게 executor를 scale out 또는 scale in / ec2기반 aws emr 5.x auto scaling 트러블 슈팅"    
 comments: true
 categories : Spark
 date: 2021-06-25
@@ -138,11 +138,47 @@ spark.dynamicAllocation.cachedExecutorIdleTimeout
 ```
 - - -    
 
-## 4. AWS EMR Cluster auto scaling   
+## 4. Spark Streaming Dynamic Allocation    
+
+`위에서 언급한 spark dynamic allocation은 idle time을 체크하는데 spark streaming은 micro 배치라 계속 일정시간 마다 
+작업을 한다. 따라서, executor를 놓지 않아서 늘어는 나도 줄어들지 않게 된다.`   
+
+spark 2.x 부터 streaming dynamic allocation 옵션을 적용할 수 있다.   
+
+[링크](https://fares.codes/posts/dynamic-scaling-and-backpressure/)를 참고하자.   
+
+> spark streaming dynamic allocation을 사용하려면 spark.dynamicAllocation.enabled=false로 설정해야 한다.   
+
+```
+spark.dynamicAllocation.enabled=false
+spark.streaming.dynamicAllocation.enabled=true
+spark.streaming.dynamicAllocation.minExecutors=2
+spark.streaming.dynamicAllocation.maxExecutors=8
+
+# default
+spark.streaming.dynamicAllocation.scalingInterval=60
+spark.streaming.dynamicAllocation.scaleUpRatio=0.9
+spark.streaming.dynamicAllocation.scaleDownRatio=0.3
+
+// ratio = processing time / processing interval
+// ratio > spark.streaming.dynamicAllocation.scaleUpRatio => executor 1개 추가
+// ratio < spark.streaming.dynamicAllocation.scaleDownRatio => executor 1개 제거
+```
+
+`위의 기준에 따라 executor가 조절 되며, 해당 처리는 executorAllocationManager에서 처리되는데 
+하나의 배치 안에서 증가/추가 되지 않고 onBatchCompleted가 호출될 때 마다 실행시간 정보가 반영되어서 
+이번 micro 배치가 끝나고 다음 번에 영향을 주게 된다.`      
+`즉, 하나의 batch interval 에서만 큰 변화가 생긴다면 효과를 보기 힘들지만 특정 시간 동안 이슈가 있다면 
+서서히 증가해서 서서히 줄어들게 된다.`   
+
+
+- - - 
+
+## 5. AWS EMR Cluster auto scaling   
 
 AWS EMR Cluster에서 스파크를 사용하고 있다면, EMR Cluster 에 대해서 먼저 이해해야 한다.   
 
-#### 4-1) EMR Cluster 구조   
+#### 5-1) EMR Cluster 구조   
 
 EMR은 기존 Hadoop에서의 Computing 부분을 그대로 구현해 놓은 플랫폼이라고 
 이해하면 된다.   
@@ -177,7 +213,7 @@ DataNode를 포함하고 있는 Core Node는 On demand로 설정해야 한다.
 > spot 옵션은 on demand 요금보다 70~90% 절감된 비용으로 사용할 수 있는 instance 이지만, 경우에 따라서 
 리소스를 뺏길 수도 있다.   
 
-#### 4-2) Core / Task Node 분리되어 있는 이유   
+#### 5-2) Core / Task Node 분리되어 있는 이유   
 
 기존 하둡의 경우 Master에 Resource Manager, NameNode가 있고, Worker에 Node Manager, DataNode가 
 설치되어 있었다.   
@@ -195,7 +231,7 @@ resource로 인해 실행되던 job들이 죽는 경우도 발생할 수 있다.
 반대로 모두 on demand로 구성한다면, 비용 차이가 두배 가까이 나기 때문에  
 그 중간의 타협점을 찾아야 한다.   
 
-#### 4-3) Dynamic Allocation in aws emr cluster(5.33x)   
+#### 5-3) Dynamic Allocation in aws emr cluster(5.33x)   
 
 현재 업무에서 AWS EMR Cluster 버전은 5.33x 버전을 사용하고 있고, 
     auto scaling 적용하던 과정에서 발생한 문제는 아래와 같다.   
