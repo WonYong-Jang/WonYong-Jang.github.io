@@ -17,7 +17,7 @@ background: '/img/posts/mac.png'
 3rd(Zendesk) -> Event Bridge -> Kinesis -> Spark Streaming(EMR Cluster)   
 
 위 파이프라인으로 운영 중 데이터 볼륨이 크게 증가했고, 이때 Event Bridge에서 
-Kinesis로 데이터 전달 시 loss가 발생했다.   
+Kinesis로 데이터 전달 시 delay 및 loss가 발생했다.   
 
 이러한 문제가 발생한 경우 확인 할 수 있는 모니터링 방법과 데이터 처리 실패시 재처리 할 수 있는 구조에 대해 
 자세히 살펴보자.   
@@ -31,6 +31,8 @@ Kinesis로 데이터 전달 시 loss가 발생했다.
 사용할 수 있는 서버리스 이벤트 버스 서비스이다.`      
 즉, 이벤트 소스의 실시간 이벤트 스트림을 원하는 대상으로 전송하는 역할을 한다.   
 
+<img width="1022" alt="스크린샷 2023-10-29 오후 2 46 08" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/6d6ceb1e-6d20-4e80-b16b-c20c3feaaea7">   
+
 
 - - - 
 
@@ -42,10 +44,15 @@ Event Bridge는 자체적으로 대상(Kinesis)에 성공적으로 전달하지 
     기본적으로 이벤트 전송을 24시간 동안 185회까지 재시도 한다.   
 
 `하지만 데이터 수가 평소보다 대량으로 증가했을 때, Event Bridge의 모니터링 지표에
-Failedinvocations 가 증가했음을 확인했다.`   
+Failedinvocations 가 증가 했음을 확인했다.`   
 
 `FailedInvocations 지표가 증가했다는 것은 해당 기간 Event Bridge가 이벤트를
-대상(Kinesis) 전달 했으나 호출에 실패 했음을 의미한다.`    
+대상(Kinesis) 전달 했으나 호출에 실패 했음을 의미한다.`   
+
+따라서, 해당 지표가 증가했다면, 데이터 loss가 발생할 수 있으므로 
+추가적인 재처리 프로세스를 구성해야 한다.   
+
+아래에서 자세히 살펴보자.   
 
 - - - 
 
