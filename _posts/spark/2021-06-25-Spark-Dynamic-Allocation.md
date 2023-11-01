@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Spark] Dynamic Allocation in AWS EMR Cluster"
-subtitle: "Spark (Streaming) 에서 Dynamic하게 executor를 scale out 또는 scale in / ec2기반 aws emr 5.x auto scaling 트러블 슈팅"    
+title: "[Spark] Dynamic Resource Allocation in AWS EMR Cluster"
+subtitle: "Spark (Streaming) Dynamic Allocation / External Shuffle Service / ec2기반 aws emr 5.x auto scaling 트러블 슈팅"    
 comments: true
 categories : Spark
 date: 2021-06-25
@@ -19,7 +19,8 @@ background: '/img/posts/mac.png'
 spark.dynamicAllocation.enabled=true
 ```
 
-또한, 아래 옵션을 추가해야 한다.   
+또한, 아래 옵션을 추가해야 한다.  
+
 `shuffle은 기본적으로 stage가 나뉠 때 발생하며, 앞의 stage 데이터를 
 shuffle write하여 쓰고, 뒤에 stage가 해당 데이터를 shuffle read하여 
 작업을 진행한다.`   
@@ -39,6 +40,18 @@ spark.dynamicAllocation.shuffleTracking.enabled=true
 // spark 2.x
 spark.shuffle.service.enabled=true
 ```
+
+<img width="500" alt="스크린샷 2023-11-01 오후 11 12 04" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/5ff97b7e-0f49-4066-9c7e-466f2511988d">   
+
+`위 그림과 같이 dynamic resource allocation은 
+external shuffle service가 반드시 필요하며, 이는 org.apache.spark.ExecutorAllocationManager 라는 클래스가 
+dynamic resource allocation을 담당한다.`      
+
+shuffle service는 executor들이 block을 가져오는 프록시 역할을 한다. 따라서 라이프 사이클은 executor와 독립적이다.   
+
+> external shuffle service 가 있기 때문에 shuffle 데이터가 executor 외부에 저장되며, executor 장애시 shuffle data loss가 없다.   
+
+
 
 - - - 
 

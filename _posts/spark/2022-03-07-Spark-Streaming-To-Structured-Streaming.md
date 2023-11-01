@@ -222,9 +222,9 @@ spark.sql.catalogImplementation 옵션은 hive와 in-memory 옵션이 존재한�
 --conf "spark.sql.catalogImplementation=hive"
 ```
 
-### 2-4) 간헐적 에러 발생(ShuffleBlockFetcherIterator)    
+### 2-4) ShuffleBlockFetcherIterator 에러 발생   
 
-Strucutred Streaming 실행은 성공했지만, 간헐적으로 특정 노드에 대해서만 아래와 같은 에러가 발생했다.   
+Strucutred Streaming 실행은 성공했지만, 특정 포트에 대해서만 아래와 같은 에러가 발생했다.      
 
 ```
 ERROR shuffle.RetryingBlockFetcher: Failed to fetch block shuffle and will not retry ( 0 retries)
@@ -239,6 +239,23 @@ org.apache.spark.network .client.ChunkFetchFailureException: Failure while fetch
 또한, [Amazon EMR 클러스터 탄력성에 따른 Spark 노드 손실 문제 해결 방법](https://aws.amazon.com/ko/blogs/korea/spark-enhancements-for-elasticity-and-resiliency-on-amazon-emr/) 도  
 참고해보자.   
 
+여러 [문서](https://www.waitingforcode.com/apache-spark/external-shuffle-service-apache-spark/read)를 리서치 해보니, 7337 port는 external shuffle 을 사용할 때 default port이며, 
+    dynamic resource allocation을 적용하기 위해 아래 옵션을 추가했을 때 문제가 발생함을 확인했다.      
+
+> spark.shuffle.service.port     
+
+```
+spark.dynamicAllocation.enabled=true
+spark.shuffle.service.enabled=true
+
+```
+
+현재 spark version 2.x 버전에서 spark batch job이 아닌, streaming에서 dynamic resource allocation을 사용했을 때, 
+    side effect가 발생할 수 있음을 확인했다.  
+
+> 해당 옵션은 spark batch job에서 사용하기 최적화 되어 있는 것 같다.     
+
+따라서 해당 옵션을 false로 변경한 후 해당 에러가 발생하지 않음을 확인했다.       
 
 - - - 
 
