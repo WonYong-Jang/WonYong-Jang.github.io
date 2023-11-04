@@ -58,7 +58,7 @@ Failedinvocations 가 증가 했음을 확인했다.`
 
 ## 3. Dead Letter Queue   
 
-위에서 Failedinvocations 지표가 증가했기 때문에, 실패한 이벤트들에 대해서 재처리를 진행해주어야 한다.  
+위에서 Failedinvocations 지표가 증가했기 때문에, 실패한 이벤트들에 대해서 재처리를 진행해 주어야 한다.  
 
 `Event Brige에서 DLQ(Dead Letter Queue)를 적용해 줄 수 있고, 이 때 실패한 데이터에 대해서 
 해당 queue로 보내지게 되어, 지속적으로 대상을 호출하는 것을 시도 한다.`   
@@ -72,8 +72,8 @@ Failedinvocations 가 증가 했음을 확인했다.`
 
 ## 4. CloudWatch Log Group   
 
-재처리(Dead Letter Queue) 적용 이후에도 데이터 loss 문제가 발생했고, Event Bridge 에 실제 데이터가 
-있는지 트래킹이 필요했다.   
+현재 데이터 파이프라인에서 문제가 발생할 경우 어느 부분에서 
+문제가 발생하는지 트래킹이 필요했다.   
 
 `관련하여 실제 3rd 파트너에서 발생한 이벤트가 이벤트 버스로 수신되지 않았음을 판단하기 위해서는 
 Event Bridge로 수신된 이벤트를 확인해야 하는데, 이때 추가적인 로깅 활성화를 진행할 수 있다.`     
