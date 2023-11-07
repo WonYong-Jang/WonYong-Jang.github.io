@@ -84,7 +84,21 @@ KinesisRecordProcessor of Kinesis Client Library(KCL) 가 shard로 부터
 
 아래 [공식문서](https://spark.apache.org/docs/latest/streaming-kinesis-integration.html) 일부를 참고하자.    
 
-- A single Kinesis input DStream can read from multiple shards of a Kinesis stream by creating multiple KinesisRecordProcessor threads.   
+- A single Kinesis input DStream can read from multiple shards of a Kinesis stream by creating multiple KinesisRecordProcessor threads.  
+
+추가적으로, 위의 코드는 하나의 receiver만 생성하여 kinesis 데이터를 받아 오는 예이며 데이터 볼륨이 증가하고 그에 따라 
+shard 개수가 증가하게 되면 bottleneck이 발생할 수 있다.   
+
+따라서, 여러 receiver를 생성하여 동시에 데이터를 받아 올 수 있으며 이때는 union을 같이 사용해야 한다.   
+
+```scala
+// This may be your config parameter
+val numStreams = 5
+val kafkaStreams = (1 to numStreams).map { i => KafkaUtils.createStream(...) }
+
+val unifiedStream = streamingContext.union(kafkaStreams)
+unifiedStream.print()
+```
 
 - - - 
 
@@ -275,7 +289,7 @@ spark.shuffle.service.enabled=true
 
 > micro batch interval 10초로 지정했을 때, describeShardInterval은 
 일반적으로 10초 ~ 60초 사이가 적당하다.    
-> 하지만, 어플리케이션이 얼마나 자주 resharding이 발생하는지, 
+> 하지만 어플리케이션이 얼마나 자주 resharding이 발생하는지, 
     AWS API rate limit이 어느정도 되는지 또는 어플리케이션의 데이터 특성에 따라 달라질 수 있다.  
 
 describeShardInterval 주기를 너무 짧게 설정하면 너무 자주 api를 호출하게 되고, 주기를 너무 길게 설정하면 
@@ -309,6 +323,15 @@ val kinesisDataFrame = spark.readStream
 
 #### 3-3) backpressure 관련 옵션   
 
+Spark Streaming에서 backpressure를 사용하기 위해서는 spark.streaming.backpressure.enabled=true 옵션으로 지정하였다.  
+`Structured Streaming은 receiver based가 아니기 때문에 real backpressure는 지원하지 않는다.`      
+`즉, dynamically 하게 배치 size를 조절할 수 없으며 불필요하다.`   
+
+> backpressure는 push based mechanisms에서만 요구되며, pull-based mechanisms 에서는 delay가 발생하여도 다음 배치에서 pull 을 
+진행하면 되기 때문에 backpressure 필요성이 제거된다.   
+
+하지만, 아래와 같이 processing rate를 조절하는 옵션은 제공된다.    
+
 ```
 .option("kinesis.executor.maxFetchTimeInMs", 1000)
 .option("kinesis.executor.maxRecordPerRead", 10000)
@@ -323,6 +346,7 @@ val kinesisDataFrame = spark.readStream
 <https://github.com/roncemer/spark-sql-kinesis>    
 <https://www.qubole.com/blog/kinesis-connector-for-structured-streaming>   
 <https://www.qubole.com/blog/dstreams-vs-dataframes-two-flavors-of-spark-streaming>    
+<https://copyprogramming.com/howto/how-does-back-pressure-property-work-in-spark-streaming#how-does-back-pressure-property-work-in-spark-streaming>   
 
 {% highlight ruby linenos %}
 

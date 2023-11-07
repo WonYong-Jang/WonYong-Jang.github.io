@@ -103,13 +103,18 @@ batch interval 당 처리할 수 있는 데이터만 읽어와서 처리한다.`
 처리 시간이 배치 간격보다 커지면 다음 배치 잡에서는 지연이 생기고 불안정해 진다.   
 `따라서 불안정 상태가 지속되면 backpressure에 의해 입력율(input rate)를 줄여 
 처리량과 처리 시간을 줄인다.`      
-따라서 지연이 0이 될 것이다.    
+
+`즉, 스케줄링이 지연되기 시작하면 어플리케이션이 받을 수 있는 최대 메시지 개수를 
+자동으로 조절한다. 하지만 사용자가 수동으로 설정한 maxRate 매개변수 값을 초과하지 않는다.`      
 
 ```
 spark.streaming.backpressure.enabled=true
 spark.streaming.backpressure.initialRate=100000
-spark.streaming.receiver.maxRate=100000
-spark.streaming.kafka.maxRatePerPartition=20000
+
+// 각 리시버 기반 입력 스트림에 유입되는 레코드 개수를 제한   
+spark.streaming.receiver.maxRate=100000 (리시버 기반 커넥터에 사용)   
+// 각 카프카 파티션에서 가져올 레코드 개수를 제한   
+spark.streaming.kafka.maxRatePerPartition=20000 (카프카 다이렉트 커넥터에 사용)   
 ```   
 
 하나의 예를 들어보면, 서버 부하 또는 하둡 클러스터 네트워크 문제로 클러스터에서 
