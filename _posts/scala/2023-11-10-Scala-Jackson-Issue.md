@@ -130,7 +130,7 @@ java.lang.Integer 로 해석할 것이다.
     val longValue = example.value.get  // Attempting to get the value as Long
     // Long으로 값을 unbox 시도하지만, 실제 object는 java.lang.Long이 아닌 java.lang.Integer 이기 때문에 에러가 발생한다.  
     ```
-- 자바의 경우는 Jackson을 사용하여 deserialize할 때, 기존 java.lang.Long 타입을 알고 있기 때문에 Integer가 아닌 Long으로 해석하기 때문에 
+- 자바의 경우는 Jackson을 사용하여 deserialize할 때, 기존 java.lang.Long 타입을 알고 있기 때문에 Integer가 아닌 Long으로 해석하여 
 문제가 발생하지 않는다.   
 
 `즉, 이 문제는 스칼라 타입과 JVM의 limitation과 Jackson's Java-centric type resolution 때문에 발생하게 된다.`   
