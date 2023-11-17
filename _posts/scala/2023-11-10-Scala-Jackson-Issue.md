@@ -24,7 +24,7 @@ implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-scal
 
 ## 1. Reproduce the issue
 
-아래와 같이 문제를 재연해보자.   
+아래와 같이 문제를 재현해보자.   
 
 ```scala
 case class Ticket
@@ -97,7 +97,7 @@ List<Integer> // use the boxed type
 `스칼라는 자바와 달리 primitive 타입을 generic class에 type argument로 사용하는 것을 지원한다.`    
 
 ```scala
-// 여기서 Int는 scala에서 primitive type 이다.
+// 여기서 Int 와 Long은 scala에서 primitive type 이다.   
 Option[Int]    
 Option[Long]   
 ```
