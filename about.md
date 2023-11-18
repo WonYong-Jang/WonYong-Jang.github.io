@@ -31,7 +31,7 @@ background: '/img/bg-index.jpg'
 - Java, Kotlin, Scala   
 - Spring Boot/MVC 
 - JPA, Hibernate 
-- Junit4/5, Mockito, Spock, Kotest     
+- Junit4/5, Mockito, Spock, Kotest, ScalaTest        
 - Gradle, Maven   
 
 ##### DevOps   
