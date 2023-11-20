@@ -60,13 +60,18 @@ spark 로그를 WARN 레벨 이상만 쓰도록 하였고, RollingFileAppender�
 
 
 ```
-log4j.appender.RollingAppender=org.apache.log4j.RollingFileAppender
-log4j.appender.RollingAppender.File=${spark.yarn.app.container.log.dir}/spark.log
-log4j.appender.RollingAppender.MaxFileSize=100MB
-log4j.appender.RollingAppender.MaxBackupIndex=10
-log4j.appender.RollingAppender.layout=org.apache.log4j.PatternLayout
-log4j.appender.RollingAppender.layout.ConversionPattern=[%p] %d %c - %m%n
-log4j.logger.org.apache.spark=WARN, RollingAppender
+log4j.rootLogger=INFO, rolling
+
+log4j.appender.rolling=org.apache.log4j.RollingFileAppender
+log4j.appender.rolling.file=${spark.yarn.app.container.log.dir}/spark.log
+log4j.appender.rolling.maxFileSize=100MB
+log4j.appender.rolling.maxBackupIndex=10
+log4j.appender.rolling.encoding=UTF-8
+log4j.appender.rolling.layout=org.apache.log4j.PatternLayout
+log4j.appender.rolling.layout.ConversionPattern=[%p] %d %c - %m%n
+
+# Set up Logging Level
+log4j.logger.org.apache.spark=WARN
 ```
 
 `추가적으로 spark event log는 default로 true로 활성화 되어 있으며, 이는 빠르게 
