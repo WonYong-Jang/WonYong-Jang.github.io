@@ -105,9 +105,6 @@ spark-submit
 `fat jar의 파일이 cluster settings를 override하지 못하기 때문에 위와 같이 추가로 files 옵션을 사용하였다.`   
 `--files 옵션은 클러스터의 각 노드에 해당 파일을 전달해주며, executor의 working directory에 위치 시켜준다.`   
 
-
-
-
 - - - 
 
 **Reference**   
