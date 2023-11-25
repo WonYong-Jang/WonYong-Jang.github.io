@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Scala] Boolean 타입 사용시 is prefix 이슈"
-subtitle: "java, kotlin 그리고 scala 언어에서의 Boolean 타입 사용할 때 is prefix 이슈 / jackson을 이용한 serialize 할 때 주의사항 "    
+title: "[Scala] is 로 시작하는 Boolean 타입 필드 사용시 이슈"
+subtitle: "java, kotlin 그리고 scala 언어에서의 차이 / jackson을 이용한 serialize 할 때 주의사항 "    
 comments: true
 categories : Scala
 date: 2023-11-25
@@ -9,10 +9,10 @@ background: '/img/posts/mac.png'
 ---
 
 이번 글에서는 업무에서 Kotlin 로직을 Scala로 전환하는 과정에서 
-발생한 이슈에 대해 공유할 예정이다.   
+발생한 이슈 중 jackson 라이브러리를 사용할 때 발생한 이슈를 공유할 예정이다.      
 
 기존 Kotlin 로직은 아래 dto를 jackson serialize 하여 kafka 에 
-publish 하는 로직이다.   
+publish 하였다.     
 
 ```kotlin
 data class Ticket(
@@ -27,7 +27,7 @@ data class Ticket(
 case class Ticket
 (
   id: Long,
-  isPublic: Boolean
+  isActive: Boolean
 )
 ``` 
 
@@ -56,9 +56,8 @@ case class Ticket
 
 ## 2. Java   
 
-`JavaBeans Convention으로 primitive boolean 타입의 
-getter method에 대해서 is prefix를 
-붙여준다.`     
+`JavaBeans Naming Convention으로 primitive boolean 타입의 
+getter method의 경우 is prefix를 붙여준다.`     
 
 ```java
 @Getter
@@ -213,20 +212,21 @@ String result = objectMapper.writeValueAsString(Ticket.builder()
         .build());
 
 System.out.println(result);
+// Output   
 // {"id":1,"active":true}
-
 ```
 
 `위 결과를 보면 의도한 결과값 isActive가 아닌 is 가 제외된 active 필드 결과값을 
 확인할 수 있다.`      
-`primitive 타입과 다르게 reference 타입은 isActive 필드로 결과값을 나타낸다.`   
+`primitive 타입과 다르게 reference 타입은 정상적으로 isActive 필드로 
+결과값을 나타낸다.`   
 
-위의 문제가 발생하는 이유는 jackson 라이브러리는 serialize, deserialize 과정에서 
-getter, setter를 사용한다.   
+`위의 문제가 발생하는 이유는 jackson 라이브러리는 serialize 할 때, getter method를 참조하여 
+필드를 가져온다.`     
 
-그럼 문제가 되는 primitive 타입의 getter와 setter는 isActive() 와 setActive(boolean) 인데, 
+> 위의 언급한 JavaBeans Naming Convention을 따른다.   
 
-
+`즉, isActive() 메소드를 참고하여 active 라는 필드로 결정하게 된다.`   
 
 
 - - - 
@@ -274,6 +274,16 @@ api 스펙이 변경 될 수 있다.
 
 ## 4. Scala   
 
+`스칼라의 경우는 is 로 시작하는 boolean 타입일 때, 
+Java Beans Naming Convention을 따르지 않는다.`   
+
+따라서, jackson-module-scala 를 이용하여 serialize 할 때, 자바 또는 코틀린과 다른 결과값을 
+전달 할 수 있으니 주의 해야 한다.   
+
+즉, 처음에서 언급한 kotlin dto에서 isActive 필드의 경우 기존에는 serialize 할 때 is 가 제거되어 
+active로 결과값이 전달 하고 있었다.   
+하지만, scala로 전환하면서 동일하게 필드 이름을 지정해 주었음에도 불구하고 결과값이 
+다른 이유는 언어에 따라 이러한 처리 방식이 다르기 때문이다.   
 
 - - - 
 
@@ -282,7 +292,8 @@ api 스펙이 변경 될 수 있다.
 <https://velog.io/@hellojihyoung/Error-Response-JSON%EC%97%90%EC%84%9C-Boolean%EC%9D%98-is%EA%B0%80-%EC%83%9D%EB%9E%B5%EB%90%98%EB%8A%94-%EB%AC%B8%EC%A0%9C>   
 <https://stackoverflow.com/questions/32270422/jackson-renames-primitive-boolean-field-by-removing-is>    
 <https://maxjang.com/7>    
-<https://multifrontgarden.tistory.com/269>   
+<https://multifrontgarden.tistory.com/269>  
+<https://github.com/FasterXML/jackson-module-scala/issues/291>   
 
 
 {% highlight ruby linenos %}
