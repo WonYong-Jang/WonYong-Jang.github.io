@@ -32,9 +32,9 @@ case class Ticket
 ``` 
 
 이러한 문제가 발생하는 원인에 대해 살펴보고 
-각 언어에 대해 차이점을 살펴보자.   
+각 언어에서 jackson을 사용할 때 차이점을 살펴보자.   
 
-> 이 글에서 jackson 버전은 2.9.x 를 사용하는 것을 기준으로 한다.  
+> 현재 업무에서 jackson 버전 2.9.4 를 사용하고 있다.     
 
 - - - 
 
@@ -226,8 +226,13 @@ System.out.println(result);
 
 > 위의 언급한 JavaBeans Naming Convention을 따른다.   
 
-`즉, isActive() 메소드를 참고하여 active 라는 필드로 결정하게 된다.`   
+`즉, JavaBeans Naming Convention에 따라 isActive() 메소드를 참고하여 
+is prefix를 제외한 active 라는 필드로 결정하게 된다.`      
 
+이 문제를 해결 하기 위해서는 reference boolean type을 사용하거나, 
+    필드 이름에서 is prefix를 사용하지 않는 것도 방법이 될 수 있다.   
+
+또한 @JsonProperty("isActive") 와 같이 직접 필드와 맵핑해 주는 방법도 있다.   
 
 - - - 
 
@@ -280,10 +285,10 @@ Java Beans Naming Convention을 따르지 않는다.`
 따라서, jackson-module-scala 를 이용하여 serialize 할 때, 자바 또는 코틀린과 다른 결과값을 
 전달 할 수 있으니 주의 해야 한다.   
 
-즉, 처음에서 언급한 kotlin dto에서 isActive 필드의 경우 기존에는 serialize 할 때 is 가 제거되어 
-active로 결과값이 전달 하고 있었다.   
-하지만, scala로 전환하면서 동일하게 필드 이름을 지정해 주었음에도 불구하고 결과값이 
-다른 이유는 언어에 따라 이러한 처리 방식이 다르기 때문이다.   
+`즉, 처음에서 언급한 kotlin dto에서 isActive 필드의 경우 기존에는 serialize 할 때 is 가 제거되어 
+active로 결과값이 전달 하고 있었다.`      
+`하지만, scala로 전환하면서 동일하게 필드 이름을 지정해 주었음에도 불구하고 결과값이 
+다른 이유는 언어에 따라 이러한 처리 방식이 다르기 때문이다.`       
 
 - - - 
 
