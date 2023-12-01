@@ -299,7 +299,7 @@ active로 결과값이 전달 하고 있었다.`
 <https://maxjang.com/7>    
 <https://multifrontgarden.tistory.com/269>  
 <https://github.com/FasterXML/jackson-module-scala/issues/291>   
-
+<https://github.com/FasterXML/jackson-module-kotlin/issues/346>   
 
 {% highlight ruby linenos %}
 
