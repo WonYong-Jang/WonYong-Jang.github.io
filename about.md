@@ -7,7 +7,7 @@ background: '/img/bg-index.jpg'
 
 ## 👨‍💻 Sr. Backend Engineer      
 
-5년 차 백엔드 개발자로서 Java, Spring, Kotlin, Redis, Kafka, AWS 등을 
+6년 차 백엔드 개발자로서 Java, Spring, Kotlin, Redis, Kafka, AWS 등을 
 사용하여 확장성과 유지 보수성이 높은 서비스를 
 설계, 개발, 운영한 경험이 있습니다.    
 
