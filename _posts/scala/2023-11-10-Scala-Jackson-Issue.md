@@ -168,6 +168,19 @@ case class Ticket
 )
 ```
 
+### 3-3) jackson-scala-reflect-extensions    
+
+기본적으로 jackson-module-scala는 java reflection을 사용하기 때문에 
+scala reflection을 사용하도록 아래와 같이 추가한다.   
+
+사용방법은 
+[jackson-scala-reflect-extensions](https://github.com/pjfanning/jackson-scala-reflect-extensions?tab=readme-ov-file)를 objectMapper에 추가한다.   
+
+```scala
+val mapper = new ObjectMapper() with ScalaReflectExtensions
+mapper.registerModule(DefaultScalaModule)
+```
+
 - - - 
 
 **Reference**    
