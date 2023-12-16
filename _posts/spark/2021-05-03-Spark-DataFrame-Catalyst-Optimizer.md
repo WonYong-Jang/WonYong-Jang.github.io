@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] 아파치 스파크(spark) SQL 의 Catalyst Optimizer"
-subtitle: "Catalyst Optimizer / Optimized Query Plan"    
+subtitle: "Spark SQL 사용시 엔진 차원에서 성능 최적화 / Optimized Query Plan"    
 comments: true
 categories : Spark
 date: 2021-05-03
