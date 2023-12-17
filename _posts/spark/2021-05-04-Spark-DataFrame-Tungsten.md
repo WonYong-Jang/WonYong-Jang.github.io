@@ -175,9 +175,29 @@ Scala 컴파일 시에는 Operator interface의 next 메소드를 확인하지�
 `즉, Tungsten 의 최적화 중에 하나인 Code Generation은
 Spark SQL로 작성한 코드를 최적화된 코드로 Generation 해주며 컴파일하여 RDD로 실행하게 해준다.`   
 
-이를 통해 아래와 같이 성능 개선을 확인할 수 있다.   
 
-<img width="600" alt="스크린샷 2023-12-17 오후 2 54 47" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/cdccd293-2f6b-4b76-9048-20e95f6e7b81">   
+- - - 
+
+## 2. 마무리    
+
+Project Tungsten는 Spark 1.4 에서 처음 소개 되었으며, 
+[SPARK-10309](https://issues.apache.org/jira/browse/SPARK-10309) 와 같이 
+issue가 발견되어 tungsten 옵션을 비활성화 하기도 하였다.   
+
+> Spark 1.6에서는 이러한 이슈가 해결된 것처럼 보이지만 여전히 성능 향상은 
+크게 없었다.   
+
+```
+spark.sql.tungsten.enabled=false
+```
+
+하지만 Spark 2.0 부터 아래와 같이 성능 향상이 크게 되었다.    
+
+<img width="600" alt="스크린샷 2023-12-17 오후 2 54 47" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/cdccd293-2f6b-4b76-9048-20e95f6e7b81">   
+
+추가적으로 Spark 3.0 부터는 [Adaptive Query Execution](https://www.databricks.com/blog/2020/05/29/adaptive-query-execution-speeding-up-spark-sql-at-runtime.html), 
+[Dynamic Partition Pruning](https://www.waitingforcode.com/apache-spark-sql/whats-new-apache-spark-3-dynamic-partition-pruning/read) 등 많은 부분이 
+추가적으로 개선이 되었으니 참고해보자.   
 
 - - - 
 
@@ -185,10 +205,10 @@ Spark SQL로 작성한 코드를 최적화된 코드로 Generation 해주며 컴
 
 <https://yeo0.tistory.com/entry/Spark-Core-of-Spark-SQL-Engine-Catalyst-Optimizer-Tungsten>   
 <https://younggyuchun.wordpress.com/2017/01/31/spark-%EC%84%B1%EB%8A%A5%EC%9D%98-%ED%95%B5%EC%8B%AC-project-tungsten-%ED%86%BA%EC%95%84%EB%B3%B4%EA%B8%B0/>   
-<https://www.databricks.com/blog/2016/05/23/apache-spark-as-a-compiler-joining-a-billion-rows-per-second-on-a-laptop.html>   
-<https://fastcampus.co.kr/courses/209522/clips/>  
 <https://1ambda.blog/2021/12/27/practical-spark-10/>  
 <https://mallikarjuna_g.gitbooks.io/spark/content/spark-sql-tungsten.html>
+<https://www.databricks.com/blog/2015/04/28/project-tungsten-bringing-spark-closer-to-bare-metal.html>   
+<https://www.databricks.com/blog/2020/06/18/introducing-apache-spark-3-0-now-available-in-databricks-runtime-7-0.html>   
 
 {% highlight ruby linenos %}
 
