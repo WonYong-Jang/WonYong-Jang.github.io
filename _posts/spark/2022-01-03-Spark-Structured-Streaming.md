@@ -185,6 +185,7 @@ Continuous Aggregation의 하나의 예를 살펴보자.
 **Reference**    
 
 <https://fastcampus.co.kr/data_online_spkhdp>    
+<https://www.netguru.com/blog/spark-streaming>   
 
 {% highlight ruby linenos %}
 
