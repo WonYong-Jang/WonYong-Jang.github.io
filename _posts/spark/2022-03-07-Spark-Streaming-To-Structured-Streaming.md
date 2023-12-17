@@ -265,10 +265,14 @@ spark.dynamicAllocation.enabled=true
 spark.shuffle.service.enabled=true
 ```
 
-현재 spark version 2.x 버전에서 spark batch job이 아닌, streaming에서 dynamic resource allocation을 사용했을 때, 
+현재 spark version 2.x 버전에서 spark batch job이 아닌, 
+    structured streaming에서 dynamic resource allocation을 사용했을 때, 
     side effect가 발생할 수 있음을 확인했다.   
 
-[링크](https://docs.oracle.com/en-us/iaas/data-flow/using/autoscaling-streaming.htm)를 참고해보자.    
+[링크](https://docs.oracle.com/en-us/iaas/data-flow/using/autoscaling-streaming.htm)와 
+[SPARK-24815](https://issues.apache.org/jira/browse/SPARK-24815) 와 
+[SPARK-12133](https://issues.apache.org/jira/browse/SPARK-12133) 티켓을 
+참고해보자.   
 
 > 해당 옵션은 spark batch job에서 사용하기 최적화 되어 있는 것 같다.     
 
