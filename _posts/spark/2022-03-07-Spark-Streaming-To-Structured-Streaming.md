@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Structured Streaming 전환 하기"   
-subtitle: "Migration Spark Streaming to Structured Streaming / Structured Streaming 과 Kinesis 연동 / checkpoint와 initialPosition"   
+subtitle: "Migration Spark Streaming to Structured Streaming / Structured Streaming 과 Kinesis 연동 / checkpoint와 initialPosition / TroubleShooting"   
 comments: true
 categories : Spark
 date: 2022-03-07
@@ -66,7 +66,7 @@ val kinesisStream = KinesisInputDStream.builder
     > 체크포인트가 없다면, 이전 데이터는 읽지 않기 때문에 data loss 발생할 수 있다.   
 
 - TRIM_HORIZON: 체크 포인트가 저장되어 있지 않다면, 가장 이전(kafka 옵션의 earliest 과 동일) 데이터 부터 로드 한다.     
-    > kinesis의 경우 default로 하루 전 데이터까지 저장하고 있으므로, 하루 전 데이터 부터 읽기 시작한다.   
+    > 체크포인트가 없다면, kinesis의 경우 default로 하루 전 데이터까지 저장하고 있으므로 하루 전 데이터 부터 읽기 시작한다.   
 
 - AT_TIMESTAMP: 지정된 시간 이후 데이터부터 로드한다.      
 
@@ -204,13 +204,15 @@ class ISODateDeserializer extends JsonDeserializer[Timestamp] {
 resultDF
   .writeStream
   .outputMode("complete") 
-  .option("checkpointLocation", "/usr/checkpoint")
+  .option("checkpointLocation", "/usr/checkpoint") // checkpoint 경로 지정   
   .format("console")
   .start()
   .awaitTermination()
 ```   
 
-이때 주로 HDFS 또는 S3에 checkpoint를 저장한다.  
+이때 노드 로컬 디스크에 checkpoint를 저장한다면 노드가 비정상적으로 
+종료되었을 때 loss가 발생할 것이다.   
+따라서 `HDFS 또는 S3에 checkpoint를 저장`한다.     
 
 
 ### 2-3) EMR Cluster 배포 시 에러(HiveExternalCatalog)   
@@ -223,7 +225,7 @@ java.lang.ClassCastException: org.apache.spark.sql.catalyst.catalog.InMemoryCata
 ```
 
 Spark Streaming(DStream)에서는 hive가 사용되지 않았지만, Strucutred Streaming(DataFrame)은 
-Spark SQL 기반이기 때문에 아래의 경우 hive를 사용한다.   
+Spark SQL 기반이기 때문에 hive를 사용한다.   
 
 [링크](https://jaceklaskowski.medium.com/why-is-spark-sql-so-obsessed-with-hive-after-just-a-single-day-with-hive-289e75fa6f2b)를 
 참고하자.   
@@ -265,16 +267,17 @@ spark.dynamicAllocation.enabled=true
 spark.shuffle.service.enabled=true
 ```
 
-현재 spark version 2.x 버전에서 spark batch job이 아닌, 
+현재 spark version 2.x 버전에서 spark batch job이 아닌 
     structured streaming에서 dynamic resource allocation을 사용했을 때, 
     side effect가 발생할 수 있음을 확인했다.   
 
 [링크](https://docs.oracle.com/en-us/iaas/data-flow/using/autoscaling-streaming.htm)와 
-[SPARK-24815](https://issues.apache.org/jira/browse/SPARK-24815) 와 
-[SPARK-12133](https://issues.apache.org/jira/browse/SPARK-12133) 티켓을 
+[SPARK-24815](https://issues.apache.org/jira/browse/SPARK-24815), [SPARK-12133](https://issues.apache.org/jira/browse/SPARK-12133) 티켓을 
 참고해보자.   
 
-> 해당 옵션은 spark batch job에서 사용하기 최적화 되어 있는 것 같다.     
+해당 옵션은 spark batch job에서 사용하기 최적화 되어 있음을 확인했고, 
+    [SPARK-24815](https://issues.apache.org/jira/browse/SPARK-24815) 티켓을 통해 structured streaming에서 dynamic resource allocation 옵션을 
+    사용할 수 있도록 개선하고 있음을 확인했다.   
 
 따라서 해당 옵션을 false로 변경한 후 해당 에러가 발생하지 않음을 확인했다.      
 
@@ -300,9 +303,6 @@ spark.shuffle.service.enabled=true
 
 describeShardInterval 주기를 너무 짧게 설정하면 너무 자주 api를 호출하게 되고, 주기를 너무 길게 설정하면 
 shard 변경에 대해서 대응이 늦어지게 되므로 데이터 처리 delay가 발생할 수 있다.   
-
-> describeShardInterval 주기를 길게 설정하여도, kinesis 데이터 보관주기(default 1 day) 안에서는 
-data loss는 없고, 처리 delay가 발생할 수 있다.   
 
 따라서, 테스트 및 모니터링을 통해 적절한 주기를 설정해야 한다.   
 
