@@ -28,7 +28,7 @@ shuffle write하여 쓰고, 뒤에 stage가 해당 데이터를 shuffle read하�
 필요하다면 과거의 shuffle 데이터를 읽어야 하는데 
 그렇지 못한 경우도 발생할 것이다.   
 
-> ex) executor가 Idle 시간이 초과 되어 제거 된 경우 
+> ex) executor의 Idle 시간이 초과 되어 제거 된 경우 
 
 `따라서, dynamicAllocation의 경우 
 shuffle 데이터를 tracking하여 필요하다면 읽을 수 있는 옵션이다.`   
