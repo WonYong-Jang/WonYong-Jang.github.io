@@ -52,7 +52,10 @@ Spark Streaming은 micro batch라는 개념을 통해, 정해진 시간 동안 �
 하지만 DB 부하 등의 이유로 정해놓은 micro batch 시간내에 처리를 하지 못한다면 
 그 다음 작업이 계속해서 지연되는 현상이 발생한다.   
 
-아래는 Spark Streaming 모니터링 UI이며, Total Delay 메트릭에 지연시간을 확인할 수 있다.   
+아래는 Spark Streaming 모니터링 UI이며, Total Delay 메트릭에 지연시간을 확인할 수 있다.    
+
+> 아래 그림은 실제 서비스 되고 있는 UI 그림은 아니며, delay가 발생한다면 해당 그래프가 
+위로 치솟는 그래프가 만들어 질 것이다.      
 
 <img width="859" alt="스크린샷 2023-07-09 오전 11 25 21" src="https://github.com/WonYong-Jang/Development-Process/assets/26623547/f78a3d63-9c81-4fe1-a22e-4f5b73ab0e2a">  
 
@@ -193,7 +196,7 @@ trait StreamingListener {
 - Records: The number of records per batch    
 
 
-`배치가 지연을 모니터링 및 알람을 추가하기 위해서 schedulingDelay와 totalDelay를 이용하여 확인할 수 있다.`   
+`배치가 지연되고 있음을 확인하기 위한 모니터링 및 알람을 추가하기 위해서 schedulingDelay와 totalDelay를 이용하여 확인할 수 있다.`   
 `totalDelay에서 schedulingDelay가 많은 비중을 차지하고 있다면, 배치가 지연되고 있음을 알 수 있다.`   
 
 ```scala
@@ -264,7 +267,22 @@ ssc.addStreamingListener(new StreamingCustomLister)
 크기 때문에 아래와 같이 action item을 잡고 진행 예정이다.
 
 `redis는 캐시 용도로만 사용하고 Spark Streaming 에서 실패한 건들은 kafka로 흘려서
-따로 재처리를 처리하도록 변경한다.`
+따로 재처리를 처리하도록 변경한다.`   
+
+### 3-4) DB 저장 방식 변경   
+
+현재 Spark Streaming에서 데이터를 수집 및 가공하여 DB에 직접 저장하고 있다.   
+위에서 DB 저장시 비효율적인 코드를 개선하였지만, 데이터 볼륨이 증가할 수록 마이크로 배치마다 
+DB에 저장되기 때문에 부하는 점차 증가할 것이다.   
+
+> 현재 마이크로 배치마다 여러 테이블을 조회 및 저장을 나눠서 진행하고 있다.     
+
+따라서, 근본적으로 해결하기 위해 Spark Streaming에서 직접 DB에 저장하는 것보다 
+kafka를 통한 저장 방식으로 변경한다.   
+
+실제로 이력 데이터는 DB 저장이 필요 없기 때문에 DB 저장을 
+제외하고 kafka를 통해 hive에 저장하는 방식으로 
+변경하였고, 스트리밍 성능이 많이 향상 됨을 확인하였다.   
 
 - - - 
 
@@ -276,7 +294,7 @@ ssc.addStreamingListener(new StreamingCustomLister)
 > 물론 그 당시에는 최선의 선택 이였을 수 있지만 현재 기준으로는 개선해야 하는 구조이다.   
 
 따라서, 위에서 언급한 root cause와 이에 따른 action item들을 정리했고  
-    action item을 하나씩 작업하여 개선해 나갸야 될 것 같다.   
+    action item을 하나씩 작업하여 개선해 나가야 될 것 같다.   
 
 - - - 
 
