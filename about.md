@@ -64,7 +64,14 @@ background: '/img/bg-index.jpg'
 
 #### 쿠팡 CS Intelligence Backend Engineer   
 
-> 2021.02.01 ~ 현재   
+> 2021.02.01 ~ 현재  
+
+- Leading data pipeline revamp project
+    - More than 10x greater streaming performance than before.   
+    - Processed rows per second(AS-IS: 800 -> TO-BE: 10,000)
+        - [https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)
+    - Migrate from spark streaming to structured streaming.
+        - [https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)
 
 - Bus Route Recommendation Service    
     - Fulfillment Center 지원자에게 버스가 제공되며, 지원자 거주지 기준으로 자동으로 가까운 버스 추천  
