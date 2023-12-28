@@ -259,11 +259,13 @@ resource로 인해 실행되던 job들이 죽는 경우도 발생할 수 있다.
 
 이러한 문제를 해결할 수 있는 방법에 대해서 살펴보자.   
 
+##### 5-3-1) node labeling 사용   
+
 - `첫번째로, executor를 core node가 아닌, task node로만 실행할 수 있다면 문제는 해결 된다.`         
 
 > 보통 emr cluster의 auto scaling은 task 노드들을 증가 또는 감소시켜서 진행하며, core 노드에는 driver 가 실행되게 하고 
 task 노드에 executor를 실행하게 하여 많은 데이터를 처리할 때 task 노드를 증가시켜 scaling을 한다.      
-> 아래 am은 AM(Application Master) 즉, driver를 뜻한다.  
+> 아래 am은 AM(Application Master) 즉, driver를 뜻한다.     
 
 ```
 --conf spark.yarn.am.nodeLabelExpression=core 
@@ -273,9 +275,12 @@ task 노드에 executor를 실행하게 하여 많은 데이터를 처리할 때
 위 옵션을 사용하기 위해서는 yarn 에서 node label을 활성화 해주어야 한다.   
 자세한 내용은 [링크](https://docs.aws.amazon.com/ko_kr/emr/latest/ManagementGuide/emr-plan-instances-guidelines.html)를 확인하자.   
 
-```
+`하지만 yarn 노르 라벨을 활성화 하게 되면, EMR Cluster autoscaling이 정상적으로 작동하지 않을 수 있다고 한다.`     
 
-```
+##### 5-3-2) maxAMShare 값 변경   
+
+##### 5-3-3) streaming 잡마다 별도의 큐를 사용   
+
 
 - - - 
 
