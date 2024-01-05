@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] (Structured) Streaming Checkpointing "
-subtitle: "Spark Streaming과 Structured Streaming Checkpoint"    
+subtitle: "Spark Streaming과 Structured Streaming Checkpoint, S3 를 checkpoint 로 사용하여 구현"    
 comments: true
 categories : Spark
 date: 2021-04-17
@@ -147,6 +147,22 @@ offsets안에 batchId가 존재하며, 실제 offsets 정보들이 저장된다.
 stateful 처리 로직에 의해 생성된 state에 대한 정보들이 저장 된다.        
 
 > aggregations, mapGroupWithState 등의 연산을 예로 들 수 있다.    
+
+- - - 
+
+## 4. S3를 Checkpoint로 사용하여 구현하기   
+
+```scala
+val credentialProvide = if("local".equals(profile)) {
+    "com.amazonaws.auth.profile.ProfileCredentialsProvider"
+} else {
+    "com.amazonaws.auth.InstanceProfileCredentialsProvider"
+}
+
+builder
+    .config("fs.s3a.aws.credentials.provider", credentialProvide)
+    .config("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+```
 
 - - - 
 
