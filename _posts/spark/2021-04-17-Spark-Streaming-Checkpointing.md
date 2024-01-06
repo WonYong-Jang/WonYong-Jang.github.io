@@ -1,15 +1,39 @@
 ---
 layout: post
 title: "[Spark] (Structured) Streaming Checkpointing "
-subtitle: "Spark Streaming과 Structured Streaming Checkpoint, S3 를 checkpoint 로 사용하여 구현"    
+subtitle: "Spark Streaming과 Structured Streaming Checkpoint, S3 를 Checkpoint 로 사용하여 구현"    
 comments: true
 categories : Spark
 date: 2021-04-17
 background: '/img/posts/mac.png'
 ---
 
-이번 글에서는 Spark Streaming과 Structured Streaming 사용할 때 장애 복구를 위해 사용 되는 
-checkpointing 에 대해 자세히 살펴보자.      
+checkpoint 란 주로 장애복구를 위해 사용되며, 현재 작업 내용을 기록해 두어서 장애가 발생했을 때 
+처음 부터 연산하지 않고 기록해 둔 곳 부터 이어서 연산이 가능하도록 해준다.   
+
+그렇다면 checkpoint는 어느 저장소에 저장하는 것이 좋을까?   
+
+`주의해야할 부분은 checkpoint 를 로컬 디스크에 기록을 한다면 문제가 발생할 수 있다.`   
+`노드 장애가 발생한다면 저장해두었던 checkpoint는 loss가 될 것이다.`      
+
+> checkpoint는 주로 s3, hdfs, dynamoDB 등을 사용한다.    
+
+분산 파일 시스템인 hdfs도 좋은 선택지가 될 수 있다.   
+
+`하지만 최근 업무에서 DR Test를 진행할 때, hdfs를 checkpoint로 사용함으로써 이슈가 있었다.`      
+EMR Cluster에서 Spark Streaming 어플리케이션을 실행하고 있었고, DR Test를 성공적으로 
+진행하기 위해서는 EMR Cluster 전체가 문제가 발생했을 때 새로운 EMR Cluster에서 어플리케이션이 
+실행되어야 한다.  
+
+> EMR Cluster는 EC2 인스턴스를 이용하여 하둡, 스파크 클러스터를 빠르게 구성할 수 있다.      
+> EMR Cluster 는 Master, Core, Task Node로 구성되어 있으며, Core Node에 hdfs를 가지고 있다.   
+
+하지만 EMR Cluster 내에서 hdfs를 checkpoint로 사용중에 기존 EMR Cluster가 중단되고 
+새로운 EMR Cluster가 생성되어 어플리케이션이 실행된다면 기존 hdfs에 저장해두었던 checkpoint는 loss 된다.   
+
+따라서, 클러스터가 이동하여도 checkpoint가 유지되는 s3로 변경하였다.   
+
+이제 장애 복구를 위해 사용 되는 checkpoint 에 대해 자세히 살펴보자.   
 
 - - -    
 
@@ -26,11 +50,6 @@ checkpointing 에 대해 자세히 살펴보자.
 `따라서, 처음 부터 연산할 필요 없이 기록한 부분부터 연산이 가능하다.`       
 
 <img width="800" alt="스크린샷 2023-07-25 오후 11 33 48" src="https://github.com/WonYong-Jang/Development-Process/assets/26623547/79ebf8a6-bf54-402b-9a52-f2a600c178bb">   
-
-`주의해야할 부분은 checkpointing을 로컬 디스크에 기록을 한다면  
-    문제가 발생할 수 있다.`       
-`노드 전체가 장애가 발생한다면 이를 복구하지 못하기 때문에 
-    보통 hdfs 같은 분산 파일 시스템에 저장한다.`     
 
 그러면 checkpointing에 어떤 내용을 기록할까?    
 
@@ -150,17 +169,29 @@ stateful 처리 로직에 의해 생성된 state에 대한 정보들이 저장 �
 
 - - - 
 
-## 4. S3를 Checkpoint로 사용하여 구현하기   
+## 4. S3를 Checkpoint로 사용하여 구현하기    
+
+먼저 aws credentials 설정이 필요하다.   
+`aws credentials은 aws를 사용할 권한을 어플리케이션에 부여하는 것이다.`    
+
+> 자격을 부여하는 여러 정책이 존재하며, 아래 코드는 aws 문서에서도 추천하고 있는 방법이며 
+가장 안전하게 aws credentials를 이용할 수 있는 방법이다.   
+
+`InstanceProfileCredentialsProvider 방식은 iam role을 어플리케이션이 구동하는 ec2에 바로 부여하는 방식이다.`   
+iam role은 사용자를 생성하는 것이 아닌 aws 서비스간 역할을 만들어 서로를 호출할 수 있는 권한을 부여하는 것이다.    
+
+`또한, ProfileCredentialsProvider 방식은 local profile을 통해 권한을 부여하는 방식이며, 주로 ~/.aws/credentials 파일을 참조한다.`   
+로컬 환경에서 개발을 진행할 때 aws 접근을 위해 주로 사용된다.   
 
 ```scala
-val credentialProvide = if("local".equals(profile)) {
+val credentialProvider = if("local".equals(profile)) {
     "com.amazonaws.auth.profile.ProfileCredentialsProvider"
 } else {
     "com.amazonaws.auth.InstanceProfileCredentialsProvider"
 }
 
 builder
-    .config("fs.s3a.aws.credentials.provider", credentialProvide)
+    .config("fs.s3a.aws.credentials.provider", credentialProvider)
     .config("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
 ```
 
