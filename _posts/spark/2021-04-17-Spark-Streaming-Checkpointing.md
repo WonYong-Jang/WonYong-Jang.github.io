@@ -31,7 +31,12 @@ EMR Cluster에서 Spark Streaming 어플리케이션을 실행하고 있었고, 
 하지만 EMR Cluster 내에서 hdfs를 checkpoint로 사용중에 기존 EMR Cluster가 중단되고 
 새로운 EMR Cluster가 생성되어 어플리케이션이 실행된다면 기존 hdfs에 저장해두었던 checkpoint는 loss 된다.   
 
-따라서, 클러스터가 이동하여도 checkpoint가 유지되는 s3로 변경하였다.   
+<img width="350" alt="스크린샷 2024-01-06 오후 7 09 02" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/ab67d364-ca6d-4b7d-808c-83f3f179d319">   
+
+따라서, 클러스터가 이동하여도 checkpoint가 유지되는 s3로 변경하였다.  
+
+> checkpoint 저장소 선택은 상황에 따라 달라 질 수 있으며, checkpoint가 손실되어도 처음부터 다시 연산하여 
+진행해도 된다면 위의 고민은 하지 않아도 될 것 같다.   
 
 이제 장애 복구를 위해 사용 되는 checkpoint 에 대해 자세히 살펴보자.   
 
@@ -171,6 +176,8 @@ stateful 처리 로직에 의해 생성된 state에 대한 정보들이 저장 �
 
 ## 4. S3를 Checkpoint로 사용하여 구현하기    
 
+
+
 먼저 aws credentials 설정이 필요하다.   
 `aws credentials은 aws를 사용할 권한을 어플리케이션에 부여하는 것이다.`    
 
@@ -190,10 +197,14 @@ val credentialProvider = if("local".equals(profile)) {
     "com.amazonaws.auth.InstanceProfileCredentialsProvider"
 }
 
+// 관련 라이브러리와 아래 코드 확인 s3a, spark builder 코드 확인 
 builder
     .config("fs.s3a.aws.credentials.provider", credentialProvider)
     .config("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
 ```
+
+위의 fs.s3a.aws.credentials.provider 는 
+사용할 aws credentials provider의 클래스 이름을 명시해준다.   
 
 - - - 
 
@@ -204,7 +215,7 @@ builder
 <https://www.waitingforcode.com/apache-spark-structured-streaming/checkpoint-storage-structured-streaming/read>   
 <https://charsyam.wordpress.com/2021/03/08/%EC%9E%85-%EA%B0%9C%EB%B0%9C-kafka-%EC%99%80-spark-structured-streaming-%EC%97%90%EC%84%9C-checkpoint-%EC%97%90%EC%84%9C-%EC%95%84%EC%A3%BC-%EA%B3%BC%EA%B1%B0%EC%9D%98-offset%EC%9D%B4-%EC%9E%88/>   
 <https://charsyam.wordpress.com/2021/03/09/%EC%9E%85-%EA%B0%9C%EB%B0%9C-spark-structured-streaming-%EC%97%90%EC%84%9C-offset-%EC%9D%80-%EC%96%B4%EB%96%BB%EA%B2%8C-%EA%B4%80%EB%A6%AC%EB%90%98%EB%8A%94%EA%B0%80%EC%95%84%EC%A3%BC-%EA%B0%84/>    
-
+<https://www.slideshare.net/ssuserca76a5/amazon-s3-best-practice-and-tuning-for-hadoopspark-in-the-cloud>     
 
 {% highlight ruby linenos %}
 
