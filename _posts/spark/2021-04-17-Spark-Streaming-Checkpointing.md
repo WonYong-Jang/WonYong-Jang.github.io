@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] (Structured) Streaming Checkpointing "
-subtitle: "Spark Streaming과 Structured Streaming Checkpoint, S3 를 Checkpoint 로 사용하여 구현"    
+subtitle: "Spark Streaming과 Structured Streaming Checkpoint, S3 를 Checkpoint 로 사용하여 구현 / S3A 와 EMRFS"    
 comments: true
 categories : Spark
 date: 2021-04-17
@@ -142,7 +142,8 @@ Kafka와 같은 source를 사용할 때, 해당 디렉토리에 commit된 offset
 
 ## 3. Strucutred Streaming Checkpoint     
 
-Structured Streaming을 checkpoint를 설정하면 checkpoint 폴더 내에 아래와 같은 파일들이 생성된다.   
+Structured Streaming을 checkpoint를 설정하면 checkpoint 폴더 내에 아래와 같은 파일들이 생성된다.    
+더 자세한 내용은 [링크](https://www.waitingforcode.com/apache-spark-structured-streaming/checkpoint-storage-structured-streaming/read)를 참고해보자.   
 
 
 #### 3-1) commit     
@@ -176,28 +177,39 @@ stateful 처리 로직에 의해 생성된 state에 대한 정보들이 저장 �
 
 ## 4. S3를 Checkpoint로 사용하여 구현하기    
 
+먼저 아래와 같이 의존성을 추가해보자.   
 
+```gradle
+implementation group: 'org.apache.hadoop', name: 'hadoop-aws', version: '2.9.2'
+implementation group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.440'
+```
 
-먼저 aws credentials 설정이 필요하다.   
+그 후 aws credentials 설정이 필요하다.   
 `aws credentials은 aws를 사용할 권한을 어플리케이션에 부여하는 것이다.`    
 
-> 자격을 부여하는 여러 정책이 존재하며, 아래 코드는 aws 문서에서도 추천하고 있는 방법이며 
-가장 안전하게 aws credentials를 이용할 수 있는 방법이다.   
+> 자격을 부여하는 여러 정책이 존재하며, InstanceProfileCredentialsProvider는 aws 문서에서도 추천하고 있는 방법이며 
+가장 안전하게 aws credentials를 이용할 수 있는 방법이다.     
 
 `InstanceProfileCredentialsProvider 방식은 iam role을 어플리케이션이 구동하는 ec2에 바로 부여하는 방식이다.`   
 iam role은 사용자를 생성하는 것이 아닌 aws 서비스간 역할을 만들어 서로를 호출할 수 있는 권한을 부여하는 것이다.    
 
+> aws 콘솔에서 s3 접근 권한을 부여한 iam role을 생성 후 ec2 에 해당 iam role을 추가해주면 된다.       
+
 `또한, ProfileCredentialsProvider 방식은 local profile을 통해 권한을 부여하는 방식이며, 주로 ~/.aws/credentials 파일을 참조한다.`   
-로컬 환경에서 개발을 진행할 때 aws 접근을 위해 주로 사용된다.   
+
+로컬 환경에서 개발을 진행할 때 aws 접근을 위해 주로 사용 되며, [gimme-aws-creds](https://github.com/Nike-Inc/gimme-aws-creds) 등을 이용하여 
+aws credentials를 획득할 수 있다.   
 
 ```scala
+// 아래 코드는 모두 s3a file system api를 사용했지만, EMR Cluster에서는 EMRFS를 사용하며 
+// EMRFS는 아래와 같이 명시적으로 코드를 작성해주지 않아도 자동으로 연동된다.  
+// 따라서, EMR Cluster에서 s3 접근 권한을 부여한 iam role이 추가 되었는지 확인해준다.   
 val credentialProvider = if("local".equals(profile)) {
     "com.amazonaws.auth.profile.ProfileCredentialsProvider"
 } else {
     "com.amazonaws.auth.InstanceProfileCredentialsProvider"
 }
 
-// 관련 라이브러리와 아래 코드 확인 s3a, spark builder 코드 확인 
 builder
     .config("fs.s3a.aws.credentials.provider", credentialProvider)
     .config("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
@@ -205,6 +217,28 @@ builder
 
 위의 fs.s3a.aws.credentials.provider 는 
 사용할 aws credentials provider의 클래스 이름을 명시해준다.   
+
+> BasicAWSCredentials, EnvironmentVariableCredentialsProvider, SystemPropertiesCredentialsProvider, InstanceProfileCredentialsProvider, ContainerCredentialsProvider 등이 존재한다.     
+> 참고로 클래스 이름을 명시해주지 않으면, DefaultAWSCredentialsProviderChain에 의해 
+정해진 순서대로 provider 설정들을 확인하며 적용이 되어 있는 
+provider 설정으로 진행한다.   
+
+위 내용을 이해하기 위해 Spark가 파일 시스템에 접근하는 방법을 자세히 살펴보면, 
+`기본적으로 Spark 는 Hadoop FileSystem API를 통해 다양한 파일 시스템에 접근한다.`         
+
+> LocalFileSystem, S3AFileSystem, EmrFileSystem 등을 이용할 수 있다.  
+
+`AWS S3에서는 S3A FileSystem API와 EMR 전용 EMR FileSystem API(EMRFS)를 제공한다.`     
+
+EMR을 제외한 다른 Spark 클러스터는 모두 S3A FileSystem을 사용해야 하며, S3A에 대한 
+정보는 S3, S3N을 거쳐 업그레이드된 버전이다.   
+
+<img width="800" alt="스크린샷 2024-01-07 오전 10 39 09" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/db77871e-42ec-4053-b54a-f8117b599d1d">   
+
+`따라서 EMR을 제외한 로컬 및 클러스터에서는 S3에 접근할 때는 S3A FileSystem API를 사용하며, prefix는 s3a:// 를 사용한다.`   
+
+`EMR Cluster에서는 EMRFS를 사용하면 되며, prefix는 s3:// 를 사용한다.`   
+
 
 - - - 
 
@@ -216,6 +250,7 @@ builder
 <https://charsyam.wordpress.com/2021/03/08/%EC%9E%85-%EA%B0%9C%EB%B0%9C-kafka-%EC%99%80-spark-structured-streaming-%EC%97%90%EC%84%9C-checkpoint-%EC%97%90%EC%84%9C-%EC%95%84%EC%A3%BC-%EA%B3%BC%EA%B1%B0%EC%9D%98-offset%EC%9D%B4-%EC%9E%88/>   
 <https://charsyam.wordpress.com/2021/03/09/%EC%9E%85-%EA%B0%9C%EB%B0%9C-spark-structured-streaming-%EC%97%90%EC%84%9C-offset-%EC%9D%80-%EC%96%B4%EB%96%BB%EA%B2%8C-%EA%B4%80%EB%A6%AC%EB%90%98%EB%8A%94%EA%B0%80%EC%95%84%EC%A3%BC-%EA%B0%84/>    
 <https://www.slideshare.net/ssuserca76a5/amazon-s3-best-practice-and-tuning-for-hadoopspark-in-the-cloud>     
+<https://cm.engineering/using-hdfs-to-store-spark-streaming-application-checkpoints-2146c1960d30>   
 
 {% highlight ruby linenos %}
 
