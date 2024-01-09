@@ -203,7 +203,7 @@ aws credentials를 획득할 수 있다.
 ```scala
 // 아래 코드는 모두 s3a file system api를 사용했지만, EMR Cluster에서는 EMRFS를 사용하며 
 // EMRFS는 아래와 같이 명시적으로 코드를 작성해주지 않아도 자동으로 연동된다.  
-// 따라서, EMR Cluster에서 s3 접근 권한을 부여한 iam role이 추가 되었는지 확인해준다.   
+// 따라서, EMR Cluster를 구성하는 ec2에 s3 접근 권한을 부여한 iam role이 추가 되었는지 확인해준다.   
 val credentialProvider = if("local".equals(profile)) {
     "com.amazonaws.auth.profile.ProfileCredentialsProvider"
 } else {
@@ -237,7 +237,7 @@ EMR을 제외한 다른 Spark 클러스터는 모두 S3A FileSystem을 사용해
 
 `따라서 EMR을 제외한 로컬 및 클러스터에서는 S3에 접근할 때는 S3A FileSystem API를 사용하며, prefix는 s3a:// 를 사용한다.`   
 
-`EMR Cluster에서는 EMRFS를 사용하면 되며, prefix는 s3:// 를 사용한다.`   
+`EMR Cluster에서는 EMRFS를 사용하여 S3에 접근하면 되며, prefix는 s3:// 를 사용한다.`      
 
 
 - - - 
