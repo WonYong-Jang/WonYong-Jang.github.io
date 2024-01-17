@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Docker] Kubernetes 시작하기"
-subtitle: "Container Orchestration System, k3s, minikube"    
+subtitle: "Container Orchestration System, k3s, minikube, 도커와 차이점"    
 comments: true
 categories : DevOps
 date: 2022-06-10
@@ -123,6 +123,166 @@ docker 드라이버를 사용할 경우 서비스 노출 방법은 아래와 같
 minikube service wordpress   
 ```
 
+### 2-2) kubectl 기본 명령어   
+
+쿠버네티스에 배포 및 리소스 확인을 하기 위한 명령어를 살펴보자.   
+
+<img width="700" alt="스크린샷 2024-01-18 오전 7 55 12" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/e4a5f932-65aa-478b-9ea6-59ac2d0edfb7">   
+
+##### 2-2-1) apply   
+
+yaml 로 작성된 파일을 이용하여 쿠버네티스에 배포할 수 있는 명령어 이며 
+url을 입력할 수도 있다.   
+
+> url을 입력하면 원격에 있는 파일을 다운로드 후 실행하게 된다.   
+
+```shell
+kubectl apply -f <파일명 또는 URL>   
+kubectl apply -f https://subicura.com/k8s/code/guide/index/wordpress-k8s.yml   
+```
+
+##### 2-2-2) get     
+
+쿠버네티스에 선언된 리소스를 확인하는 방법이다.   
+
+```shell
+kubectl get <TYPE>   
+
+kubectl get pods
+kubectl get pod
+kubectl get po
+
+kubectl get nodes
+kubectl get node
+kubectl get no   
+
+# 결과 포맷 변경   
+kubectl get pod -o wide
+kubectl get pod -o yaml
+kubectl get pod -o json   
+
+# Label 조회   
+kubectl get pod --show-labels
+
+# 여러 TYPE 입력   
+kubectl get pod,service,svc
+
+# Pod, ReplicaSet, Deployment, Service, Job 조회 => all
+kubectl get all
+```
+
+위처럼 short name으로 짧게 줄여서 명령어를 사용할 수 있으며, 
+    쿠버네티스에서 지원하는 short name 확인 명령어는 
+    아래와 같다.   
+
+```shell
+kubectl api-resources
+```
+
+
+##### 2-2-3) describe   
+
+쿠버네티스에 선언된 리소스의 상세한 상태를 확인하는 명령어는 다음과 같다.   
+
+> 쿠버네티스에 pod가 정상적으로 실행되지 않을 때 해당 명령어에서 제공하는 event를 
+확인하여 원인을 찾을 수도 있다.    
+
+```shell
+kubectl describe <TYPE>/<NAME> 또는 <TYPE> <NAME>   
+```
+
+```shell
+# Pod 조회로 이름을 확인   
+kubectl get pod
+
+# 위에서 조회한 이름으로 상세 확인   
+kubectl describe pod/wordpress-746bd6d54b-4rg8q 
+```
+
+##### 2-2-4) delete   
+
+쿠버네티스에 선언된 리소스를 제거하는 명령어는 다음과 같다.   
+
+```shell
+kubectl delete <TYPE>/<NAME> 또는 <TYPE> <NAME>
+```
+
+```shell
+# Pod 조회로 이름을 확인
+kubectl get pod
+
+# 위에서 조회한 이름으로 상세 확인
+kubectl delete pod/wordpress-746bd6d54b-4rg8q
+```
+
+```shell
+# 워드 프레스 리소스를 제거한다.
+kubectl delete -f wordpress-k8s.yml
+```
+
+##### 2-2-5) logs
+
+컨테이너의 로그를 확인하는 명령어는 다음과 같다.   
+
+```shell
+kubectl logs <POD_NAME>
+```
+
+```shell
+# Pod 조회로 이름을 확인
+kubectl get pod
+
+# 위에서 조회한 pod 로그 조회   
+kubectl logs wordpress-746bd6d54b-4rg8q 
+
+# 실시간 로그 확인 
+kubectl logs -f wordpress-746bd6d54b-4rg8q
+
+# 만약 하나의 pod에 여러 개의 컨테이너가 있는 경우 -c 옵션으로 컨테이너를 
+지정해야 한다.   
+```   
+
+##### 2-2-6) exec  
+
+컨테이너에 접속하는 명령어는 다음과 같다.   
+
+`도커를 사용할 때도 exec 명령어를 통해 컨테이너 접속이 가능하지만, 여러 서버에 
+나뉘어 컨테이너를 사용중인 경우 해당 서버로 접속 후 exec 명령어가 가능했다.`   
+`하지만, 쿠버네티스의 경우 해당 서버에 접속하지 않고도 kubectl 명령어로 접속이 
+가능하기 때문에 중앙에서 제어하기 수월하다.`       
+
+```shell
+kubectl exec <-it> <POD_NAME> -- <COMMAND>   
+```
+
+쉘로 접속하여 컨테이너 상태를 확인하는 경우에 -it 옵션을 사용하고 
+여러 개의 컨테이너가 있는 경우엔 -c 옵션으로 컨테이너를 지정한다.    
+
+```shell
+# Pod 조회로 이름 확인   
+kubectl get po
+
+# 조회한 Pod의 컨테이너 접속 
+kubectl exec -it wordpress-746bd6d54b-9s4rx -- bash
+```
+
+##### 2-2-7) config   
+
+kubectl은 여러 개의 쿠버네티스 클러스터를 context로 설정하고 필요에 따라 선택할 수 있다.   
+현재 어떤 컨텍스트로 설정되어 있는지 확인하고 원하는 컨텍스트를 지정한다.   
+
+```shell
+# 현재 컨텍스트 확인 
+kubectl config current-context   
+```
+
+> 현재는 실습 중이기 때문에 minikube가 출력될 것이다.
+> 여러 클러스터 컨텍스트가 존재 한다면 이를 변경해가며 접속할 수 있다.   
+
+```shell
+# 컨텍스트 설정
+kubectl config use-context minikube
+```
 
 - - - 
 
@@ -134,7 +294,7 @@ WordPress 웹 어플리케이션 배포하는 실습을 해보자.
 <img width="572" alt="스크린샷 2024-01-15 오후 12 09 36" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/7504c44c-d10d-45e6-8985-ecfb7f87b9e4">    
 
 위 그림에서 Pod, ReplicaSet 등의 용어는 이후에 설명할 예정이며, 
-    우선 아래 yml 파일을 생성하고 배포를 해보자.   
+    우선 아래 yaml 파일을 생성하고 배포를 해보자.   
 
 ```yml
 apiVersion: apps/v1
@@ -254,7 +414,7 @@ kubectl get all
 ## 4. 쿠버네티스와 도커 서비스 차이   
 
 위에서 쿠버네티스에 간단한 웹 어플리케이션을 배포해 봤다.  
-그럼 동일하게 yml 파일을 이용하여 도커 컴포즈로 실행한 웹 어플리케이션과 
+그럼 동일하게 yaml 파일을 이용하여 도커 컴포즈로 실행한 웹 어플리케이션과 
 어떠한 차이가 있을까?   
 
 `도커로 서비스를 구성했을 경우 컨테이너 또는 서버 전체가 죽는다면 
@@ -278,8 +438,8 @@ spec:
 ```
 
 이처럼 설정만 추가해줌으로써 컨테이너끼리 로드밸런싱을 구성해주며 
-부하가 증가했을 때 자동으로 scale out을 진행해 주는 등 
-간편하게 제공해준다.   
+부하가 증가했을 때 자동으로 scale out을 진행해 주는 등의 
+여러 기능을 제공한다.   
 
 - - - 
 
