@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Docker] Kubernetes 시작하기"
-subtitle: "Container Orchestration System, k3s, minikube, 도커와 차이점"    
+subtitle: "Container Orchestration System, k3s, minikube, 도커와 차이점, 기본 명령어"    
 comments: true
 categories : DevOps
 date: 2022-06-10
@@ -154,7 +154,11 @@ kubectl get po
 
 kubectl get nodes
 kubectl get node
-kubectl get no   
+kubectl get no  
+
+# Endpoint 정보 
+kubectl get endpoints
+kubectl get ep
 
 # 결과 포맷 변경   
 kubectl get pod -o wide
@@ -252,7 +256,7 @@ kubectl logs -f wordpress-746bd6d54b-4rg8q
 가능하기 때문에 중앙에서 제어하기 수월하다.`       
 
 ```shell
-kubectl exec <-it> <POD_NAME> -- <COMMAND>   
+kubectl exec -it <POD_NAME> -- <COMMAND>   
 ```
 
 쉘로 접속하여 컨테이너 상태를 확인하는 경우에 -it 옵션을 사용하고 
