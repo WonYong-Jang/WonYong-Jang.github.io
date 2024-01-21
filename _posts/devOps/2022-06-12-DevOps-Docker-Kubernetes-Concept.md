@@ -11,7 +11,7 @@ background: '/img/posts/mac.png'
 [이전글](https://wonyong-jang.github.io/devops/2022/06/10/DevOps-Docker-Kubernetes.html)에서 쿠버네티스 실습 환경을 
 구성해보고 기본 명령어를 살펴봤다.  
 
-이번 글에서는 쿠버네티스를 구성하고 있는 Pod, RepliaSet, Deployment 등을 
+이번 글에서는 쿠버네티스를 구성하고 있는 Pod, ReplicaSet, Deployment 등을 
 자세히 살펴보자.    
 
 - - -
