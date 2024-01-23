@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Docker] Kubernetes 구성과 기본 개념 2"
-subtitle: "Service, Ingress, Volume, ConfigMap, Secret"      
+subtitle: "Service(ClusterIP, NodePort, LoadBalancer), Ingress, Volume, ConfigMap, Secret"      
 comments: true
 categories : DevOps
 date: 2022-06-13
@@ -31,11 +31,13 @@ Pod, ReplicaSet, Deployment에 이어서 Service, Ingress, Volume, ConfigMap, Se
 ### 1-1) Service(ClusterIP)    
 
 ClusterIP는 클러스터 내부에 새로운 IP를 할당하고 여러 개의 Pod를 바라보는 
-로드밸랜서 기능을 제공한다.   
+로드밸랜서 기능을 제공한다.     
 그리고 서비스 이름을 내부 도메인 서버에 등록하여 Pod 간에 서비스 이름으로 통신할 수 
 있다.     
 
-> 내부에서만 사용하는 용도이다.   
+> 외부와 통신할 필요 없이 클러스터 내부에서 파드끼리 통신할 때 사용한다.   
+
+이전 실습에서 생성했던, counter 앱 중에 redis를 서비스로 노출해보자.   
 
 ```yaml
 apiVersion: apps/v1
@@ -55,7 +57,7 @@ spec:
     spec:
       containers:
         - name: redis
-          image: redis
+          image: redis              # redis image
           ports:
             - containerPort: 6379
               protocol: TCP
@@ -66,8 +68,9 @@ kind: Service        # Service
 metadata:
   name: redis        #
 spec:
+  # type을 별도로 지정을 안하면 ClusterIP로 지정 
   ports:
-    - port: 6379     # 서비스가 생성할 port
+    - port: 6379     # 서비스가 생성할 port 오픈 
       protocol: TCP
 #    - targetPort    # 서비스가 접근할 Pod의 port (생성 port와 동일한 경우 생략 가능)   
   selector:           # 서비스가 접근할 Pod의 label 조건  
@@ -79,17 +82,18 @@ spec:
 
 <img width="263" alt="스크린샷 2024-01-22 오전 7 00 56" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/f704254f-7914-4dbe-97c1-b5fd900e2c36">   
 
-`같은 클러스터에서 생성된 Pod라면 redis라는 도메인으로 redis Pod에 
+`같은 클러스터에서 생성된 Pod라면 redis라는 도메인 이름으로 redis Pod에 
 접근할 수 있다.`        
 
+> 내부 DNS 서버에 도메인 이름이 등록되기 때문에 접근 가능해진다.   
 > redis.default.svc.cluster.local 로도 접근이 가능하며, 서로 다른 
 namespace와 cluster를 구분할 수 있다. 
 
-그럼 이제 다른 Pod를 생성하여 redis에 접근할 수 있는 예시는 아래와 같다.
+이제 redis에 접근할 counter 앱을 Deployment로 만들어보자.   
 
 ```yml
 apiVersion: apps/v1
-kind: Deployment
+kind: Deployment      
 metadata:
   name: counter
 spec:
@@ -108,10 +112,14 @@ spec:
           image: ghcr.io/subicura/counter:latest
           env:
             - name: REDIS_HOST
-              value: "redis"      # redis 라는 이름의 service 를 위에서 생성하였고 접근을 위해 이를 명시   
+              value: "redis"      # redis 라는 이름의 service(ClusterIP) 를 위에서 생성하였고 접근을 위해 이를 명시   
             - name: REDIS_PORT
               value: "6379"       # 
 ```
+
+위 코드는 counter 앱을 deployment로 생성하였고, redis 파드 접근을 위해 
+clusterIP 서비스를 생성해두었기 때문에, 해당 도메인 이름을 작성하여 
+접근할 수 있도록 했다.   
 
 ### 1-2) Service(NodePort)   
 
