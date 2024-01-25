@@ -73,6 +73,7 @@ spec:
     - port: 6379     # 서비스가 생성할 port 오픈 
       protocol: TCP
 #    - targetPort    # 서비스가 접근할 Pod의 port (생성 port와 동일한 경우 생략 가능)   
+                     # 즉, Service 객체로 전달된 요청을 Pod로 전달할 때 사용하는 포트 
   selector:           # 서비스가 접근할 Pod의 label 조건  
     app: counter
     tier: db
@@ -124,7 +125,13 @@ clusterIP 서비스를 생성해두었기 때문에, 해당 도메인 이름을 
 ### 1-2) Service(NodePort)   
 
 `ClusterIP는 클러스터 내부에서만 접근할 수 있다.`    
-`클러스터 외부(노드)에서 접근할 수 있도록 NodePort 서비스를 만들어보자.`     
+`클러스터 외부(노드)에서 접근할 수 있도록 NodePort 서비스를 만들어보자.`    
+
+아래 코드에서 NodePort, Port, TargetPort 등이 보이는데, 이에 대한 구분은 아래 그림과 같다.   
+
+<img width="514" alt="스크린샷 2024-01-23 오후 11 43 27" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/a0ad9a32-edc7-424f-bb05-8ad4e5562a02">   
+
+
 
 ```yml
 apiVersion: v1
@@ -134,13 +141,15 @@ metadata:
 spec:
   type: NodePort          # type이 없으면 기본적으로 ClusterIP이며, 이를 Node Port로 명시   
   ports:
-    - port: 3000          # 
+    - port: 3000          # Cluster 내부에서 사용할 Service 객체의 포트 
+    # targetPort : Service 객체로 전달된 요청을 Pod로 전달할 때 사용하는 포트( port 와 동일한 경우 생략 가능)   
       protocol: TCP
       nodePort: 31000     # 실제 노드에 오픈되는 port는 31000(미 지정시 30000~32768 중에 자동 할당)
   selector:
     app: counter
     tier: app
 ```   
+
 
 ```shell
 kubectl apply -f counter-nodeport.yml
@@ -212,7 +221,7 @@ counter-lb   LoadBalancer   10.109.133.129   <pending>     30000:31535/TCP   9s
 
 이를 테스트 하기 위해 minikube에서 가상 LoadBalancer를 만들 수 있게 제공해준다.   
 
-##### minikube에 가장 LoadBalancer 만들기   
+##### minikube에 가상 LoadBalancer 만들기   
 
 Load Balancer를 사용할 수 없는 환경에서 가상 환경을 만들어 주는 것이 MetalLB 라는 것이 있다.   
 minikube에서는 현재 떠 있는 노드를 Load Balancer로 설정한다.  
