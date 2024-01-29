@@ -319,13 +319,18 @@ val kinesisDataFrame = spark.readStream
 
 #### 3-2) awsUseInstanceProfile   
 
-`awsUseInstanceProfile의 default 옵션은 true이며, 이는 AWS EC2 인스턴스 프로파일을 이용하여 인증하는 방식이다.`   
+[kinesis-sql](https://github.com/qubole/kinesis-sql/issues/84) 를 사용시 아래 옵션을 추가하지 않으면 
+로컬 환경에서 에러가 발생한다.    
 
 ```scala
 .option("awsUseInstanceProfile", "false")
 ```
 
-`현재 업무에서는 AWS Credentials file(~/.aws/credentials)을 사용하여 인증하는 방식이기 때문에 fals로 지정하였다.`  
+`awsUseInstanceProfile의 default 옵션은 true이며, 이는 AWS EC2 인스턴스 프로파일을 이용하여 인증하는 방식이다.`     
+현재 로컬환경에서는 AWS Credentials file(~/.aws/credentials)을 사용하여 인증하는 방식이기 때문에 fals로 지정해야 한다.  
+
+해당 옵션을 false로 지정하게 되면 [DefaultAWSCredentialsProviderChain](https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/?com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html) 에 따라 
+순차적으로 인증 여부를 확인하게 된다.   
 
 #### 3-3) backpressure 관련 옵션   
 
