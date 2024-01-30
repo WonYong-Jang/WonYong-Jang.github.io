@@ -199,7 +199,7 @@ ssc.awaitTermination()
 즉, 한번 시작하면 명시적인 종료 또는 에러가 없다면 어플리케이션이 임의로 종료되지 않아야 하기 때문이다.   
 
 또한, 종료는 sparkStreamContext.stop() 메서드를 이용하면 된다.    
-참고로 데이터 손실 없는 종료는 [링크](https://wonyong-jang.github.io/spark/2021/06/29/Spark-graceful-shutdown.html)를 
+참고로 데이터 손실 없는 종료는 [링크](https://wonyong-jang.github.io/spark/2021/04/19/Spark-Streaming-Graceful-Shutdown.html)를 
 참고하자.   
 
 

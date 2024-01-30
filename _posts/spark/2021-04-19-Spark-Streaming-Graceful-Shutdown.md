@@ -140,9 +140,6 @@ object GracefulShutdownExample {
 
         println("ssc is stopped!!!!!!!")  
       }
-
-      Thread.sleep(1000)
-
     }
   }
 

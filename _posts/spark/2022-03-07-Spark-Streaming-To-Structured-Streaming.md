@@ -313,10 +313,8 @@ def stopStreamQuery(query: StreamingQuery, appId: String, awaitTerminationTimeMs
 
           query.stop() // 종료   
       }
-
-      Thread.sleep(1000)
+      query.awaitTermination(awaitTerminationTimeMs)
    }
-   query.awaitTermination(awaitTerminationTimeMs)
 }
 ```
 
