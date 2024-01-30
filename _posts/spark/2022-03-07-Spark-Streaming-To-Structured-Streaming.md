@@ -10,7 +10,7 @@ background: '/img/posts/mac.png'
 
 이번 글에서는 현재 업무에서 사용하던 Spark Streaming을 
 Structured Streaming 으로 전환 하는 과정에서 
-trouble shooting을 정리해 보려고 한다.   
+Trouble shooting을 정리해 보려고 한다.   
 
 [Incident Review](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)에서 
 공유한 것처럼 잘못된 구조로 설계되어 있는 부분을 개선하면서 
@@ -281,9 +281,50 @@ spark.shuffle.service.enabled=true
 
 따라서 해당 옵션을 false로 변경한 후 해당 에러가 발생하지 않음을 확인했다.      
 
+### 2-5) Gracefully Shutdown   
+
+기존 Spark Streaming에서는 스트리밍을 종료할 때 아래와 같이 gracefully shutdown 옵션이 존재했다.   
+
+```scala
+ssc.stop(sparkContext = true, stopGracefully = true)
+```
+
+하지만 structured streaming은 이러한 옵션이 존재하지 않기 때문에 아래와 같이 StreamingQuery에서 
+제공하는 옵션들을 이용하여 진행 중인 query를 확인 후 종료하도록 했다.   
+
+```scala
+def stopStreamQuery(query: StreamingQuery, appId: String, awaitTerminationTimeMs: Long) {
+
+   var shouldStop = false
+
+   // query.isActive: Returns true if this query is actively running.     
+   while (query.isActive) {
+      if(! shouldStop) {
+          val shutdownMarkers = S3Util.listingS3ObjectKeys()
+          shouldStop = !shutdownMarkers.contains(s"/$appId")
+      }
+
+      // query.status.isTriggerActive: True when the trigger is actively firing, False when waiting for the next trigger
+      // query.status.isDataAvailable: True when there is new data to be processed.   
+      if(shouldStop && !query.status.isTriggerActive) {
+          val msg = query.status.message
+          val isDataAvailable = query.status.isDataAvailable   
+          // 로그로 query 상태 확인   
+
+          query.stop() // 종료   
+      }
+
+      Thread.sleep(1000)
+   }
+   query.awaitTermination(awaitTerminationTimeMs)
+}
+```
+
+
+
 - - - 
 
-## 3. Configuration  
+## 3. Configuration     
 
 #### 3-1) kinesis.client.describeShardInterval   
 

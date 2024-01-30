@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "[Spark] 아파치 스파크 graceful shutdown "   
+title: "[Spark] Streaming Graceful Shutdown "   
 subtitle: "How to do graceful shutdown of spark streaming job"    
 comments: true
 categories : Spark
-date: 2021-06-29
+date: 2021-04-19
 background: '/img/posts/mac.png'
 ---
 
@@ -19,7 +19,7 @@ graceful 하게 종료하기 전에는 다음과 같이 어플리케이션을 �
 데이터 손실이 있을 수 있기 때문에 권장하지 않는다.   
 
 ```
-$ yan application -kill [applicationId]
+$ yarn application -kill [applicationId]
 ```
 
 스파크 스트리밍을 graceful 하게 종료 할수 있는 몇가지 방법이 있다.    
@@ -79,7 +79,7 @@ Spark driver는 SIGTERM 신호를 받은 후에 다음과 같은 로그 메시�
 
 ## 2. implement graceful shutdown   
 
-필자의 경우 현재 AWS를 이용하여 스파크 스트리밍을 배포하여 운영하고 
+현재 업무에서 AWS를 이용하여 스파크 스트리밍을 배포하여 운영하고 
 있고 Kinesis, EMR, S3, DynamoDB 등을 같이 사용하고 있다.    
 그래서 S3를 이용하여 checkpoint와 같이 마커 파일을 s3에 저장하고 
 graceful shutdown을 직접 구현하였다.   
@@ -91,8 +91,8 @@ graceful shutdown을 직접 구현하였다.
 - 스파크 스트리밍을 시작한 후 S3(checkpoint directory)에 현재 스파크 스트리밍을 
 구분할 수 있는 이름을 가진 하나의 파일(마커)을 생성한다.    
 
-
-> 이 글에서는 S3에 마커를 저장했지만, 상황에 따라 hdfs, redis 등을 이용해도 된다.  
+    > 이름은 SparkContext에서 제공해주는 applicationId를 사용했다.    
+    > 이 글에서는 S3에 마커를 저장했지만, 상황에 따라 hdfs, redis 등을 이용해도 된다.     
 
 - 현재 진행중인 스파크 스트리밍의 Driver는 지속적으로 지정된 위치의 파일이 
 존재하는지 확인한다.   
@@ -123,6 +123,7 @@ object GracefulShutdownExample {
     val checkIntervalMillis = 10000
     var isStopped = false
 
+    // 주기적으로 s3 파일을 확인   
     while (! isStopped) {
       println("calling awaitTerminationOrTimeout")
       isStopped = ssc.awaitTerminationOrTimeout(checkIntervalMillis)
@@ -131,13 +132,17 @@ object GracefulShutdownExample {
       else
         println("Streaming App is still running. Timeout...")
 
-      checkShutdownMarker(appId) // s3에 shutdown 마커가 존재하는지 확인   
-      if (!isStopped && stopFlag) {
-        println("stopping ssc right now")
-        ssc.stop(sparkConext = true, stopGracefully = true)
+      // s3에 shutdown 마커가 존재하는지 확인하며, 존재하지 않는다면 stopFlag = true 로 변경하여 스트리밍 종료를 진행   
+      checkShutdownMarker(appId)    
+      if (!isStopped && stopFlag) {    
+        println("stopping ssc right now")        
+        ssc.stop(sparkConext = true, stopGracefully = true) // Gracefully Shutdown   
 
-        println("ssc is stopped!!!!!!!")
+        println("ssc is stopped!!!!!!!")  
       }
+
+      Thread.sleep(1000)
+
     }
   }
 
@@ -155,7 +160,7 @@ scc.stop(true, true)에서 첫번째 true가 의미하는 것은 spark conext가
 중지 되는 것을 의미하며, 두번째 true가 의미하는 것은 graceful shutdown을 
 의미한다.    
 
-`주의할 점은 stop를 Batch처리하는 코드 내부에서 처리하면 deadlock을 
+`주의할 점은 stop()은 Executor 내에서 처리하면 deadlock이 
 발생시킬수 있으므로 Driver에서 처리 할수 있도록 하자.`    
 
 - - - 

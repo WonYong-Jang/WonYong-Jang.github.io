@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] (Structured) Streaming Checkpointing "
-subtitle: "Spark Streaming과 Structured Streaming Checkpoint, S3 를 Checkpoint 로 사용하여 구현 / S3A 와 EMRFS"    
+subtitle: "Spark Streaming과 Structured Streaming Checkpoint, S3 를 Checkpoint 로 사용하여 구현(aws credentials) / S3A 와 EMRFS"    
 comments: true
 categories : Spark
 date: 2021-04-17
@@ -142,9 +142,25 @@ Kafka와 같은 source를 사용할 때, 해당 디렉토리에 commit된 offset
 
 ## 3. Strucutred Streaming Checkpoint     
 
-Structured Streaming을 checkpoint를 설정하면 checkpoint 폴더 내에 아래와 같은 파일들이 생성된다.    
-더 자세한 내용은 [링크](https://www.waitingforcode.com/apache-spark-structured-streaming/checkpoint-storage-structured-streaming/read)를 참고해보자.   
+[Structured Streaming을 checkpoint](https://www.waitingforcode.com/apache-spark-structured-streaming/checkpoint-storage-structured-streaming/read)를 
+설정하면 checkpoint 폴더 내에 아래와 같은 파일들이 생성된다.    
 
+<img width="600" alt="스크린샷 2024-01-29 오후 9 57 24" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/875ee8e6-697a-4bf0-b554-39fd574717b1">   
+
+위 그림을 보면 commit과 offset이 동시에 generate 되는게 아닌 것을 알 수 있다.   
+`처리해야할 offset, state를 먼저 확인 및 기록해두고, 데이터 처리 완료 후 commit을 하게 된다.`   
+`Spark를 restart 했을 때 마지막에 쓰여진 offset이 commit log와 일치하는지 확인하며, 일치한다면 다음 offset 부터 작업을 
+진행한다.`    
+`그렇지 않은 경우는 완료되기 전 가장 오래된 작업 부터 다시 진행을 한다.`     
+
+또한, checkpoint 숫자를 늘려가며 기록하는데, 무한히 파일이 쌓일까?   
+
+아래 옵션에 따라 100개의 파일만 유지된다.
+
+```shell
+# default 100
+spark.sql.streaming.minBatchesToRetain 
+```
 
 #### 3-1) commit     
 
@@ -171,7 +187,9 @@ offsets안에 batchId가 존재하며, 실제 offsets 정보들이 저장된다.
 
 stateful 처리 로직에 의해 생성된 state에 대한 정보들이 저장 된다.        
 
-> aggregations, mapGroupWithState 등의 연산을 예로 들 수 있다.    
+> aggregations, mapGroupWithState 등의 연산을 예로 들 수 있다.   
+
+
 
 - - - 
 
@@ -250,7 +268,8 @@ EMR을 제외한 다른 Spark 클러스터는 모두 S3A FileSystem을 사용해
 <https://charsyam.wordpress.com/2021/03/08/%EC%9E%85-%EA%B0%9C%EB%B0%9C-kafka-%EC%99%80-spark-structured-streaming-%EC%97%90%EC%84%9C-checkpoint-%EC%97%90%EC%84%9C-%EC%95%84%EC%A3%BC-%EA%B3%BC%EA%B1%B0%EC%9D%98-offset%EC%9D%B4-%EC%9E%88/>   
 <https://charsyam.wordpress.com/2021/03/09/%EC%9E%85-%EA%B0%9C%EB%B0%9C-spark-structured-streaming-%EC%97%90%EC%84%9C-offset-%EC%9D%80-%EC%96%B4%EB%96%BB%EA%B2%8C-%EA%B4%80%EB%A6%AC%EB%90%98%EB%8A%94%EA%B0%80%EC%95%84%EC%A3%BC-%EA%B0%84/>    
 <https://www.slideshare.net/ssuserca76a5/amazon-s3-best-practice-and-tuning-for-hadoopspark-in-the-cloud>     
-<https://cm.engineering/using-hdfs-to-store-spark-streaming-application-checkpoints-2146c1960d30>   
+<https://cm.engineering/using-hdfs-to-store-spark-streaming-application-checkpoints-2146c1960d30>  
+<https://dev.to/kevinwallimann/how-to-recover-from-a-deleted-sparkmetadata-folder-546j>   
 
 {% highlight ruby linenos %}
 
