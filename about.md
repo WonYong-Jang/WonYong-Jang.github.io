@@ -145,9 +145,9 @@ Spark Streaming 및 AWS 인프라를 통해
 
 - [AWS EMR에서 실행되는 Spark 라이브러리 버전 충돌 해결](https://wonyong-jang.github.io/spark/2021/07/08/Spark-override-dependency.html)       
 
-- [Spark Streaming 에서 데이터 손실을 방지하기 위한 graceful shutdown 적용](https://wonyong-jang.github.io/spark/2021/06/29/Spark-graceful-shutdown.html)          
+- [Spark Streaming 에서 데이터 손실을 방지하기 위한 graceful shutdown 적용](https://wonyong-jang.github.io/spark/2021/04/19/Spark-Streaming-Graceful-Shutdown.html)             
 
-- [Spark Streaming 처리 지연 장애 리뷰](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Incident-Review.html)    
+- [Spark Streaming 처리 지연 장애 리뷰](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)       
 
 
 
