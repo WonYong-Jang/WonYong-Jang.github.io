@@ -1,0 +1,132 @@
+---
+layout: post
+title: "[BigData] File Format - Parquet"   
+subtitle: "Parquet(파케이), / 컬럼 기반(Columnar) 저장 포맷과 열 기반(Row-based) 저장 포맷"       
+comments: true
+categories : BigData
+date: 2024-02-02
+background: '/img/posts/mac.png'
+---
+
+이번 글에서는 빅데이터 처리할 경우 사용하는 파일 포맷(Parquet, ORC, Avro)에 대해 
+살펴볼 예정이며 그 중에서도 Parquet에 대해 자세히 살펴보자.      
+
+Parquet, ORC, Avro의 공통점과 차이점은 아래와 같다.      
+
+##### 공통점   
+
+- 기계가 읽을 수 있는 바이너리 포맷이다.  
+- 여러개의 디스크로 나뉘어질 수 있으며 이는 빅데이터의 분석처리에 용이하다.   
+- 스키마 파일을 가지고 있다.  
+
+##### 차이점   
+
+`Parquet와 ORC는 column 기반으로 저장하고, Avro는 row 기반으로 저장한다.`     
+`row 기반은 데이터를 쓸 때 용이하고, column 기반은 읽어서 분석해야 하는 경우 용이하다.`   
+column 기반은 row 기반에 비해 압축률이 좋지만, 전체 데이터를 재구성하는데 시간이 
+    오래 걸린다는 단점이 있다.   
+
+`따라서 한번에 모든 필드를 접근해서 데이터를 읽고 쓰고자 할 때는 Avro 파일 포맷을 쓰는 것이 좋고, 특정 필드에만 
+반복적으로 접근해야 하는 경우 Parquet이나 ORC를 사용하는 것이 좋다.`   
+
+> 참고로, ORC는 Hive에 특화된 포맷이며 Impala, Pig, Spark 등 다른 쿼리 엔진에서 사용하기 부적합하다.   
+
+- - - 
+
+## 1. Parquet(파케이)    
+
+데이터를 저장하는 방식 중 하나로 하둡생태계에서 많이 사용되는 파일 포맷이다.   
+빅데이터를 처리할 때는 많은 시간과 비용이 들어가기 때문에 
+빠르게 읽고, 압축률이 좋아야 한다.   
+이러한 특징을 가진 파일 포맷으로는 Parquet(파케이), ORC, Avro(에이브로)가 있다.   
+
+`Parquet가 압축률이 좋은 이유는 컬럼기반 저장포맷이기 때문이다.`     
+
+먼저, 컬럼기반이 무엇인지 알아보자.      
+
+다음과 같은 데이터베이스를 이용하여 이해해보자.   
+
+<img width="227" alt="스크린샷 2024-02-02 오후 10 49 05" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/13e35d6b-9a57-4d1d-9238-f94aecde216f">      
+
+행 기반으로 저장되는 건 아래와 같이 저장된다.     
+
+<img width="330" alt="스크린샷 2024-02-02 오후 10 49 11" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/3420232d-ec64-4804-9dc8-8ba1cfab027c">     
+
+열 기반으로 저장되는 건 아래와 같이 저장 된다.    
+
+<img width="358" alt="스크린샷 2024-02-02 오후 10 49 14" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/4b4bc5c4-dbbc-406d-bc10-59fae5eb9540">     
+
+그럼 왜 열 기반으로 저장되는 것이 압축률이 더 좋을까?   
+
+같은 컬럼에는 종종 유사한 데이터가 나열된다.    
+`특히 같은 문자열의 반복은 매우 작게 압축할 수 있다.`        
+데이터의 종류에 따라 다르지만, 열 지향 데이터베이스는 압축되지 않은 행 지향 데이터 베이스와 
+비교하면 1/10 이하로 압축 가능하다.    
+`또한, 데이터를 전체 컬럼중에서 일부 컬럼을 선택해서 가져오는 형식이므로 
+선택되지 않는 컬럼의 데이터에서는 I/O가 발생하지 않게 된다.`   
+
+
+> 데이터 분석에서는 종종 일부 컬럼만이 집계 대상이기 때문에, 이렇게 열 기반으로 압축하면 필요한 컬럼만을 
+빠르게 읽고 집계할 수 있다.     
+
+그렇다면 열 기반으로만 저장하는게 무조건 좋은게 아닌가?   
+
+MySQL의 경우 대표적인 행 기반 저장 방식의 데이터베이스이다.     
+`행 기반 데이터베이스는 매일 발생하는 대량의 트랜잭션을 지연 없이 처리하기 위해 
+데이터 추가를 효율적으로 할 수 있도록 하는 것이 행 지향 데이터베이스의 특징이다.`   
+즉, 새로운 레코드를 추가할 경우 끝부분에 추가되기 때문에 고속으로 쓰기가 가능하다.  
+
+### 1-1) Parquet 구조  
+
+파케이 파일은 헤더, 하나 이상의 블록, 꼬리말 순으로 구성된다.   
+헤더는 파케이 포맷의 파일임을 알려주는 4바이트 매직 숫자인 PAR1만 포함하고 있다.  
+파일의 모든 메타데이터는 꼬리말에 저장된다.      
+꼬리말 데이터는 포맷버전, 스키마, 추가 키-값 쌍, 파일의 모든 블록에 대한 메타데이터와 
+같은 정보를 포함하고 있다.   
+
+<img width="653" alt="스크린샷 2024-02-02 오후 10 59 29" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/f3af19f9-cc80-4f09-9fdf-0db5a3a6aeeb">     
+
+파케이 파일의 각 블록은 행 그룹을 저장한다. 행 그룹은 행에 대한 컬럼 데이터를 포함한 컬럼 청크로 되어 있다.   
+각 컬럼 청크의 데이터는 페이지에 기록된다.   
+`각 페이지는 동일한 컬럼의 값만 포함하고 있다. 
+따라서 페이지에 있는 값은 비슷한 경향이 있기 때문에 페이지를 압축할 때 매우 유리하다.`      
+
+<img width="349" alt="스크린샷 2024-02-03 오후 2 24 40" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/b37247de-d58f-4d12-bca7-7bc2b090223f">    
+
+데이터의 가장 최소 단위인 페이지에는 동일 컬럼의 데이터만 존재한다. 그래서 인코딩/압축을 할 때, 
+    페이지 단위로 수행하면 된다.     
+
+위 구조가 머리속에 그려지면 파케이 파일을 만들 때 아래 설정 값이 이해된다.   
+
+<img width="699" alt="스크린샷 2024-02-03 오후 2 24 21" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/309c719f-e35b-4905-863d-51ba7d7d7e66">   
+
+
+### 1-2) 파케이 파일 검토     
+
+생성된 파케이 파일을 확인하기 위해 [duckdb](https://duckdb.org/docs/data/parquet/overview.html)를 사용할 수 있다.   
+
+```shell
+// 설치  
+$ brew install duckdb
+
+$ duckdb
+$ D * from read_parquet('/Users/jang-won-yong/Downloads/cities.parquet') limit 3   
+```
+
+
+- - - 
+
+**Reference**   
+
+<https://devidea.tistory.com/92>   
+<https://amazelimi.tistory.com/entry/File-Format-For-Big-Data-Parquer-vs-ORC-vs-Avro-LIM>   
+<https://amazelimi.tistory.com/78>   
+
+{% highlight ruby linenos %}
+
+{% endhighlight %}
+
+
+{%- if site.disqus.shortname -%}
+    {%- include disqus.html -%}
+{%- endif -%}
