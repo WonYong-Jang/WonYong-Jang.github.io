@@ -170,7 +170,8 @@ class MainTest extends FunSpec with DatasetSuiteBase {
 <https://medium.com/analytics-vidhya/spark-testing-base-scalatest-scalacheck-808009688245>   
 <https://github.com/holdenk/spark-testing-base>   
 <https://mkuthan.github.io/blog/2015/03/01/spark-unit-testing/>   
-<https://github.com/mkuthan/example-spark>   
+<https://github.com/mkuthan/example-spark>  
+<https://towardsdatascience.com/how-to-test-your-spark-scala-code-268e5de471fd>   
 
 {% highlight ruby linenos %}
 
