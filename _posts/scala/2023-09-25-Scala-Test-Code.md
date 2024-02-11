@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Scala] 테스트 코드 작성하기"
-subtitle: "scalatest, scalacheck 셋팅 / 단위 테스트를 하기 위한 구조 / singleton object mock 테스트"    
+subtitle: "scalatest, scalacheck, mockito scala / 단위 테스트를 하기 위한 구조 / singleton object mock 테스트"    
 comments: true
 categories : Scala
 date: 2023-09-25
@@ -20,8 +20,7 @@ background: '/img/posts/mac.png'
 scalatest 의존성을 추가하고 기본적인 단위 테스트를 진행해보자.   
 
 ```gradle
-// https://mvnrepository.com/artifact/org.scalatest/scalatest
-testImplementation group: 'org.scalatest', name: 'scalatest_2.11', version: '3.0.8'
+testImplementation group: 'org.scalatest', name: 'scalatest_2.12', version: '3.2.17'
 ```
 
 아래와 같이 NameService 클래스를 생성 후 테스트를 위한 
@@ -43,16 +42,17 @@ scalatest에는 여러가지 스타일로 테스트를 작성할 수 있도록 �
 
 [공식문서](https://www.scalatest.org/user_guide/selecting_a_style)에서 더 많은 테스트 style 을 살펴보자.   
 
-```scala  
-import org.scalatest.FunSpec
-class NameServiceTest extends FunSpec {
+```scala 
+import org.scalatest.funspec.AnyFunSpec
+
+class NameServiceTest extends AnyFunSpec with Matchers {
 
   describe("NameServiceTest") {
     it("The name should be kaven") {
 
       val service = new NameService("kaven")
 
-      assert("kaven" === service.printName())
+      service.printName() shouldBe "kaven"
     }
   }
 }
@@ -123,13 +123,10 @@ assert("error" === thrown.getMessage)
 scala에서 mock 테스트를 하기 위한 방법은 ScalaMock, EasyMock, JMock, Mockito 등을 이용 할 수 있으며, 
     자세한 내용은 [공식문서](https://www.scalatest.org/user_guide/testing_with_mock_objects#scalamock)를 참고하자.   
 
-여기서는 mockito를 이용한 단위테스트를 살펴 볼 것이며, 의존성을 추가해주자.    
+여기서는 [mockito](https://github.com/mockito/mockito-scala)를 이용한 단위테스트를 살펴 볼 것이며, 의존성을 추가해주자.     
 
 ```gradle
-// https://mvnrepository.com/artifact/org.scalatestplus/mockito-3-4
-testImplementation group: 'org.scalatestplus', name: 'mockito-3-4_2.11', version: '3.2.9.0', {
-    exclude group: 'org.scalatest'
-}
+testImplementation group: 'org.mockito', name: 'mockito-scala_2.12', version: '1.16.23'
 ```
 
 아래 예시는 NameService에서 ConfigService를 파라미터로 받아서 이름을 
@@ -153,7 +150,6 @@ class ConfigService {
   }
 }
 
-
 class NameService(config: ConfigService) {
 
   def printName(): String = {
@@ -163,11 +159,12 @@ class NameService(config: ConfigService) {
 ```
 
 `따라서 단위 테스트 진행을 할 경우 외부 의존성을 mocking 해야 하며,
-     아래와 같이 가능하다.`
+     아래와 같이 가능하다.`    
 
+> MockitoSugar 를 상속받아서 mock 키워드를 사용한다.   
 
 ```scala
-class NameServiceTest extends FunSpec with GivenWhenThen {
+class NameServiceTest extends AnyFunSpec with MockitoSugar with GivenWhenThen {
 
   describe("NameServiceTest") {
     it("The name should be kaven") {
@@ -196,7 +193,60 @@ class NameServiceTest extends FunSpec with GivenWhenThen {
 
 ## 4. singleton object 테스트 코드   
 
-아래와 같이 singleton object를 사용하여 mocking 테스트가 가능할까?
+아래와 같이 singleton object를 사용한 경우 테스트 코드를 작성해보자.   
+
+```scala
+object ConfigSupport {
+  val config: Config = ConfigFactory.load()
+}
+
+object NameService {
+
+  def printName(): String = {
+    ConfigSupport.config.getString("domain")   
+  }
+}
+```
+
+`object를 mocking하기 위해 mockito-scala에서 제공하는 withOjbectMocked 를 
+사용하면 된다.`    
+
+`단, withObjectMocked 를 활성화하기 위해 src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker 파일을 
+생성 후 아래 내용을 추가해 줘야 한다.`      
+
+```
+mock-maker-inline
+```
+
+그 후 아래와 같이 테스트 코드를 작성할 수 있다.   
+
+
+```scala
+class NameServiceTest extends AnyFunSpec with MockitoSugar with Matchers {
+
+  describe("NameServiceTest") {
+
+    it("The name should be kaven") {
+
+      withObjectMocked[ConfigSupport.type] {
+
+        val config = mock[Config]
+
+        when(ConfigSupport.config).thenReturn(config)
+        when(config.getString(anyString())).thenReturn("kaven")
+
+        NameService.printName() shouldBe "kaven"
+      }
+    }
+  }
+}
+```
+
+- - - 
+
+## 5. 단위 테스트 가능한 구조      
+
+아래 예제의 경우 단위 테스트가 가능할까?   
 
 ```scala
 trait ConfigSupport {
@@ -211,29 +261,35 @@ object NameService extends ConfigSupport {
 }
 ```
 
-또는 ConfigSupport가 object로 구성되어 아래와 같이 외부 dependency가 
-있는 메서드를 테스트 할 경우 단위 테스트가 가능할까?   
-
-`scala 에서 많은 singleton object 를 생성하여 아래와 같이 코드를 작성한다면 
-외부 의존성(외부 api, 라이브러리 등)을 mocking 하지 못하여 
-단위테스트가 불가능해질 것이다.`   
-
-> scala object는 생성자를 가질 수 없다.    
+이러한 경우 단위테스트가 불가능하진 않지만, 아래와 같이 리플렉션을 직접 
+이용하여 단위 테스트 하는 등의 방식으로 진행해야 한다.   
 
 ```scala
-object ConfigSupport {
-  val config: Config = ConfigFactory.load()
-}
+class NameServiceTest extends AnyFunSpec with MockitoSugar with Matchers {
 
-object NameService {
+  describe("NameServiceTest") {
 
-  def printName(): String = {
-    ConfigSupport.config.getString("domain")
+    it("The name should be kaven") {
+
+      val mockConfig = mock[Config]
+      when(mockConfig.getString("domain")).thenReturn("kaven")
+
+      val nameService = NameService
+
+      // Use reflection to override the config field with the mock
+      val configField = nameService.getClass.getDeclaredField("config")
+      configField.setAccessible(true)
+      configField.set(nameService, mockConfig)
+
+      val result = nameService.printName()
+      result shouldBe "kaven"
+    }
   }
 }
-```   
+```
 
-따라서 object 를 사용할 때 단위 테스트가 가능한 구조로 작성 해야 한다.   
+따라서 코드를 작성할 때 [Dependency Injection](https://di-in-scala.github.io/) 로 디자인 하게 되면 
+서비스 간에 loose coupling 을 향상시킬 수 있고, 테스트하기 쉬운 코드로 관리할 수 있게 된다.     
 
 `아래와 같이 class 를 통해 로직들을 분리 함으로써 mocking이 가능해진다.`   
 
@@ -242,6 +298,7 @@ trait ConfigSupport {
   val config: Config = ConfigFactory.load()
 }
 
+// Config 를 생성사 또는 메서드 파라미터로 전달함으로써 mocking 이 가능해진다.   
 class NameServiceLogic(config: Config) {
 
   def printName(): String = {
@@ -325,7 +382,7 @@ class NameServiceTest extends FunSpec {
 
 - - - 
 
-## 5. ScalaCheck 함께 사용하기   
+## 6. ScalaCheck 함께 사용하기   
 
 `scalacheck와 scalatest 모두 scala에서 테스트를 위한 라이브러리이며, 
     scalacheck는 property based testing 이다.`  
