@@ -11,18 +11,30 @@ background: '/img/posts/mac.png'
 ## 1. Spark의 Memory 관리   
 
 Spark의 기존 메모리 관리는 정적인 메모리 분할(Memory fraction)을 통해 
-구조화 되어 있다.    
+구조화 되어 있다.   
+
+<img width="800" alt="스크린샷 2024-02-13 오후 11 35 24" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/15148d1f-2921-401e-9984-d40d06c367ca">  
+
+
+
+
 메모리 공간은 3개의 영역으로 분리되어 있으며, 각 영역의 크기는 JVM Heap 크기를 
 Spark Configuration에 설정된 고정 비율로 나누어 정해진다.   
 
 <img width="900" alt="스크린샷 2024-02-13 오후 10 01 04" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/ca761a71-6892-4b29-8c1e-173c1dcea7b0">      
 
-- Execution: 이 영역은 Shuffle, Join, Sort, Aggregation 등을 수행할 때의 중간 데이터를 
-버퍼링하는데에 사용된다. 이 영역의 크기는 spark.shuffle.memoryFraction(기본값: 0.2)를 통해 설정된다.   
+- spark.executor.memory: executor가 사용할 수 있는 총 메모리 크기를 정의한다.   
 
-- Storage: 이 영역은 주로 추후에 다시 사용하기 위한 데이터 블록들을 Caching하기 위한 용도로 사용되며, 
+- Execution(Shuffle): 이 영역은 Shuffle, Join, Sort, Aggregation 등을 수행할 때의 중간 데이터를 
+버퍼링하는데에 사용된다. 
+    - 이 영역의 크기는 spark.shuffle.memoryFraction(기본값: 0.2)를 통해 설정   
 
-- Other: 
+- Storage: 이 영역은 주로 추후에 다시 사용하기 위한 데이터 블록들을 Caching하기 위한 용도로 사용된다.  
+    - Cache, Broadcast, Accumulator를 위한 데이터 저장 비율   
+    - spark.storage.memoryFraction(기본값: 0.6)을 통해 설정   
+
+- Other: 나머지 메모리 공간은 주로 사용자 코드에서 할당되는 데이터나 Spark에서 내부적으로 사용하는 
+메타데이터를 저장하기 위해 사용된다.   
 
 `각 영역 메모리에 상주된 데이터들은 자신이 위치한 메모리 영역이 가득 찬다면 
 Disk로 Spill 된다.`   
