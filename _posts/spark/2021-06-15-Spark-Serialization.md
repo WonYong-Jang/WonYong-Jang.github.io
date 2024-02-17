@@ -202,7 +202,7 @@ object Example {
 
 object를 중첩하여 조금 더 복잡한 예제를 살펴보자.       
 
-조금 더 복잡해보이지만 원칙은 같다. 여기서 innerNum은 map 함수가 참조하고 
+조금 더 복잡해 보이지만 원칙은 같다. 여기서 innerNum은 map 함수가 참조하고 
 있다. 그렇기 때문에 NestedExample object 전체를 직렬화 하였기 때문에 
 정상적으로 동작한다.   
 이전과 동일하게 myFunc 함수 내에 새로운 변수를 생성하여 innerNum을 받아서 
@@ -264,8 +264,8 @@ Driver에 있는 변수를 사용할 경우 더 다양한 예제를 살펴보자
 
 ```scala
 val tc = org.apache.spark.TaskContext.get
-println(s"${tc.partitonId}")
-println(s"${tc.stageId}")
+println(s"${tc.partitonId}")      
+println(s"${tc.stageId}")         
 println(s"${tc.attemptNumber}")
 println(s"${tc.taskAttemptId}")
 ```
