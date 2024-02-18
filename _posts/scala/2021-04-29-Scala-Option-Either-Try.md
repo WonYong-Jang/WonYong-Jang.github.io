@@ -8,15 +8,15 @@ date: 2021-04-29
 background: '/img/posts/mac.png'
 ---
 
-# 스칼라 예외처리    
+## 1. 스칼라 예외처리    
 
 Scala에서는 JVM 기반 언어 최대의 적인 NPE(NullPointerException)를 
 functional하게 handling 할 수 있는 다양한 수단을 제공하고 있다.    
 Scala의 exception handling 3인방인 Option, Either, Try 에 대해 알아보도록 하자.   
 
-- - - 
+- - -    
 
-## Option   
+### 1-1) Option   
 
 Java에서는 빈 List에 find를 할 때 값이 없으면 null을 반환하거나 exception throw를 
 하는 것이 일반적인 상황이다. 이 일반적인 상황은 매우 위험한 상황이 될 수 있는데 
@@ -113,13 +113,13 @@ val o2: Option[Int] = None
 assert(o2.map(_.toString).isEmpty)
 ```
 
-
-
 - - - 
 
-## Either   
+### 1-2) Either   
 
-Either는 Exception과 결과 값을 한번에 받을 수 있는 타입니다.    
+Option은 어떤 값이 정상적으로 있는지 없는지를 다룰 때 유용하게 사용할 수 있다.   
+만약, 정상 값이 없을 때 에러 내용 등을 알고 싶다면 Either를 사용하여 
+Exception과 결과 값을 한번에 받을 수 있다.   
 
 아래와 같이 Either에 값을 담을 수 있다.   
 인자로 제대로 된 값이 들어오면 Right 즉, Either의 오른쪽에 담고 
@@ -147,26 +147,11 @@ val result = eitherExample(Some(7)) match {
 
 - - - 
 
-## Try   
+### 1-3) Try       
 
-자바에서 try/catch를 이용한 예외처리는 스칼라에서도 가능하다.    
-아래와 같이 예외를 처리할 수 있지만, try/catch를 통한 예외처리는 여러 가지 
-문제가 있다.   
-
-우선 다른 함수를 호출할 때, 어떤 예외가 발생할지 모른다. 
-
-```scala 
-try {
-  methodThatMayThrowAnException()
-} catch {
-  case e: MyException => // do stuff
-  case e: NonFatal => // do stuff
-  case _: Throwable => // do stuff
-} finally {
-  anotherPieceOfCode() // useful to close a database connection for instance
-}
-```
-
+Either는 Scala 2.10 부터 잘 사용하지 않으며, Try 를 주로 사용한다.    
+Either와 유사하게 예외가 발생하면 전파하지 않고 Try로 감싸서 
+예외를 값으로 다룰 수 있다.   
 
 <img width="450" alt="스크린샷 2021-04-29 오후 4 11 10" src="https://user-images.githubusercontent.com/26623547/116514217-b0bc6780-a905-11eb-85c8-a52a44361f76.png">   
 
@@ -182,6 +167,14 @@ match {
     case Failure(_) => ...
 }
 ```
+
+또한, Try를 쓰면 다음과 같은 문법도 사용할 수 있다.   
+
+
+```scala
+Try(upperString).toOption
+```
+
 
 
 
