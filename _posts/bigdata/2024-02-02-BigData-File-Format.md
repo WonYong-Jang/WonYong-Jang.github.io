@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[BigData] File Format - Parquet"   
-subtitle: "Parquet(파케이), / 컬럼 기반(Columnar) 저장 포맷과 열 기반(Row-based) 저장 포맷"       
+title: "[BigData] File Format - Parquet, ORC"   
+subtitle: "Parquet(파케이), ORC(Optimized Row Columnar) / 컬럼 기반(Columnar) 저장 포맷과 열 기반(Row-based) 저장 포맷"       
 comments: true
 categories : BigData
 date: 2024-02-02
@@ -29,7 +29,6 @@ column 기반은 row 기반에 비해 압축률이 좋지만, 전체 데이터�
 `따라서 한번에 모든 필드를 접근해서 데이터를 읽고 쓰고자 할 때는 Avro 파일 포맷을 쓰는 것이 좋고, 특정 필드에만 
 반복적으로 접근해야 하는 경우 Parquet이나 ORC를 사용하는 것이 좋다.`   
 
-> 참고로, ORC는 Hive에 특화된 포맷이며 Impala, Pig, Spark 등 다른 쿼리 엔진에서 사용하기 부적합하다.   
 
 - - - 
 
@@ -101,7 +100,7 @@ MySQL의 경우 대표적인 행 기반 저장 방식의 데이터베이스이�
 <img width="699" alt="스크린샷 2024-02-03 오후 2 24 21" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/309c719f-e35b-4905-863d-51ba7d7d7e66">   
 
 
-### 1-2) 파케이 파일 검토     
+### 1-2) 파케이 파일 확인         
 
 생성된 파케이 파일을 확인하기 위해 [duckdb](https://duckdb.org/docs/data/parquet/overview.html)를 사용할 수 있다.   
 
@@ -113,6 +112,20 @@ $ duckdb
 $ D * from read_parquet('/Users/jang-won-yong/Downloads/cities.parquet') limit 3   
 ```
 
+- - - 
+
+## 2. ORC   
+
+ORC(Optimized Row Columnar)는 컬럼 기반의 파일 저장 방식으로 
+Hadoop, Hive, Pig, Spark 등에 적용이 가능하다.   
+
+### 2-1) ORC 파일 확인   
+
+ORC 파일 확인하기 위해서 [orc-tools](https://orc.apache.org/docs/java-tools.html)를 
+이용하여 확인 가능하다.   
+
+[링크](https://repo1.maven.org/maven2/org/apache/orc/orc-tools/1.9.2/)에서 orc-tools-1.9.2-uber.jar 를 
+다운 받은 후 사용할 수 있다.   
 
 - - - 
 
