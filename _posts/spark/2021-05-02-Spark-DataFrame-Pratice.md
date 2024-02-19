@@ -393,7 +393,8 @@ Output
 **Reference**    
 
 <https://databricks.com/blog/2015/04/13/deep-dive-into-spark-sqls-catalyst-optimizer.html>   
-<https://www.popit.kr/spark2-0-new-features1-dataset/>    
+<https://www.popit.kr/spark2-0-new-features1-dataset/>   
+<https://stackoverflow.com/questions/40413526/reading-csv-files-with-quoted-fields-containing-embedded-commas>   
 
 {% highlight ruby linenos %}
 
