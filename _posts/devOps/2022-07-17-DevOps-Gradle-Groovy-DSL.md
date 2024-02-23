@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Gradle] Gradle task 이해와 Gradle Wrapper 사용하기"
+title: "[Gradle] Gradle task 이해와 Gradle Wrapper 사용하기(Groovy DSL)"
 subtitle: "gradle wrapper / up to date / 빌드시 Plain jar 와 Executable jar"        
 comments: true
 categories : DevOps
