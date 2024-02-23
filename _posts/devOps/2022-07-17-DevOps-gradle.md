@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Gradle] Gradle task 이해와 Gradle Wrapper 사용하기"
-subtitle: "gradle wrapper /  up to date / 빌드시 Plain jar 와 Executable jar"        
+subtitle: "gradle wrapper / up to date / 빌드시 Plain jar 와 Executable jar"        
 comments: true
 categories : DevOps
 date: 2022-07-17
@@ -123,7 +123,7 @@ jar {
 
 `이렇게 생성된 executable jar는 fat jar라고도 한다.`    
 
-모든 의존성을 포함하기 때문에 java -jar 명령어를 통해 실행 가능하다.
+모든 의존성을 포함하기 때문에 java -jar 명령어를 통해 실행 가능하다.   
 
 - - -    
 
@@ -167,7 +167,7 @@ clean - Deletes the build directory.
 // ...
 ```   
 
-### 2-1) task up-to-date    
+### 3-1) task up-to-date    
 
 task는 함수와 같이 input과 output이 있으며, input과 output을 확인함으로써 
 해당 task가 최신인지를 확인한다.   
@@ -197,7 +197,7 @@ Skipping task ':compileGroovy' as it has no source files and no previous output 
 // ...
 ```
 
-### 2-2) task 기본 사용법   
+### 3-2) task 기본 사용법   
 
 task를 사용하기 위해 아래와 같이 사용가능하다.   
 
@@ -220,7 +220,7 @@ hello
 ```
 
 
-### 2-3) 변수 사용    
+### 3-3) 변수 사용    
 
 build.gradle에서 변수를 사용하는 방식에 대해서 살펴보자.   
 
@@ -237,7 +237,7 @@ task printTask(){
 }
 ```
 
-### 2-4) processTestResources   
+### 3-4) processTestResources   
 
 gradle wrapper를 이용하여 build를 진행하게되면, 전체 빌드 후 모든 테스트 코드를 
 실행시키게 된다.    
@@ -246,16 +246,18 @@ gradle wrapper를 이용하여 build를 진행하게되면, 전체 빌드 후 �
 이때, api key 값과 같은 args 를 주입해주어 정상적으로 통합 테스트를 진행할 수 있도록 
 해주어야 한다.   
 
-이때, 아래와 같이 -P 옵션으로 args를 전달해주고, 이를 processTestResources task에서 
+아래와 같이 -P 옵션으로 args를 전달해주고, 이를 processTestResources task에서 
 전달 받아서, application.yml에 정상적으로 매핑 시켜줄 수 있다.   
 
 ```groovy
 // $ ./gradlew clean build -PKAKAO_REST_API_KEY={api key 값} 명령어로 전체 테스트 및 빌드하여 jar 파일 생성
 processTestResources {
 	boolean hasProperty = project.hasProperty("KAKAO_REST_API_KEY")
+
 	System.out.println("Set kakao rest api key: $hasProperty")
+
 	filesMatching('**/application.yml') {
-		expand(project.properties)
+            expand(project.properties)
 	}
 }
 ```
@@ -276,12 +278,66 @@ kakao:
 
 - - - 
 
+## 4. Gradle Plugin   
+
+`Plugin이란 Gradle Task의 집합이다.`   
+
+```groovy
+plugins {
+    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+```
+
+위 두개의 plugin들을 적용시키고 아래와 같이 task를 확인해보면 
+수행해서 사용할 수 있는 task의 목록을 보여준다.   
+
+```
+$ ./gradlew tasks --all
+
+Publishing tasks
+----------------
+publish - Publishes all publications produced by this project.
+publishToMavenLocal - Publishes all Maven publications produced by this project to the local Maven cache.
+
+Shadow tasks
+------------
+knows - Do you know who knows?
+shadowJar - Create a combined JAR of project and runtime dependencies
+```
+
+먼저 [maven-publish](https://docs.gradle.org/current/userguide/publishing_maven.html)의 사용 예시를 살펴보자.   
+아래 코드는 maven repository에 artifact를 publish 할 수 있는 코드이다.   
+
+
+```groovy
+publishing {
+    publications {
+    }
+}
+```
+
+```shell
+# maven url로 publish  
+$ ./gradlew publish  
+# local repository에 publish   
+$ ./gradlew publishToMavenLocal  
+
+# 문제가 생기면 아래 명령어로 확인한다.   
+$ ./gradlew publish --debug
+$ ./gradlew publish --stacktrace
+```
+
+
+- - - 
+
 **Reference**    
 
 <https://stackoverflow.com/questions/15137271/what-does-up-to-date-in-gradle-indicate>   
 <https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=sharplee7&logNo=221413629068>   
 <https://goateedev.tistory.com/133>    
 <https://junilhwang.github.io/TIL/Gradle/GradleWrapper/#build-gradle-%E1%84%8C%E1%85%A1%E1%86%A8%E1%84%89%E1%85%A5%E1%86%BC>    
+<https://docs.gradle.org/current/userguide/publishing_maven.html>    
 
 {% highlight ruby linenos %}
 
