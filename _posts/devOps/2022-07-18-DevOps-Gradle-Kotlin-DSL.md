@@ -119,9 +119,40 @@ allprojects{
 외부에서 제어하는 것이 많아지면 모듈간 독립성이 보장되지 않기 때문이다.   
 
 
-
-
 ### 2-4) SourceSet   
+
+`gradle build를 통해 빌드를 하게 되면 default로 프로젝트 하위의 src/main/java 
+디렉토리의 파일이 target이 되어 빌드 된다.`    
+
+아래 형태가 기본으로 제공되는 형태이다.   
+
+> java plugin에 sourceSets이 등록되어 있고, main이라는 
+entry name이 default로 등록되어 있다.   
+
+```kotlin
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+}
+```
+
+추가적으로 source 디렉토리를 gradle에서 처리 및 제외하기 위해서는 
+아래와 같이 sourceset 디렉토리를 추가해주면 된다.   
+
+```kotlin
+`sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java2'
+            exclude '**/consump/**'
+            exclude '**/popStay/**'
+        }
+    }
+}
+```
 
 - - - 
 
