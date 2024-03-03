@@ -9,7 +9,7 @@ background: '/img/posts/mac.png'
 ---
 
 이번글에서는 멀티 모듈 프로젝트에서 Kotlin DSL 를 사용하는 방법을 살펴보자.   
-또한, gradle에서 shadowJar를 이용하여 특정 모듈에서 jar 파일을 
+또한, gradle에서 shadowJar를 이용하여 특정 모듈에서 jar 파일을  
 생성하는 방법을 알아보자.   
 
 - - - 
@@ -22,9 +22,13 @@ background: '/img/posts/mac.png'
 `Kotlin DSL은 코틀린의 언어적인 특징으로 가독성이 좋고 
 간략한 코드를 사용하여 Gradle 스크립팅을 하는 것을 목적으로 하는 DSL 이다.`   
 
-Kotlin DSL로 사용했을 때 장점은 아래와 같다.   
+Groovy DSL 과 Kotlin DSL을 비교했을 때, 
+장단점은 아래와 같다.      
 
 - 컴파일 타임에 에러 확인   
+    - Groovy 는 동적 언어인 반면 Kotlin은 정적으로 타입이 지정 되기 때문에 런타임이 아닌 
+    컴파일 타임에 빌드 스크립트 오류를 확인할 수 있다.   
+    
 - 코드 탐색 및 자동 완성   
 - 구문 강조   
 - IDE의 지원으로 향상된 편집환경   
@@ -40,7 +44,9 @@ Kotlin DSL로 사용했을 때 장점은 아래와 같다.
 
 ## 2. Kotlin DSL 사용하기    
 
-### 2-1) 플러그인   
+### 2-1) 플러그인  
+
+플러그인이란 gradle task의 집합이며, Kotlin DSL에서는 아래와 같이 사용할 수 있다.     
 
 ```kotlin
 plugins {
@@ -69,6 +75,7 @@ include(":service-batch")
 서브프로젝트 gradle build를 실행할 때는 아래와 같이 실행한다.   
 
 ```
+// ./gradlew [모듈 명]:[task 명]   
 $ ./gradlew :service-batch:build   
 ```
 
@@ -133,7 +140,7 @@ entry name이 default로 등록되어 있다.
 sourceSets {
     main {
         java {
-            srcDir 'src/main/java'
+            srcDir("src/main/java")
         }
     }
 }
@@ -143,16 +150,22 @@ sourceSets {
 아래와 같이 sourceset 디렉토리를 추가해주면 된다.   
 
 ```kotlin
-`sourceSets {
+sourceSets {
     main {
         java {
-            srcDir 'src/main/java2'
-            exclude '**/consump/**'
-            exclude '**/popStay/**'
+            srcDir("src/main/java2")
+            exclude("**/consump/**")
+            exclude("**/popStay/**")
         }
     }
 }
 ```
+
+### 2-5) Configuration    
+
+
+
+
 
 - - - 
 
@@ -190,6 +203,26 @@ Gradle을 실행하면 buildSrc라는 디렉토리가 존재하는지 검사한�
 존재한다면 자동으로 buildSrc/build.gradle.kts 코드를 컴파일하고 테스트한 뒤 
 빌드 스크립트의 클래스 패스에 집어 넣는다.   
 
+<img width="231" alt="스크린샷 2024-03-03 오후 1 34 56" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/e8b6b945-d629-445b-b92b-e41f7944f2d0">   
+
+`위와 같이 폴더를 구성하고 Versions, Dependencies 등의 파일을 생성하여 
+여러 모듈에서 공통으로 버전 및 함수 등을 재사용할 수 있다.`         
+
+```kotlin
+object Versions {
+    const val scala = "2.12.15"
+    const val spark = "3.3.0"
+}
+```   
+
+위와 같이 buildSrc 폴더 내에 코틀린 파일로 선언한 버전을 
+서브 모듈에서 공통으로 사용할 수 있게 된다.   
+
+```kotlin
+dependencies {
+    implementation("org.apache.spark:spark-sql_2.12:${Versions.spark}")
+}
+```
 
 - - - 
 
@@ -200,6 +233,7 @@ Gradle을 실행하면 buildSrc라는 디렉토리가 존재하는지 검사한�
 <https://docs.gradle.org/current/userguide/kotlin_dsl.html>   
 <https://imperceptiblethoughts.com/shadow/custom-tasks/>   
 <https://docs.gradle.org/current/dsl/org.gradle.api.tasks.SourceSet.html>   
+<https://olivejua-develop.tistory.com/59>   
 
 {% highlight ruby linenos %}
 
