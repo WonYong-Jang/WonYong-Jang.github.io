@@ -130,7 +130,9 @@ Await.result(query, Duration.create(10, TimeUnit.SECONDS)
 ### 2-3) 불필요한 Shuffle 발생   
 
 Spark 에서 Shuffle은 일반적으로 데이터 집계같은 작업을 진행하였을 때 클러스터 노드의 
-전체 데이터를 재분배하는데 사용된다.   
+전체 데이터를 재분배하는데 사용된다.  
+
+<img width="550" alt="스크린샷 2024-03-09 오후 3 48 10" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/1bc87035-50b5-4a53-a460-b285fc27a1d6">   
 
 `따라서 Shuffle은 클러스터 노드마다 데이터 재분배를 위해 중간 파일을 기록하고 읽으면서 
 오버헤드가 발생하며 네트워크 비용이 발생하기 때문에 
