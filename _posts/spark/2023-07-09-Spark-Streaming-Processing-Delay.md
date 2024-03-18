@@ -286,11 +286,8 @@ ssc.addStreamingListener(new StreamingCustomLister)
 `db 부하가 발생하였고, 대량의 데이터가 지속적으로 실패하여 redis에 쌓이게 되었다.
 따라서 해당 장애로 인해 redis의 cpu 및 memory가 피크를 쳐서 장애가 전파 되었다.`
 
-따라서, 재처리 방식 구조가 잘못 설계 되었음을 확인했고 당장 구조를 바꾸기에는 공수가
-크기 때문에 아래와 같이 action item을 잡고 진행 예정이다.
-
-`redis는 캐시 용도로만 사용하고 Spark Streaming 에서 실패한 건들은 kafka로 흘려서
-따로 재처리를 처리하도록 변경한다.`   
+`따라서, redis는 캐시 용도로만 사용하고 Spark Streaming 에서 실패한 건들은 kafka로 흘려서
+따로 재처리를 처리하도록 변경하였다.`      
 
 ### 3-4) DB 저장 방식 변경   
 
@@ -320,8 +317,6 @@ kafka를 통한 저장 방식으로 변경하여 Spark Streaming 에서 많은 �
 전파되었다.   
 
 > 물론 그 당시에는 최선의 선택 이였을 수 있지만 현재 기준으로는 개선해야 하는 구조이다.   
-
-
 
 따라서, 위에서 언급한 root cause와 이에 따른 action item들을 정리했고  
     action item을 하나씩 작업하여 개선해 나가야 될 것 같다.   
