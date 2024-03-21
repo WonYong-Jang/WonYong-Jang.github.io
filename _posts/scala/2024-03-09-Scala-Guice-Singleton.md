@@ -45,13 +45,14 @@ implementation 'com.google.inject:guice:7.0.0'
 만들어서 주입하고자 하는 클래스의 정보를 등록해주어야 한다.`      
 
 
-
-
 ### 2-2) @Singletone 어노테이션 사용   
 
 Singleton으로 설정된 객체는 호출될 때, 기존의 객체가 있는 경우 
 그 객체를 계속해서 사용하게 된다.  
 
+### 2-3) @Injector   
+
+`@Injector 는 Guice에서 의존성 주입을 수행하는 역할을 한다.`   
 
 
 
@@ -63,6 +64,7 @@ Singleton으로 설정된 객체는 호출될 때, 기존의 객체가 있는 �
 
 <https://github.com/google>   
 <https://github.com/google/guice/wiki/JSR330>   
+<https://www.digitalocean.com/community/tutorials/google-guice-dependency-injection-example-tutorial>    
 
 {% highlight ruby linenos %}
 
