@@ -87,12 +87,41 @@ task를 처리하는 시간 동안 아무런 처리를 하지 않게 된다.
 작업을 할 것인가. 파티셔닝을 잘해서 80분에 작업을 마칠것인가는 
 개발자의 역량이다.`    
 
+- - - 
+
+## 2. spark.sql.files.maxPartitonBytes   
+
+<img width="700" alt="스크린샷 2024-03-26 오후 11 44 28" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/1aaff5d2-cab3-4ef5-b997-099b4ad67516">   
+
+Spark는 기본적으로 spark.sql.files.maxPartitonBytes 값 (Default: 128 MB)을 
+설정하면 이를 토대로 데이터를 끊어서 읽는다.   
+
+하지만 실제 테스트를 진행해보면 그 결과가 다를 수 있다.   
+
+실제 Spark 코드를 보면 아래와 같다.   
+
+```scala
+# sql/core/src/main/scala/org/apache/spark/sql/execution/datasources/FilePartition.scala
+
+def maxSplitBytes(
+    sparkSession: SparkSession,
+    selectedPartitions: Seq[PartitionDirectory]): Long = {
+  val defaultMaxSplitBytes = sparkSession.sessionState.conf.filesMaxPartitionBytes
+  val openCostInBytes = sparkSession.sessionState.conf.filesOpenCostInBytes
+  val minPartitionNum = sparkSession.sessionState.conf.filesMinPartitionNum
+    .getOrElse(sparkSession.leafNodeDefaultParallelism)
+  val totalBytes = selectedPartitions.flatMap(_.files.map(_.getLen + openCostInBytes)).sum
+  val bytesPerCore = totalBytes / minPartitionNum
+
+  Math.min(defaultMaxSplitBytes, Math.max(openCostInBytes, bytesPerCore))
+}
+```
 
 - - - 
 
-## 2. 파티션과 관련된 연산
+## 3. 파티션과 관련된 연산
 
-### 1. foreachPartition, mapPartitons
+### 3-1) foreachPartition, mapPartitons
 
 RDD에서 제공하는 대부분의 연산들(map, filter..)등은 RDD 의 element 단위로 동작한다.   
 
@@ -105,7 +134,7 @@ RDD에서 제공하는 대부분의 연산들(map, filter..)등은 RDD 의 eleme
 
 
 
-### 2. coalesce와 repartition
+### 3-2) coalesce와 repartition
 
 `RDD를 생성한 뒤 filter() 연산을 비롯한 다양한 트랜스포메이션 연산을
 수행하다 보면 최초에 설정한 파티션 개수가 적합하지 않은 경우가
