@@ -1,13 +1,12 @@
 ---
 layout: post
 title: "[Spark] 아파치 스파크 Partitioning"
-subtitle: "RDD on a Cluster / Partiton 개수와 크기 정하기 / coalesce 와 repartition "    
+subtitle: "RDD on a Cluster / Partiton 개수와 크기 정하기 / coalesce 와 repartition / spark.sql.files.maxPartitionBytes "    
 comments: true
 categories : Spark
 date: 2021-06-21
 background: '/img/posts/mac.png'
 ---
-
 
 ## 1. Partitoning 이란?   
 
@@ -116,6 +115,36 @@ def maxSplitBytes(
   Math.min(defaultMaxSplitBytes, Math.max(openCostInBytes, bytesPerCore))
 }
 ```
+
+```
+# 변수명 : Spark 설정값에 대한 metadata
+
+defaultMaxSplitBytes 
+= spark.sql.files.maxPartitionBytes (default 128 MB)
+
+openCostInBytes 
+= spark.sql.files.openCostInBytes (default 4 MB)
+
+minPartitionNum 
+= spark.sql.files.minPartitionNum 
+= (Or Else) spark.sql.leafNodeDefaultParallelism 
+(default spark.default.parallelism = total number of virtual cores)
+```
+
+변수 minPartitionNum 은 별도의 설정이 없다면 spark.default.parallelism 갯수와 
+동일하다.   
+
+즉, 해당 개수가 데이터 사이즈에 비해 너무 많다면 bytesPerCore 값이 작아질 것이다.   
+
+> bytesPerCore = totalBytes / minPartitionNum    
+
+결국 코드 마지막 라인에서 최종적으로 결정될 maxSplitBytes 의 return 값이 
+4MB (default openCostInBytes) ~ 128MB(default maxPartitoinBytes) 사이의 
+값이 될 수도 있는 것이다.    
+
+`따라서 확실하게 spark.sql.files.maxPartitionBytes 값이 
+maxSplitBytes로 사용되길 원한다면 spark.sql.files.minPartitionNum 값도 
+함께 적절하게 설정해 주어야 한다.`       
 
 - - - 
 
