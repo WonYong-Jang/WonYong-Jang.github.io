@@ -88,12 +88,14 @@ task를 처리하는 시간 동안 아무런 처리를 하지 않게 된다.
 
 - - - 
 
-## 2. spark.sql.files.maxPartitonBytes   
+## 2. spark.sql.files.maxPartitionBytes   
 
 <img width="700" alt="스크린샷 2024-03-26 오후 11 44 28" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/1aaff5d2-cab3-4ef5-b997-099b4ad67516">   
 
-Spark는 기본적으로 spark.sql.files.maxPartitonBytes 값 (Default: 128 MB)을 
-설정하면 이를 토대로 데이터를 끊어서 읽는다.   
+Spark는 기본적으로 spark.sql.files.maxPartitionBytes 값 (Default: 128 MB)을 
+설정하면 이를 토대로 데이터를 끊어서 읽는다.  
+
+> 해당 설정은 Parquet, JSON, ORC 등의 file-based sources를 사용할 때 효과가 있다.   
 
 하지만 실제 테스트를 진행해보면 그 결과가 다를 수 있다.   
 
@@ -145,6 +147,8 @@ minPartitionNum
 `따라서 확실하게 spark.sql.files.maxPartitionBytes 값이 
 maxSplitBytes로 사용되길 원한다면 spark.sql.files.minPartitionNum 값도 
 함께 적절하게 설정해 주어야 한다.`       
+
+
 
 - - - 
 
