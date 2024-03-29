@@ -103,11 +103,14 @@ default는 24시간이다.
 
 다음은 Kinesis를 사용할 때 주의 깊게 모니터링 해야할 지표는 아래와 같다.   
 
-### 3-1) GetRecords    
+### 3-1) GetRecords
 
-
+Kinesis로 부터 데이터를 가져오고 있음을 확인할 수 있다.   
 
 #### 3-1-1) GetRecords.Success   
+
+GetRecords가 성공하고 있음을 확인할 수 있는 지표이다.   
+
 
 #### 3-1-2) GetRecords.IteratorAgeMilliseconds 
 
@@ -121,7 +124,7 @@ default는 24시간이다.
     - Amazon Kinesis Client Library(KCL)을 사용하는 경우 물리적 리소스가 부족한지 등을 확인해야 한다.   
 
 - 읽기 스로틀(Getrecords.ReadProvisionedThroughputExceeded)   
-    - 
+    - 해당 메트릭이 증가하는지 같이 확인해봐야 한다.    
 
 - AWS Lambda 함수 오류   
 
@@ -135,11 +138,25 @@ default는 24시간이다.
     샤드 전체에 데이터를 균등하게 분배하지 않기 때문이다. 이렇게 고르지 않은 데이터 분포로 인해 Kinesis 데이터 스트림 샤드에 
     대한 병렬 GetRecords 호출이 줄어들어 IteratorAgeMilliseconds 수가 증가 한다.   
 
+#### 3-1-3) ReadProvisionedThroughputExceeded   
 
-### 3-2) PutRecords  
+`읽기 처리량 초과함을 확인할 수 있는 지표이며, 해당 지표가 발생하고 있다면 
+kinesis 데이터를 consume하고 있는 대상이 consume을 따라가고 있지 못함을 
+의미한다.`       
+
+
+### 3-2) PutRecords   
+
+Kinesis에 데이터를 추가하고 있음을 확인할 수 있는 메트릭이다.   
 
 ### 3-4) WriteProvisionedThroughputExceeded     
 
+`쓰기 처리량 초과함을 확인할 수 있는 지표이며, 해당 지표가 발생하고 있다면 
+kinesis에 데이터를 추가하는 속도가 현재 kinesis의 throughput 에  
+따라가지 못하고 있음을 의미한다.`       
+`따라서 kinesis의 샤드의 갯수를 증가시켜야 하며 읽기처리량과 쓰기처리량의 지표가 
+지속적으로 증가한다면 데이터 loss가 발생할 수 있으므로 
+알람 등을 추가하여 빠르게 조치하여야 한다.`       
 
 
 - - - 
