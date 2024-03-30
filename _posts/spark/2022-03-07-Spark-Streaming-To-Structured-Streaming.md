@@ -366,7 +366,7 @@ val kinesisDataFrame = spark.readStream
 ```
 
 `awsUseInstanceProfile의 default 옵션은 true이며, 이는 AWS EC2 인스턴스 프로파일을 이용하여 인증하는 방식이다.`     
-현재 로컬환경에서는 AWS Credentials file(~/.aws/credentials)을 사용하여 인증하는 방식이기 때문에 fals로 지정해야 한다.  
+현재 로컬환경에서는 AWS Credentials file(~/.aws/credentials)을 사용하여 인증하는 방식이기 때문에 false 로 지정해야 한다.  
 
 해당 옵션을 false로 지정하게 되면 [DefaultAWSCredentialsProviderChain](https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/?com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html) 에 따라 
 순차적으로 인증 여부를 확인하게 된다.   
