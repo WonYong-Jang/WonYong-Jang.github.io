@@ -47,10 +47,21 @@ Event Bridge는 자체적으로 대상(Kinesis)에 성공적으로 전달하지 
 Failedinvocations 가 증가 했음을 확인했다.`   
 
 `FailedInvocations 지표가 증가했다는 것은 해당 기간 Event Bridge가 이벤트를
-대상(Kinesis) 전달 했으나 호출에 실패 했음을 의미한다.`   
+대상(Kinesis) 전달 했으나 호출에 실패 했음을 의미한다.`  
 
-따라서, 해당 지표가 증가했다면, 데이터 loss가 발생할 수 있으므로 
-추가적인 재처리 프로세스를 구성해야 한다.   
+FailedInvocations 지표는 명확하게 데이터 전달이 실패했음을 의미하며, 
+                  실패 전에 파이프라인에 `병목현상이 있는지 
+                  확인하기 위한 지표로는 ThrottledRules 를 확인해야 한다.`   
+
+`ThrottledRules 지표가 지속적으로 상승한다면 데이터 loss로 이어질 수 있기 때문에 
+EventBridge quotas를 증설해주어야 한다.`   
+
+> Invocations throttle limit in transactions per second / aws default quota vault 1100    
+
+현재 업무에서 ThrottledRules 지표가 지속적으로 상승하여 9000까지 증설하여 해소 됨을 확인했다.   
+
+하지만, 데이터 볼륨이 증가함에 따라 동일하게 지표가 증가하여 데이터 loss가 
+발생할 수 있기 때문에 추가적인 재처리 프로세스를 구성해야 한다.   
 
 아래에서 자세히 살펴보자.   
 
@@ -99,7 +110,9 @@ fields @timestamp, @message
 | filter `detail-type` = 'UserCreated'
 | filter `detail.firstName` = "Matthew"
 | sort @timestamp desc
-```
+```   
+
+
 
 - - -   
 
