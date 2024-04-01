@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Dynamic Resource Allocation in AWS EMR Cluster"
-subtitle: "Spark (Streaming) Dynamic Allocation / External Shuffle Service / ec2기반 aws emr 5.x auto scaling 트러블 슈팅"    
+subtitle: "Spark (Streaming) Dynamic Allocation / External Shuffle Service / ec2기반 aws emr auto scaling 트러블 슈팅"    
 comments: true
 categories : Spark
 date: 2021-06-25
@@ -257,11 +257,14 @@ resource로 인해 실행되던 job들이 죽는 경우도 발생할 수 있다.
 
 > EMR Cluster 내에 여러 Spark job을 실행할 때 발생할 수 있는 문제이다.   
 
-이러한 문제를 해결할 수 있는 방법에 대해서 살펴보자.   
+이러한 문제를 해결할 수 있는 방법 중 가장 간단한 방법은 core node 개수를 
+증가시키는 것이다.   
+하지만, 비용이 비싼 core node 를 무한하게 증가 시킬수는 없기 때문에 
+아래와 같은 방법을 살펴보자.      
 
 ##### 5-3-1) node labeling 사용   
 
-- `첫번째로, executor를 core node가 아닌, task node로만 실행할 수 있다면 문제는 해결 된다.`         
+`첫번째로, executor를 core node가 아닌, task node로만 실행할 수 있다면 문제는 해결 된다.`         
 
 > 보통 emr cluster의 auto scaling은 task 노드들을 증가 또는 감소시켜서 진행하며, core 노드에는 driver 가 실행되게 하고 
 task 노드에 executor를 실행하게 하여 많은 데이터를 처리할 때 task 노드를 증가시켜 scaling을 한다.      
@@ -275,11 +278,45 @@ task 노드에 executor를 실행하게 하여 많은 데이터를 처리할 때
 위 옵션을 사용하기 위해서는 yarn 에서 node label을 활성화 해주어야 한다.   
 자세한 내용은 [링크](https://docs.aws.amazon.com/ko_kr/emr/latest/ManagementGuide/emr-plan-instances-guidelines.html)를 확인하자.   
 
-`하지만 yarn 노르 라벨을 활성화 하게 되면, EMR Cluster autoscaling이 정상적으로 작동하지 않을 수 있다고 한다.`     
+`하지만 yarn 노드 라벨을 활성화 하게 되면, EMR Cluster autoscaling이 정상적으로 작동하지 않을 수 있다고 한다.`    
 
-##### 5-3-2) maxAMShare 값 변경   
+- Managed scaling doesn't support the YARN node labels feature. Avoid using node labels on 
+    clusters with managed scaling. For example, don't allow executors to run only on task nodes. When you use 
+    node labels in your Amazon EMR clusters, you may find that your cluster isn't scaling up, which can lead to a slow-down of your application.   
+
+
+##### 5-3-2) maxAMShare 값 변경  
+
+default queue에 설정되어 있는 maxAMShare 값을 -1로 변경하여 큐에 할당될 수 있는 
+자원을 최대한 늘린다.  
+
+만약 1.0f로 설정하면 AM 은 cpu, memory 모두 100%로 사용함을 의미하며, -1 은 
+이를 비활성화하여 체크하지 않는다.      
+기본값은 0.5f로 설정되어 있다.   
+
+단, 이 설정을 사용하기 위해서는 Resource Manager 재시작이 필요하다.   
+
 
 ##### 5-3-3) streaming 잡마다 별도의 큐를 사용   
+
+`streaming 잡마다 큐를 분리하여 core 노드의 리소스 부족 문제를 최대한 방지한다.`       
+또한, 한번 생성된 큐에서는 설정을 다이나믹하게 변경이 가능하므로 
+위의 AMShare 변경 방법에 비해서는 이점이 있다.   
+
+```
+--conf spark.yarn.queue={queue_name}
+```
+
+`위와 같이 별도의 큐를 구성하여 사용할 수 있으며, 별도의 설정을 하지 않으면 default 큐에서 
+모든 스트리밍이 실행된다.`        
+
+기존에는 default 큐에서 maxAMShare 값을 따로 설정하지 않았기 때문에 기본값인 0.5를 사용하고 
+있었으며 이는 default 큐 내에서는 최대 50%의 코어 노드 자원 사용이 가능함을 의미한다.   
+
+`따라서, 여러 큐를 분리하여 스트리밍 잡마다 maxAMShare 값을 50%만 사용하게 함으로써 
+코어 노드의 리소스 자원 부족 문제를 방지할 수 있다.`    
+
+현재 해당 방법으로 Core Node의 리소스 문제를 해결하였다.   
 
 
 - - - 
