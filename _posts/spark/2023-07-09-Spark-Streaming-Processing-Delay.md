@@ -19,13 +19,14 @@ action item에 대해 살펴보려고 한다.
 Incident review를 진행하기 전에 현재 서비스되고 있는 구조에 대해 
 살펴보면 아래와 같다.   
 
-실제 아키텍처는 더 복잡하지만 간략히 살펴보면, `Kinesis를 통해 데이터를 지속적으로 
-수집하여 Spark Streaming에서 가공 후 documentDB에 저장한다.`     
+실제 아키텍처는 더 복잡하지만 간략히 살펴보면, `AWS Event Bridge Event Bus를 통해 이벤트를 실시간으로
+AWS Kinesis Data Stream에 보내주고 Spark Streaming이 이를 consume 하여  가공 후 documentDB에 저장한다.`     
 그 후 여러 도메인들이 사용할 수 있도록 kafka를 통해 데이터를 publishing 한다.    
 
 > Spark Streaming 처리 중 실패 데이터는 redis에 저장 후 배치를 통해 재처리를 진행하고 있다.    
 
-<img width="633" alt="스크린샷 2023-07-09 오후 12 28 04" src="https://github.com/WonYong-Jang/Development-Process/assets/26623547/cf67eb03-2def-4d20-b300-4ea89143f117">   
+<img width="900" alt="스크린샷 2024-04-03 오전 12 13 20" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/4a776d93-5c9e-4c16-90c6-3ee8d2d1cc56">
+
 
 위의 그림에서는 EMR Cluster에 
 Spark Streaming 인스턴스를 1대만 표시했지만 실제로 6 대의 인스턴스가 
