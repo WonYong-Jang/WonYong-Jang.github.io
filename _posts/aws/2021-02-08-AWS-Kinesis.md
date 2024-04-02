@@ -1,16 +1,16 @@
 ---
 layout: post
 title: "[Kinesis] AWS Kinesis"
-subtitle: "Amazon Kinesis Data Streams, Kafka와의 차이점, Kinesis 모니터링 지표"    
+subtitle: "Amazon Kinesis Data Streams, Firehose / Kafka와의 차이점 / Kinesis 모니터링 지표"    
 comments: true
 categories : AWS
 date: 2021-02-08
 background: '/img/posts/mac.png'
 ---
 
-## 1. AWS Kinesis   
+## 1. AWS Kinesis Data Stream
 
-`AWS Kinesis 는 데이터 수집구간과 데이터 처리구간 중간에 위치한다. 이렇게 중간에 위치하는 소프트웨어를 
+`AWS Kinesis Data Stream는 데이터 수집구간과 데이터 처리구간 중간에 위치한다. 이렇게 중간에 위치하는 소프트웨어를 
 만든 이유는 다양한 데이터들을 수집하고 이것을 다양한 포맷으로 만들어 주기 때문이다.`        
 
 Kinesis는 `스트리밍 데이터 처리`를 해주는데 여기서 스트리밍 데이터 처리라는 말은 
@@ -161,24 +161,19 @@ kinesis에 데이터를 추가하는 속도가 현재 kinesis의 throughput 에
 
 - - - 
 
-## 정리    
+## 4. Kinesis Firehose   
 
-`Kinesis와 Kafka의 성능 비교한 글을 찾아보면 대부분 Kafka의 성능이 
-Kinesis에 비해 우수하다.`             
-따라서, 회사내에 Kafka를 셋업할 줄 아는 사람이 있으면 
-Kafka를 사용하는게 유리하다.   
+`kiensis firehose는 실시간 스트리밍 데이터를 전송하는 완전 관리형 서비스이다.`   
 
-> AWS의 Kinesis는 완전 관리형 서비스로써 Kafka에 비해 셋업이 쉽다.    
+예를 들면 아래와 같이 kinesis data stream에 연결하여 실시간으로 s3에 데이터를 수집할 수 있다.   
 
-또한, 초당 1000개 이상 데이터를 처리해야 하거나 
-1주일 이상 보관해야 한다면 카프카를 사용하는 것을 권장한다.   
+<img width="564" alt="스크린샷 2024-04-01 오후 8 11 03" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/c12febc9-526b-43cc-8c5a-f7b70abcd446">   
 
-참고로 Kafka가 Kinesis에 비해 성능면에서 우수하므로, AWS가 
-Kafka를 클러스터링을 구성해서 제공하는 MSK[https://aws.amazon.com/ko/msk/getting-started/)가 있다. 
+현재 업무에서 kinesis data stream을 사용하고 있고, 데이터 트래킹 및 백필을 위한 데이터를 s3에 수집하고 있다.
 
-완전 관리형 서비스로서 Streaming 서비스를 위해 Kinesis는 선택 가능한
-옵션 중 하나다. 다만 운영/성능/가격 측면에서
-장단점은 무엇인지 비교하고 적용해야 한다.   
+이때 aws kinesis firehose를 사용하여 간단하게 s3와 연결할 수 있다.   
+자세한 내용은 [링크](https://medium.com/@neslihannavsar/streaming-data-from-amazon-kinesis-data-streams-to-s3-using-firehose-35c0b50449b7)를 참고해보자.   
+
 
 - - - 
 
