@@ -12,7 +12,7 @@ background: '/img/posts/mac.png'
 
 엘라스틱 서치를 안정적으로 운영하기 위해 인덱스 별명(Index Aliases)에 대해 
 설명하고 활용 사례를 공유한다.   
-이 글은 [링크](https://ridicorp.com/story/index-aliases)을 참고하여 작성하였다.   
+이 글은 [링크](https://ridicorp.com/story/index-aliases)를 참고하여 작성하였다.   
 
 엘라스틱 서치는 분산형 Restful 검색 및 분석 엔진이다.    
 `분산형이기 때문에 데이터 증가에 따라 유연하게 확장할 수 있고, Restful API를 

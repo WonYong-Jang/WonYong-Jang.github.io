@@ -57,8 +57,8 @@ summary-20230505
 
 또한 `template을 이용하여 생성된 인덱스에 자동으로 alias를 매핑해 줄 수도 있다.`
 
-이제 직접 template을 생성하여, 인덱스가 생성될 때 설정한 mapping, settings 및 alias  
-정보들이 적용 되는지 확인해보자.   
+이제 직접 template을 생성하여, 인덱스가 생성될 때 설정한 mapping, settings 및 alias 정보들이 적용 되는지 확인해보자.      
+
 
 - - - 
 
