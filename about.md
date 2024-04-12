@@ -114,7 +114,6 @@ Spark Streaming 및 AWS 인프라를 통해
 
 - SW Certificate 강사 활동        
 - Samsung SW certificate professional 취득     
-- DRM(Digital Right Management) 서버를 이용한 사용자 로그인 인증 보안 설계 및 개발    
 - 자바, 스프링 기반의 Outsourcing Management System 개발 및 운영    
 - 삼성 SDS 대학생 it 멘토링 발표   
     > [https://www.youtube.com/watch?v=WW8luDK_pCk](https://www.youtube.com/watch?v=WW8luDK_pCk)   
