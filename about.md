@@ -66,11 +66,20 @@ Spark Streaming 및 AWS 인프라를 통해
 > 2021.02.01 ~ 현재  
 
 - Leading data pipeline revamp project   
-    - More than 10x greater streaming performance than before.      
     - Processed rows per second(AS-IS: 800 -> TO-BE: 10,000)   
-        - [<u>https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html</u>](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)   
+        - [<u>https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html</u>](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)     
+    - Active-Active EMR Cluster 구성   
+    - 불필요한 Shuffle 제거   
+    - 재처리 구조 개선     
+    - 데이터 정합성 메트릭 구성    
     - Migrate from spark streaming to structured streaming.   
         - [<u>https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)   
+
+- Migration from Druid to ElasticSearch   
+    - 하루 평균 1,500백만건 데이터를 api로 집계 결과값 서빙   
+    - Nginder를 이용한 성능 테스트 
+
+- 상담 가능성 높은 상품 예측 및 call routing 서비스 반영      
 
 - Bus Route Recommendation Service    
     - Fulfillment Center 지원자에게 버스가 제공되며, 지원자 거주지 기준으로 자동으로 가까운 버스 추천  

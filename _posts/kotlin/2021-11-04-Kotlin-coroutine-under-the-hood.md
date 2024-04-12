@@ -8,10 +8,10 @@ date: 2021-11-04
 background: '/img/posts/mac.png'
 ---
 
-이번글에서는 코루틴을 공부하다가 보면, 여러가지 의문점이 생겼을 것이다.   
-어떻게 함수가 호출이 되었다가 중단(suspend)이 되고, 다시 재개(resume)이 되는지 이해하기 힘들 것이다.    
-내부동작을 이해하지 못하고 코루틴 라이브러리를 사용해도 무리없이 사용할수 있지만,  
-    내부 동작을 이해하고 사용하면, 조금 더 깊이있게 
+코루틴을 공부하다가 보면, 여러가지 의문점이 생길 것이다.   
+예를 들면, 
+    어떻게 함수가 호출이 되었다가 중단(suspend)이 되고, 다시 재개(resume)이 되는지 이해하기 힘들 것이다.    
+내부동작을 이해하지 못하고 코루틴 라이브러리를 사용해도 무리없이 사용할수 있지만 내부 동작을 이해하고 사용하면, 조금 더 깊이있게 
     사용할 수 있을 것이다.   
 
 [Deep Dive into Coroutines on JVM by Roman Elizarov](https://www.youtube.com/watch?v=YrrUCSi72E8)에 
@@ -22,8 +22,8 @@ background: '/img/posts/mac.png'
 ## CPS Transforms
 
 위에 언급한 유투브 영상을 참고해서 설명해보면, 
-코루틴을 사용하다 보면 suspend 되고 resume되는 과정이 마법처럼 느껴지지만 마법이 아니고  
-`코루틴 코드가 컴파일 되면 내부적으로 CPS(Continuation Passing Style)로 변경된다고 한다.`        
+코루틴을 사용하다 보면 suspend 되고 resume되는 과정이 마법처럼 느껴지지만 마법이 아니고 `코루틴 코드가 
+컴파일 되면 내부적으로 CPS(Continuation Passing Style)로 변경된다고 한다.`        
 
 `Continuation Passing Style이란 것은 결국 콜백(Callback)이라고 생각하면 된다.`       
 아직까지는 이해하기 힘들지만, 아래 예제를 보면서 이해해보자.   
