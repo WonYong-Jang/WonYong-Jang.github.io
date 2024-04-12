@@ -73,15 +73,15 @@ Spark Streaming 및 AWS 인프라를 통해
     - 재처리 구조 개선     
     - 데이터 정합성 메트릭 구성    
     - Migrate from spark streaming to structured streaming.   
-        - [<u>https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)   
+        - [<u>https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)     
 
-- Migration from Druid to ElasticSearch   
+- Migration from Druid to ElasticSearch      
     - 하루 평균 1,500백만건 데이터를 api로 집계 결과값 서빙   
-    - Nginder를 이용한 성능 테스트 
+    - Nginder를 이용한 성능 테스트     
 
-- 상담 가능성 높은 상품 예측 및 call routing 서비스 반영      
+- 상담 가능성 높은 상품 예측 및 call routing 서비스 반영         
 
-- Bus Route Recommendation Service    
+- Bus Route Recommendation Service       
     - Fulfillment Center 지원자에게 버스가 제공되며, 지원자 거주지 기준으로 자동으로 가까운 버스 추천  
     - 기존에는 상담사가 직접 지원자의 거주지와 가까운 버스 정류장을 찾아서 전달하기 때문에 상담시간 지연 발생   
     - 지원자의 거주지를 위, 경도로 변환 후 버스 정류장의 위, 경도와 비교하여 거리 및 우선순위에 따라 추천   
