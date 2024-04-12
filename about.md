@@ -1,6 +1,6 @@
 ---
 layout: page
-title: About Me
+title: Resume
 description: 
 background: '/img/bg-index.jpg'
 ---
