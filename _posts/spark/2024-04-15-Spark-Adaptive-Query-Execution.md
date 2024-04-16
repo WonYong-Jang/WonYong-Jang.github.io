@@ -1,19 +1,18 @@
 ---
 layout: post
 title: "[Spark] Adaptive Query Execution"   
-subtitle: "Broadcast Hash Join / Shuffle Partition"             
+subtitle: "Broadcast Hash Join / coalescing shuffle partitons, switching join strategies, optimizing skew joins"             
 comments: true   
 categories : Spark   
 date: 2024-04-15   
 background: '/img/posts/mac.png'   
 ---
 
-
 ## 1. Spark Adaptive Query Execution   
 
-spark 3.0 부터 지원하는 기능인 Spark AQE(Adaptive Query Execution) 은 
+`spark 3.0 부터 지원하는 기능인 Spark AQE(Adaptive Query Execution) 은 
 런타임시 발생하는 다양한 통계치를 수집해 성능 개선을 가능하게 하며 
-아래와 같은 기능을 제공한다.   
+아래와 같은 기능을 제공한다.`       
 
 > 참고로 기존의 Spark SQL의 쿼리 옵티마이저는 1.x 에서는 rule-based, 2.x 에서는 
 rule-based 외에 cost-based 을 포함해 최적화를 실행하였다.   
@@ -34,11 +33,11 @@ rule-based 외에 cost-based 을 포함해 최적화를 실행하였다.
 기존 방식으로 셔플을 진행하면, 아래 그림과 같이 5개의 셔플 파티션이 생기고 
 각 파티션마다 크기가 달라질 수 있다.   
 
-<img width="600" alt="스크린샷 2024-04-16 오전 11 25 06" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/75be7ec5-a98a-48f2-afcf-3398b9d4b841">   
+<img width="700" alt="스크린샷 2024-04-16 오전 11 25 06" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/75be7ec5-a98a-48f2-afcf-3398b9d4b841">   
 
 `아래 그림과 같이 AQE는 작은 크기의 파티션을 적절하게 합쳐서 비슷한 크기의 파티션 3개로 생성해 주어서 처리 속도를 올릴 수 있다.`            
 
-<img width="600" alt="스크린샷 2024-04-16 오전 11 25 13" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/82972449-6109-442c-906e-b2dbb832d8cf">      
+<img width="700" alt="스크린샷 2024-04-16 오전 11 25 13" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/82972449-6109-442c-906e-b2dbb832d8cf">      
 
 Spark UI의 SQL 탭에서 AQE가 개입하여 최적화한 결과를 살펴보자.  
 Exchange에서 실제로 shuffle이 일어나고, AQEShuffleRead가 추가된 것을 
@@ -46,36 +45,54 @@ Exchange에서 실제로 shuffle이 일어나고, AQEShuffleRead가 추가된 �
 `이때 number of partitions가 10000에서 5000으로 줄어들었고 AQE가 
 partition의 크기를 기본값 64MB에 근접하도록 최적화한 결과이다.`   
 
-<img width="747" alt="스크린샷 2024-04-16 오후 2 03 09" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/d955562e-9ee0-4c8c-8bcb-4d5a1d3751a5">
+<img width="850" alt="스크린샷 2024-04-16 오후 2 03 09" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/d955562e-9ee0-4c8c-8bcb-4d5a1d3751a5">
 
 
-### 1-2) Dynamically switching join strategies   
+### 1-2) Dynamically switching join strategies      
 
-Spark는 여러 조인 전략을 지원하며, 데이터가 많은 테이블과 적은 테이블을 
+Spark는 여러 조인 전략을 지원하며, 그 중 데이터가 많은 테이블과 적은 테이블을 
 조인할 경우 Broadcast hash join을 사용할 수 있다.       
 Broadcast hash join 을 사용할 경우 shuffle이 발생하지 않기 때문에 
-성능이 좋으며 AQE가 실행 계획을 확인하여 Broadcast hash join 이 
-사용 가능한 경우 이를 적용시켜 준다.     
+성능이 좋으며 `AQE가 실행 계획을 확인하여 Broadcast hash join 이 
+사용 가능한 경우 이를 적용시켜 준다.`     
 
-`Broadcast hash join이란 RDD를 조인할 때는 Map Side Join 또는 Replicated Join이라고도 부르며, 큰 테이블과 작은 테이블을
-join할 때 셔플을 피할 수 있는 방법이다.`
+> RDD를 조인할 때는 Map Side Join 또는 Replicated Join이라고도 부르며, 큰 테이블과 작은 테이블을
+join할 때 셔플을 피할 수 있는 방법이다.   
 
-`작은 테이블의 경우는 Broadcast 변수를 사용하여 Shuffle을 피할 수 있으며,
-    Broadcast 변수는 driver 에서 만들어서 executor로 보내주게 된다.`
+작은 테이블의 경우는 [Broadcast 변수](https://wonyong-jang.github.io/spark/2021/07/08/Spark-broadcast-accumulator.html)를 driver에서 만들어서 
+각 executor로 보내주게 되며, 이를 통해 shuffle을 피하여 join을 할 수 있게 된다.
 
-<img width="700" alt="스크린샷 2024-04-16 오후 3 07 31" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/929038a7-4fc3-469a-b1b2-5084666db9cc">    
 
-일반적으로는 Spark의 작은 데이터셋이 10MB 이하일 때
-Broadcast Join을 사용하는 것이 권장된다.   
+<img width="700" alt="스크린샷 2024-04-16 오후 3 07 31" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/929038a7-4fc3-469a-b1b2-5084666db9cc">     
 
-하지만, 아래 옵션 변경을 통해 Broadcast 될 데이터셋의 크기를
-설정할 수 있기 때문에 크기에 따라 변경해 줄 수 있다.    
+`AQE는 런타임에 최적화를 진행하여 처음 실행 계획과 달라질 수 있다.`    
+
+예를 들어 조인 대상의 두 테이블이 처음에는 큰 데이터여서 Sort Merge Join 으로 실행 계획이 세워졌다.   
+`하지만 아래와 같이 where 조건으로 한쪽의 테이블의 데이터가 줄어들게 되었을 때 AQE가 
+이를 개입하여 Broadcast hash join을 진행한다.`       
+
+> 실행계획에서는 데이터가 많이 필터 될 것인지는 알지 못하고 실행 해봐야 알기 때문에 
+처음 실행계획은 Sort Merge Join으로 세워진다.     
+
+```
+df_2006
+    .where(df_2006("UniqueCarrier") === "TZ")
+    .join(df_2007, df_2006("FlightNum") == df_2007("FlightNum"))
+    .show()
+```
+
+
+`Default로 Spark의 작은 데이터셋이 10MB 이하일 때 Broadcast Join을 사용할 수 있다.`        
+
+하지만, 아래 옵션 변경을 통해 Broadcast 될 데이터셋의 크기를 변경해줄 수 있다.      
 
 ```scala
 // default: 10MB
 // -1로 설정하게 되면 broadcast는 비활성화 된다.
 spark.sql.autoBroadcastJoinThreshold
 ```
+
+
 
 
 ### 1-3) Dynamically optimizing skew joins   
