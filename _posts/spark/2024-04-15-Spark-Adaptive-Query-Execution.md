@@ -174,8 +174,6 @@ spark.conf.set("spark.sql.adaptive.enabled",true)
 spark.conf.set("spark.sql.adaptive.skewJoin.enabled",true)
 ```
 
-
-
 - - - 
 
 **Reference**   
