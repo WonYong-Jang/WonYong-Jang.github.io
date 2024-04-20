@@ -14,7 +14,7 @@ background: '/img/posts/mac.png'
 런타임시 발생하는 다양한 통계치를 수집해 성능 개선을 가능하게 하며 
 아래와 같은 기능을 제공한다.`       
 
-> 참고로 기존의 Spark SQL의 쿼리 옵티마이저는 1.x 에서는 rule-based, 2.x 에서는 
+> 참고로 기존의 Spark SQL의 쿼리 옵티마이저는 spark 1.x 에서는 rule-based, spark 2.x 에서는 
 rule-based 외에 cost-based 을 포함해 최적화를 실행하였다.   
 
 - Dynamically coalescing shuffle partitions   
@@ -42,10 +42,10 @@ rule-based 외에 cost-based 을 포함해 최적화를 실행하였다.
 Spark UI의 SQL 탭에서 AQE가 개입하여 최적화한 결과를 살펴보자.  
 Exchange에서 실제로 shuffle이 일어나고, AQEShuffleRead가 추가된 것을 
 확인할 수 있다.   
-`이때 number of partitions가 10000에서 5000으로 줄어들었고 AQE가 
-partition의 크기를 기본값 64MB에 근접하도록 최적화한 결과이다.`   
+`AQE가 개입하여 partition의 크기를 기본 값 64MB에 근접하도록 
+number of partitions을 10000에서 5000으로 줄여서 최적화 하였다.`     
 
-<img width="850" alt="스크린샷 2024-04-16 오후 2 03 09" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/d955562e-9ee0-4c8c-8bcb-4d5a1d3751a5">
+<img width="850" alt="스크린샷 2024-04-16 오후 2 03 09" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/d955562e-9ee0-4c8c-8bcb-4d5a1d3751a5">   
 
 
 ### 1-2) Dynamically switching join strategies      
@@ -65,13 +65,13 @@ join할 때 셔플을 피할 수 있는 방법이다.
 
 <img width="700" alt="스크린샷 2024-04-16 오후 3 07 31" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/929038a7-4fc3-469a-b1b2-5084666db9cc">     
 
-`AQE는 런타임에 최적화를 진행하여 처음 실행 계획과 달라질 수 있다.`    
+`AQE는 런타임에 최적화를 진행하기 때문에 처음 실행 계획과 달라질 수 있다.`    
 
 예를 들어 조인 대상의 두 테이블이 처음에는 큰 데이터여서 Sort Merge Join 으로 실행 계획이 세워졌다.   
-`하지만 아래와 같이 where 조건으로 한쪽의 테이블의 데이터가 줄어들게 되었을 때 AQE가 
+`하지만 아래와 같이 where 조건으로 한쪽의 테이블의 데이터가 줄어 들게 되었을 때 AQE가 
 이를 개입하여 Broadcast hash join을 진행한다.`       
 
-> 실행계획에서는 데이터가 많이 필터 될 것인지는 알지 못하고 실행 해봐야 알기 때문에 
+> 실행계획에서는 데이터가 얼마나 필터 될 것인지 알지 못하고 실행 해봐야 알기 때문에 
 처음 실행계획은 Sort Merge Join으로 세워진다.     
 
 ```
