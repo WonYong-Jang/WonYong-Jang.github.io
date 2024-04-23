@@ -59,7 +59,8 @@ sort merge join 은 조인 작업 전에 조인 키를 기준으로 정렬되며
 위에서 설명한 broadcast 변수를 생성하여 각 executor로 복제해 놓고, 해시 조인을 실행하는 
 방식이다.    
 
-<img width="800" alt="스크린샷 2024-04-20 오후 12 44 11" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/e2f1c911-fb77-4078-b6f5-5938684071eb">   
+<img width="800" alt="스크린샷 2024-04-21 오후 3 38 11" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/055eb343-b4f2-457d-8441-58d874a3c1b2">
+
 
 
 - - - 
