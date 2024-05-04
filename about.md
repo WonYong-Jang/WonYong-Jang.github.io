@@ -76,12 +76,10 @@ Spark Streaming 및 AWS 인프라를 통해
         - [<u>https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)     
        
           
-
 - Migration from Druid to ElasticSearch      
     - 하루 평균 1,500백만건 데이터를 api로 실시간 집계 결과값 서빙   
     - nGrinder를 이용한 성능 테스트 
 
-<br>
 
 - 상담 가능성 높은 상품 예측 및 call routing 서비스 반영        
     - Accuracy: (60% -> 92%)
