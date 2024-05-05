@@ -8,6 +8,13 @@ date: 2022-07-17
 background: '/img/posts/mac.png'
 ---
 
+Gradle은 Groovy를 기반으로 하는 빌드 시스템이며, 앤트(Ant)나 Maven 보다 유연하며 스크립트 기반의 
+처리로 여러가지 장점을 가지고 있다.     
+
+이번 글에서는 Gradle에 대해서 자세히 살펴보자.     
+
+- - -    
+
 ## 1. Gradle Wrapper란?   
 
 Gradle 빌드에 권장되는 사용 방법은 Gradle Wrapper를 사용하는 것이다.   

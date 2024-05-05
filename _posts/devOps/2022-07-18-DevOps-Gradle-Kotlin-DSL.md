@@ -8,9 +8,9 @@ date: 2022-07-18
 background: '/img/posts/mac.png'
 ---
 
-이번글에서는 멀티 모듈 프로젝트에서 Kotlin DSL 를 사용하는 방법을 살펴보자.   
-또한, gradle에서 shadowJar를 이용하여 특정 모듈에서 jar 파일을  
-생성하는 방법을 알아보자.   
+이번글에서는 멀티 모듈 프로젝트에서 Kotlin DSL 를 사용하는 방법을 살펴보자.      
+또한, gradle에서 shadowJar를 이용하여 특정 모듈에서 jar 파일을    
+생성하는 방법을 알아보자.     
 
 - - - 
 
@@ -118,12 +118,13 @@ allprojects{
 `즉, 프로젝트 수준의 build.gradle을 제외한 모든 모듈(서브 모듈)의 build.gradle을 제어한다.`       
 
 
-
 ##### project   
 
 `특정 모듈만 제어하고 싶다면 project 를 사용하면 된다.`   
 하지만 외부에서 제어하는 것보다 해당 모듈의 build.gradle에 직접 제어하는 것이 권장된다.   
 외부에서 제어하는 것이 많아지면 모듈간 독립성이 보장되지 않기 때문이다.   
+
+
 
 
 ### 2-4) SourceSet   
@@ -163,8 +164,11 @@ sourceSets {
 
 ### 2-5) Configuration    
 
+환경 구성 설정   
 
+### 2-6) buildscript  
 
+빌드 스크립트 클래스 패스 설정 
 
 
 - - - 
