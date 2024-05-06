@@ -59,7 +59,7 @@ result.show(truncate=false) // row 길이가 길어도 짤리지 않고 모두 �
 이용한 데이터프레임 생성방법이라고 한다.`     
 
 
-### 1-2) 명시적 타입 지정을 통한 데이터프레임 생성      
+### 1-2) 명시적 타입(StructType) 지정을 통한 데이터프레임 생성      
 
 리플렉션 방식을 통한 데이터프레임 생성 방법은 스키마 정보를 일일이 지정하지 않아도 된다는 점에서 사용하기에 편리 하다는 
 장점이 있다.    
@@ -80,6 +80,7 @@ val spark = SparkSession.builder()
   .config("spark.driver.bindAddress", "127.0.0.1")
   .getOrCreate()
 
+// StructType과 StructField를 사용    
 val sf1 = StructField("name", StringType, nullable = true)
 val sf2 = StructField("age", IntegerType, nullable = true)
 val sf3 = StructField("job", StringType, nullable = true)
@@ -189,7 +190,38 @@ Output
 //
 ```
 
-#### 2-2) join    
+### 2-2) explode   
+
+아래 데이터와 같이 grade 라는 컬럼을 각 row로 분리할 때 explode() 를 사용할 수 있다.   
+
+```scala
+val df = Seq(("Nam", List("A", "B", "C", "D"))).toDF("name", "grade")
+
+df.show()
++----+------------+
+|name|       grade|
++----+------------+
+| Nam|[A, B, C, D]|
++----+------------+
+```
+
+원하는 column을 explode() 함수를 통해 분리해서 펼쳐주면 다음과 같이 
+리스트가 각 row로 분리된 것을 확인할 수 있다.     
+
+```scala
+df.select(explode(col("grade")).alias("score")).show()   
+
++-----+
+|score|
++-----+
+|    A|
+|    B|
+|    C|
+|    D|
++-----+
+```
+
+### 2-3) join    
 
 기본적으로 타입을 지정하지 않으면 inner join으로 실행되며, 
     그외에 모든 join 들도 제공 하고 있다.   
@@ -212,7 +244,7 @@ df.join(df3, $"age" === $"age3").show
 ```
 
 
-#### 2-3) cache(), persist()    
+### 2-4) cache(), persist()    
 
 RDD에서 마찬가지로 작업 중인 데이터를 메모리에 저장한다.    
 `스파크SQL의 기본값인 MEMORY_AND_DISK 타입을 사용한다.`   
