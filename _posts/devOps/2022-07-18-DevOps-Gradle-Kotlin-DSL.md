@@ -48,6 +48,7 @@ Groovy DSL 과 Kotlin DSL을 비교했을 때,
 
 플러그인이란 gradle task의 집합이며, Kotlin DSL에서는 아래와 같이 사용할 수 있다.     
 
+
 ```kotlin
 plugins {
     java
@@ -164,12 +165,82 @@ sourceSets {
 
 ### 2-5) Configuration    
 
-환경 구성 설정   
+`Configuration은 의존성 그룹으로 이해하면 되고, dependencies를 통해 의존성 그룹에 
+라이브러리를 추가해주는 개념으로 이해하면 된다.`   
+
+아래 코드를 실행해보면 configuration 확인이 가능하다.   
+
+```
+// build.gradle
+for (config in configurations) {
+    println config
+}
+```
+
+Output   
+
+```
+> Configure project :
+configuration ':annotationProcessor'
+configuration ':apiElements'
+configuration ':archives'
+configuration ':compileClasspath'
+configuration ':compileOnly'
+configuration ':default'
+configuration ':implementation'
+configuration ':incrementalScalaAnalysisElements'
+configuration ':incrementalScalaAnalysisFormain'
+configuration ':incrementalScalaAnalysisFortest'
+configuration ':runtimeClasspath'
+configuration ':runtimeElements'
+configuration ':runtimeOnly'
+configuration ':scalaCompilerPlugins'
+configuration ':testAnnotationProcessor'
+configuration ':testCompileClasspath'
+configuration ':testCompileOnly'
+configuration ':testImplementation'
+configuration ':testRuntimeClasspath'
+configuration ':testRuntimeOnly'
+configuration ':zinc'
+```
+
+`추가적으로 configuration을 선언하기 위해서는 아래와 같이 진행한다.`      
+
+```groovy
+configurations {
+    provided
+}
+
+provided scope는 배포시에는 제외되고, 컴파일시에 들어가는 의존성을 provided에 지정한다.   
+
+
+sourceSets {
+    main { compileClasspath += configurations.provided }
+}
+```
+
 
 ### 2-6) buildscript  
 
-빌드 스크립트 클래스 패스 설정 
+`buildscript 는 gradle로 task를 수행할 때 사용되는 설정이며, buildscript 내에 
+정의된 dependencies는 task를 사용할 때 사용되는 라이브러리이며 buildscript 밖에서 정의된 dependencies는 소스를 컴파일할 때 등에 사용된다.`     
 
+`buildscript는 소스코드 컴파일과 같은 빌드 작업을 시작하기 전에 빌드 시스템 준비 단계에서 
+제일 먼저 실행된다.`    
+
+
+> 보통 springboot 버전 정보, maven repository 정보, dependency 모듈을 지정하여 스프링 부트 플러그인을 
+사용할 수 있는 기본 바탕을 정의한다.    
+
+```groovy
+buildscript {
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}"
+        classpath "org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}"
+        classpath "org.jetbrains.kotlin:kotlin-noarg:${kotlinVersion}"
+    }
+}
+```
 
 - - - 
 
