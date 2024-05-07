@@ -18,23 +18,26 @@ background: '/img/posts/mac.png'
 `아래 그림과 같이 Spark에서 작성한 SQL Query(ANSI SQL, Hive QL 등) 와 DataFrame 코드는 
 실행할 때 실행 계획에 따른 최적화가 이루어 지는데 이를 Catalyst Optimizer라고 한다.`     
 
-<img width="800" alt="스크린샷 2023-12-15 오전 7 36 23" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/2951a1e3-719c-4843-9530-f7248b702ccb">   
+<img width="939" alt="스크린샷 2024-05-06 오후 10 19 58" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/18c53933-407e-496b-8259-cfcfa36fbf90">   
 
-먼저 `Unresolved Logical Plan`은 작성한 코드를 파싱하여 문법적 오류가 없는지 체크 한다.   
+
+먼저 `Unresolved Logical Plan`은 작성한 코드를 파싱하여 문법적 오류가 없는지 체크 한다.     
 
 문법적 오류가 없다면 `Logical Plan`을 만드는데 그 전에 `Catalog`를 확인하여  
 작성한 코드의 대상 테이블 및 컬럼 정보(이름, 타입) 또는 사용한 함수, UDF 등 
 실제로 존재하는지 체크한다.   
 
-> 해당 정보는 Catalog의 메타 데이터로 등록 되어 있다.  
+> 스키마 정보 등의 메타 데이터를 위한 repository가 Catalog 이며, 이곳에 저장 되어 있다.   
 
 그 후 Optimized Logical Plan은 최적화 과정이 이루어짐을 의미한다.    
 
-> 최적화에 대한 내용은 아래에서 더 자세히 다룰 예정이다.   
+> 최적화(Catalyst Optimizer)에 대한 내용은 아래에서 더 자세히 다룰 예정이다.   
 
-Optimized Logical Plan 거치고 나면 `물리 계획(Physical Plans)`를 세우게 된다.   
+Optimized Logical Plan 거치고 나면 `물리 계획(Physical Plans)`를 세우게 된다.      
 
-> 물리 계획이란 어느 경로에서 어떤식으로 파일을 읽어서 처리할 건지에 대한 계획이다.   
+`물리 계획이란 Logical Plan을 클러스터가 알아 들을 수 있도록 변경하는 plan이다.`      
+
+> 예를 들면 어느 경로에서 어떤식으로 파일을 읽어서 처리할 건지에 대한 계획이다.   
 
 여러 물리 계획을 세운 후 그 중에서 `비용이 적게 드는 모델(Cost Model)`을 선택하게 되며, 
     `선택된 모델을 가지고(Selected Physical Plan)` 실제로 RDD 베이스 코드를 만들어 낸다.  
@@ -43,7 +46,12 @@ Optimized Logical Plan 거치고 나면 `물리 계획(Physical Plans)`를 세�
 
 위 그림에서 `Code Generation` 부분은 Tungsten을 통해 최적화된 Code를 생성하게 해주며 
 Tungsten 에 대해서는 [링크](https://wonyong-jang.github.io/spark/2021/05/04/Spark-DataFrame-Tungsten.html)를 
-참고하자.   
+참고하자.  
+
+마지막으로 Spark 3.0 이후 부터 [Adaptive Plan(Adaptive Query Execution)](https://wonyong-jang.github.io/spark/2024/04/15/Spark-Adaptive-Query-Execution.html)이 
+추가되었다.   
+이는, Logical Plan 에서 RDD 사이까지 프로세스 중에서 real time으로 plan이 변경 되면서 
+최적화를 제공해준다.   
 
 - - - 
 

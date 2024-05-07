@@ -16,8 +16,6 @@ Spark의 기존 메모리 관리는 정적인 메모리 분할(Memory fraction)�
 <img width="800" alt="스크린샷 2024-02-13 오후 11 35 24" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/15148d1f-2921-401e-9984-d40d06c367ca">  
 
 
-
-
 메모리 공간은 3개의 영역으로 분리되어 있으며, 각 영역의 크기는 JVM Heap 크기를 
 Spark Configuration에 설정된 고정 비율로 나누어 정해진다.   
 
