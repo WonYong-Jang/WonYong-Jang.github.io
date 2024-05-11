@@ -8,6 +8,24 @@ date: 2024-02-13
 background: '/img/posts/mac.png'
 ---
 
+## Executor의 메모리   
+
+Executor는 Worker 노드에서 실행되는 JVM 프로세스 역할을 한다. 따라서 JVM 메모리 관리를 
+이해하는 것이 중요하다.    
+
+JVM 메모리 관리는 두가지로 나눌 수 있다.   
+
+##### On-Heap Memory Management(In-Memory)   
+
+`Object는 JVM heap에 할당되고 GC에 바인딩된다.`      
+
+##### Off-Heap Memory Management(External-Memory)   
+
+`Object는 직렬화에 의해 JVM 외부의 메모리에 할당되고 Application에 의해 
+관리되며 GC에 바인딩되지 않는다.`      
+
+일반적으로 Object의 읽기 및 쓰기 속도는 On-Heap > Off-Heap > DISK 순서로 빠르다.   
+
 ## 1. Spark의 Memory 관리   
 
 Spark의 기존 메모리 관리는 정적인 메모리 분할(Memory fraction)을 통해 
