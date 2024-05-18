@@ -8,7 +8,9 @@ date: 2021-06-25
 background: '/img/posts/mac.png'
 ---
 
-## 1. Spark Dynamic Allocation   
+## 1. Spark Dynamic Allocation  
+
+<img width="900" alt="스크린샷 2024-05-18 오전 11 26 24" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/7cd32f2e-94e9-4ffc-a213-1510ed6f1e5b">    
 
 `Spark의 Resource를 dynamic하게 할당하기 위해서는 아래와 같이 
 옵션을 추가해야 한다.`      
