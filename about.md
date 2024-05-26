@@ -76,7 +76,9 @@ Spark Streaming 및 AWS 인프라를 통해
         - [<u>https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)     
        
           
-- Migration from Druid to ElasticSearch      
+- Elastic Search와 Airflow 스케줄을 이용한 실시간 집계 결과값 제공   
+    - 데이터 웨어하우스에서 데이터 추출 및 S3 저장   
+    - S3 데이터 로드하여 Elastic Search 인덱싱   
     - 하루 평균 1,500백만건 데이터를 api로 실시간 집계 결과값 서빙   
     - nGrinder를 이용한 성능 테스트 
 
