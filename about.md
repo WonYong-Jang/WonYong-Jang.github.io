@@ -36,7 +36,7 @@ Spark Streaming 및 AWS 인프라를 통해
 
 ##### DevOps   
 
-- DocumentDB(MongoDB), RDS(Aurora), Mysql, Oracle   
+- DocumentDB(MongoDB), RDS(Aurora), Mysql     
 - Jenkins, CircleCI, Airflow   
 - Elastic Cache (Redis), S3, EC2, Cloud Watch   
 - Nginx, Tomcat   
