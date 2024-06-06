@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Streaming Graceful Shutdown "   
-subtitle: "How to do graceful shutdown of spark streaming job"    
+subtitle: "How to do graceful shutdown of spark streaming job / sigkill, sigterm, sigint 차이"    
 comments: true
 categories : Spark
 date: 2021-04-19
@@ -20,6 +20,10 @@ graceful 하게 종료하기 전에는 다음과 같이 어플리케이션을 �
 
 ```
 $ yarn application -kill [applicationId]
+
+// or
+
+$ kill -9 PID  // -9는 강제 종료 
 ```
 
 스파크 스트리밍을 graceful 하게 종료 할수 있는 몇가지 방법이 있다.    
@@ -28,18 +32,28 @@ $ yarn application -kill [applicationId]
 현재까지 진행중인 모든 데이터까지는 처리하고 종료 한다는 것을 의미한다.`       
 
 
-- - - 
+- - -    
 
 ## 1. stopGracefullyOnShutdown parameter   
 
-첫번째 방법은 spark.streaming.stopGracefullyOnShutdown 파라미터를 
-true로 주는 방법이다.( default 는 false이다 )    
+`첫번째 방법은 spark.streaming.stopGracefullyOnShutdown 파라미터를 
+true로 주는 방법이다. (default 는 false이다)`     
+
+> true 로 주면 현재 배치를 완료하고 shutdown 전에 resource 정리를 한다.    
+
 개발자가 더이상 코드에서 직접 ssc.stop()을 호출할 필요가 없다.
 대신 SIGTERM 신호를 driver에게 보낸다.   
 
 ```
-sparkConf.set(“spark.streaming.stopGracefullyOnShutdown","true") 
+sparkConf.set(“spark.streaming.stopGracefullyOnShutdown","true")
+
+// or
+
+.config("spark.streaming.stopGracefullyOnShutdown", "true")
 ```
+
+`단, 위 옵션은 RDD based-streaming에만 적용이 되며, spark structured streaming 같은 경우는 
+따로 처리해줘야 한다.`      
 
 여기서 SIGTERM이란 프로세서를 중지시키는 안전한 방법이다. 반대로 
 SIGKILL 신호를 프로세스에게 보낸다면 그 프로세서는 바로 중단한다.   
@@ -158,7 +172,37 @@ scc.stop(true, true)에서 첫번째 true가 의미하는 것은 spark conext가
 의미한다.    
 
 `주의할 점은 stop()은 Executor 내에서 처리하면 deadlock이 
-발생시킬수 있으므로 Driver에서 처리 할수 있도록 하자.`    
+발생시킬수 있으므로 Driver에서 처리 할수 있도록 하자.`     
+
+
+- - - 
+
+## 3. SIGINT, SIGTERM 후킹하기   
+
+`위에서 제공한 stopGracefully 파라미터는 RDD based-streaming에서만 제공했으며, DataFrame 기반의 
+Spark Structured Streaming은 직접 구현이 필요하다.`      
+
+위와 유사하게 구현하기 위해서는 
+[Spark Structured Streaming](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html) 를 
+참고하자.     
+
+`또한, 프로세스 종료신호(SIGINT, SIGTERM)를 후킹하여 graceful shutdown을 구현할 수 있는 방법도 있다.`    
+
+> SIGINT 는 Ctrl + C를 이용하여 종료했을 때 발생한다.    
+
+특정 신호를 후킹하여 [Graceful Shutdown](https://www.waitingforcode.com/apache-spark-structured-streaming/stopping-structured-streaming-query/read)을 
+구현할 수 있지만 권장하지 않는다.  
+`이유는 데드락 발생 가능성이 있고 모든 JVM이 shutdown hook을 보장하지 않기 때문이다.`
+
+```scala
+sys.addShutdownHook {
+  logger.info("Gracefully stopping Spark Streaming Application.")
+
+  // graceful shutdown logic...
+
+  logger.info("The Spark Streaming Application has been successfully stopped.")
+}
+```
 
 - - - 
 
@@ -168,10 +212,6 @@ scc.stop(true, true)에서 첫번째 true가 의미하는 것은 spark conext가
 알아 봤다. 만약 프로그램 수정이 필요하여 가장 최근 버전으로 
 빌드된 jar파일로 변경해야 할 때는  스파크 스트리밍을 graceful하게 종료하고 
 가장 최근에 빌드된 jar파일로 다시 시작을 하면된다.    
-
-graceful하게 종료하여 데이터 손실을 막기는 했지만 
-다운타임이 존재한다는 단점이 있기 때문에 무중단으로 
-배포할 수 있는 방법이 있는지 알아봐야 할 것 같다.   
 
 
 
