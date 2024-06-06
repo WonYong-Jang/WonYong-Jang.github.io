@@ -110,15 +110,18 @@ fact 테이블과 조인을 하여 shuffle 없이 성능을 최적화 한다.
 
 ## 2. Speculative Execution     
 
-task가 fault worker node로 인해 완료되지 않는 것으로 의심되면 
-다른 node에서 해당 작업을 동시에 실행한다.   
+`task가 fault worker node로 인해 완료되지 않는 것으로 의심되면 
+다른 node에서 해당 작업을 동시에 실행한다.`      
+`둘 중 하나의 task가 완료되면 나머지 task는 kill 시킨다.`      
 
-둘 중 하나의 task가 완료되면 나머지 task는 kill 시킨다.   
+하지만, Speculative Execution은 overhead를 동반하기 때문에 대다수의 경우 선호되지 않는다.   
+
+
 
 ```
-spark.speculation  
-spark.speculation.interval   
-spark.
+spark.speculation=false     // default: false  
+spark.speculation.interval  // 확인하는 주기      
+spark.speculation.quantile  // 전체 task가 해당 비율을 넘어가면 Speculative Execution을 고려   
 ```
 
 
