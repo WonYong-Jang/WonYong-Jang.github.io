@@ -34,12 +34,12 @@ $ kill -9 PID  // -9는 강제 종료
 
 - - -    
 
-## 1. stopGracefullyOnShutdown parameter   
+## 1. SIGTERM 신호를 이용하여 kill     
 
 `첫번째 방법은 spark.streaming.stopGracefullyOnShutdown 파라미터를 
-true로 주는 방법이다. (default 는 false이다)`     
+true로 변경하여 kill 명령어를 통해 SIGTERM 신호를 전달하는 방법이다. (default 는 false이다)`     
 
-> true 로 주면 현재 배치를 완료하고 shutdown 전에 resource 정리를 한다.    
+> true 로 주면 현재 배치까지 처리를 완료하고 shutdown 전에 resource 정리를 한다.    
 
 개발자가 더이상 코드에서 직접 ssc.stop()을 호출할 필요가 없다.
 대신 SIGTERM 신호를 driver에게 보낸다.   
@@ -58,8 +58,8 @@ sparkConf.set(“spark.streaming.stopGracefullyOnShutdown","true")
 여기서 SIGTERM이란 프로세서를 중지시키는 안전한 방법이다. 반대로 
 SIGKILL 신호를 프로세스에게 보낸다면 그 프로세서는 바로 중단한다.   
 
-stopGracefullyOnShutdown 파라미터를 true로 주는 방법은 
-아래와 같은 순서로 진행된다.   
+stopGracefullyOnShutdown 파라미터를 true로 변경한 후 
+아래와 같은 순서로 진행된다.     
 
 1. Spark UI를 이용하여 driver 프로세스가 실행중인 노드를 찾는다.    
 
@@ -72,7 +72,8 @@ Spark driver는 SIGTERM 신호를 받은 후에 다음과 같은 로그 메시�
 ```
 17/02/02 01:31:35 ERROR yarn.ApplicationMaster: RECEIVED SIGNAL 15: SIGTERM
 
-17/02/02 01:31:35 INFO streaming.StreamingContext: Invoking stop(stopGracefully=true) from shutdown hook
+17/02/02 01:31:35 INFO streaming.StreamingContext: 
+Invoking stop(stopGracefully=true) from shutdown hook
 
 ...
 
@@ -87,7 +88,26 @@ Spark driver는 SIGTERM 신호를 받은 후에 다음과 같은 로그 메시�
 ...
 
 17/02/02 01:31:45 INFO util.ShutdownHookManager: Shutdown hook called
+```   
+
+하지만 위의 방법도 문제점이 있다.   
+spark.yarn.maxAppAttempts parameter 는 yarn.resourcemanager.am.max-attempts 의 
+default value를 사용하며, default 값은 2 이다.    
+
+`즉, 첫번째 kill command의 의해 AM(Driver)가 종료되면 yarn은 자동적으로 
+또 다른 driver를 실행시킨다.`      
+그래서 다시 한번 동일하게 kill 명령어를 통해 종료해 주어야 한다.   
+
+아래 옵션을 추가하여 변경할 수 있지만, 그에 따라 스트리밍의 안정성을 
+보장할 수 없기 때문에 주의하여 변경해야 한다.   
+
 ```
+--conf spark.yarn.maxAppAttempts=1
+```
+
+`위와 같은 문제점과 스트리밍을 종료하기 위해서 AWS 콘솔로 직접 
+접근하여 명령어를 통해 스트리밍을 종료해야 한다는 단점이 있기 때문에 
+아래와 같은 솔루션이 더 권장된다.`       
 
 - - - 
 
@@ -177,7 +197,7 @@ scc.stop(true, true)에서 첫번째 true가 의미하는 것은 spark conext가
 
 - - - 
 
-## 3. SIGINT, SIGTERM 후킹하기   
+## 3. SIGINT, SIGTERM 를 통한 Shutdown hook       
 
 `위에서 제공한 stopGracefully 파라미터는 RDD based-streaming에서만 제공했으며, DataFrame 기반의 
 Spark Structured Streaming은 직접 구현이 필요하다.`      
