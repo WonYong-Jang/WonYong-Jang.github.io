@@ -216,12 +216,10 @@ Spark Structured Streaming은 직접 구현이 필요하다.`
 
 ```scala
 sys.addShutdownHook {
-  logger.info("Gracefully stopping Spark Streaming Application.")
-
-  // graceful shutdown logic...
-
-  logger.info("The Spark Streaming Application has been successfully stopped.")
-}
+   println(s"SHUTDOWN!!!!!!!! ==> ${startedAggregationQuery.status}")
+   while (startedAggregationQuery.status.isTriggerActive) {}
+   startedAggregationQuery.stop()
+  }
 ```
 
 - - - 
