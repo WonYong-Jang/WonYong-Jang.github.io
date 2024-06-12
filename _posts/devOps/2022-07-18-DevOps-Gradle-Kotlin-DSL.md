@@ -111,7 +111,9 @@ allprojects{
         useJUnitPlatform()
     }
 }
-```
+```   
+
+
 
 ##### subprojects      
 
@@ -124,8 +126,6 @@ allprojects{
 `특정 모듈만 제어하고 싶다면 project 를 사용하면 된다.`   
 하지만 외부에서 제어하는 것보다 해당 모듈의 build.gradle에 직접 제어하는 것이 권장된다.   
 외부에서 제어하는 것이 많아지면 모듈간 독립성이 보장되지 않기 때문이다.   
-
-
 
 
 ### 2-4) SourceSet   
@@ -298,6 +298,59 @@ dependencies {
     implementation("org.apache.spark:spark-sql_2.12:${Versions.spark}")
 }
 ```
+
+- - - 
+
+## 4. dependency-management Plugin   
+
+`아래에서 io.spring.dependency-management 플러그인에 의해 Spring Boot Dependency에 있는 
+버전을 자동으로 가져와서 버전에 대한 생략이 가능해 진다.`         
+
+```kotlin
+plugins {
+
+    // 해당 플러그인을 단독으로 적용하면 프로젝트는 아무런 변화가 없다. 대신 다른 플러그인이 적용되는 시점을 감지하고 그에 따라 반응한다.
+    // 예를 들면, java 플러그인이 적용되면 실행 가능한 jar 빌드 작업이 자동으로 구성된다.   
+    id("org.springframework.boot") version "2.7.8"
+
+    // Spring Boot의 플러그인이 사용중인 Spring Boot 버전에서 Spring-boot-dependency bom을 자동으로 가져온다. 
+    // 즉, Maven 과 같은 종속성 관리 기능을 제공하는 Gradle 플러그인이다.
+    // 이는 의존성을 추가할 때 버전을 생략할 수 있다.   
+    id("io.spring.dependency-management") version "1.1.4"
+    id("kotlin")
+}
+```
+
+터미널에 다음과 같이 명령어를 입력하면 관리되고 있는 내용과 버전 정보를 확인할 수 있다.   
+
+```
+gradlew dependencyManagement    
+
+global - Default dependency management for all configurations    
+    antlr:antlr 2.7.7    
+    ch.qos.logback:logback-access 1.2.11
+    io.lettuce:lettuce-core 6.1.10.RELEASE
+    ...
+```
+
+`업무에서 spring dependency management에서 제공하고 있는 라이브리러 버전이 
+신규로 추가한 라이브러리 내부 모듈 버전을 덮어써서 문제가 발생하였다.`      
+
+> lettuce version 6.3.0.RELEASE 을 사용해야 했지만, spring dependency management 에서 6.1.0.RELEASE 으로 override 하였다.   
+
+`따라서 아래와 같이 extra properties extension을 이용하여 버전 정보를 고정하였다.`   
+
+```kotlin
+allprojects {
+    ext {
+        set("lettuce.version", "6.3.0.RELEASE")
+    }
+}
+```
+
+[Version Properties](https://docs.spring.io/spring-boot/appendix/dependency-versions/properties.html#appendix.dependency-versions.properties)를
+확인하여 관리되고 있는 library와 version property를 확인할 수 있다.
+
 
 - - - 
 
