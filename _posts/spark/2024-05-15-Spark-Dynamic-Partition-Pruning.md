@@ -116,11 +116,18 @@ fact 테이블과 조인을 하여 shuffle 없이 성능을 최적화 한다.
 
 하지만, Speculative Execution은 overhead를 동반하기 때문에 대다수의 경우 선호되지 않는다.   
 
+<img width="600" alt="스크린샷 2024-06-14 오후 10 54 36" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/959ed9c4-26e8-4332-8998-38fcfb9a3e7d">
+
+`장점으로는 slow tasks들에 대해서 다시 시작시켜서 전체 처리시간을 
+단축시킬 수 있지만, 오직 hardware problems, overload 에 대해서만 
+효과가 있다.`    
+
+`또한, data skew, insufficient memory에 대해서는 해결할 수 없다.`   
 
 
 ```
 spark.speculation=false     // default: false  
-spark.speculation.interval  // 확인하는 주기      
+spark.speculation.interval  // slow tasks 를 확인하는 주기, default: 100ms
 spark.speculation.quantile  // 전체 task가 해당 비율을 넘어가면 Speculative Execution을 고려   
 ```
 
@@ -132,6 +139,7 @@ spark.speculation.quantile  // 전체 task가 해당 비율을 넘어가면 Spec
 <https://www.slideshare.net/slideshow/dynamic-partition-pruning-in-apache-spark/188385762>   
 <https://kadensungbincho.tistory.com/88>  
 <https://eyeballs.tistory.com/248>   
+<https://medium.com/@nethaji.bhuma/spark-speculative-execution-02e8bcb03f39>    
 
 {% highlight ruby linenos %}
 
