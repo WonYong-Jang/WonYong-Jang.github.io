@@ -68,7 +68,7 @@ DataFrame은 Spark 엔진에서 최적화 할 수 있도록 하는 기능들이 
 
 `즉, DataFrame의 경우 filter, sorting 또는 hashing 등의 연산에는 직렬화 및 역직렬화를 하기 위한 비용이 들지 않는 다는 것이다.`      
 
-##### Performanc - RDD vs DataFrame   
+##### Performance - RDD vs DataFrame   
 
 그림과 같이 RDD를 사용했을 때 보다 2~10배 빠르다라고 알려져 있고, RDD는 언어에 따라
 성능차이가 많이 나는 반면, `DataFrame은 어떠한 언어를 사용하든지 빠른 성능을 보장받을 수 있다.`    

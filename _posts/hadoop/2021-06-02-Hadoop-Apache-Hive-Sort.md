@@ -58,7 +58,6 @@ SELECT *
 
 ## SORT BY     
 
-
 order by 와 비슷해 보일 수 있으나, order by의 경우에는 전체 결과를 
 하나의 리듀서가 정렬을 하게 되는 반면, sort by의 경우에는 
 각 리듀서에서 정렬을 하게 된다.   
@@ -114,7 +113,8 @@ distribute by Role
 
 <img width="700" alt="스크린샷 2021-06-03 오후 5 56 14" src="https://user-images.githubusercontent.com/26623547/120617404-08199e80-c495-11eb-9636-2fc30b1dba54.png">   
 
-<img width="700" alt="스크린샷 2021-06-03 오후 5 56 19" src="https://user-images.githubusercontent.com/26623547/120617476-19fb4180-c495-11eb-87cb-61b3ad12ae1e.png">   
+<img width="700" alt="스크린샷 2021-06-03 오후 5 56 19" src="https://user-images.githubusercontent.com/26623547/120617476-19fb4180-c495-11eb-87cb-61b3ad12ae1e.png">  
+
 
 
 보통은 아래처럼 sort by와 함께 사용하거나 cluster by를 사용한다.
@@ -144,6 +144,8 @@ SELECT col1, col2 FROM t1 DISTRIBUTE BY col1 SORT BY col1 ASC, col2 DESC
 ## CLUSTER BY     
 
 `sort by 와 DISTRIBUTE by를 동시에 수행한다.`      
+`sort by 절 전에 DISTRIBUTE by 절을 사용할 것을 요구하므로 주의해야 한다.`   
+
 같은 값을 가지는 row는 
 같은 리듀서에 전달되고, 리듀서 처리 결과를 정렬하여 출력한다.   
 
