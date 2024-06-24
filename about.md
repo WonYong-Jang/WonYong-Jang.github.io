@@ -28,7 +28,7 @@ Spark Streaming 및 AWS 인프라를 통해
 
 ##### Backend
 
-- Java, Kotlin, Scala   
+- Java, Kotlin, Scala, Python   
 - Spring Boot/MVC 
 - JPA, Hibernate 
 - Junit4/5, Mockito, Spock, Kotest, ScalaTest        
@@ -45,7 +45,7 @@ Spark Streaming 및 AWS 인프라를 통해
 - Kafka, Hive     
 - ELK Stack   
 - Grafana, Graylog, Prometheus, nGrinder   
-- Git/Github, Gerrit      
+- Git/Github 
 
 ##### Frontend
 
