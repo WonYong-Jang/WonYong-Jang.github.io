@@ -255,9 +255,28 @@ driver.get(url)
 
 <img width="800" alt="스크린샷 2024-06-30 오후 11 42 25" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/37882a3d-2883-45cd-9d21-266baeda3612">     
 
+해당 페이지의 소스코드는 아래와 같이 확인해볼 수 있다.   
 
+<img width="1500" alt="스크린샷 2024-06-30 오후 11 53 58" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/d5d860fb-cca2-4c45-aea3-9dc8b7caa446">     
 
+위에서 실습했던 것과 마찬가지로 Selenium을 이용하여 
+문자열을 html로 파싱하고 원하는 데이터를 추출 할 수 있다.   
 
+`Selenium을 이용하면 페이지를 이동을 하거나 로그인 하는 등의 
+액션도 가능하기 때문에 동적으로 변하는 페이지에 대하여 데이터 추출이 가능해진다.`       
+
+```python
+# 페이지 소스 가져오기
+from bs4 import BeautifulSoup
+page_source = driver.page_source
+
+soup = BeautifulSoup(page_source, 'html.parser')
+
+# 태그 검색
+print('title 태그 요소: ', soup.title)
+print('title 태그 이름: ', soup.title.name)
+print('title 태그 문자열: ', soup.title.text)
+```
 - - -
 
 <https://www.inflearn.com/course/lecture?courseSlug=llm-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B6%84%EC%84%9D-%EC%9B%B9%ED%81%AC%EB%A1%A4%EB%A7%81-%EC%B6%94%EC%B2%9C%EC%8B%9C%EC%8A%A4%ED%85%9C&unitId=220385&tab=curriculum>    
