@@ -209,7 +209,52 @@ li_list = soup.select('.list_newsissue > li')
 `select 함수를 사용할 때, 추출하고자 위치에서 html 자식관계가 어떻게 되어 있는지 
 빠르게 확인하기 위해서는 아래 그림을 진행해서 확인할 수 있다.`          
 
-<img width="500" alt="스크린샷 2024-06-25 오후 10 51 36" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/b27874bd-0460-42ec-a7b6-f3999211ac2e">   
+<img width="500" alt="스크린샷 2024-06-25 오후 10 51 36" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/b27874bd-0460-42ec-a7b6-f3999211ac2e">  
+
+- - - 
+
+## 4. 동적 웹 페이지 스크래핑    
+
+`Selenium 라이브러리를 이용할 수 있으며, Selenium 은 동적 웹페이지가 
+실시간으로 변동하는 내용을 중간 단계에 저장이 가능하다.`   
+
+웹 어플리케이션 테스트 도구로 개발되었으며 크롬 웹드라이버를 실행하여 
+모든 동작을 직접 제어 가능하다.   
+
+Selenium을 사용하기 위한 기본 코드는 아래와 같다.   
+
+```python
+#Selenium 드라이버 생성
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+
+# Chrome 옵션 설정 
+options = webdriver.ChromeOptions()
+options.add_argument('--headless') # 화면 없이 실행 
+
+# Driver 서비스 실행 
+service = Service(ChromeDriverManager().install())
+
+# 웹 드라이버 초기화 
+driver = webdriver.Chrome(service=service, options=options)
+```
+
+<img width="800" alt="스크린샷 2024-06-30 오후 11 45 00" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/bab26026-9421-4b5e-a20b-74b8d977fa0d">   
+
+`그 이후에는 Selenium이 제어하는 Chrome 창에 주소를 전달해서 
+서버에 요청을 보내는 작업이다.`   
+
+
+```python
+# 뉴스 사이트
+url = "https://news.daum.net/"
+
+driver.get(url)
+```
+
+<img width="800" alt="스크린샷 2024-06-30 오후 11 42 25" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/37882a3d-2883-45cd-9d21-266baeda3612">     
+
 
 
 
