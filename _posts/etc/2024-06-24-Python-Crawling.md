@@ -1,15 +1,14 @@
 ---
 layout: post
 title: "[Python] Python을 이용한 Crawling"
-subtitle: "웹 크롤링, 웹 스크래핑 / BeautifulSoup, Selenium"
+subtitle: "웹 크롤링, 웹 스크래핑 / BeautifulSoup, Selenium / CSS Selector(태그 선택자, 클래스 선택자, ID 선택자)"
 comments: true
 categories : ETC
 date: 2024-06-24
 background: '/img/posts/mac.png'
 ---
 
-이번 글에서는 python을 이용하여 크롤링을 실습해보고 데이터 수집을 
-진행해보자.   
+이번 글에서는 python을 이용하여 Crawling을 실습해보자.    
 
 - - -    
 
@@ -51,7 +50,7 @@ $ pip install ipykernel
 // 설치
 (base) ➜  ~ pip install jupyterlab
 
-// 주피터 시작 
+// 현재 위치에서 주피터 시작 
 (base) ➜  ~ jupyter lab .
 ```   
 
@@ -139,7 +138,7 @@ youtube-transcript-api==0.6.2
 
 ## 3. 정적 웹페이지 스크래핑    
 
-가장 기본적인 코드는 아래와 같이 라이브러리를 import 하여 
+가장 기본적인 코드는 아래와 같이 라이브러리를 import 하고  
 입력한 url 서버에 요청을 하여 응답을 받는다.   
 
 ```python
@@ -192,6 +191,9 @@ newsissue = soup.find_all(name='ul', attrs={'class':'list_newsissue'})
 
 > select 메서드   
 
+`select 메서드는 아래와 같이 CSS Selector(태그 선택자, 클래스 선택자, ID 선택자)를 사용하여 
+데이터를 추출할 수 있다.`    
+
 ```python
 # 태그 선택자를 이용   
 ul_list = soup.select('ul')
@@ -209,7 +211,75 @@ li_list = soup.select('.list_newsissue > li')
 `select 함수를 사용할 때, 추출하고자 위치에서 html 자식관계가 어떻게 되어 있는지 
 빠르게 확인하기 위해서는 아래 그림을 진행해서 확인할 수 있다.`          
 
-<img width="500" alt="스크린샷 2024-06-25 오후 10 51 36" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/b27874bd-0460-42ec-a7b6-f3999211ac2e">  
+<img width="500" alt="스크린샷 2024-06-25 오후 10 51 36" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/b27874bd-0460-42ec-a7b6-f3999211ac2e"> 
+
+#### 3-1) 판다스 DataFrame 사용하기   
+
+[https://news.daum.net](https://news.daum.net) 에서 
+뉴스 제목, 뉴스 카테고리, 언론사 이름, 뉴스 링크를 추출하여서 
+판다스 DataFrame으로 생성해보자.  
+
+<img width="1185" alt="스크린샷 2024-07-02 오후 10 04 07" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/6e80d8c7-7563-469d-8c36-30bcb8e5164f">
+
+먼저 첫번째 기사만 가져와서 결과를 확인해보자.   
+
+```python
+li_list = soup.select('ul.list_newsissue > li')
+
+# 첫번째 뉴스 제목 추출 
+link_text = li_list[0].select('a.link_txt')[0].text
+
+# strip(): 앞 뒤 공백 제거   
+link_text.strip()
+
+# 첫번째 뉴스 카테고리 추출 
+text_category = li_list[0].select('span.txt_category')[0].text
+text_category.strip()
+```    
+
+다음으로 언론사 이름을 가져와 보자.   
+
+`언론사 이름을 가져왔을 때 값이 여러개가 반환되며, alt 속성값에 값이 있는 것만 가져와야 하기 때문에 
+아래와 같이 작성해볼 수 있다.`        
+
+```python
+# list comprehension
+[ t['alt'] for t in li_list[0].select('img.thumb_g') if t['alt'] != ""]
+```
+
+마지막으로 링크를 가져온다.   
+
+```python
+link = li_list[0].select('a.link_txt')[0]['href']
+link
+```
+
+이제 최종적으로 첫번째 요소만이 아닌, 전체 관련 데이터를 추출하여 DataFrame으로 생성해보자.   
+
+```python
+data = {'title': [], 'agency': [], 'category': [], 'link': []}
+# li_list[0].select('a.link_txt')[0].text
+# text_category = li_list[0].select('span.txt_category')[0].text
+
+for item in li_list:
+    try:        
+        data['title'].append(item.select('a.link_txt')[0].text.strip())
+        data['agency'].append( [ t['alt'] for t in item.select('img.thumb_g') if t['alt'] != ""][0] )
+        data['category'].append(item.select('span.txt_category')[0].text.strip())
+        data['link'].append(item.select('a.link_txt')[0]['href'].strip())
+    except:
+        print("error item:" + item)
+```
+
+<img width="1400" alt="스크린샷 2024-07-02 오후 11 02 58" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/1cf29772-cd82-4a8c-8e39-a66a7a1b6140">
+
+생성한 DataFrame을 아래와 같이 csv 파일로 저장할 수 있다.   
+
+```python
+# csv 파일로 저장
+# index=False 인 경우 인덱스 번호 제외  
+df.to_csv('news.csv', index=False)
+```
 
 - - - 
 
