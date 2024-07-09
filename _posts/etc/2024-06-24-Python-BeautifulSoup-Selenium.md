@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Python] Python을 이용한 Crawling"
-subtitle: "웹 크롤링(Crawling), 웹 스크래핑(Scraping) / BeautifulSoup, Selenium / CSS Selector(태그 선택자, 클래스 선택자, ID 선택자)"
+title: "[Python] Python을 이용한 Crawling (BeautifulSoup, Selenium)"
+subtitle: "웹 크롤링(Crawling), 웹 스크래핑(Scraping) / CSS Selector(태그 선택자, 클래스 선택자, ID 선택자)"
 comments: true
 categories : ETC
 date: 2024-06-24
