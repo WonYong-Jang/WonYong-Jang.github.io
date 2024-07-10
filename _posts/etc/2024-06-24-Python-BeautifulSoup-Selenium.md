@@ -349,6 +349,7 @@ print('title 태그 문자열: ', soup.title.text)
 ```
 - - -
 
+<https://www.crummy.com/software/BeautifulSoup/bs4/doc/>    
 <https://www.inflearn.com/course/lecture?courseSlug=llm-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B6%84%EC%84%9D-%EC%9B%B9%ED%81%AC%EB%A1%A4%EB%A7%81-%EC%B6%94%EC%B2%9C%EC%8B%9C%EC%8A%A4%ED%85%9C&unitId=220385&tab=curriculum>    
 
 {% highlight ruby linenos %}

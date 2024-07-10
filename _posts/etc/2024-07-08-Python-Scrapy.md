@@ -8,7 +8,7 @@ date: 2024-07-08
 background: '/img/posts/mac.png'
 ---
 
-이번 글에서는 Scrpay를 사용하여 특정 페이지를 Scraping 해보자.   
+이번 글에서는 Scrpay를 사용하여 특정 페이지를 Scraping 해보자.    
 
 - - - 
 
@@ -24,20 +24,22 @@ asynchronous networking libary 인 [Twisted](https://twisted.org/)를 기반으�
 
 > 한편, 셀레니움과 다르게 webdriver를 사용하지 않는다.     
 
-scrapy는 지정된 url만 조회하기 때문에 scrapy가 셀레니움보다 가볍고 빠른 크롤링을 실행할 수 있다.   
+scrapy는 지정된 url만 조회하기 때문에 scrapy가 셀레니움보다 가볍고 빠른 크롤링을 실행할 수 있다.     
 
 
 - - -    
 
-## 2. Scrapy 시작하기    
+## 2. Scrapy 프로젝트 생성    
 
 이제 scrapy를 설치하고 프로젝트를 생성해보자.    
 
 ```
+### 설치
 $ pip install scrapy
 
 $ scrapy version
 
+### scrapy 프로젝트 생성    
 $ scrapy startproject <project name>
 ```
 
@@ -66,14 +68,16 @@ myScrapy
 `프로젝트 내 items는 데이터를 담는 VO 역할을 하며, spyders 안에 작성하는 소스 코드는 
 실제 웹페이지 파일로부터 html을 가져와서 처리하는 코드를 담당한다.`   
 
+
 또한, `pipeline은 spyders에서 읽어온 item들을 파일, db 등으로 저장하는 작업을 담당한다.`      
 
-> 또는 유효성 체크를 하거나 아이템을 가공하는데 사용한다.   
+> 또는 유효성 체크, 필터 작업을 하거나 아이템을 가공하는 등의 후처리 작업을 할 수 있다.          
 
-마지막으로 settings.py 파일에서 어떠한 스크립트를 실행할지를 
-작성하여 프로젝트를 실행할 수 있다.   
+마지막으로 settings.py 파일에서 파이프라인 설정을 어떻게 할 것인지, csv 파일 저장 등을 
+설정할 수 있다.    
 
-- - -    
+
+- - - 
 
 ## 3. Scrapy 실행 
 
