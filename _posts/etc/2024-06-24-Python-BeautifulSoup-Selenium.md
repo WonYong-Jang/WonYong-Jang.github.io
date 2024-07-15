@@ -346,7 +346,56 @@ soup = BeautifulSoup(page_source, 'html.parser')
 print('title 태그 요소: ', soup.title)
 print('title 태그 이름: ', soup.title.name)
 print('title 태그 문자열: ', soup.title.text)
+```   
+
+#### 4-2) 웹 요소 선택 도구 By 활용     
+
+Selenium을 이용하여 아래와 같이 `경제 카테고리를 클릭하는 액션`을 구성해보자.   
+
+<img width="800" alt="스크린샷 2024-07-15 오후 7 17 31" src="https://github.com/user-attachments/assets/ca777203-13fc-4c4b-af87-7acd931803ce">      
+
+
+```python
+from selenium.webdriver.common.by import By
+
+# 경제 뉴스 클릭
+economy = driver.find_element(By.CSS_SELECTOR, '#gnbContent > div > ul > li:nth-child(4) > a')
+# click 액션  
+economy.click()
+
+# 페이지 로딩되는데 대기 시간 설정   
+driver.implicitly_wait(5)
 ```
+
+이제 경제 카테고리로 이동하였고, 그 후 스크래핑 작업을 동일하게 하면 된다.   
+
+```python
+# 이제 page_source 는 경제 카테고리를 클릭하여 나온 html을 가져온다 
+soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+# 실시간 경제 뉴스 검색 
+news = soup.select('#timeline > ul > li')   
+
+# 첫번째 요소만 선택 ( select_one )
+news[0].select_one("a.link_txt").text.strip()
+```
+
+#### 4-3) Pagination     
+
+이제 아래와 같이 실시간 경제 뉴스에서 pagination 되어 있는 기사를 수집해보자.   
+
+<img width="700" alt="스크린샷 2024-07-15 오후 7 32 55" src="https://github.com/user-attachments/assets/d407b6d8-f0fb-46fd-9756-d21d6916a31d">     
+
+각 pagination 번호를 클릭하는 
+액션을 구성하기 위해 아래와 같이 진행해보자.   
+
+<img width="719" alt="스크린샷 2024-07-15 오후 7 40 35" src="https://github.com/user-attachments/assets/97b500b8-58a5-4130-8d46-581ae4cdfb9b">      
+
+
+
+
+
+
 - - -
 
 <https://www.crummy.com/software/BeautifulSoup/bs4/doc/>    
