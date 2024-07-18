@@ -213,7 +213,7 @@ li_list = soup.select('.list_newsissue > li')
 
 <img width="500" alt="스크린샷 2024-06-25 오후 10 51 36" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/b27874bd-0460-42ec-a7b6-f3999211ac2e"> 
 
-#### 3-1) 판다스 DataFrame 사용하기   
+### 3-1) 판다스 DataFrame 사용하기   
 
 [https://news.daum.net](https://news.daum.net) 에서 
 뉴스 제목, 뉴스 카테고리, 언론사 이름, 뉴스 링크를 추출하여서 
@@ -348,7 +348,7 @@ print('title 태그 이름: ', soup.title.name)
 print('title 태그 문자열: ', soup.title.text)
 ```   
 
-#### 4-2) 웹 요소 선택 도구 By 활용     
+### 4-1) 웹 요소 선택 도구 By 활용     
 
 Selenium을 이용하여 아래와 같이 `경제 카테고리를 클릭하는 액션`을 구성해보자.   
 
@@ -367,11 +367,56 @@ economy.click()
 driver.implicitly_wait(5)
 ```   
 
+### 4-3) implicitly wait, explicitly wait, time.sleep 
+
 `implicitly wait 함수는 페이지의 로딩이 완료될 때까지 기다리는 함수이며, 
     파라미터는 최대 n 초 동안 대기하였다가 n 초 동안 페이지가 
     로딩 완료가 안되는 경우 에러를 발생시킨다.`   
 `n 초 안에 페이지 로딩이 완료되면, 이후 남은 시간을 무시하고 다음 코드가 
-실행이 된다.`    
+실행이 된다.`   
+
+- implicitly wait는 웹페이지 전체가 넘어올때까지 기다린다.     
+- explicitly wait 는 웹페이지 일부분이 나타날때까지 기다리는 것이다.     
+
+> 한번만 설정하면 driver를 사용하는 모든 코드에 적용된다.   
+
+하지만, 어떤 사이트에 접속을 하면 전체 페이지의 일부분이 먼저 노출되거나 
+나중에 노출되는 경우가 있다.   
+
+> 블로그를 방문하였는데 블로그 내용이 먼저 보이고 몇초 후에 광고가 나타나는 경우를 예롤 들 수 있다.   
+
+즉, implicitly wait를 충분히 설정하였더라도 웹페이지가 넘어오는 순간 다음 명령어가 실행되어 버릴 것이고 
+웹페이지는 넘어왔으니 일부 자바스크립트의 내용이 렌더링 되기도 전에 그 다음 명령어가 
+작동이 되어 버린다면 제대로 된 수집이 불가능해진 것이다.    
+
+`이러한 경우 explicitly wait를 사용하여 어떤 조건이 성립했을 때까지 
+기다릴 수 있다.`
+`조건이 성립하지 않으면 timeout으로 설정된 시간만큼 최대한 기다린다.`   
+
+```python
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
+
+# wait until someid is clickable
+wait = WebDriverWait(driver, 10)
+element = wait.until(expected_conditions.element_to_be_clickable((By.ID, 'someid')))
+```
+
+위와 같이 WebDrivrWait를 사용할 수 있다.   
+
+```
+WebDriverWait(driver, timeout, poll_frequence=0.5, ignored_exceptions=None)   
+
+- driver: 사용할 webdriver 객체를 전달  
+- timeout: 최대로 대기할 시간이며 단위는 초
+- poll_frequency: 로딩이 완료될때까지 기다리는 동안 element를 일정 시간 마다 호출해보게 되는데, 이때 얼마만큼의 시간 간격으로 호출할 것인지를 결정한다. 기본값은 0.5초   
+- ignored_exceptions: 일정간격마다 element를 호출하는 동안 발생하는 Exception 을 무시할 수 있으며, 기본값으로 NoSuchElementException만 무시   
+```   
+
+더 많은 옵션은 [링크](https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.support.expected_conditions)를 확인해보자.   
+
+참고로 `time.sleep(2) 물리적으로 정해진 시간 동안 대기`하는 함수이다.   
+
 
 이제 경제 카테고리로 이동하였고, 그 후 스크래핑 작업을 동일하게 하면 된다.   
 
@@ -386,7 +431,7 @@ news = soup.select('#timeline > ul > li')
 news[0].select_one("a.link_txt").text.strip()
 ```
 
-#### 4-3) Pagination     
+### 4-4) Pagination     
 
 이제 아래와 같이 실시간 경제 뉴스에서 pagination 되어 있는 기사를 수집해보자.   
 
@@ -397,7 +442,59 @@ news[0].select_one("a.link_txt").text.strip()
 
 <img width="719" alt="스크린샷 2024-07-15 오후 7 40 35" src="https://github.com/user-attachments/assets/97b500b8-58a5-4130-8d46-581ae4cdfb9b">      
 
+최종적으로 driver와 카테고리를 전달 해주면, 해당 카테고리의 실시간 기사를 
+수집하는 함수는 아래와 같다.   
 
+```python
+# 페이지를 이동하면서 데이터를 수집하여 정리하는 함수
+def get_news(driver, category):
+
+    # 모든 category 찾기
+    category_tabs = driver.find_elements(By.CSS_SELECTOR, '#gnbContent > div > ul > li')
+    # category 별 dictionary 생성
+    category_dict = {category.text:category for category in category_tabs}
+    target_category = category_dict[category]
+    
+    target_category.click()
+    
+    # result
+    data = {'title': [], 'agency': [], 'category': [], 'link': [], 'time_line': []}
+    
+    current_page = 1
+    while current_page < 6:
+        
+        try:
+            page_numbers = WebDriverWait(driver, 5).until(
+                expected_conditions.presence_of_all_elements_located((By.CSS_SELECTOR, '#timeline > div > div > .num_paging'))
+            )
+
+            for p in page_numbers:
+                if(p.text == '다음'): 
+                    continue
+                if(int(p.text) == current_page):
+                    print(p.text)
+                    p.click()
+                    time.sleep(1)
+                    
+                    soup = BeautifulSoup(driver.page_source, 'html.parser')
+                    news = soup.select('#timeline > ul > li')
+
+                    for current_news in news:
+                        data['title'].append(current_news.select_one('strong> a').text.strip())
+                        data['agency'].append(current_news.select_one('strong> span.info_cp').text.strip())
+                        data['category'].append(category)
+                        data['link'].append(current_news.select_one('strong> a')['href'].strip())
+                        data['time_line'].append(current_news.select_one('em.txt_time').text.strip())
+                    break
+                        
+            current_page = current_page + 1
+                        
+        except Exception as e:
+            print(f"Error navigating to the next page: {e}")
+            break
+            
+    return pd.DataFrame(data)
+```
 
 
 
