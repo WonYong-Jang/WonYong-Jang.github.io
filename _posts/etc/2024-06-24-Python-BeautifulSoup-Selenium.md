@@ -363,9 +363,15 @@ economy = driver.find_element(By.CSS_SELECTOR, '#gnbContent > div > ul > li:nth-
 # click 액션  
 economy.click()
 
-# 페이지 로딩되는데 대기 시간 설정   
+# 페이지 로딩되는데 대기 시간 설정 (최대 5초)    
 driver.implicitly_wait(5)
-```
+```   
+
+`implicitly wait 함수는 페이지의 로딩이 완료될 때까지 기다리는 함수이며, 
+    파라미터는 최대 n 초 동안 대기하였다가 n 초 동안 페이지가 
+    로딩 완료가 안되는 경우 에러를 발생시킨다.`   
+`n 초 안에 페이지 로딩이 완료되면, 이후 남은 시간을 무시하고 다음 코드가 
+실행이 된다.`    
 
 이제 경제 카테고리로 이동하였고, 그 후 스크래핑 작업을 동일하게 하면 된다.   
 
