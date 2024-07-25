@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[AWS] VPC 와 Subnet 이해하기"
-subtitle: "VPC, Subnet, VPC 방화벽(Network ACL, Security Group)"
+subtitle: "VPC, Subnet, VPC 방화벽(Network ACL, Security Group) / IAM"
 comments: true
 categories : AWS
 date: 2022-07-10
@@ -86,7 +86,53 @@ WhiteList 방식이다.
 `또한, 상태를 저장하여 한 번 아웃바운드를 통과하는 트래픽은 인바운드 규칙 적용을 받지 않고 허용한다.`   
 
 > 인바운드를 통해 허용된 트래픽은 보안그룹에서 기억하고 있다가, 트래픽이 빠져 나갈 때 이 트래픽은 
-문제 없다는 걸 기억하기 때문에 아웃바운드 규칙과 관계 없이 허용한다.   
+문제 없다는 걸 기억하기 때문에 아웃바운드 규칙과 관계 없이 허용한다.  
+
+
+- - - 
+
+## 4. IAM(Identity and Access Management)    
+
+<img width="600" alt="스크린샷 2024-07-24 오후 11 30 42" src="https://github.com/user-attachments/assets/4d0332ef-a540-4722-9ffb-28e27c3c0178">    
+
+`AWS Identity and Access Management 는 AWS 리소스에 대한 액세스를 안전하게 
+제어할 수 있는 웹 서비스이다.`    
+
+IAM은 AWS 클라우드 인프라 안에서 신분과 접근을 관리하기 위한 서비스이며, 
+    크게 `User, Group, Role, Policy`로 구성되어 있다.   
+
+먼저 `IAM 정책(Policy) 은 권한을 부여`하는 방법이다.   
+`하나 이상의 AWS 리소스에 대한 어떤 작업을 수행할 수 있는지 허용 규칙을 
+JSON 형식으로 작성된다.`   
+
+> IAM 정책(policy)는 IAM user, role, group에게 부여할 수 있다.   
+
+IAM 사용자는 실제 사용자 단 한명을 의미한다.   
+하지만 AWS 계정을 처음 만들었을 때 만든 루트 계정이랑 완전 다르다는 
+점을 알아야 한다.   
+왜냐하면 루트 계정은 모든 권한을 갖고 있고, IAM 사용자는 단지 루트 계정에 
+의해 만들어졌을 뿐이다.   
+
+> AWS에서는 루트 계정을 직접 사용하지 말고, 어드민 권한(AdministratorAccess)을 
+부여한 IAM 사용자를 따로 만들어서 사용하는 것을 권장하고 있다.   
+
+IAM 그룹은 다수의 IAM 사용자를 모아놓은 개념이다.   
+그룹이 필요한 이유는 IAM 사용자마다 매번 정책을 직접 연결해줘야 하는 번거로움과 
+관리 포인트를 줄일 수 있기 때문이다.    
+예를 들어 developers 라는 그룹에 s3와 cloudwatch에 read only 정책을 연결한다면, 
+    이 그룹에 속한 IAM 사용자에게 자동으로 이 정책이 적용되는 것이다.   
+
+마지막으로 가장 중요한 IAM 역할(role)에 대해 알아보자.   
+
+IAM Role의 큰 특징은 IAM 사용자나 IAM 그룹에는 연결되지 않는다는 점이다.   
+대신 신뢰할 수 있는 IAM 사용자나 어플리케이션 또는 AWS 서비스(ex. ec2)가 역할을 
+맡을 수 있다.   
+
+여기서 신뢰할 수 있다는 말은 신분이 증명되었다는 것으로, 
+    ec2 같은 aws 서비스는 이미 내 aws 계정 안에서 실행되고 있어서 
+    신뢰할 수 있다고 볼 수 있다.    
+
+
 
 
 - - -   
