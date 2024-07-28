@@ -155,9 +155,9 @@ Output
 아래 예시와 같이 jinja template을 사용하여 dag 실행시 값을 할당하여 사용한다.   
 
 ```
-{{ dag_run }}
-{{ ts }}
-{{ ds }}
+{% raw %}{{ dag_run }}{% endraw %}
+{% raw %}{{ ts }}{% endraw %}
+{% raw %}{{ ds }}{% endraw %}
 ```
 
 airflow 에서 더 많은 사용 예시는 [공식문서](https://airflow.apache.org/docs/apache-airflow/stable/templates-ref.html)를 

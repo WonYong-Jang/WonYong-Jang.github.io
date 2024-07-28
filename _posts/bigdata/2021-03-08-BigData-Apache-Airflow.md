@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Airflow] 아파치 Airflow - Workflow "
-subtitle: "DAG(Directed Acyclic Graph) / 데이터 워크 플로우 관리 도구/ execution_date 의미 "    
+subtitle: "DAG(Directed Acyclic Graph) / 데이터 워크 플로우 관리 도구/ execution_date 의미 / backfill and catchup"    
 comments: true
 categories : BigData
 date: 2021-03-08
@@ -207,26 +207,11 @@ BashOperator 에는 다음과 같은 속성이 존재한다.
 `또한 t1 >> t2 는 t1이 실행된 후 t2를 실행한다는 의미이다.(t1이 t2의 Upstream Task)`    
 
 
-### 3-6) Airflow CLI와 Webserver를 통해 생성된 DAG 확인하기    
+### 3-6) 생성된 DAG 확인하기    
 
-Airflow CLI로 방금 만든 DAG가 잘 반영되었는지 확인해보자.    
-원래는 airflow list_dags 명령어로 Airflow에 등록된 DAG 목록을 출력할 수 있는데, 여기서는 Docker Compose로 띄워 놓았기 때문에 
-airflow list_dags 명령어 앞에 docker-compose -f docker-compose-CeleryExecutor.yml run --rm webserver를 붙여주어야 한다.    
 
-단, docker-airflow 위치에서 아래 명령어를 실행 한다.    
-
-```
-$ docker-compose -f docker-compose-CeleryExecutor.yml run --rm webserver airflow list_dags
-
--------------------------------------------------------------------
-DAGS
--------------------------------------------------------------------
-tutorial
-tutorial_bash
-```
-
-WebServer에서도 일정 시간이 지나면 아래와 같이 tutorial_bash가 만들어진 것을 
-확인 할 수 있다.   
+dags 폴더에 위에서 작성한 파이썬 파일을 생성 후 docker compose up 을 
+통해 실행하게 되면 아래와 같이 web ui에서 생성한 dag를 확인할 수 있다.   
 
 <img width="830" alt="스크린샷 2021-03-09 오후 11 33 10" src="https://user-images.githubusercontent.com/26623547/110486957-7b2ea580-8130-11eb-8fbe-096c7872cb7a.png">    
 
@@ -236,15 +221,6 @@ WebServer에서도 일정 시간이 지나면 아래와 같이 tutorial_bash가 
 만들어진 DAG는 활성화된 상태가 아니어서(Paused) 실행되지 않는다. 실행을 
 위해서는 CLI나 Web UI상에서 'Off' 버튼을 눌러 'On' 상태로 변경해주어야 한다.   
 
-`CLI Command는 airflow unpause [DAG ID] 로써 여기서는 Docker compose 명령어와 함께 아래와 같이 실행하면 된다.`    
-
-```
-> docker-compose -f docker-compose-CeleryExecutor.yml run --rm webserver airflow unpause tutorial_bash
-
-[2020-05-16 06:04:41,772]  INFO - Filling up the DagBag from /usr/local/airflow/dags/tutorial_bash.py
-Dag: tutorial_bash, paused: False
-```
-
 Web UI에서 확인하면 'Off' 였던 상태가 'On' 으로 변경되고, DAG가 실행되고 
 있는 것을 볼 수 있다.   
 
@@ -252,14 +228,29 @@ Web UI에서 확인하면 'Off' 였던 상태가 'On' 으로 변경되고, DAG�
 <img width="830" alt="스크린샷 2021-03-09 오후 11 36 35" src="https://user-images.githubusercontent.com/26623547/110486979-7ff35980-8130-11eb-8eed-6f46a134aec4.png">   
 
 
-DAG에서 특정 tak를 클랙했을 때 아래와 같이 팝업창을 볼수 있다. 각 task에 
+DAG에서 특정 task를 클랙했을 때 아래와 같이 팝업창을 볼수 있다. 각 task에 
 대해 로그를 보거나 rendered 된 파라미터를 볼수도 있고, task 실패시 Clear 버튼을 
-통해 retry 할수도 있다.   
+통해 retry 할수도 있다.  
 
-`여기서 선택한 task 부터 다시 돌리고 싶을 경우 Future 를 선택 후 Clear를 
-클릭한다.`        
+### 3-8) Retry Tasks   
 
-<img width="709" alt="스크린샷 2021-06-03 오후 3 13 17" src="https://user-images.githubusercontent.com/26623547/120596279-84ed4e00-c47e-11eb-87b3-1c400081c3c6.png">
+일부 task가 실패했거나, 데이터에 변경이 발생해서 특정 시점 작업을 다시 수행해야 할 수 있다.   
+Dag 실행 화면의 Tree 보기 또는 Graph 보기에서 실패한 Task를 
+클릭하면 Task의 세부 동작을 설정할 수 있는 팝업이 출력된다.   
+
+<img width="761" alt="스크린샷 2024-07-28 오후 6 00 52" src="https://github.com/user-attachments/assets/e6586339-fee1-4d17-b669-96623cf36015">   
+
+Clear 버튼을 클릭하여 재처리를 할 수 있고 삭제 대상 Task 범위를 지정해 줄 수 있다.   
+
+> 특정 Task 이후 모든 Task를 재처리 해야 하는 경우 모든 Task를 일일이 클릭하지 않고 범위를 지정하여 한번에 재처리가 가능하다.   
+
+선택 가능한 삭제 대상 Task 범위는 다음과 같다.  
+
+<img width="757" alt="스크린샷 2024-07-28 오후 6 01 03" src="https://github.com/user-attachments/assets/bf626182-076f-44b0-abe0-3632bf5660b0">    
+
+Past, Future, Upstream, Downstream을 그림으로 표현하면 다음과 같다.   
+
+<img width="731" alt="스크린샷 2024-07-28 오후 6 01 09" src="https://github.com/user-attachments/assets/34621690-986b-4da7-aa45-89d8f2087b27">   
 
 
 - - - 
@@ -394,8 +385,8 @@ dag = DAG(
 <https://zzsza.github.io/data/2018/01/04/airflow-1/>    
 <https://medium.com/@aldente0630/%EC%95%84%ED%8C%8C%EC%B9%98-%EC%97%90%EC%96%B4%ED%94%8C%EB%A1%9C%EC%9A%B0%EB%A1%9C-%EC%9E%91%EC%97%85%ED%9D%90%EB%A6%84-%EA%B0%9C%EB%B0%9C%ED%95%B4%EB%B3%B4%EA%B8%B0-8f3653d749b4>   
 <https://engineering.linecorp.com/ko/blog/data-engineering-with-airflow-k8s-1/>    
-<https://bomwo.cc/posts/execution_date/>   
-<https://leeyh0216.github.io/2020-05-16/airflow_install_and_tutorial>    
+<https://bomwo.cc/posts/execution_date/>  
+<https://www.bearpooh.com/154>     
 <https://www.bucketplace.com/post/2021-04-13-%EB%B2%84%ED%82%B7%ED%94%8C%EB%A0%88%EC%9D%B4%EC%8A%A4-airflow-%EB%8F%84%EC%9E%85%EA%B8%B0/>     
 
 {% highlight ruby linenos %}
