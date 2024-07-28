@@ -75,28 +75,37 @@ Airflow 2.0에는 CeleryKubernetes Executor가 추가되었다.
 
 ## 2. 설치 방법    
 
-apache/airflow를 docker images로 로컬에서 간단하게 설치하고 테스트 할 수 있다.   
-
-
-```
-$ git clone https://github.com/puckel/docker-airflow
-$ cd docker-airflow
-$ docker pull puckel/docker-airflow 
-$ docker-compose -f docker-compose-LocalExecutor.yml up -d 
-또는 
-$ docker-compose -f docker-compose-CeleryExecutor.yml up -d
-
-$ docker ps // 현재 실행중인 컨테이너 확인    
-
+[공식문서](https://airflow.apache.org/docs/apache-airflow/2.0.2/start/docker.html#accessing-the-environment) 를 참고하여 설치를 진행해보자.   
 
 ```
-     
-자세한 사용방법은 아래 링크를 참고하자.   
+$ mkdir airflow-docker
+$ cd airflow-docker
 
-<https://github.com/puckel/docker-airflow>    
+### fetch docker-compose file
+$ curl -LfO 'https://airflow.apache.org/docs/apache-airflow/2.0.2/docker-compose.yaml'
 
-그 후 local:8080을 통해 airflow web ui에 접속 가능하다.   
+$ mkdir ./dags ./logs ./plugins
 
+$ echo -e "AIRFLOW_UID=$(id -u)\nAIRFLOW_GID=0" > .env
+
+$ docker-compose up airflow-init
+
+### start all service
+$ docker-compose up
+```
+
+위의 명령어를 모두 실행 후 localhost:8080 에서 web ui를 확인할 수 있으며, 
+    초기 id/pw 는 airflow 이다.  
+
+
+테스트가 완료된 이후 컨테이너와 database에 있는 데이터의 volumes 등을 
+아래와 같이 정리해준다.   
+
+```
+docker-compose down --volumes --rmi all
+```
+
+ 
 - - - -
 
 ## 3. Airflow Tutorial 진행    
