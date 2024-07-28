@@ -131,6 +131,7 @@ default_args={
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=1),
+    'execution_timeout': timedelta(seconds=300), 
     'on_failure_callback': SlackWebhook.airflow_failed_callback
 }
 ```
@@ -142,7 +143,8 @@ default_args={
 - email_on_failure : 작업 실패 시 이메일 수신 여부   
 - email_on_retry : 작업 재시도 시 이메일 수신 여부    
 - retries : 작업 재시도 횟수   
-- retry_delay : 작업 재시도 간격    
+- retry_delay : 작업 재시도 간격   
+- execution_timeout: default로 24시간이며, 정해진 시간동안 dag가 완료되지 않는 경우 타임아웃 에러 발생    
 
 Callback을 사용하여 task가 성공하거나 실패했을 경우 알람을 보내는 등의 동작을 구성할 수있다.   
 
@@ -198,8 +200,8 @@ BashOperator 에는 다음과 같은 속성이 존재한다.
 
 ### 3-6) Airflow CLI와 Webserver를 통해 생성된 DAG 확인하기    
 
-Airflow CLI로 방금 만든 DAG가 잘 반영되었는지 확인해보자. 원래는 airflow list_dags 명령어로 Airflow에 
-등록된 DAG 목록을 출력할 수 있는데, 여기서는 Docker Compose로 띄워 놓았기 때문에 
+Airflow CLI로 방금 만든 DAG가 잘 반영되었는지 확인해보자.    
+원래는 airflow list_dags 명령어로 Airflow에 등록된 DAG 목록을 출력할 수 있는데, 여기서는 Docker Compose로 띄워 놓았기 때문에 
 airflow list_dags 명령어 앞에 docker-compose -f docker-compose-CeleryExecutor.yml run --rm webserver를 붙여주어야 한다.    
 
 단, docker-airflow 위치에서 아래 명령어를 실행 한다.    
