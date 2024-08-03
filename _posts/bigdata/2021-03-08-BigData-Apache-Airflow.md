@@ -25,12 +25,14 @@ background: '/img/posts/mac.png'
 `길이가 긴 스크립트 실행을 cron으로 돌리거나 빅데이터 처리 배치 작업을 
 정기적으로 수행하려고 할때 Airflow가 도움이 될 수 있다.`   
 
-Airflow 상의 작업흐름은 방향성 비순환 그래프(DAG)로 설계된다.   
+Airflow 상의 `작업흐름은 방향성 비순환 그래프(DAG)`로 설계된다.   
 즉, 작업 흐름을 짤 때 그것이 어떻게 독립적으로 실행 가능한 태스크들로 나뉠 수 있을까 
 생각해봐야 한다. 그래야 각 태스크를 그래프로 결합하여 전체적인 
 논리 흐름에 맞게 합칠 수 있다.   
 
 <img width="609" alt="스크린샷 2021-03-08 오후 9 52 55" src="https://user-images.githubusercontent.com/26623547/110324055-d0978380-8058-11eb-852c-21e15b64d01a.png">   
+
+> 위 그림에서 전체 Workflow를 DAG라고 하며 각각의 작업 단위를 Task라고 한다.   
 
 그래프 모양이 작업흐름의 전반적인 논리 구조를 결정한다. Airflow DAG는 
 여러 분기를 포함할 수 있고 작업흐름 실행 시 건너뛸 지점과 중단할 
@@ -45,21 +47,36 @@ Airflow 상의 작업흐름은 방향성 비순환 그래프(DAG)로 설계된�
 
 <img width="795" alt="스크린샷 2021-03-08 오후 10 06 59" src="https://user-images.githubusercontent.com/26623547/110325401-a6df5c00-805a-11eb-8816-b1ac13127b0a.png">   
 
-- Scheduler : 가장 중추적인 역할을 수행하며 모든 DAG(Directed Acyclic Graph)와 태스크를 모니터링하고 관리한다. 그리고 주기적으로 
-실행해야 할 태스크를 찾고 해당 태스크를 실행 가능한 상태로 변경   
+##### Scheduler    
 
-- Webserver : workflow(DAG)의 실행, 재시작, 로그, 코드 등 모두 WebServer UI로 관리 가능    
+- 가장 중추적인 역할을 수행하며 모든 DAG(Directed Acyclic Graph)와 태스크를 모니터링하고 관리한다. 
+- 개발자가 작성한 python 워크플로우 script를 확인하여 주기적으로 실행해야 할 태스크를 찾고 
+해당 태스크를 실행 가능한 상태로 변경   
+- MetaDB 에 어떤 시점에 dag를 실행해야 하고, 어떤 형태로 워크플로우가 구성되어 있는지 등을 저장   
 
-- Kerberos : 인증처리를 위한 티켓 갱신(ticket renewer) 프로세스(선택사항)   
+##### Webserver 
 
-- DAG Script : 개발자가 작성한 Python 워크 플로우 스크립트   
+- workflow(DAG)의 실행, 재시작, 로그, 코드 등 모두 WebServer UI로 관리 가능    
 
-- MetaDB : Airflow 메타데이터 저장소이다. 어떤 DAG가 존재하고 어떤 태스크로 구성되었는지, 어떤 태스크가 실행 중이고 
+##### Kerberos    
+
+- 인증처리를 위한 티켓 갱신(ticket renewer) 프로세스(선택사항)   
+
+##### DAG Script    
+
+- 개발자가 작성한 Python 워크 플로우 스크립트   
+
+##### MetaDB     
+- Airflow 메타데이터 저장소이다. 어떤 DAG가 존재하고 어떤 태스크로 구성되었는지, 어떤 태스크가 실행 중이고 
 또 실행 가능한 상태인지 등의 많은 정보가 기입된다.   
 
-- Executor : 태스크 인스턴스를 실행하는 주체이며 종류가 다양하다.   
+##### Executor   
+- 태스크 인스턴스를 실행하는 주체이며 종류가 다양하다. 
+- 실행해야 하는 task를 찾아서 상태를 변경하고 내부 Queue에 Task를 추가한다.    
 
-- Worker : 실제 작업을 수행하는 주체이며 워커의 동작 방식은 Executor의 종류에 따라 상이하다.   
+##### Worker    
+
+- 실제 작업을 수행하는 주체이며 워커의 동작 방식은 Executor의 종류에 따라 상이하다.   
 
 ### 1-2) Executor의 종류 및 특징과 장단점   
 
@@ -70,6 +87,7 @@ Executor에는 다양한 종류가 있고 각 종류에 따라 동작 원리가 
 현재 Airflow에는 Sequential Executor와 Debug Executor, Local Executor, Dask 
 Executor, Celery Executor, Kubernetes Executor를 제공하고 있으며 
 Airflow 2.0에는 CeleryKubernetes Executor가 추가되었다.   
+
 
 - - - 
 
