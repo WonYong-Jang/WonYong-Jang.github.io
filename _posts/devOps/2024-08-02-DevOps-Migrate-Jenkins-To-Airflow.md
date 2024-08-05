@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[DevOps] Jenkins Batch to Airflow"
-subtitle: "젠킨스 배치를 airflow와 쿠버네티스(k8s) Job 으로 전환"
+subtitle: "젠킨스 배치의 문제점 / 젠킨스 배치를 airflow와 쿠버네티스(k8s) Job 으로 전환"
 comments: true
 categories : DevOps
 date: 2024-08-02
@@ -26,8 +26,30 @@ Jenkins는 Java 진영의 대표적인 CI/CD 툴로 대부분의
 Jenkins를 배치에서 사용할때 장점으로는 대시보드를 통해 로그 및 이력관리 등을 
 바로 확인할 수 있다. 또한, 이메일, 슬랙 등과 같이 통합 환경이 잘 구축되어 있다.   
 
-하지만 젠킨스를 배치 실행을 위해 사용했을 때 
-security, reliability, less maintenace 관점에서 단점은 아래와 같다.   
+
+하지만 젠킨스를 배치 실행을 위해 사용했을 때 복잡한 워크플로우 처리가 어렵고, 
+    대규모 배치작업 또는 분산처리에 한계가 있다.    
+
+##### 복잡한 워크플로우 관리의 한계   
+
+Jenkins는 기본적으로 순차적으로 작업을 실행하는데 최적화되어 있다.   
+`하지만 복잡한 워크플로우를 처리해야 할 때, 특히 작업 간에 
+의존 관계가 많거나 병렬 처리가 필요한 경우에 한계가 있다.`     
+
+<img width="740" alt="스크린샷 2024-08-03 오후 9 44 11" src="https://github.com/user-attachments/assets/bd3db8d1-2729-4d8a-b2cf-0ff8424b9434">   
+
+
+##### 분산 처리의 어려움   
+
+`Jenkins는 기본적으로 Leader Follower 아키텍처를 사용하지만, 이 구조는 
+확장성이 제한적이며, 특히 대규모 데이터 처리나 복잡한 분산 작업을 효율적으로 
+처리하는데 어려움이 있다.`    
+
+> 작업에 대해 동적으로 리소스를 할당하고, 여러 작업을 병렬로 수행한 후 결과를 
+취합하는 경우는 추가적인 설정과 복잡한 스크립트 작업이 필요하다.   
+
+
+또한, security, reliability, less maintenace 관점에서 단점은 아래와 같다.   
 
 ##### security    
 
@@ -45,7 +67,9 @@ security, reliability, less maintenace 관점에서 단점은 아래와 같다.
 
 주로 DR 테스트가 이루어질 때 여러 문제가 발생함을 확인했다.    
 
-- DR 상황의 경우 Leader 노드가 다운 되면 다른 노드가 Leader로 선정되어 다시 정상화 될 때 까지 모든 배치가 중단된다.   
+- DR 상황의 경우 Leader 노드가 다운 되면 다른 노드가 Leader로 선정되어 다시 정상화 될 때 까지 모든 배치가 중단된다.  
+    > 복구 될 때 까지 Jenkins 의 웹 인터페이스에 접근도 불가능해진다.    
+
 - Follower 노드가 다운되고 다시 실행이 되었을 때 Leader 노드에 자동으로 연결이 안되어 직접 설정해주거나, 다운된 노드에 대해서 제거해주는 
 작업 등이 필요하다.  
     > 해당 노드를 찾아서 젠킨스에서 직접 연결해주거나 제거하는 작업   
@@ -59,9 +83,51 @@ security, reliability, less maintenace 관점에서 단점은 아래와 같다.
 
 - - - 
 
-## 2. Airflow on Kubernetes   
+## 2. Airflow와 Kubernetes Job를 이용하여 전환   
+
+위에서 언급한 문제들을 해결하기 위해 airflow와 kubernetes job으로 전환을 고려하였다.      
+[airflow](https://wonyong-jang.github.io/devops/2024/07/25/BigData-Apache-Airflow.html) 를 사용하면 
+복잡한 워크플로우 관리와 대규모 배치작업을 효율적으로 진행할 수 있다.   
+또한, 기존 Spring Batch를 Kubernetes 환경에서 실행 할 수 있도록 
+[kubernetes job](https://kubernetes.io/ko/docs/concepts/workloads/controllers/job/)를 고려했다.   
+
+> 현재 회사 플랫폼 팀에서 airflow와 쿠버네티스 환경은 제공해주고 있기 때문에 
+이를 활용하였고, airflow를 통해 스케줄링 및 배치 작업이 트리거 되면 k8s job으로  
+실행하여 기존 Spring Batch를 실행할 수 있도록 전환했다.   
+
+k8s job에 대해서 더 자세히 살펴보자.   
+
+`job은 하나 이상의 파드를 지정하고 지정된 수의 파드를 성공적으로 
+실행하도록 하는 설정이며, 특정 배치 처럼 한번 실행하고 종료되는 성격의 작업에 
+사용될 수 있다.`    
+
+즉, 어플리케이션이 실행되고 실행이 완료되면 파드의 할 일이 끝난 것으로 
+간주하고 파드를 종료시킨다.    
+
+만약 어플리케이션이 실행되고 있는 중에 파드가 죽거나 완료되지 않았다면, 
+    파드를 다시 스케줄링하여 재실행하게 구성할 수 있다.   
+
+### 2-1) Job 설정 옵션   
+
+##### backoffLimit   
+
+백오프 정책이라고 하며 잡에 연계된 실패 파드가 있다면 지정된 수만큼 
+재시도를 한다.   
 
 
+> default: 6 이며 실패할 때마다 10초, 20초, 40초.. delay를 두며 재시도를 한다.   
+
+##### completions  
+
+잡이 완료될 때까지 실행 종료해야 하는 파드의 수   
+
+> default: 1    
+
+##### parallelism   
+
+잡을 실행할 때 병렬로 실행되는 파드 수   
+
+> default: 1
 
 - - -
 Referrence 
