@@ -61,19 +61,37 @@ PySpark에서 UDF(User Defined Function)을 사용할 때, Python 프로세스�
 
 - - - 
 
-## 1. 설치   
+## 2. 설치   
+
+anaconda 를 이용하여 pyspark를 설치해보자.  
 
 ```
-brew install apache-spark
-brew install jupyterlab   
+conda --version
+
+# pyspark 이름의 가상환경 생성 
+conda create --name pyspark python=3.8
+
+# 활성화
+conda activate pyspark
+```
+
+```
+pip install pyspark==3.4.1
+pip install jupyter
 ```
 
 pyspark를 실행할 때 아래 2개의 환경변수를 .bashrc 또는 .zshrc에 넣어주면 
 pyspark를 실행하면 jupyterlab을 실행하게 된다.   
 
 ```
+# jupyter 
 export PYSPARK_DRIVER_PYTHON=jupyter
 export PYSPARK_DRIVER_PYTHON_OPTS='notebook'
+
+# bind spark driver address 
+export SPARK_LOCAL_IP="127.0.0.1"
+
+export PYSPARK_PYTHON=/Users/wonyong/opt/anaconda3/envs/pyspark/bin/python
 ```
 
 pyspark를 실행하면 즉시 jupyterlab이 실행된다.   
