@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] PySpark 개념과 주요기능"   
-subtitle: "scala 와 python 을 이용한 Spark 비교 / PySpark의 장단점 / 설치 및 주요 기능"             
+subtitle: "scala 와 python 을 이용한 Spark 비교 / 설치 및 주요 기능 / Temp View"             
 comments: true   
 categories : Spark   
 date: 2024-08-08     
@@ -94,11 +94,107 @@ export SPARK_LOCAL_IP="127.0.0.1"
 export PYSPARK_PYTHON=/Users/wonyong/opt/anaconda3/envs/pyspark/bin/python
 ```
 
-pyspark를 실행하면 즉시 jupyterlab이 실행된다.   
+pyspark를 실행하면 즉시 jupyterlab이 실행되며, 
+    Pycharm, Intellij, VS Code 등과 같은 IDE를 같이 사용할 수도 있다.   
 
 ```
 pyspark
 ```
+
+- - - 
+
+## 3. 주요 기능    
+
+이제 pyspark 의 간단한 코드를 작성해보자.      
+아래 코드는 SparkSession을 이용하여 데이터 프레임을 생성후 출력하는 
+예제이다.   
+
+```python
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("Basic PySpark Example").getOrCreate()
+
+# 데이터 생성
+data = [
+    (1, "Alice", 29),
+    (2, "Bob", 31),
+    (3, "Cathy", 25)
+]
+
+# 데이터프레임 생성
+columns = ["id", "name", "age"]
+df = spark.createDataFrame(data, columns)
+
+# 데이터프레임 출력
+df.show()
+
+# SparkSession 종료
+spark.stop()
+```
+
+### 3-1) SQL 사용과 Temp View    
+
+DataFrame 외에 친근한 SQL 문으로 데이터를 다룰 수도 있다.   
+`이때 Temp View를 생성 하고 SparkSession.sql() 메서드를 통해 SQL을 작성할 수 있다.`   
+
+```python
+# Temp View 생성
+df.createOrReplaceTempView("dfTable")
+# SparkSession 을 통해서 SQL 사용
+spark.sql("SELECT age FROM dfTable").show()
+```   
+
+Temp View 의 종류는 아래와 같이 제공 되며 생성한 Temp View 테이블들을 확인하거나 
+삭제할 수도 있다.  
+
+```python
+# Spark 세션의 임시 뷰 목록 조회   
+spark.catalog.listTables()
+
+# 특정 임시 뷰 삭제   
+spark.catalog.dropTempView("view_name")   
+# 글로벌 임시 뷰 삭제   
+spark.catalog.dropGlobalTempView("view_name")
+```
+
+##### createTempView   
+
+데이터 프레임을 세션 범위에서 Temp View로 등록한다.   
+단, 동일한 이름의 뷰가 이미 존재하는 경우 오류가 발생한다.   
+
+- 유효 범위: 현재 세션    
+
+> 여기서 세션은 SparkSession을 의미한다.   
+ 
+##### createOrReplaceTempView    
+
+데이터프레임을 세션 범위에서 Temp View로 등록하며, 동일한 
+이름의 뷰가 이미 존재하는 경우 기존 뷰를 덮어쓴다.   
+
+- 유효 범위: 현재 세션   
+
+##### createGlobalTempView, createOrReplaceGlobalTempView   
+
+데이터 프레임을 모든 세션에서 사용할 수 있는 글로벌 Temp View로 등록한다.    
+동일한 이름 존재 여부에 따라서 에러를 발생지킬지 
+덮어쓸지가 나뉜다.
+
+- 유효 범위: 모든 세션   
+
+예를 들면 spark1 이름의 SparkSession에서 생성한 Temp View를 spark2 이름의 SparkSession에서 
+접근이 가능하다.   
+
+`Temp View는 SparkSession 의 생명 주기에 따라 존재하기 때문에, 세션이 종료되면 해당 세션 내에서 
+생성된 모든 Temp View 도 사라진다.`   
+
+> spark.stop() 을 통해 세션을 종료할 수 있다.   
+
+단, Global Temp View는 SparkSession이 아닌 어플리케이션 전체 범위에 공유된다.   
+따라서 한 세션이 종료되어도 다른 세션에서 여전히 접근이 가능하다. 그러나 어플리케이션이 
+완전히 종료되면 Global Temp View도 제거 된다.   
+
+> Global Temp View는 전역 상태로 남기기 위해 임시 데이터베이스로 연결되기 때문에 
+신중히 사용해야 한다.   
 
 - - - 
 
