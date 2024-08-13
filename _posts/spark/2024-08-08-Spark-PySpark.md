@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Spark] PySpark 개념과 주요기능"   
-subtitle: "scala 와 python 을 이용한 Spark 비교 / 설치 및 주요 기능 / Temp View"             
+title: "[Spark] PySpark 개발환경 구성과 주요기능"   
+subtitle: "scala 와 python 을 이용한 Spark 비교 / Temp View / Python Package Management / spark-submit 옵션 "             
 comments: true   
 categories : Spark   
 date: 2024-08-08     
@@ -56,16 +56,13 @@ PySpark에서 UDF(User Defined Function)을 사용할 때, Python 프로세스�
     있다는 장점이 있으며 Spark SQL 이나 데이터 프레임을 사용하는 경우는 
     다른 언어와 성능차이가 미미하거나 없다.`    
 
-
-
-
 - - - 
 
 ## 2. 설치   
 
 anaconda 를 이용하여 pyspark를 설치해보자.  
 
-```
+```shell
 conda --version
 
 # pyspark 이름의 가상환경 생성 
@@ -75,7 +72,7 @@ conda create --name pyspark python=3.8
 conda activate pyspark
 ```
 
-```
+```shell
 pip install pyspark==3.4.1
 pip install jupyter
 ```
@@ -83,7 +80,7 @@ pip install jupyter
 pyspark를 실행할 때 아래 2개의 환경변수를 .bashrc 또는 .zshrc에 넣어주면 
 pyspark를 실행하면 jupyterlab을 실행하게 된다.   
 
-```
+```shell
 # jupyter 
 export PYSPARK_DRIVER_PYTHON=jupyter
 export PYSPARK_DRIVER_PYTHON_OPTS='notebook'
@@ -97,13 +94,137 @@ export PYSPARK_PYTHON=/Users/wonyong/opt/anaconda3/envs/pyspark/bin/python
 pyspark를 실행하면 즉시 jupyterlab이 실행되며, 
     Pycharm, Intellij, VS Code 등과 같은 IDE를 같이 사용할 수도 있다.   
 
-```
+```shell
 pyspark
 ```
 
 - - - 
 
-## 3. 주요 기능    
+## 3. Python Package Management   
+
+YARN, Kubernetes, Mesos 등을 이용하여 클러스터에 PySpark 어플리케이션을 실행 시킬 때, 
+    소스 코드와 사용 라이브러리들이 executor에서 사용될 수 있어야 한다.   
+
+클러스터에서 [python dependencies 를 관리](https://spark.apache.org/docs/latest/api/python/user_guide/python_packaging.html)하기 위한 여러가지 방법이 있다.   
+
+- Using PySpark Native Features   
+- Using Conda
+- Using Virtualenv
+- Using PEX   
+
+여기서는 Conda를 이용해 보자.   
+
+### 3-1) 내부 모듈 생성   
+
+`--py-files 옵션으로 전달할 zip 파일을 생성해보자.`      
+
+```
+# my_project/
+# ├── main.py
+# └── packages/
+#     ├── __init__.py
+#     └── utils.py
+```
+
+```shell
+zip -r packages.zip packages 
+```
+
+### 3-2) 가상 환경 구성    
+
+`driver와 executor에서 사용할 conda 환경을 생성 후 archive file로 패키징해보자.`      
+
+```shell
+## env export: 현재 활성화된 Conda 환경의 패키지 목록과 버전 정보를 export   
+## --no-builds: 패키지 build specifications 을 포함하지 않도록 설정하여 구체적인 세부사항을 포함하지 않게하여, 파일을 더 간결하게 만든다.   
+## grep -v "prefix": prefix라는 문자열이 포함된 라인은 제외   
+conda env export --no-builds | grep -v "prefix" > environment.yml
+```
+
+위의 명령어를 입력하면 environment.yml 파일이 아래와 같이 생성된다.   
+
+##### environment.yml   
+
+```yml
+name: pyspark_conda_env
+channels:
+  - defaults
+dependencies:
+  - python=3.8
+```
+
+`environment.yml 파일에서 name은 가상환경 이름이며, channels는 conda 환경에서 
+패키지를 찾을 위치를 지정하는 곳이다.`   
+
+`default는 conda가 기본적으로 패키지를 찾는 공식 채널이며, 다양한 
+공식 채널 외에도 추가적인 사용자 지정 채널을 지정할 수 있다.`      
+
+```yml
+channels:
+  - conda-forge
+  - bioconda
+```
+
+위의 경우 conda-forge 와 bioconda라는 두개의 채널이 명시되어 있고, conda가 
+패키지를 찾을 때 위 채널에서 검색을 하게 된다.
+
+`dependencies에 명시된 패키지를 검색하여 설치하게 되며, channels에 명시된 
+순서로 찾게 된다.`   
+
+> channels 목록에 명시된 순서대로 conda 패키지가 검색하게 되며, 해당 패키지가 
+첫 번째로 발견된 채널에서 설치된다.   
+
+```shell
+# 가상환경 생성
+conda env create -f environment.yml
+
+# environment.yml 에서 정의한 이름으로 가상환경이 생성되었고, 가상환경으로 activate   
+conda activate pyspark_conda_env
+
+## conda 환경을 이동 가능한 형태로 만들어 다른 시스템에서 쉽게 사용할 수 있다.   
+## 현재 활성화된 환경을 패키징
+## -f, --force 파일이 존재하는 경우 덮어쓰도록 강제 
+## -o, --output 출력 파일의 이름을 지정하는데 사용 
+conda pack -f -o pyspark_conda_env.tar.gz
+```    
+
+`--archives 옵션을 이용하여 spark-submit을 하게 되면, executor 위에서 archive가 자동으로 unpack 된다.`  
+
+### 3-3) spark-submit   
+
+위에서 클러스터에 배포할 패키지들을 구성했다면 아래 예시를 통해서 
+spark-submit 옵션들을 살펴보자.   
+
+```shell
+spark-submit \
+--master yarn \
+--deploy-mode cluster \
+
+## 어플리케이션에 필요한 외부 라이브러리를 추가   
+--packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0 \
+
+## Python 파일 또는 모듈의 ZIP 아카이브를 추가
+## 파이썬 코드와 함께 필요한 라이브러리를 클러스터에 배포할 수 있다.   
+--py-files packages.zip \
+
+## yarn 어플리케이션 마스터의 환경변수를 설정  
+## PYSPARK_PYTHON 환경 변수를 어플리케이션 마스터가 사용할 파이썬 인터프리터로 설정   
+## 아래 심볼릭 링크 지정으로 경로를 현재경로인 ./ 로 시작   
+--conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=./environment/bin/python \
+
+--conf spark.executorEnv.PYSPARK_PYTHON=./environment/bin/python \ 
+
+## 어플리케이션에 필요한 압축된 아카이브를 추가하고, 심볼릭 링크를 생성   
+## 아래의 경우 Python 가상환경이 포함된 pyspark_conda_env.tar.gz 파일이 추가되고,
+## environment 라는 심볼릭 링크가 생성   
+--archives pyspark_conda_env.tar.gz#environment \
+main.py
+```
+
+
+- - - 
+
+## 4. 주요 기능      
 
 이제 pyspark 의 간단한 코드를 작성해보자.      
 아래 코드는 SparkSession을 이용하여 데이터 프레임을 생성후 출력하는 
@@ -200,8 +321,10 @@ spark.catalog.dropGlobalTempView("view_name")
 
 **Reference**   
 
+<https://spark.apache.org/docs/latest/api/python/user_guide/python_packaging.html>   
 <https://www.databricks.com/kr/glossary/pyspark>   
 <https://surgach.tistory.com/105>   
+<https://velog.io/@bbkyoo/%EA%B0%9C%EB%B0%9C-%ED%99%98%EA%B2%BD-%EA%B5%AC%EC%84%B1>    
 
 
 {% highlight ruby linenos %}
