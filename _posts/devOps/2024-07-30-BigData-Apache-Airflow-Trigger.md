@@ -1,19 +1,19 @@
 ---
 layout: post
-title: "[Airflow] 아파치 Airflow - Dag run 이용하여 arguments 전달 "
-subtitle: "Trigger Dag"    
+title: "[Airflow] 아파치 Airflow - Trigger "
+subtitle: "Trigger DAG 이용하여 arguments 전달(dag_run) / "    
 comments: true
 categories : DevOps
 date: 2024-07-30
 background: '/img/posts/mac.png'
 ---
 
-이번 글에서는 airflow 를 실행할 때 arguments를 전달하여 dag를 실행하는 
-방법에 대해 살펴보자.    
+이번 글에서는 airflow 를 실행할 때 Trigger DAG 를 이용하여 
+arguments를 전달하는 방법과 Trigger를 사용하여 다른 DAG를 호출하는 방법에 대해 살펴보자.   
 
 - - - 
 
-## 1. Trigger Dag    
+## 1. Trigger Dag 를 통한 arguments 전달        
 
 Trigger DAG 버튼을 클릭하게 되면 아래와 같이 json 형식으로 arguments를 전달 할 수 있다.    
 
@@ -71,6 +71,12 @@ true를 추가해 주어야 한다.
 # 값이 empty인 경우 false로 간주하는데, false 인 경우에도 default 값을 출력해주기 위해서는 두번째 파라미터에 true로 지정한다.   
 ```
 
+
+- - - 
+
+## 2. Trigger를 이용하여 다른 DAG 실행   
+
+`Trigger를 사용하려면 `
 
 - - - 
 
