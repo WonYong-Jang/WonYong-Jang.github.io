@@ -41,8 +41,8 @@ Spark Streaming 및 AWS 인프라를 통해
 - Elastic Cache (Redis), S3, EC2, Cloud Watch   
 - Nginx, Tomcat   
 - Spark Streaming/Batch, Structured Streaming     
-- AWS Event Bridge, Kinesis    
-- Kafka, Hive     
+- AWS Event Bridge, Kinesis, Kafka
+- Hive, Presto, Trino     
 - ELK Stack   
 - Grafana, Graylog, Prometheus, nGrinder   
 - Git/Github 
