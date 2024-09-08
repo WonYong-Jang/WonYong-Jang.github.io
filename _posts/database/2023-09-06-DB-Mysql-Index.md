@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[DB] Mysql 인덱스 이해하기"
-subtitle: "B-Tree 인덱스 구조 / 다중 컬럼 인덱스 / UNIQUE INDEX / index condition pushdown / 실행계획 / 주의사항"
+subtitle: "B-Tree 인덱스 구조 / 다중 컬럼 인덱스 / UNIQUE INDEX / index condition pushdown  / 주의사항"
 comments: true
 categories : Database
 date: 2023-09-06
@@ -88,7 +88,7 @@ InnoDB (MySQL)은 디스크에 데이터를 저장하는 가장 기본 단위를
 하지만 유저의 id 같은 경우엔 인덱스를 통해 데이터의 대부분을 걸러내기 때문에 빠르게 검색이 가능하다.   
 
 `즉, 인덱스를 설계할 때 컬럼은 조회시 자주 사용되며, 고유한 값 위주로 설계하는 것이 좋다.(PK, Join 시 사용되는 컬럼)`      
-`또한 인덱스의 키의 크기는 되도록 작게 설계해야하며, update가 빈번하지 않는 컬럼을 
+`또한 인덱스의 키의 크기는 되도록 작게 설계 해야 하며, update가 빈번하지 않는 컬럼을 
 인덱스로 잡는 것이 좋다.`      
 
 ### 3-1) 여러 컬럼으로 인덱스 구성시 기준   
@@ -98,7 +98,7 @@ InnoDB (MySQL)은 디스크에 데이터를 저장하는 가장 기본 단위를
 `아래와 같이 Cardinality가 높은 순에서 낮은 순(중복도가 낮은 순에서 높은 순)으로 생성해야 
 성능이 뛰어 나다.`  
 
-```
+```sql
 -- 다중 컬럼 인덱스   
 CREATE INDEX IDX_USER ON user(user_id, is_bonus);
 
@@ -106,13 +106,18 @@ CREATE INDEX IDX_USER ON user(user_id, is_bonus);
 SHOW INDEX FROM 테이블 이름    
 ```
 
-아래는 중복 값을 허용하지 않는 인덱스를 생성할 수 있다.   
+### 3-2) UNIQUE 인덱스    
 
-```
+unique 인덱스는 테이블의 한 컬럼 또는 여러 컬럼의 조합에 대해 
+중복된 값을 허용하지 않는 인덱스 이다.   
+
+아래와 같이 중복 값을 허용하지 않는 인덱스를 생성할 수 있다.   
+
+```sql
 CREATE UNIQUE INDEX 인덱스 이름 ON 테이블이름(필드 이름1, 필드 이름2, ...)    
 ```
 
-### 3-2) 여러 컬럼으로 인덱스시 조건 누락  
+### 3-3) 여러 컬럼으로 인덱스시 조건 누락  
 
 아래 테이블을 예시로 살펴보자.   
 
@@ -171,18 +176,68 @@ where name = ? and age = ? 에서 age 컬럼은 인덱스 적용이 되지 않�
 
 먼저 Mysql(or MariaDB)에서 Index Condition Pushdown 옵션이 활성화 되어 있는지 확인해보자.   
 
-```
-show variables like 'optimizer_switch';
+```sql
+show variables like 'optimizer_switch';   
 
-// 아래와 같이 확인 가능 
+-- 아래와 같이 확인 가능 
 // ...index_condition_pushdown=on;... 
 ```
 
 해당 옵션을 off 하기 위해서는 아래와 같이 진행할 수 있다.   
 
-```
+```sql
+-- off 로 변경 
 set optimizer_switch = 'index_condition_pushdown=off';
+
+-- on 으로 변경 
+set optimizer_switch = 'index_condition_pushdown=on';
 ```   
+
+`인덱스 푸시 다운은 쿼리의 실행 계획 Extra 컬럼에서 Using index condition으로 표시되며 어떠한 상황에서 발생하는지 
+살펴보자.`  
+
+먼저 인덱스 푸시다운을 off 로 하고 테스트 해보자.   
+
+```sql
+-- index
+ALTER TABLE people ADD INDEX idx_people(zipzode, lastname)
+
+-- query
+SELECT * FROM people WHERE zipcode='95054' AND lastname LIKE '%ho%'
+```
+
+실행 계획을 보면 Using where 를 확인할 수 있다.   
+
+`MySQL (MariaDB)에서는 like 사용시 와일드카드(ex: like %ho)로 시작되는 
+값에 대해서는 인덱스가 적용되지 않기 때문에 zipcode=95054 는 
+인덱스를 통해 걸러내고, lastname like '%ho'에 대해서는 
+인덱스가 적용되지 않는 방식이니 걸러진 데이터를 테이블에서 하나씩 
+비교했기 때문이다.`   
+
+좀 더 자세히 알아보기 위해 MySQL (MariaDB)의 쿼리 실행 구조를 확인해보자.   
+
+MySQL은 DB 엔진과 스토리지 엔진이 분리된 구조로 되어 있다.   
+`MySQL DB 엔진은 쿼리 파싱과 실행 계획 생성 및 수행을 담당하고, 
+      각 스토리지 엔진이 데이터와 인덱스 및 물리적인 I/O 작업을 관리한다.`      
+
+<img width="700" alt="스크린샷 2024-09-08 오후 9 07 09" src="https://github.com/user-attachments/assets/80a64beb-af15-4ba0-bdc1-c3a90a1b0a69">   
+
+> 위 그림은 MySQL 5.6 이전에 Index Condition Pushdown을 지원하기 전의 처리 흐름이다.   
+
+위 쿼리는 ref 타입의 실행 계획으로 처리되며 MySQL 엔진(옵티마이저)은 
+스토리지 엔진에게 zipcode=95043이라는 조건밖에 전달하지 못한다.   
+스토리지 엔진은 lastname LIKE '%ho%' 라는 조건을 알 수 없기에, zipcode가 95054인 
+데이터 모두를 MySQL 엔진으로 전달할 수 밖에 없다.   
+`즉, 읽지 않아도 될 데이터를 읽어서 전달한 셈이다.`      
+
+하지만 (MySQL 5.6 / MariaDB 5.3) 버전부터는 Index Condition Pushdown 기능이 추가되어, 
+    `인덱스 범위 조건에 사용될 수 없어도 인덱스에 포함된 필드라면 스토리지 엔진으로 
+    전달하여 최대한 스토리지 엔진에서 걸러낸 데이터만 전달`하도록 개선되었다.  
+
+`이 기능은 InnoDB, MyISAM 스토리지 엔진에 구현되었고 range, eq_ref, ref, ref_or_null 타입의 
+쿼리에 적용 된다.`      
+
+<img width="700" alt="스크린샷 2024-09-08 오후 9 17 56" src="https://github.com/user-attachments/assets/6ce1156d-83c6-42d2-8358-d802e659ff50">   
 
 
 - - -   
@@ -211,42 +266,7 @@ set optimizer_switch = 'index_condition_pushdown=off';
 
 - null 값의 경우 is null 조건으로 인덱스 레인지 스캔 가능   
 
-- - - 
 
-## 6. 실행계획 분석   
-
-explain 을 이용하여 실행계획을 확인할 때 `possible_keys, key, Extra 를 주목해서 봐야 한다.`   
-
-`possible_keys는 사용 가능한 인덱스들의 목록이고, key는 그 중 mysql이 봤을 때 적합하다고 판단되어서 
-실제로 사용하게 되는 인덱스이다.`   
-
-`Extra는 조회를 할 때 내부적으로 어떤 절차를 밟게 되는지, 신경 써야 하는 부분이 어떤 것들이 있는지 알려준다.`   
-
-### 6-1) Extra  
-
-##### Using where   
-
-<img width="746" alt="스크린샷 2024-09-07 오후 10 53 44" src="https://github.com/user-attachments/assets/fca9d4eb-a706-46c4-a65d-717eacb1745f">   
-
-InnoDB 스토리지 엔진이 넘겨 준 데이터(인덱스를 사용해 걸러진 데이터) 중에서 MySQL (MariaDB) 엔진이 
-한번 더 걸러야 되는 조건(필터링 혹은 체크 조건)이 있다면 Using Where가 된다.   
-
-즉 Using where는 InnoDB 스토리지 엔진을 통해 테이블에서 행을 가져온 뒤, MySQL 엔진에서 
-추가적인 체크 조건을 활용해서 행의 범위를 축소한 경우 표시된다.   
-
-
-##### Using temporary   
-
-임시 테이블을 생성하여 결과를 처리함을 나타낸다. 일반적으로 order by 와 group by 절에서 
-정렬이나 그룹화를 수행할 때 발생할 수 있다.   
-
-##### Using filesort   
-
-파일 정렬을 사용하여 데이터를 정렬함을 나타낸다. 이는 인덱스를 사용하지 않고 정렬을 수행해야 할 때 
-발생할 수 있다. 
-
-
-- - -    
 
 
 - - -
