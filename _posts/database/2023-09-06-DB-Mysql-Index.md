@@ -206,7 +206,8 @@ ALTER TABLE people ADD INDEX idx_people(zipzode, lastname)
 SELECT * FROM people WHERE zipcode='95054' AND lastname LIKE '%ho%'
 ```
 
-실행 계획을 보면 Using where 를 확인할 수 있다.   
+실행 계획을 보면 `Using where` 를 확인할 수 있다.   
+
 
 `MySQL (MariaDB)에서는 like 사용시 와일드카드(ex: like %ho)로 시작되는 
 값에 대해서는 인덱스가 적용되지 않기 때문에 zipcode=95054 는 
@@ -216,9 +217,9 @@ SELECT * FROM people WHERE zipcode='95054' AND lastname LIKE '%ho%'
 
 좀 더 자세히 알아보기 위해 MySQL (MariaDB)의 쿼리 실행 구조를 확인해보자.   
 
-MySQL은 DB 엔진과 스토리지 엔진이 분리된 구조로 되어 있다.   
-`MySQL DB 엔진은 쿼리 파싱과 실행 계획 생성 및 수행을 담당하고, 
-      각 스토리지 엔진이 데이터와 인덱스 및 물리적인 I/O 작업을 관리한다.`      
+MySQL 엔진과 스토리지 엔진은 분리된 구조로 되어 있다.    
+스토리지 엔진에서는 메모리나 디스크에서 데이터를 조회하여 물리적인 I/O 작업을 담당하고, 
+    조건문에 포함되는 연산이나 가공은 MySQL 엔진에서 실행하게 된다.   
 
 <img width="700" alt="스크린샷 2024-09-08 오후 9 07 09" src="https://github.com/user-attachments/assets/80a64beb-af15-4ba0-bdc1-c3a90a1b0a69">   
 
@@ -272,6 +273,7 @@ MySQL은 DB 엔진과 스토리지 엔진이 분리된 구조로 되어 있다.
 - - -
 Referrence
 
+<https://blog.naver.com/seuis398/70111486432>   
 <https://jojoldu.tistory.com/243>  
 <https://jojoldu.tistory.com/529>   
 <https://jojoldu.tistory.com/476>   
