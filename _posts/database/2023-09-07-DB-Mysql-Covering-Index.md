@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[DB] Mysql 커버링 인덱스로 성능 최적화 하기"
-subtitle: "Covering Index / 쿼리 실행 순서"
+subtitle: "Covering Index / 쿼리 실행 순서 / Clustered, Non Clustered"
 comments: true
 categories : Database
 date: 2023-09-07
@@ -59,8 +59,22 @@ order by 의 경우 select 보다 나중에 처리 된다.
 
 - - - 
 
+## 2. Non-clustered Key와 Clustered Key     
 
-## 2. Non-clustered Key와 Clustered Key   
+DB에서 인덱스의 구조는 크게 Clustered와 Non Clustered로 나뉜다.   
+
+<img width="700" alt="스크린샷 2024-09-15 오후 2 30 29" src="https://github.com/user-attachments/assets/e909ca4c-71c9-47b5-977e-6d86aa71c7a9">    
+
+### 2-1) Clustered  
+
+`Clustered Index는 데이터가 테이블에 물리적으로 
+저장되는 순서를 정의하며, 이 컬럼을 기준으로 
+데이터를 정렬하고 저장한다.`  
+
+
+
+### 2-2) Non Clustered   
+
 
 
 
