@@ -29,7 +29,7 @@ insert, update, delete 의 성능을 희생하고 대신 select 의 성능을 �
 
 - 인덱스 탐색은 Root -> Branch -> Leaf -> 디스크 저장소 순으로 진행된다.   
     - 예를 들어 Branch(페이지 번호 2)는 dept-no가 d001이면서 emp-no가 10017 ~ 10024까지인 Leaf의 부모로 있다.   
-    - `즉, dept-no=d001 이면서 emp-no=10018 을 조회하면 페이지 번호 4인 Leaf를 찾아 데이터 파일의 주소를 불러와 반환하는 과정을 하게 된다.`      
+    - `즉, dept-no=d001 이면서 emp-no=10018 을 조회하면 페이지 번호 4인 Leaf를 찾아 데이터 파일의 주소를 불러와 반환하는 과정을 하게 된다.`     
 
 - `다중 컬럼 인덱스의 두번째 컬럼은 첫 번째 컬럼에 의존해서 정렬되어 있다.`   
     - 즉, 두번째 컬럼의 정렬은 첫번째 컬럼이 똑같은 열에서만 의미가 있다. 
@@ -103,7 +103,7 @@ InnoDB (MySQL)은 디스크에 데이터를 저장하는 가장 기본 단위를
 CREATE INDEX IDX_USER ON user(user_id, is_bonus);
 
 -- 인덱스 조회
-SHOW INDEX FROM [테이블 이름]   
+SHOW INDEX FROM <TABLE_NAME>  
 ```
 
 
@@ -115,7 +115,7 @@ unique 인덱스는 테이블의 한 컬럼 또는 여러 컬럼의 조합에 �
 아래와 같이 중복 값을 허용하지 않는 인덱스를 생성할 수 있다.   
 
 ```sql
-CREATE UNIQUE INDEX 인덱스 이름 ON 테이블이름(필드 이름1, 필드 이름2, ...)    
+CREATE UNIQUE INDEX <INDEX_NAME> ON <TABLE_NAME>(FIELD_NAME1, FIELD_NAME2, ...)    
 ```
 
 ### 3-3) 여러 컬럼으로 인덱스시 조건 누락  
@@ -170,6 +170,8 @@ SELECT * FROM table2 WHERE address='경기도';
 where name = ? and age = ? 에서 age 컬럼은 인덱스 적용이 되지 않는다.   
 
 `다중 컬럼 인덱스를 사용할 때는 인덱스로 설정해준 제일 왼쪽 컬럼이 where 절에 사용되어야 한다.`       
+
+> 즉, 조회 쿼리 사용시 인덱스를 태우려면 최소한 첫번째(제일 왼쪽) 인덱스 조건은 조회조건에 포함되어야만 한다.   
 
 - - - 
 
