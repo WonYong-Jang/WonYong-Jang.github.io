@@ -1,14 +1,14 @@
 ---
 layout: post
 title: "[JPA] Querydsl을 JPA와 함께 사용하기"
-subtitle: "Querydsl 환경 설정 / Querydsl 소개와 사용이유"
+subtitle: "Querydsl 환경 설정 / Querydsl 소개와 사용이유 / PageableExecutionUtils"
 comments: true
 categories : JPA
 date: 2022-04-30
 background: '/img/posts/mac.png'
 ---   
 
-## Querydsl 소개   
+## 1. Querydsl 소개   
 
 Querydsl은 HQL(Hibernate Query Language) 쿼리를 타입에 안전하게 생성 및 
 관리할 수 있게 해주는 프레임워크다.   
@@ -17,7 +17,7 @@ Querydsl은 HQL(Hibernate Query Language) 쿼리를 타입에 안전하게 생�
 
 - - -    
 
-## Querydsl 설정과 검증   
+## 2. Querydsl 설정과 검증   
 
 Querydsl을 사용하기 위해 gradle에 아래와 같이 설정을 추가한다.    
 
@@ -199,6 +199,75 @@ logging.level:
 # org.hibernate.type: trace # 쿼리에 있는 파라미터도 같이 보여준다.   
 ```  
 
+- - - 
+
+## 3. QueryDSL 에서 pageable 개선   
+
+보통 QueryDSL 에서 페이징 처리를 할 때 new PageImpl()을 사용한다.   
+
+### 3-1) 기존 QueryDSL의 페이징    
+
+<img width="800" alt="스크린샷 2024-09-18 오전 11 17 33" src="https://github.com/user-attachments/assets/c15a0eee-aea5-402d-814f-9be42616b16c">     
+
+위 그림과 같이 각 파라미터를 살펴보자.   
+
+##### content 
+
+content 인자는 아래와 같이 JpaQuery의 fetch() 의 결과값을 의미한다.   
+
+> 참고로 fetchResults()는 deprecated 되었다.   
+
+<img width="400" alt="스크린샷 2024-09-18 오전 11 22 26" src="https://github.com/user-attachments/assets/4338dce9-7e42-4ef1-b4bc-d9c9e0cd22b6">   
+
+##### total  
+
+total 은 offset, limit 이 적용되지 않은(페이징이되지 않은) 전체 갯수이다.   
+
+<img width="400" alt="스크린샷 2024-09-18 오전 11 22 32" src="https://github.com/user-attachments/assets/d7a20f11-2ba7-4bea-98a4-3d0b5a310b67">   
+
+
+즉, new PageImpl()은 총 두번의 쿼리를 실행하여 페이징을 적용한다는 것을 
+알 수 있다.   
+
+### 3-2) PageableExecutionUtils 를 이용하여 쿼리 개선    
+
+`PageableExecutionUtils를 사용하면 기존 PageImpl를 사용할 때 보다 
+성능 최적화를 할 수 있다.`   
+
+PageableExecutionUtils 클래스는 내부 getPage()라는 단 하나의 정적 메서드를 가진다.  
+아래 코드를 살펴보면서 이해해보자.   
+
+> PageableExecutionUtils.getPage() 내부에선 결국 new PageImpl()을 
+호출하고 있다.   
+> 즉, new PageImpl()을 한번 더 추상화했다고 볼 수 있다.   
+
+<img width="900" alt="스크린샷 2024-09-18 오전 11 30 53" src="https://github.com/user-attachments/assets/8c86b09b-0e1c-4da4-b566-5c7d59e9986f">   
+
+- `첫 번째 페이지이면서 content 크기가 한 페이지의 사이즈보다 작을 때`   
+    - e.g. 쿼리 결과가 content 갯수 3개이며, page 크기가 10 일때   
+- `마지막 페이지일 때`      
+    - e.g. offset이 0이 아니면서, content 크기가 한페이지의 사이즈보다 작을 때   
+
+위의 두 케이스에 대해 count 쿼리를 발생시키지 않게 된다.  
+PageableExecutionUtils.getPage() 메소드의 세번째 인자인 LongSupplier 를 
+전달함으로써, 필요한 경우에만 count 쿼리를 발생시킬 수 있게 한다.  
+
+샘플 코드는 아래와 같다.   
+
+```java
+List<BookmarkResponse> fetch = query.select(new QBookmarkResponse(qBookmark, qFo
+            .from(qBookmark)
+            .where(condition(userId))
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+JPAQuery<Long> count = query.select(qBookmark.count())
+    .from(qBookmark)
+    .where(condition(userId));
+
+return PageableExecutionUtils.getPage(fetch, pageable, count::fetchOne);  //////
+```
 
 - - - 
 
@@ -210,13 +279,13 @@ JPA를 사용하다 보면 기본 기능으로 해결되지 않는 경우에는 
 
 Querydsl을 사용하면 자동 완성과 같은 IDE의 도움을 받을 수 있고, 컴파일 시점에 
 타입이나 문법 오류를 확인할 수 있다.   
-또한 동적 쿼리도 쉽게 사용할 수  있어서 편리하다.  
-
+또한 동적 쿼리도 쉽게 사용할 수  있어서 편리하다.   
 
 
 - - -
 Referrence
 
+<https://junior-datalist.tistory.com/342>   
 <https://www.inflearn.com/course/Querydsl-%EC%8B%A4%EC%A0%84/lecture/30114?tab=curriculum&volume=1.00>   
 <https://madplay.github.io/post/introduction-to-querydsl>   
 
