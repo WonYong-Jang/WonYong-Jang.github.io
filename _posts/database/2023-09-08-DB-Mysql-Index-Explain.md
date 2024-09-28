@@ -50,7 +50,9 @@ SQL 문을 통해 스토리지 엔진으로 가져온 데이터 대상으로 필
 
 `스토리지 엔진의 데이터 결과를 MySQL 엔진으로 전송하는데 
 데이터양을 줄여 성능 효율을 높일 수 있는 
-옵티마이저의 최적화 방식이다.`      
+옵티마이저의 최적화 방식이다.`     
+
+더 자세한 내용은 [링크](https://wonyong-jang.github.io/database/2023/09/06/DB-Mysql-Index.html)를 참고하자.   
 
 
 ### 3-3) Using where
@@ -74,7 +76,21 @@ Using where 메시지는 표시되지 않는다.
 `보통 distinct, group by, order by 절이 포함된 쿼리에서 발생할 수 있다.`      
 임시 테이블을 메모리에 생성하거나 메모리 영역을 
 초과하여 디스크에 임시 테이블을 생성하면 Using temporary는 
-성능 저하의 원인이 될 수 있기 때문에 튜닝의 대상이 된다.   
+성능 저하의 원인이 될 수 있기 때문에 튜닝의 대상이 된다.    
+
+임시 테이블을 사용하는 경우, 조회된 데이터 조합을 
+모두 밀어넣어야하므로 당연히 인덱스나 filesort 보다 성능이 좋지 못하다.   
+
+임시 테이블이 필요한 쿼리는 아래와 같다.   
+
+- order by와 group by에 명시된 컬럼이 다른 쿼리   
+- order by와 group by에 명시된 컬럼이 조인의 순서상 첫 번째 테이블이 아닌 쿼리   
+- distinct와 order by가 동시에 존재하는 경우 또는 distinct가 인덱스로 처리되지 못하는 
+쿼리   
+- union 이나 union distinct가 사용된 쿼리   
+- union all이 사용된 쿼리   
+
+
 
 
 ### 3-5) Using filesort   
