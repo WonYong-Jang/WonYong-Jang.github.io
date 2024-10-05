@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Iceberg] Apache Iceberg 등장"
-subtitle: "Hive와 비교하여 Iceber만의 특징(Snapshot, Hidden Partition) / Hive 사용시 문제점"
+subtitle: "Hive Table Format과 비교하여 Iceberg 의 특징(Snapshot, Hidden Partition) "   
 comments: true
 categories : BigData
 date: 2024-10-01
@@ -10,7 +10,7 @@ background: '/img/posts/mac.png'
 
 ## 1. Apache Iceberg의 등장   
 
-기존의 Apache Hive에서 대용량 데이터를 다룰 때 규모/성능/사용성에 대한 
+기존의 Apache Hive에서 대용량 데이터를 다룰 때 규모, 성능, 사용성에 대한 
 문제가 존재했고 이를 해결하기 위해 등장하게 되었다.   
 Netflix에서 개발되었으며 페타바이트 규모의 테이블을 위해 설계된 
 개방형 테이블 형식으로 설계 되어 모든 파일 포맷을 관리 구성 및 추적하는 
@@ -27,7 +27,7 @@ Netflix에서 개발되었으며 페타바이트 규모의 테이블을 위해 �
 
 ## 2. Iceberg 구조   
 
-`Iceberg는 크게 data layer, metadata layer, iceberg catalog로 계층적인 
+`Iceberg는 크게 data layer, metadata layer, Iceberg catalog로 계층적인 
 구조로 이루어져 있다.`      
 
 <img width="650" alt="스크린샷 2024-10-01 오후 12 04 25" src="https://github.com/user-attachments/assets/f91dcc7f-dc83-40ab-a4ce-58918cd8d520">   
@@ -45,12 +45,15 @@ catalog는 특정 데이터 소스에 접근을 가능하게 만들어주는 설
 `테이블 형상은 metadata file로 관리되며, 테이블 내용에 변경이 생기면 
 새로운 metadata file이 만들어지고 기존의 것을 대체 한다.`        
 
-`metadata file은 스키마, 파티션, 스냅샷에 대한 정보를 가지고 있다.`  
+metadata file은 스키마, 파티션, 스냅샷에 대한 정보를 가지고 있다.      
 
 > 참고로, Hive는 MetaStore에서 메타데이터를 관리하여 RDB 스토리지 부하 문제가 발생할 수 있다.   
 
-`Iceberg는 스냅샷 기능을 통해 특정 시점의 테이블 형상을 파일로 기록해주는데, 
-    이는 특정 시점에 대한 rollback이 가능하게 해준다.`      
+`즉, Iceberg는 메타정보 및 데이터를 파일로 관리하기 때문에 hive 테이블 형식의 
+문제점을 해결한 키 포인트이다.`        
+
+Iceberg는 스냅샷 기능을 통해 특정 시점의 테이블 형상을 파일로 기록해주는데, 
+    이는 `특정 시점에 대한 rollback이 가능`하게 해준다.          
 
 
 
@@ -78,10 +81,14 @@ SELECT * FROM mydb.iceberg_table.snapshots;
 `실제 데이터 파일을 저장하는 곳`으로, 테이블에 정의된 파일 포맷(orc, parquet)형식으로 데이터 파일을 저장해 준다.    
 manifest file의 메타 정보를 이용하여 필요한 데이터 파일에 접근할 수 있게 된다.   
 
-정리해보면 Iceberg는 metadata -> manifest 를 거쳐서 원하는 데이터를 쉽게 찾을 수 있다.  
-만약 특정 파티션 값의 데이터를 조회하는 쿼리가 실행된다면 
-manifest list의 파티션 정보로 필터링 -> 필터링된 manifest를 거쳐서 데이터 
-파일을 가져올 수 있다.     
+정리해보면 Iceberg는 metadata -> manifest 를 거쳐서 원하는 데이터를 쉽게 찾을 수 있다.    
+
+select 쿼리가 발생하면 아래와 같은 프로세스로 데이터를 조회한다.   
+
+- catalog에 접근하여 현재 metadata pointer를 체크한다.   
+- pointer가 가르키는 metadata file을 읽는다. (스키마, 파티션, 스냅샷 정보)   
+- manifest list의 파티션 정보로 필터링 후 필터링된 manifest를 거쳐서 데이터 
+파일을 가져온다.   
 
 - - - 
 
@@ -89,7 +96,7 @@ manifest list의 파티션 정보로 필터링 -> 필터링된 manifest를 거�
 
 Hive는 데이터를 관리할 때 MetaStore(RDB) + 데이터(HDFS 안에 있는 실제 데이터 파일)로 
 나뉘어서 관리 된다.   
-DB에서 파일이 어디에 있는지 어떤 데이터를 추출해야 하는지 스키마나 파티션 정보들을  
+DB에서 파일이 어디에 있는지 어떤 데이터를 추출해야 하는지 스키마나 파티션 정보들을 
 관리하고 실제 데이터는 HDFS나 S3 등에 적재 되어 있다.   
 
 Hive Table을 사용할 때 아래와 같은 문제점이 발생할 수 있다.   
@@ -168,7 +175,14 @@ Time Travel은 Iceberg가 스냅샷을 관리하기 때문에 특정 시점의
 ```sql   
 -- 특정 스냅샷 시점의 데이터 조회
 SELECT * FROM mydb.iceberg_table.snapshot_at('2023-09-01T00:00:00');
-```
+```   
+
+### 4-4) Upsert 와 Delete   
+
+
+
+<img width="1400" alt="스크린샷 2024-10-01 오후 10 12 45" src="https://github.com/user-attachments/assets/5c1972b7-6a22-4e19-8441-68c8df5aa8b3">     
+
 
 
 - - -
