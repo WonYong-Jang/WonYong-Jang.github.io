@@ -18,7 +18,13 @@ Netflix에서 개발되었으며 페타바이트 규모의 테이블을 위해 �
 
 `간단히 요약하자면 Iceberg는 오픈 소스 테이블 포맷을 의미하며 구조상 
 대용량 데이터를 쉽게 다룰 수 있는 이점이 있는데, Iceberg의 
-구조와 특징에 대해 자세히 알아보자.`   
+구조와 특징에 대해 자세히 알아보자.`  
+
+Iceberg는 Hadoop 및 Apache Spark와 같은 분산 처리 시스템에서 사용되며, 
+    대규모 데이터셋에 대한 효율적인 저장, 버전관리, 스키마 변화 관리 및 
+    쿼리 처리를 제공한다.   
+
+
 
 그 외에도 Uber에서 개발한 Hudi, Databricks에서 지원하는 delta lake 가 존재하며,
     이 글에서는 Iceberg에 대해서 다룰 예정이다.
@@ -137,7 +143,8 @@ Hive는 MetaStore라는 메타데이터 저장소를 RDB를 활용하여 구축�
 
 기존에 Hive는 ORC 파일 포맷을 이용할 때만 ACID 트랜잭션을 지원했지만 
 Iceberg에서는 분산환경에서도 ACID 트랜잭션을 지원하며 데이터 일관성과 
-무결성을 보장한다.   
+무결성을 보장하여 여러 사용자가 동시에 데이터를 안전하게 
+수정할 수 있도록 한다.   
 
 
 ### 4-2) Hidden Partition    
@@ -187,6 +194,7 @@ SELECT * FROM mydb.iceberg_table.snapshot_at('2023-09-01T00:00:00');
 
 - - -
 
+<https://wikidocs.net/228567>   
 <https://magpienote.tistory.com/255>    
 <https://iceberg.apache.org/docs/latest/spark-queries/>   
 <https://developers-haven.tistory.com/50>   
