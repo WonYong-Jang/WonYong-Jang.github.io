@@ -42,7 +42,7 @@ Spark Streaming 및 AWS 인프라를 통해
 - Nginx, Tomcat   
 - Spark Streaming/Batch, Structured Streaming     
 - AWS Event Bridge, Kinesis, Kafka
-- Hive, Presto, Trino     
+- Hive, Presto, Trino, Iceberg         
 - ELK Stack   
 - Grafana, Graylog, Prometheus, nGrinder   
 - Git/Github 
