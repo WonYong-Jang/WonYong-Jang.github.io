@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Iceberg] Apache Iceberg 등장"
-subtitle: "Hive Table Format과 비교하여 Iceberg 의 특징(Snapshot, Hidden Partition) "   
+subtitle: "Hive Table Format과 비교하여 Iceberg 의 특징(Snapshot, Hidden Partition) / 스냅샷 정리방법" / Tag   
 comments: true
 categories : BigData
 date: 2024-10-01
@@ -174,27 +174,146 @@ WHERE event_date = '2024-10-01';
 
 `Iceberg는 데이터의 각 스냅샷을 관리한다. 그렇기 때문에 과거 시점의 데이터를 
 조회할 수도 있고 데이터를 롤백할 수 있도록 제공한다.`   
-Time Travel은 Iceberg가 스냅샷을 관리하기 때문에 특정 시점의 
+
+[Time Travel](https://iomete.com/resources/reference/iceberg-tables/time-travel)은 Iceberg가 스냅샷을 관리하기 때문에 특정 시점의 
 데이터 상태를 조회할 수 있도록 제공하는 기능이다.  
 이를 통해 데이터 변경 이력을 추적하고 분석할 수 있다.   
 
+아래는 스냅샷을 조회하는 예시이다.   
 
 ```sql   
+-- 스냅샷 모두 조회 
+SELECT * FROM my_catalog.my_database.my_table.snapshots
+
 -- 특정 스냅샷 시점의 데이터 조회
 SELECT * FROM mydb.iceberg_table.snapshot_at('2023-09-01T00:00:00');
 ```   
 
-### 4-4) Upsert 와 Delete   
+롤백 방식은 여러방식을 제공하며 아래 예시를 살펴보자.   
 
+```sql
+-- RESTORE_TABLE
+-- 특정 스냅샷으로 테이블의 상태를 복원하되, 기존 스냅샷 히스토리를 유지한다.  
+CALL my_catalog.my_database.RESTORE_TABLE('my_table', 'snapshot_id');
 
+-- ROLLBACK_TO_SNAPSHOT
+-- 특정 스냅샷으로 테이블의 상태를 롤백한다.  
+-- 현재 테이블의 상태를 완전히 이전 스냅샷으로 되돌린다.   
+CALL my_catalog.my_database.my_table.ROLLBACK_TO_SNAPSHOT('snapshot_id');
+
+-- ROLLBACK_TO_TIMESTAMP   
+-- 명시적으로 스냅샷 ID를 지정할 필요 없이 특정 타임스탬프에 해당하는 상태로 테이블을 롤백한다.   
+-- 이때 가장 최근의 스냅샷을 참조하여 해당 시점의 상태로 복원한다.   
+CALL my_catalog.my_database.my_table.ROLLBACK_TO_TIMESTAMP(TIMESTAMP 'YYYY-MM-DD HH:MM:SS');
+
+-- SET_CURRENT_SNAPSHOT   
+-- 테이블의 현재 스냅샷을 변경하여 특정 스냅샷을 현재 스냅샷으로 설정한다.  
+-- 이전 스냅샷으로 롤백하는 대신, 특정 스냅샷을 현재로 설정할 수 있다.   
+CALL my_catalog.my_database.my_table.SET_CURRENT_SNAPSHOT('snapshot_id');
+
+-- CHERRYPICK_SNAPSHOT
+-- 특정 스냅샷의 변경 사항만 선택적으로 적용하여 현재 테이블에 반영한다.   
+-- 전체 롤백과는 달리 선택적인 변경을 수행 
+CALL my_catalog.my_database.my_table.CHERRYPICK_SNAPSHOT('snapshot_id');
+```
+
+### 4-4) Upsert 와 Delete  
+
+[링크](https://iomete.com/resources/reference/iceberg-tables/writes) 에서 
+더 많은 쿼리 예시를 살펴보자.   
 
 <img width="1400" alt="스크린샷 2024-10-01 오후 10 12 45" src="https://github.com/user-attachments/assets/5c1972b7-6a22-4e19-8441-68c8df5aa8b3">     
 
+- - - 
 
+## 5. Iceberg Maintenance   
+
+Apache Iceberg를 사용할 때, 데이터 변경이 발생할 때마다 스냅샷이 
+생성되어 s3와 같은 스토리지에 저장된다.   
+이 스냅샷들이 누적되면서 저장 공간을 많이 차지할 수 있기 때문에, 
+    실무에서는 주기적으로 스냅샷을 정리하는 것이 중요하다.   
+
+이를 위해 Iceberg는 스냅샷과 데이터 파일 관리를 위한 
+몇 가지 방법을 제공한다.   
+
+### 5-1) Expire Snapshots(스냅샷 만료)    
+
+Iceberg는 오래된 스냅샷을 삭제하는 메커니즘을 제공하며, 
+    일정 기간 이전의 스냅샷을 만료시킴으로써 스토리지 비용을 줄일 수 있다.   
+
+아래와 같이 특정 날짜 이전의 모든 스냅샷을 삭제하여 테이블의 
+메타데이터를 정리하고 스토리지 사용량을 줄이는데 사용된다.   
+
+
+```
+CALL <catalog_name>.<namespace>.expire_snapshots('<table_name>', TIMESTAMP '<expiration_time>')
+
+- catalog_name: Iceberg의 카탈로그의 이름   
+- namespace: Iceberg 테이블이 포함된 데이터베이스 이름  
+- table_name: 스냅샷을 만료시킬 Iceberg 테이블의 이름   
+- expiration_time: 삭제할 스냅샷의 기준 날짜이며, 이 날짜 이전에 생성된 모든 스냅샷이 삭제된다.   
+```
+
+아래 예시는 2023년 1월 1일 이전에 생성된 모든 스냅샷을 삭제한다.   
+
+```sql
+CALL my_catalog.my_database.expire_snapshots('my_table', TIMESTAMP '2023-01-01 00:00:00')
+```
+
+추가적으로 스냅샷 관리 시, 만료 기간이 지났음에도 가장 최근 
+스냅샷 만큼 유지하는 옵션이 있으며, 아래 예시를 보자.   
+
+```
+CALL my_catalog.my_database.expire_snapshots('my_table', TIMESTAMP '2023-01-01 00:00:00', retain_last=3)
+
+- retain_last: 2023년 1월 1일 이전의 생성된 모든 스냅샷을 삭제하되, 가장 최근 3개의 스냅샷은 삭제하지 않고 유지   
+```
+
+### 5-2) Remove Orphan Files(고아 파일 제거)    
+
+Iceberg의 메타데이터와 연결되지 않은 고아 파일(Orphan Files)이 
+있을 수 있다. 이러한 파일을 정리하지 않으면 스토리지가 낭비될 수 있기 
+때문에, 주기적으로 고아 파일을 삭제하는 것이 좋다.   
+
+> 스냅샷을 만료시킨 후, 해당 스냅샷이 참조하던 파일들이 남아 있을 수 있다.   
+
+```
+CALL <catalog_name>.<namespace>.remove_orphan_files('<table_name>', TIMESTAMP '<expiration_time>')
+```
+
+
+### 5-3) Table Compaction(테이블 압축)    
+
+데이터 파일을 정리하고, 작은 파일들을 합치는 작업(Compaction)을 
+주기적으로 수행하여 읽기 성능을 최적화하고, 스토리지 효율성을 
+높일 수 있다.   
+
+```sql
+CALL catalog.schema.rewrite_data_files('table_name');
+```
+
+- - - 
+
+## 6. Spark 에서 Iceberg 사용   
+
+
+
+```python
+from pyspark.sql import SparkSession
+
+# Spark 세션 생성
+spark = SparkSession.builder \
+    .appName("Iceberg Snapshot Example") \
+    .config("spark.sql.catalog.my_catalog", "org.apache.iceberg.spark.SparkCatalog") \
+    .config("spark.sql.catalog.my_catalog.type", "hadoop") \
+    .config("spark.sql.catalog.my_catalog.warehouse", "s3://your-iceberg-warehouse") \
+    .getOrCreate()
+```
 
 - - -
 
 <https://wikidocs.net/228567>   
+<https://iomete.com/resources/reference/iceberg-tables/maintenance>   
 <https://magpienote.tistory.com/255>    
 <https://iceberg.apache.org/docs/latest/spark-queries/>   
 <https://developers-haven.tistory.com/50>   
