@@ -72,9 +72,10 @@ Iceberg는 스냅샷 기능을 통해 특정 시점의 테이블 형상을 파�
 
 ```sql
 -- 테이블 스냅샷 조회(시점별 스냅샷에 대한 manifest list 확인 가능)
+-- Spark SQL 에서 조회
 SELECT * FROM mydb.iceberg_table.snapshots; 
 
--- Trino 에서 아래와 같이 확인 가능 
+-- Trino(Presto) 에서 아래와 같이 확인 가능 
 SELECT * FROM "mydb"."iceberg_table$snapshots";
 ```
 
@@ -194,6 +195,9 @@ WHERE event_date = '2024-10-01';
 아래는 스냅샷을 조회하는 예시이다.   
 
 ```sql   
+-- catalog 이름 검색
+SHOW catalogs;
+
 -- 스냅샷 모두 조회 
 SELECT * FROM my_catalog.my_database.my_table.snapshots
 
@@ -214,35 +218,54 @@ for version as of 1234;
 ```sql
 -- RESTORE_TABLE
 -- 특정 스냅샷으로 테이블의 상태를 복원하되, 기존 스냅샷 히스토리를 유지한다.  
-CALL my_catalog.my_database.RESTORE_TABLE('my_table', 'snapshot_id');
+CALL my_catalog.system.RESTORE_TABLE('my_table', 'snapshot_id');
 
 -- ROLLBACK_TO_SNAPSHOT
 -- 특정 스냅샷으로 테이블의 상태를 롤백한다.  
 -- 현재 테이블의 상태를 완전히 이전 스냅샷으로 되돌린다.   
-CALL my_catalog.my_database.my_table.ROLLBACK_TO_SNAPSHOT('snapshot_id');
+CALL my_catalog.system.my_table.ROLLBACK_TO_SNAPSHOT('snapshot_id');
 
 -- ROLLBACK_TO_TIMESTAMP   
 -- 명시적으로 스냅샷 ID를 지정할 필요 없이 특정 타임스탬프에 해당하는 상태로 테이블을 롤백한다.   
 -- 이때 가장 최근의 스냅샷을 참조하여 해당 시점의 상태로 복원한다.   
-CALL my_catalog.my_database.my_table.ROLLBACK_TO_TIMESTAMP(TIMESTAMP 'YYYY-MM-DD HH:MM:SS');
+CALL my_catalog.system.my_table.ROLLBACK_TO_TIMESTAMP(TIMESTAMP 'YYYY-MM-DD HH:MM:SS');
 
 -- SET_CURRENT_SNAPSHOT   
 -- 테이블의 현재 스냅샷을 변경하여 특정 스냅샷을 현재 스냅샷으로 설정한다.  
 -- 이전 스냅샷으로 롤백하는 대신, 특정 스냅샷을 현재로 설정할 수 있다.   
-CALL my_catalog.my_database.my_table.SET_CURRENT_SNAPSHOT('snapshot_id');
+CALL my_catalog.system.my_table.SET_CURRENT_SNAPSHOT('snapshot_id');
 
 -- CHERRYPICK_SNAPSHOT
 -- 특정 스냅샷의 변경 사항만 선택적으로 적용하여 현재 테이블에 반영한다.   
 -- 전체 롤백과는 달리 선택적인 변경을 수행 
-CALL my_catalog.my_database.my_table.CHERRYPICK_SNAPSHOT('snapshot_id');
+CALL my_catalog.system.my_table.CHERRYPICK_SNAPSHOT('snapshot_id');
 ```
 
-### 4-4) Upsert 와 Delete  
+### 4-4) Upsert 와 Delete 
 
-[링크](https://iomete.com/resources/reference/iceberg-tables/writes) 에서 
-더 많은 쿼리 예시를 살펴보자.   
 
 <img width="1400" alt="스크린샷 2024-10-01 오후 10 12 45" src="https://github.com/user-attachments/assets/5c1972b7-6a22-4e19-8441-68c8df5aa8b3">     
+
+upsert 는 아래와 같이 merge 쿼리를 제공하며 전통적인 sql에서 사용하는 구문과 유사하다.    
+
+```sql
+-- 대상 테이블(target): 병합 작업이 수행될 테이블
+-- 소스 테이블(source): 병합할 데이터를 제공할 테이블   
+-- 조건(on): 대상 테이블과 소스 테이블 간의 매칭 조건을 정의   
+-- 일치하는 경우(when matched): 매칭 조건이 참일 때 수행할 작업을 정의   
+-- 일치하지 않는 경우(when not matched): 매칭 조건이 거짓일 때 수행할 작업을 정의   
+
+MERGE INTO my_database.iceberg_table AS target
+USING (
+        SELECT 1 AS productid, 101 AS categoryid
+      ) AS source   
+ON target.productid = source.productid
+WHEN MATCHED THEN update set * 
+WHEN NOT MATCHED THEN insert *   
+```
+
+[링크](https://iomete.com/resources/reference/iceberg-tables/writes) 에서
+더 많은 쿼리 예시를 살펴보자.
 
 - - - 
 
@@ -289,6 +312,7 @@ CALL my_catalog.my_database.expire_snapshots('my_table', TIMESTAMP '2023-01-01 0
 - retain_last: 2023년 1월 1일 이전의 생성된 모든 스냅샷을 삭제하되, 가장 최근 3개의 스냅샷은 삭제하지 않고 유지   
 ```
 
+
 ### 5-2) Remove Orphan Files(고아 파일 제거)    
 
 Iceberg의 메타데이터와 연결되지 않은 고아 파일(Orphan Files)이 
@@ -316,7 +340,7 @@ CALL catalog.schema.rewrite_data_files('table_name');
 
 ## 6. Spark 에서 Iceberg 사용   
 
-
+Spark에서 Iceberg 테이블을 사용하기 위한 코드를 살펴보자.  
 
 ```python
 from pyspark.sql import SparkSession
@@ -329,6 +353,17 @@ spark = SparkSession.builder \
     .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
     .getOrCreate()
 ```
+
+> spark_catalog는 해당 catalog의 이름이다.   
+
+위의 코드에서 `catalog.type을 hive`로 지정하였고, 이는 hive 메타스토어를 사용하여 
+테이블의 메타데이터를 관리한다.   
+hive를 사용하는 경우는 기존에 hive 생태계를 사용하고 있어서 
+여러 어플리케이션이 메타데이터를 공유해야 하는 경우에 주로 사용한다.   
+
+반면 `hadoop으로 설정하면 hive 메타스토어를 사용하지 않고, Iceberg가 
+자체적으로 hdfs나 s3와 같은 파일 시스템을 통해 메타데이터 파일을 관리`한다.   
+메타데이터는 테이블의 메타데이터 디렉토리에 json 파일 형식으로 저장된다.   
 
 - - -
 
