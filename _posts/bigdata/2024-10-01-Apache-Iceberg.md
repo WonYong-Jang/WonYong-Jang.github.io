@@ -72,8 +72,20 @@ Iceberg는 스냅샷 기능을 통해 특정 시점의 테이블 형상을 파�
 
 ```sql
 -- 테이블 스냅샷 조회(시점별 스냅샷에 대한 manifest list 확인 가능)
-SELECT * FROM mydb.iceberg_table.snapshots;   
+SELECT * FROM mydb.iceberg_table.snapshots; 
+
+-- Trino 에서 아래와 같이 확인 가능 
+SELECT * FROM "mydb"."iceberg_table$snapshots";
 ```
+
+```sql
+-- Trino 에서 조회 가능
+-- file 하나 하나 담긴 row count, file size, 컬럼별 size, 특정 컬럼의 null row count 까지 파악할 수 있다.
+SELECT * FROM "mydb"."iceberg_table$files";
+```
+
+`위와 같은 쿼리로 스냅샷 히스토리 조회가 가능하며, 이를 통해 해당 테이블의 트랜잭션이 언제 발생하였는지, 
+    얼마나 많은 파일의 업데이트가 이뤄졌는지 쉽게 파악할 수 있다.`    
 
 
 ##### manifest file   
@@ -187,7 +199,15 @@ SELECT * FROM my_catalog.my_database.my_table.snapshots
 
 -- 특정 스냅샷 시점의 데이터 조회
 SELECT * FROM mydb.iceberg_table.snapshot_at('2023-09-01T00:00:00');
-```   
+```  
+
+```sql
+-- Trino 에서 조회
+-- 1234 는 snapshot id
+
+SELECT * FROM mydb.iceberg_table 
+for version as of 1234;
+```
 
 롤백 방식은 여러방식을 제공하며 아래 예시를 살펴보자.   
 
