@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Iceberg] Apache Iceberg 등장"
-subtitle: "Hive Table Format과 비교하여 Iceberg 의 특징(Snapshot, Hidden Partition) / 스냅샷 정리방법" / Tag   
+subtitle: "Hive Table Format과 비교하여 Iceberg 의 특징(Snapshot, Hidden Partition) / 스냅샷 정리방법 / Tag" 
 comments: true
 categories : BigData
 date: 2024-10-01
@@ -304,9 +304,9 @@ from pyspark.sql import SparkSession
 # Spark 세션 생성
 spark = SparkSession.builder \
     .appName("Iceberg Snapshot Example") \
-    .config("spark.sql.catalog.my_catalog", "org.apache.iceberg.spark.SparkCatalog") \
-    .config("spark.sql.catalog.my_catalog.type", "hadoop") \
-    .config("spark.sql.catalog.my_catalog.warehouse", "s3://your-iceberg-warehouse") \
+    .config("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog") \
+    .config("spark.sql.catalog.spark_catalog.type", "hive") \
+    .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
     .getOrCreate()
 ```
 
