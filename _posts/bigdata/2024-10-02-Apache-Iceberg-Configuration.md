@@ -9,7 +9,7 @@ background: '/img/posts/mac.png'
 ---
 
 
-## 6. 테이블 생성
+## 1. 테이블 생성
 
 아래와 같이 iceberg 테이블 생성 예시를 통해 
 [주요 옵션](https://iceberg.apache.org/docs/latest/configuration/#reserved-table-properties)에 대해서 살펴보자.  
@@ -60,6 +60,8 @@ iceberg 테이블에서 데이터를 저장할 기본 파일 형식을 설정한
 
 
 #### 6-5) write.delete.mode   
+
+
 
 #### 6-6) write.merge.mode  
 
