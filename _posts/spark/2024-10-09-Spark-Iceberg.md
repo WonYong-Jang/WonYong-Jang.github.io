@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Spark에서 Iceberg 테이블 다루기"
-subtitle: "" 
+subtitle: "테이블 생성 및 업데이트, 병합 쿼리" 
 comments: true
 categories : Spark
 date: 2024-10-09
@@ -35,7 +35,37 @@ hive를 사용하는 경우는 기존에 hive 생태계를 사용하고 있어�
 자체적으로 hdfs나 s3와 같은 파일 시스템을 통해 메타데이터 파일을 관리`한다.   
 메타데이터는 테이블의 메타데이터 디렉토리에 json 파일 형식으로 저장된다.  
 
+- - - 
 
+## 2. 테이블 생성   
+
+
+```python
+// Iceberg 테이블 생성
+spark.sql("""
+  CREATE TABLE my_catalog.db.my_table (
+    id BIGINT,
+    name STRING,
+    ts TIMESTAMP
+  ) USING iceberg
+  PARTITIONED BY (days(ts))
+""")
+```
+
+- - - 
+
+## 3. merge
+
+```python
+// Iceberg 테이블에 조건부 업데이트/삽입 (MERGE INTO)
+spark.sql("""
+  MERGE INTO my_catalog.db.my_table t
+  USING updates u
+  ON t.id = u.id
+  WHEN MATCHED THEN UPDATE SET *
+  WHEN NOT MATCHED THEN INSERT *
+""")
+```
 
 - - -
 
