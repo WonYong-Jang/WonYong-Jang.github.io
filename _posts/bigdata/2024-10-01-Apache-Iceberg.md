@@ -218,27 +218,27 @@ for version as of 1234;
 ```sql
 -- RESTORE_TABLE
 -- 특정 스냅샷으로 테이블의 상태를 복원하되, 기존 스냅샷 히스토리를 유지한다.  
-CALL my_catalog.system.RESTORE_TABLE('my_table', 'snapshot_id');
+CALL spark_catalog.system.RESTORE_TABLE('my_table', 'snapshot_id');
 
 -- ROLLBACK_TO_SNAPSHOT
 -- 특정 스냅샷으로 테이블의 상태를 롤백한다.  
 -- 현재 테이블의 상태를 완전히 이전 스냅샷으로 되돌린다.   
-CALL my_catalog.system.my_table.ROLLBACK_TO_SNAPSHOT('snapshot_id');
+CALL spark_catalog.system.ROLLBACK_TO_SNAPSHOT('db_name.table_name','snapshot_id');
 
 -- ROLLBACK_TO_TIMESTAMP   
 -- 명시적으로 스냅샷 ID를 지정할 필요 없이 특정 타임스탬프에 해당하는 상태로 테이블을 롤백한다.   
 -- 이때 가장 최근의 스냅샷을 참조하여 해당 시점의 상태로 복원한다.   
-CALL my_catalog.system.my_table.ROLLBACK_TO_TIMESTAMP(TIMESTAMP 'YYYY-MM-DD HH:MM:SS');
+CALL spark_catalog.system.my_table.ROLLBACK_TO_TIMESTAMP(TIMESTAMP 'YYYY-MM-DD HH:MM:SS');
 
 -- SET_CURRENT_SNAPSHOT   
 -- 테이블의 현재 스냅샷을 변경하여 특정 스냅샷을 현재 스냅샷으로 설정한다.  
 -- 이전 스냅샷으로 롤백하는 대신, 특정 스냅샷을 현재로 설정할 수 있다.   
-CALL my_catalog.system.my_table.SET_CURRENT_SNAPSHOT('snapshot_id');
+CALL spark_catalog.system.my_table.SET_CURRENT_SNAPSHOT('snapshot_id');
 
 -- CHERRYPICK_SNAPSHOT
 -- 특정 스냅샷의 변경 사항만 선택적으로 적용하여 현재 테이블에 반영한다.   
 -- 전체 롤백과는 달리 선택적인 변경을 수행 
-CALL my_catalog.system.my_table.CHERRYPICK_SNAPSHOT('snapshot_id');
+CALL spark_catalog.system.my_table.CHERRYPICK_SNAPSHOT('snapshot_id');
 ```
 
 ### 4-4) Upsert 와 Delete 
