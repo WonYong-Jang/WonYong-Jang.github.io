@@ -343,7 +343,8 @@ CALL catalog.schema.rewrite_data_files('table_name');
 <https://iomete.com/resources/reference/iceberg-tables/maintenance>   
 <https://magpienote.tistory.com/255>    
 <https://iceberg.apache.org/docs/latest/spark-queries/>   
-<https://developers-haven.tistory.com/50>   
+<https://developers-haven.tistory.com/50>  
+<https://toss.tech/article/datalake-iceberg>   
 
 {% highlight ruby linenos %}
 {% endhighlight %}
