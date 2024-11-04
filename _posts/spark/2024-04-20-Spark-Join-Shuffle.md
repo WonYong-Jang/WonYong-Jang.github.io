@@ -183,7 +183,22 @@ val joinDF = bigDF.join(broadcast(smallDF), "joinKey")
     고려해 볼 수 있다.   
 각 키 별로 필터링하여 broadcast join과 일반적인 join을 나눠서 수행하고 union으로 
 합치는 방법이다.   
-이 방법은 다루기 힘든 심하게 skewed 된 데이터를 다룰 때 고려해 볼 수 있을 것이다.    
+이 방법은 다루기 힘든 심하게 skewed 된 데이터를 다룰 때 고려해 볼 수 있을 것이다.   
+
+### 3-7) Broadcast Nested Loop Join
+
+Broadcast hash 조인과 유사하게 작은 데이터 셋이 전체 워커 노드로 전달 되지만, 
+hash 기반 조인이 아닌, nested loop join이 진행된다.   
+
+데이터 셋이 크다면 굉장히 비효율적인 방식이다.   
+
+### 3-8) Cartesian Product Join    
+
+Shuffle and Replication Nested Loop Join 이기도 하며 데이터 셋이 
+Broadcast 되지 않는다는 점을 제외하면 Broadcast Nested Loop Join과 
+매우 유사하게 동작한다.
+
+
 
 
 - - - 
