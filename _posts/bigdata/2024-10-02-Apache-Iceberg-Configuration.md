@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Iceberg] Apache Iceberg 주요 설정 및 테이블 생성"
-subtitle: "iceberg 테이블 생성 및 주요 설정 / snapshot 및 메타데이터 관리 옵션" 
+subtitle: "iceberg 테이블 생성 및 주요 설정 / snapshot 및 메타데이터 관리 옵션 / 유지보수" 
 comments: true
 categories : BigData
 date: 2024-10-02
@@ -125,10 +125,68 @@ iceberg 테이블에서 데이터를 저장할 기본 파일 형식을 설정한
 최소한으로 유지해야 할 스냅샷의 개수를 보장한다.   
 
 
+- - -   
+
+## 2. 테이블 복구 및 재구축   
+
+Iceberg 테이블을 운영하다 보면, 여러 가지 이유로 테이블을 복구하거나 다시 설정해야 하는 상황이 발생할 수 있다.   
+다음은 테이블 복구 및 재구축을 위해 사용되는 주요 방법들이다.   
+
+### 2-1) 카탈로그에서 테이블이 제거된 경우    
+
+`데이터와 메타데이터 파일이 정상적으로 존재하지만, 카탈로그에서 테이블이 삭제된 경우 아래 명령`을 사용해 
+[테이블을 다시 등록](https://iceberg.apache.org/docs/1.6.1/spark-procedures/#register_table)할 수 있다.   
+이 방법을 통해 기존 데이터 구조를 유지하면서 빠르게 테이블을 복구할 수 있다.     
+
+```python
+# 기존 메타데이터 파일을 사용해 테이블을 등록
+spark.sql("CALL system.register_table(table => 'db.sample', metadata_file => 'hdfs://{metadata_path}/metadata.json')")
+```  
+
+### 2-2) 데이터 파일만 존재하는 경우   
+
+`테이블의 데이터 파일은 남아 있지만, 메타데이터가 손실된 경우 아래와 같이 진행`할 수 있다.    
+이 경우 아래 명령을 사용해 데이터 파일을 새롭게 iceberg 테이블로 등록할 수 있다. 
+
+```python
+# 데이터 파일을 Iceberg 테이블로 추가
+spark.sql("CALL system.add_files(table => 'db.sample', source_table => 'parquet.`hdfs://{path}/data`')")
+```
+
+### 2-3) 기존 테이블을 Iceberg로 변환   
+
+다른 포맷으로 저장된 기존 테이블을 iceberg 테이블로 변경하고 싶을 때는 [migrate 명령](https://iceberg.apache.org/docs/1.6.1/spark-procedures/#migrate)을 사용할 수 있다.   
+이 명령을 통해 기존 데이터를 유지하면서 iceberg의 장점을 활용할 수 있다.   
+
+```python
+# 기존 테이블을 Iceberg 포맷으로 마이그레이션
+spark.sql("CALL spark_catalog.system.migrate('db.sample')")
+```
+
+
+- - -    
+
+## 3. Iceberg 유지보수 및 운영 팁   
+
+Iceberg의 메타데이터는 읽기 성능에 큰 영향을 미치기 때문에 
+주기적으로 정리하고 최적화 해야 한다.   
+
+아래 정보를 이용하여 테이블 상태 확인 및 최적화가 가능하다.   
+
+```spark
+snapshot_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.snapshots")
+manifest_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.manifests")
+data_files_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.files")
+partitions_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.partitions")
+row_count_df = spark.sql(f"select count(1) as row_count from spark_catalog.{table}")
+delete_files_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.delete_files")
+```
+
 
 
 - - -
 
+<https://toss.tech/article/datalake-iceberg>   
 <https://wikidocs.net/228567>   
 <https://iomete.com/resources/reference/iceberg-tables/maintenance>   
 <https://magpienote.tistory.com/255>    

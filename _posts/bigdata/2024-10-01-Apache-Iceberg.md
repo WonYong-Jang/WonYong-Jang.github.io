@@ -273,7 +273,7 @@ WHEN NOT MATCHED THEN insert *
 
 Apache Iceberg를 사용할 때, 데이터 변경이 발생할 때마다 스냅샷이 
 생성되어 s3와 같은 스토리지에 저장된다.   
-이 스냅샷들이 누적되면서 저장 공간을 많이 차지할 수 있기 때문에, 
+이 스냅샷들이 누적되면서 저장 공간을 많이 차지하며 성능에 영향을 끼칠 수 있기 때문에  
     실무에서는 주기적으로 스냅샷을 정리하는 것이 중요하다.   
 
 이를 위해 Iceberg는 스냅샷과 데이터 파일 관리를 위한 
@@ -303,14 +303,21 @@ CALL <catalog_name>.<namespace>.expire_snapshots('<table_name>', TIMESTAMP '<exp
 CALL my_catalog.my_database.expire_snapshots('my_table', TIMESTAMP '2023-01-01 00:00:00')
 ```
 
-추가적으로 스냅샷 관리 시, 만료 기간이 지났음에도 가장 최근 
+다만, 작업 중 간혹 org.apache.iceberg.exceptions.NotFoundException: File does not exist Avro 와 
+같은 오류가 발생할 수 있는데, 이는 특정 스냅샷 파일이 사라졌을 때 생기는 문제이다.   
+`이를 방지하기 위해 아래와 같이 최근 2개의 스냅샷을 유지한 상태에서 오래된 스냅샷을 제거하는 방식으로 
+관리하는 게 좋다.`      
+
+아래는 스냅샷 관리 시, 만료 기간이 지났음에도 가장 최근 
 스냅샷 만큼 유지하는 옵션이 있으며, 아래 예시를 보자.   
 
 ```
-CALL my_catalog.my_database.expire_snapshots('my_table', TIMESTAMP '2023-01-01 00:00:00', retain_last=3)
+CALL system.expire_snapshots(table => '{table}', older_than => TIMESTAMP '2023-01-01 00:00:00', retain_last => 2)
 
-- retain_last: 2023년 1월 1일 이전의 생성된 모든 스냅샷을 삭제하되, 가장 최근 3개의 스냅샷은 삭제하지 않고 유지   
+- retain_last: 2023년 1월 1일 이전의 생성된 모든 스냅샷을 삭제하되, 가장 최근 2개의 스냅샷은 삭제하지 않고 유지   
 ```
+
+
 
 
 ### 5-2) Remove Orphan Files(고아 파일 제거)    
