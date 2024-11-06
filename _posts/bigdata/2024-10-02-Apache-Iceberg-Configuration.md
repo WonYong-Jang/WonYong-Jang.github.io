@@ -1,13 +1,17 @@
 ---
 layout: post
 title: "[Iceberg] Apache Iceberg 주요 설정 및 테이블 생성"
-subtitle: "iceberg 테이블 생성 및 주요 설정 / snapshot 및 메타데이터 관리 옵션 / 유지보수" 
+subtitle: "iceberg 테이블 생성 및 주요 설정 / snapshot 및 메타데이터 관리 옵션 / 테이블 복구 및 유지보수" 
 comments: true
 categories : BigData
 date: 2024-10-02
 background: '/img/posts/mac.png'
 ---
 
+이번글 에서는 Apache Iceberg 테이블의 주요 설정 및 
+메타데이터를 관리하기 위한 여러가지 방법 및 옵션에 대해 살펴보자.    
+
+- - - 
 
 ## 1. 테이블 생성
 
@@ -140,13 +144,14 @@ Iceberg 테이블을 운영하다 보면, 여러 가지 이유로 테이블을 �
 
 ```python
 # 기존 메타데이터 파일을 사용해 테이블을 등록
-spark.sql("CALL system.register_table(table => 'db.sample', metadata_file => 'hdfs://{metadata_path}/metadata.json')")
+spark.sql("CALL spark_catalog.system.register_table(table => 'db.sample', metadata_file => 'hdfs://{metadata_path}/metadata.json')")
 ```  
 
 ### 2-2) 데이터 파일만 존재하는 경우   
 
 `테이블의 데이터 파일은 남아 있지만, 메타데이터가 손실된 경우 아래와 같이 진행`할 수 있다.    
 이 경우 아래 명령을 사용해 데이터 파일을 새롭게 iceberg 테이블로 등록할 수 있다. 
+이를 통해 parquet 등 다른 포맷으로 저장된 데이터를 손쉽게 Iceberg 테이블로 등록할 수 있다.   
 
 ```python
 # 데이터 파일을 Iceberg 테이블로 추가
@@ -173,14 +178,17 @@ Iceberg의 메타데이터는 읽기 성능에 큰 영향을 미치기 때문에
 
 아래 정보를 이용하여 테이블 상태 확인 및 최적화가 가능하다.   
 
-```spark
+```python
 snapshot_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.snapshots")
 manifest_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.manifests")
 data_files_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.files")
 partitions_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.partitions")
 row_count_df = spark.sql(f"select count(1) as row_count from spark_catalog.{table}")
 delete_files_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.delete_files")
-```
+```    
+
+
+
 
 
 
