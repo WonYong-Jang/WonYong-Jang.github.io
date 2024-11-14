@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Hive] Apache hive 파티션 타입 및 종류"
-subtitle: "정적, 동적 파티션 "       
+subtitle: "정적, 동적 파티션 및 파티션 관리(제거, 수정, 추가)"       
 comments: true
 categories : Hadoop
 date: 2021-05-31
@@ -221,28 +221,40 @@ ALTER TABLE supply (DROP IF EXISTS) PARTITION(day=20190621, cd=21);
 
 ## 4. 파티션 수정    
 
-Drop 파티션, rename 파티션을 위해서는 alter 명령어를 통해 수행할 수 있다.    
+drop 파티션, rename 파티션을 위해서는 alter 명령어를 통해 수행할 수 있다.    
 
 ```
 --파티션 이름 변경
-alter table delivery partition (createdat=2021-01-01) rename to partition (createdat=2021-02-02);
+alter table delivery partition (createdat='2021-01-01') rename to partition (createdat='2021-02-02');
 
 -- 파티션 Location 수정 
-alter table delivery partition (createdat=2021-01-01) set location 's3://directory';
+alter table delivery partition (createdat='2021-01-01') set location 's3://directory';
 
 -- 기본적인  파티션 삭제 
-alter table delivery drop if exists partition (createdat=2021-0101);
+alter table delivery drop if exists partition (createdat='2021-01-01');
 
 -- 2개 이상의 파티션 삭제     
 alter table delivery drop if exists partition (type ='order', createdat='2021-01-01');   
 -- order 라는 partiton 내의 createdat 이 2021-01-01인 모든 파티션 데이터가 지워진다.   
 
 -- 범위 지정 파티션 지우기     
-alter table delivery drop if exists partition (type ='order', createdat <'2021-01);   
--- order 라는 partition 내의 createdat 이 2021-0101보다 과거의 파티션 데이터가 지워진다.   
+alter table delivery drop if exists partition (type ='order', createdat < '2021-01-01);   
+-- order 라는 partition 내의 createdat 이 2021-01-01보다 과거의 파티션 데이터가 지워진다.   
 ```
 
+`위의 파티션 제거는 메타데이터의 파티션을 제거하기 때문에, external table을 사용하고 있을 경우  
+location에 위치한 데이터는 제거되지 않는다.`   
+따라서, alter table 명령어를 이용하여 파티션을 제거 하고 msck repair 를 이용하여 파티션을 복구할 수 있다.   
+
+`주의해야할 점은 external table을 사용할 때, s3 또는 hdfs에 위치한 실제 데이터만 제거하고, 메타데이터 파티션을 제거하지 
+않을 경우 아래와 같이 문제가 발생할 수 있다.`    
+
+> location의 위치한 실제 데이터는 제거되었지만 메타데이터에 해당 파티션 정보가 있기 때문에 찾지 못하는 이슈이다.   
+> org.apache.hadoop.mapred.InvalidInputException: Input path does not exist: s3://bucket/date=20241113   
+
 - - - 
+
+## 정리    
 
 파티션을 만들고 관리하는 것은 hive의 시작이라고 할 수 있다. RDBMS에는 
 트랜잭션 단위의 데이터 처리에 대한 응답성은 매우 빠르지만, 페타 단위의 
@@ -257,6 +269,10 @@ alter table delivery drop if exists partition (type ='order', createdat <'2021-0
 인덱스 설계를 고심하듯, Hive에서는 반드시 파티션에 대한 설계를 
 공들여야 한다. 그러고나면 Hive가 보장해 줄 수 있는 최소한의 성능을 
 제공받을 수 있을 것이다.    
+
+
+
+
 
 - - - 
 
