@@ -243,8 +243,9 @@ alter table delivery drop if exists partition (type ='order', createdat='2021-01
 -- order 라는 partiton 내의 createdat 이 2021-01-01인 모든 파티션 데이터가 지워진다.   
 
 -- 범위 지정 파티션 지우기     
-alter table delivery drop if exists partition (type ='order', createdat < '2021-01-01);   
--- order 라는 partition 내의 createdat 이 2021-01-01보다 과거의 파티션 데이터가 지워진다.   
+alter table delivery drop if exists partition (type ='order', createdat < '2021-01-01);  
+
+-- order 라는 partition 내의 createdat 이 2021-01-01 보다 과거의 파티션 데이터가 지워진다.   
 ```
 
 `위의 파티션 제거는 메타데이터의 파티션을 제거하기 때문에, external table을 사용하고 있을 경우  
