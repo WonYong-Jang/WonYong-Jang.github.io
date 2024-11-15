@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Hive] Apache hive 파티션 타입 및 종류"
-subtitle: "정적, 동적 파티션 및 파티션 관리(제거, 수정, 추가)"       
+subtitle: "정적, 동적 파티션 및 파티션 관리(제거, 수정, 추가) / 테이블 및 파티션 정보 확인"       
 comments: true
 categories : Hadoop
 date: 2021-05-31
@@ -178,7 +178,7 @@ set hive.merge.size.per.task =256000000;
 
 - - - 
 
-## 3. 파티션의 필요성    
+## 3. 파티션의 필요성 및 파티션 정보 확인   
 
 아래와 같은 쿼리를 수행한다고 해보자.    
 
@@ -194,7 +194,7 @@ full-scan 작업을 거쳐야 한다. 그러나 동일한 쿼리를 파티션이
 
 #### 3-1) partiton에 대한 다양한 명령어   
 
-```
+```sql
 #1 테이블 정보 및 로케이션 확인
 desc formatted [테이블명];
 
@@ -204,13 +204,18 @@ day=20190621/cd=21
 day=20190621/cd=22
 day=20190622/cd=14
 
-특정 파티션의 sub partition을 확인하려면
+# 특정 파티션의 sub partition을 확인하려면
 SHOW PARTITONS supply(day=20190621)
 day=20190621/cd=21
 day=20190621/cd=22
 
+
 #3 Partition Description(정보) 보기
 DESCRIBE FORMATTED supply PARTITION(day=20190621,cd=25);
+
+또는 
+DESCRIBE EXTENDED supply PARTITION(day=20190621,cd=25);
+
 
 #4 ALTER PARTITIONS
 #파티션 삭제
