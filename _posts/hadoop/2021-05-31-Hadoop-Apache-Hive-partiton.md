@@ -55,7 +55,7 @@ hdfs 상의 디렉토리 구조가 결정됨으로 워크로드에 따라 그 �
 
 일반적으로 hive의 non-partiton 테이블은 아래와 같이 생성 한다.   
 
-```
+```sql
 create table delivery (
     id bigint,
     orderid bigint,
@@ -66,7 +66,7 @@ create table delivery (
 위의 테이블에서 createdat 컬럼을 partition key로 설정하기 위해서는 아래와 같이 
 partitioned by를 사용하면 된다.   
 
-```
+```sql
 -- 1. Single Partition 테이블의 Create문 
 create table delivery (
     id bigint,
@@ -105,7 +105,7 @@ HDFS 관점에서 보면 파티션은 테이블 Directory 하위에 생성된 su
 
 정적 파티션은 partiton의 값을 명시적으로 입력해야 한다.     
 
-```
+```sql
 -- Static Partitioning 예시
 INSERT INTO TABLE delivery PARTITION(day=20210101)
 SELECT * FROM delivery WHERE day=20210101;
@@ -122,7 +122,7 @@ SELECT * FROM delivery WHERE day=20210101;
 
 `해당 파티션이 없는 경우에 파티션을 만들어서 입력해주는 방법이다.`    
 
-```
+```sql
 -- Dynamic Paritioining 예시
 INSERT INTO TABLE supply PARTITION (day,cd)
 SELECT id,part,quantity FROM source ;
@@ -144,7 +144,7 @@ SELECT id,part,quantity FROM source ;
 이것을 사용하기 전에 동적 파티션을 위한 아래와 같은 parameter 설정이 필요하다.   
 해당 option이 있는 이유는 과도한 partiton 생성으로 생기는 side effect를 막고자 함에 있다.   
 
-```
+```sql
 set hive.exec.dynamic.partition=true;     
  --true: hive가 동적 파티션을 수행할 수 있도록 허용 
 
@@ -195,30 +195,30 @@ full-scan 작업을 거쳐야 한다. 그러나 동일한 쿼리를 파티션이
 #### 3-1) partiton에 대한 다양한 명령어   
 
 ```sql
-#1 테이블 정보 및 로케이션 확인
+-- 1 테이블 정보 및 로케이션 확인
 desc formatted [테이블명];
 
-#2 Partition 조회하기
+-- 2 Partition 조회하기
 SHOW PARTITIONS supply;
 day=20190621/cd=21
 day=20190621/cd=22
 day=20190622/cd=14
 
-# 특정 파티션의 sub partition을 확인하려면
+-- 특정 파티션의 sub partition을 확인하려면
 SHOW PARTITONS supply(day=20190621)
 day=20190621/cd=21
 day=20190621/cd=22
 
 
-#3 Partition Description(정보) 보기
+-- 3 Partition Description(정보) 보기
 DESCRIBE FORMATTED supply PARTITION(day=20190621,cd=25);
 
-또는 
+-- 또는 
 DESCRIBE EXTENDED supply PARTITION(day=20190621,cd=25);
 
 
-#4 ALTER PARTITIONS
-#파티션 삭제
+-- 4 ALTER PARTITIONS
+-- 파티션 삭제
 ALTER TABLE supply (DROP IF EXISTS) PARTITION(day=20190621, cd=21);
 ```
 
@@ -228,7 +228,7 @@ ALTER TABLE supply (DROP IF EXISTS) PARTITION(day=20190621, cd=21);
 
 drop 파티션, rename 파티션을 위해서는 alter 명령어를 통해 수행할 수 있다.    
 
-```
+```sql
 --파티션 이름 변경
 alter table delivery partition (createdat='2021-01-01') rename to partition (createdat='2021-02-02');
 
