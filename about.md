@@ -30,7 +30,7 @@ Spark Streaming 및 AWS 인프라를 통해
 
 - Java, Kotlin, Scala, Python   
 - Spring Boot/MVC 
-- JPA, Hibernate 
+- JPA, Querydsl
 - Junit4/5, Mockito, Spock, Kotest, ScalaTest        
 - Gradle, Maven   
 
@@ -64,12 +64,11 @@ Spark Streaming 및 AWS 인프라를 통해
 
 #### 쿠팡 CS Intelligence Backend Engineer   
 
-> 2021.02.01 ~ 현재  
+> 2021.02.01 ~ 현재 
 
 - Leading data pipeline revamp project   
     - Processed rows per second(AS-IS: 800 -> TO-BE: 10,000)   
         - [<u>https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html</u>](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)     
-    - Active-Active EMR Cluster 구성    
     - 불필요한 Shuffle 제거   
     - 재처리 구조 개선     
     - 데이터 정합성 메트릭 구성    
