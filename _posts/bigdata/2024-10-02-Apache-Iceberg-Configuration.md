@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Iceberg] Apache Iceberg 주요 설정 및 테이블 생성"
-subtitle: "iceberg 테이블 생성 및 주요 설정 / snapshot 및 메타데이터 관리 옵션 / 테이블 복구 및 유지보수" 
+subtitle: "테이블 생성 및 주요 설정 / snapshot 및 메타데이터 관리 옵션 / 테이블 복구 및 유지보수 / 테이블 전환" 
 comments: true
 categories : BigData
 date: 2024-10-02
@@ -43,7 +43,10 @@ TBLPROPERTIES (
 #### external.table.purge   
 
 `테이블 삭제시 데이터 파일의 삭제 여부를 제어하는 속성이며, true로 설정되어 있으면 
-테이블을 삭제할 때 데이터 파일까지 함께 삭제된다.`      
+테이블을 삭제할 때 데이터 파일까지 함께 삭제된다.`     
+
+`external table로 생성 후 아래 설정을 true로 지정하게 되면 drop table 시 
+데이터가 손실되기 때문에 반드시 false로 설정해두어야 한다.`   
 
 ```sql
 CREATE EXTERNAL TABLE my_table (
@@ -68,13 +71,13 @@ Spark, Flink 등 호환 되는지 확인이 필요하다.
 
 #### write.format.default   
 
-iceberg 테이블에서 데이터를 저장할 기본 파일 형식을 설정한다.    
+`iceberg 테이블에서 데이터를 저장할 기본 파일 형식`을 설정한다.    
 
 > parquet, orc, avro 등
 
 #### write.parquet.compression-codec / write.orc.compression-codec
 
-데이터 파일의 압축 방식을 설정한다.   
+`데이터 파일의 압축 방식`을 설정한다.   
 
 > snappy, zlib, zstd, gzip 등이 있다.  
 
@@ -168,6 +171,21 @@ spark.sql("CALL system.add_files(table => 'db.sample', source_table => 'parquet.
 spark.sql("CALL spark_catalog.system.migrate('db.sample')")
 ```
 
+`하지만 위 Procedures 는 Avro, Parquet, and ORC 파일 포맷만 지원하기 때문에 
+다른 포맷의 경우는 사용할 수 없다.`   
+
+현재 업무에서 Json Serde 포맷을 사용하는 hive 테이블을 ORC 포맷의 Iceberg 테이블로 
+전환이 필요했고, 아래 방식으로 전환하였다.   
+
+> json 파일 포맷을 가진 hive 테이블에서 customer 이름을 동일하게 사용하되 iceberg 테이블로 
+전환이 필요하다고 가정해보자.  
+
+- iceberg 테이블 스키마를 생성 ( table name: customer-backup )   
+- 기존 hive 테이블 데이터를 iceberg 테이블로 insert overwrite 진행   
+- 기존 hive 테이블의 이름을 다른 이름으로 rename 
+- iceberg 테이블의 이름을 customer 라는 이름으로 rename 하여 전환 완료
+    - alter table customer-backup rename to customer
+
 
 - - -    
 
@@ -184,7 +202,7 @@ manifest_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.manifests")
 data_files_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.files")
 partitions_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.partitions")
 row_count_df = spark.sql(f"select count(1) as row_count from spark_catalog.{table}")
-delete_files_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.delete_files")
+delete_files_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.all_delete_files")
 ```    
 
 
