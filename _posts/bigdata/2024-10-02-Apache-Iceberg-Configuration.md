@@ -58,6 +58,11 @@ LOCATION 's3://my-bucket/my_table'
 TBLPROPERTIES ('external.table.purge' = 'true');
 ```
 
+TBLPROPERTIES 변경은 아래와 같이 가능하다.   
+
+```sql
+ALTER TABLE my_table SET TBLPROPERTIES('external.table.purge'='false');
+```
 
 
 #### format-version
