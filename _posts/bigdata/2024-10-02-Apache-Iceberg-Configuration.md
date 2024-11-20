@@ -142,7 +142,11 @@ Spark, Flink 등 호환 되는지 확인이 필요하다.
 ## 2. 테이블 복구 및 재구축   
 
 Iceberg 테이블을 운영하다 보면, 여러 가지 이유로 테이블을 복구하거나 다시 설정해야 하는 상황이 발생할 수 있다.   
-다음은 테이블 복구 및 재구축을 위해 사용되는 주요 방법들이다.   
+이때, iceberg에서 제공하는 [procedures](https://iceberg.apache.org/docs/1.7.0/spark-procedures/)를 사용할 수 있다.    
+
+`모든 procedures는 system이라는 namespace를 사용`하며, spark에서 사용하기 위해서는 
+[sql extension](https://iceberg.apache.org/docs/1.7.0/spark-configuration/#sql-extensions)이 함께 필요하다.   
+
 
 ### 2-1) 카탈로그에서 테이블이 제거된 경우    
 
@@ -267,8 +271,8 @@ Iceberg의 메타데이터와 연결되지 않은 고아 파일(Orphan Files)이
 
 > 스냅샷을 만료시킨 후, 해당 스냅샷이 참조하던 파일들이 남아 있을 수 있다.
 
-```
-CALL <catalog_name>.<namespace>.remove_orphan_files('<table_name>', TIMESTAMP '<expiration_time>')
+```sql
+CALL spark_catalog.system.remove_orphan_files('db.sample')
 ```
 
 
@@ -278,16 +282,24 @@ CALL <catalog_name>.<namespace>.remove_orphan_files('<table_name>', TIMESTAMP '<
 주기적으로 수행하여 읽기 성능을 최적화하고, 스토리지 효율성을
 높일 수 있다.
 
+`실시간성 스트리밍 데이터에서 주로 필요하며, 작은 용량의 파일이 
+여러개 들어올 때 compaction 기능을 사용한다.`  
+
+> 여러개 작은 파일 -> compaction -> 큰 파일 생성 -> 새로운 메타, 스냅샷 -> 새로운 스냅샷 참조해서 쿼리 속도 향상   
+
 ```sql
-CALL catalog.schema.rewrite_data_files('table_name');
+CALL spark_catalog.system.rewrite_data_files('db.sample');
 ```
+
+더 자세한 내용은 [공식문서](https://iceberg.apache.org/docs/1.7.0/spark-procedures/#rewrite_data_files)를 참고하자.   
 
 - - - 
 
 ## 4. Iceberg 유지보수를 위한 쿼리      
 
 Iceberg의 메타데이터는 읽기 성능에 큰 영향을 미치기 때문에 
-주기적으로 정리하고 최적화 해야 한다.   
+주기적으로 정리하고 최적화 해줘야 한다.
+따라서 이를 확인하기 위한 쿼리를 살펴보자.    
 
 아래와 같이 spark sql을 이용하여 테이블 상태 확인 및 최적화가 가능하다.   
 

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Iceberg] Apache Iceberg 등장"
-subtitle: "Hive Table Format과 비교하여 Iceberg 의 특징(Snapshot, Hidden Partition) / 스냅샷 정리방법 / Tag" 
+subtitle: "Hive Table Format과 비교하여 Iceberg 의 특징(Snapshot, Hidden Partition) / 스냅샷 롤백 / Tag" 
 comments: true
 categories : BigData
 date: 2024-10-01
@@ -48,7 +48,7 @@ catalog는 특정 데이터 소스에 접근을 가능하게 만들어주는 설
 `테이블 형상은 metadata file로 관리되며, 테이블 내용에 변경이 생기면 
 새로운 metadata file이 만들어지고 기존의 것을 대체 한다.`        
 
-metadata file은 스키마, 파티션, 스냅샷에 대한 정보를 가지고 있다.      
+`metadata file은 스키마, 파티션, 스냅샷에 대한 정보`를 가지고 있다.      
 
 > 참고로, Hive는 MetaStore에서 메타데이터를 관리하여 RDB 스토리지 부하 문제가 발생할 수 있다.   
 
@@ -185,7 +185,7 @@ WHERE event_date = '2024-10-01';
 `Iceberg는 데이터의 각 스냅샷을 관리한다. 그렇기 때문에 과거 시점의 데이터를 
 조회할 수도 있고 데이터를 롤백할 수 있도록 제공한다.`   
 
-[Time Travel](https://iomete.com/resources/reference/iceberg-tables/time-travel)은 Iceberg가 스냅샷을 관리하기 때문에 특정 시점의 
+Time Travel은 Iceberg가 스냅샷을 관리하기 때문에 특정 시점의 
 데이터 상태를 조회할 수 있도록 제공하는 기능이다.  
 이를 통해 데이터 변경 이력을 추적하고 분석할 수 있다.   
 
@@ -194,13 +194,7 @@ WHERE event_date = '2024-10-01';
 ```sql   
 -- catalog 이름 검색
 SHOW catalogs;
-
--- 스냅샷 모두 조회 
-SELECT * FROM my_catalog.my_database.my_table.snapshots
-
--- 특정 스냅샷 시점의 데이터 조회
-SELECT * FROM mydb.iceberg_table.snapshot_at('2023-09-01T00:00:00');
-```  
+``` 
 
 ```sql
 -- Trino 에서 조회
@@ -210,32 +204,36 @@ SELECT * FROM mydb.iceberg_table
 for version as of 1234;
 ```
 
-롤백 방식은 여러방식을 제공하며 아래 예시를 살펴보자.   
+[롤백 방식](https://iceberg.apache.org/docs/1.7.0/spark-procedures/)은 여러방식을 제공하며 아래 예시를 살펴보자.   
 
 ```sql
--- RESTORE_TABLE
--- 특정 스냅샷으로 테이블의 상태를 복원하되, 기존 스냅샷 히스토리를 유지한다.  
-CALL spark_catalog.system.RESTORE_TABLE('my_table', 'snapshot_id');
-
 -- ROLLBACK_TO_SNAPSHOT
 -- 특정 스냅샷으로 테이블의 상태를 롤백한다.  
 -- 현재 테이블의 상태를 완전히 이전 스냅샷으로 되돌린다.   
-CALL spark_catalog.system.ROLLBACK_TO_SNAPSHOT('db_name.table_name','snapshot_id');
+CALL spark_catalog.system.rollback_to_snapshot(
+        'db_name.table_name',
+        'snapshot_id'
+);
 
 -- ROLLBACK_TO_TIMESTAMP   
 -- 명시적으로 스냅샷 ID를 지정할 필요 없이 특정 타임스탬프에 해당하는 상태로 테이블을 롤백한다.   
--- 이때 가장 최근의 스냅샷을 참조하여 해당 시점의 상태로 복원한다.   
-CALL spark_catalog.system.my_table.ROLLBACK_TO_TIMESTAMP(TIMESTAMP 'YYYY-MM-DD HH:MM:SS');
+-- 이때 가장 최근의 스냅샷을 참조하여 해당 시점의 상태로 복원한다.  
+CALL spark_catalog.system.rollback_to_timestamp(
+        'db.sample', 
+        TIMESTAMP '2021-06-30 00:00:00.000'
+);
+
 
 -- SET_CURRENT_SNAPSHOT   
 -- 테이블의 현재 스냅샷을 변경하여 특정 스냅샷을 현재 스냅샷으로 설정한다.  
 -- 이전 스냅샷으로 롤백하는 대신, 특정 스냅샷을 현재로 설정할 수 있다.   
-CALL spark_catalog.system.my_table.SET_CURRENT_SNAPSHOT('snapshot_id');
+CALL spark_catalog.system.set_current_snapshot('db.sample', 1);
+
 
 -- CHERRYPICK_SNAPSHOT
 -- 특정 스냅샷의 변경 사항만 선택적으로 적용하여 현재 테이블에 반영한다.   
--- 전체 롤백과는 달리 선택적인 변경을 수행 
-CALL spark_catalog.system.my_table.CHERRYPICK_SNAPSHOT('snapshot_id');
+-- 전체 롤백과는 달리 선택적인 변경을 수행
+CALL catalog_name.system.cherrypick_snapshot('my_table', 1);
 ```
 
 ### 4-4) Upsert 와 Delete 
@@ -261,7 +259,7 @@ WHEN MATCHED THEN update set *
 WHEN NOT MATCHED THEN insert *   
 ```
 
-[링크](https://iomete.com/resources/reference/iceberg-tables/writes) 에서
+[링크](https://iceberg.apache.org/docs/1.6.0/spark-writes/) 에서
 더 많은 쿼리 예시를 살펴보자.
 
 
@@ -269,7 +267,6 @@ WHEN NOT MATCHED THEN insert *
 - - -
 
 <https://wikidocs.net/228567>   
-<https://iomete.com/resources/reference/iceberg-tables/maintenance>   
 <https://magpienote.tistory.com/255>    
 <https://iceberg.apache.org/docs/latest/spark-queries/>   
 <https://developers-haven.tistory.com/50>  
