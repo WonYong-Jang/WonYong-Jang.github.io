@@ -147,7 +147,7 @@ Iceberg 테이블을 운영하다 보면, 여러 가지 이유로 테이블을 �
 
 ```python
 # 기존 메타데이터 파일을 사용해 테이블을 등록
-spark.sql("CALL spark_catalog.system.register_table(table => 'db.sample', metadata_file => 'hdfs://{metadata_path}/metadata.json')")
+spark.sql("CALL spark_catalog.system.register_table(table => 'db.sample', metadata_file => 's3://{metadata_path}/metadata/0001-metadata.json')")
 ```  
 
 ### 2-2) 데이터 파일만 존재하는 경우   
