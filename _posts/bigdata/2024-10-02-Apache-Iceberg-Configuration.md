@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Iceberg] Apache Iceberg 주요 설정 및 테이블 생성"
+title: "[Iceberg] Apache Iceberg 주요 설정 및 테이블 생성, 복구, 유지보수"
 subtitle: "테이블 생성 및 주요 설정 / snapshot 및 메타데이터 관리 옵션 / 테이블 복구 및 유지보수 / 테이블 전환" 
 comments: true
 categories : BigData
@@ -9,7 +9,7 @@ background: '/img/posts/mac.png'
 ---
 
 이번글 에서는 Apache Iceberg 테이블의 주요 설정 및 
-메타데이터를 관리하기 위한 여러가지 방법 및 옵션에 대해 살펴보자.    
+메타데이터를 관리하기 위한 여러가지 방법에 대해 살펴보자.    
 
 - - - 
 
@@ -155,15 +155,23 @@ Iceberg 테이블을 운영하다 보면, 여러 가지 이유로 테이블을 �
 spark.sql("CALL spark_catalog.system.register_table(table => 'db.sample', metadata_file => 's3://{metadata_path}/metadata/0001-metadata.json')")
 ```  
 
+> metadata는 json 파일 형식으로 되어 있다.     
+
 ### 2-2) 데이터 파일만 존재하는 경우   
 
-`테이블의 데이터 파일은 남아 있지만, 메타데이터가 손실된 경우 아래와 같이 진행`할 수 있다.    
+테이블의 데이터 파일은 남아 있지만, 메타데이터가 손실된 경우 아래와 같이 진행할 수 있다.    
 이 경우 아래 명령을 사용해 데이터 파일을 새롭게 iceberg 테이블로 등록할 수 있다. 
 이를 통해 parquet 등 다른 포맷으로 저장된 데이터를 손쉽게 Iceberg 테이블로 등록할 수 있다.   
 
+자세한 내용은 [공식문서](https://iceberg.apache.org/docs/1.6.1/spark-procedures/#examples_9)를 
+참고하자.   
+
 ```python
 # 데이터 파일을 Iceberg 테이블로 추가
-spark.sql("CALL system.add_files(table => 'db.sample', source_table => 'parquet.`hdfs://{path}/data`')")
+CALL spark_catalog.system.add_files(
+  table => 'db.tbl',
+  source_table => '`parquet`.`path/to/table`'
+);
 ```
 
 ### 2-3) 기존 테이블을 Iceberg로 변환   
@@ -182,7 +190,7 @@ spark.sql("CALL spark_catalog.system.migrate('db.sample')")
 현재 업무에서 Json Serde 포맷을 사용하는 hive 테이블을 ORC 포맷의 Iceberg 테이블로 
 전환이 필요했고, 아래 방식으로 전환하였다.   
 
-> json 파일 포맷을 가진 hive 테이블에서 customer 이름을 동일하게 사용하되 iceberg 테이블로 
+> json 파일 포맷을 가진 hive 테이블에서 customer 테이블 이름을 동일하게 사용하되 iceberg 테이블로 
 전환이 필요하다고 가정해보자.  
 
 - iceberg 테이블 스키마를 생성 ( table name: customer-backup )   
@@ -192,14 +200,96 @@ spark.sql("CALL spark_catalog.system.migrate('db.sample')")
     - alter table customer-backup rename to customer
 
 
-- - -    
+- - -   
 
-## 3. Iceberg 유지보수 및 운영 팁   
+## 3. Iceberg Maintenance
+
+Apache Iceberg를 사용할 때, 데이터 변경이 발생할 때마다 스냅샷이
+생성되어 s3와 같은 스토리지에 저장된다.
+이 스냅샷들이 누적되면서 저장 공간을 많이 차지하며 성능에 영향을 끼칠 수 있기 때문에
+    실무에서는 주기적으로 스냅샷을 정리하는 것이 중요하다.
+
+이를 위해 Iceberg는 스냅샷과 데이터 파일 관리를 위한
+몇 가지 방법을 제공한다.
+
+### 3-1) Expire Snapshots(스냅샷 만료)
+
+Iceberg는 오래된 스냅샷을 삭제하는 메커니즘을 제공하며,
+    일정 기간 이전의 스냅샷을 만료시킴으로써 스토리지 비용을 줄일 수 있다.
+
+아래와 같이 특정 날짜 이전의 모든 스냅샷을 삭제하여 테이블의
+메타데이터를 정리하고 스토리지 사용량을 줄이는데 사용된다.
+
+
+```
+CALL <catalog_name>.<namespace>.expire_snapshots('<table_name>', TIMESTAMP '<expiration_time>')
+
+- catalog_name: Iceberg의 카탈로그의 이름
+- namespace: Iceberg 테이블이 포함된 데이터베이스 이름
+- table_name: 스냅샷을 만료시킬 Iceberg 테이블의 이름
+- expiration_time: 삭제할 스냅샷의 기준 날짜이며, 이 날짜 이전에 생성된 모든 스냅샷이 삭제된다.
+```
+
+아래 예시는 2023년 1월 1일 이전에 생성된 모든 스냅샷을 삭제한다.
+
+```sql
+CALL spark_catalog.my_database.expire_snapshots('my_table', TIMESTAMP '2023-01-01 00:00:00')
+```
+
+다만, 작업 중 간혹 org.apache.iceberg.exceptions.NotFoundException: File does not exist Avro 와
+같은 오류가 발생할 수 있는데, 이는 특정 스냅샷 파일이 사라졌을 때 생기는 문제이다.
+`이를 방지하기 위해 아래와 같이 최근 2개의 스냅샷을 유지한 상태에서 오래된 스냅샷을 제거하는 방식으로
+관리하는 게 좋다.`
+
+`즉 현재 버전 스냅샷 1개와 이전 버전 스냅샷 1개를 최소 스냅샷 갯수로 유지해야 한다.`
+
+아래는 스냅샷 관리 시, 만료 기간이 지났음에도 가장 최근
+스냅샷 만큼 유지하는 옵션이 있으며, 아래 예시를 보자.
+
+```sql
+CALL spark_catalog.system.expire_snapshots(
+        table => '{table}',
+        older_than => TIMESTAMP '2099-12-31 23:59:59.999',
+        retain_last => 2
+)
+
+-- retain_last: 2023년 1월 1일 이전의 생성된 모든 스냅샷을 삭제하되, 가장 최근 2개의 스냅샷은 삭제하지 않고 유지
+```
+
+
+
+
+### 3-2) Remove Orphan Files(고아 파일 제거)
+
+Iceberg의 메타데이터와 연결되지 않은 고아 파일(Orphan Files)이
+있을 수 있다. 이러한 파일을 정리하지 않으면 스토리지가 낭비될 수 있기
+때문에, 주기적으로 고아 파일을 삭제하는 것이 좋다.
+
+> 스냅샷을 만료시킨 후, 해당 스냅샷이 참조하던 파일들이 남아 있을 수 있다.
+
+```
+CALL <catalog_name>.<namespace>.remove_orphan_files('<table_name>', TIMESTAMP '<expiration_time>')
+```
+
+
+### 3-3) Table Compaction(테이블 압축)
+
+데이터 파일을 정리하고, 작은 파일들을 합치는 작업(Compaction)을
+주기적으로 수행하여 읽기 성능을 최적화하고, 스토리지 효율성을
+높일 수 있다.
+
+```sql
+CALL catalog.schema.rewrite_data_files('table_name');
+```
+
+- - - 
+
+## 4. Iceberg 유지보수를 위한 쿼리      
 
 Iceberg의 메타데이터는 읽기 성능에 큰 영향을 미치기 때문에 
 주기적으로 정리하고 최적화 해야 한다.   
 
-아래 정보를 이용하여 테이블 상태 확인 및 최적화가 가능하다.   
+아래와 같이 spark sql을 이용하여 테이블 상태 확인 및 최적화가 가능하다.   
 
 ```python
 snapshot_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.snapshots")
@@ -210,7 +300,14 @@ row_count_df = spark.sql(f"select count(1) as row_count from spark_catalog.{tabl
 delete_files_df = spark.sql(f"SELECT * FROM spark_catalog.{table}.all_delete_files")
 ```    
 
+아래는 trino(presto)에서 조회가 가능하다.   
 
+```sql
+select * from "db"."table_name$snapshots"
+select * from "db"."table_name$manifests"
+select * from "db"."table_name$files"
+select * from "db"."table_name$partitions"
+```
 
 
 

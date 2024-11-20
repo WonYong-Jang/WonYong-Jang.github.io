@@ -12,9 +12,8 @@ background: '/img/posts/mac.png'
 
 기존의 Apache Hive에서 대용량 데이터를 다룰 때 규모, 성능, 사용성에 대한 
 문제가 존재했고 이를 해결하기 위해 등장하게 되었다.   
-Netflix에서 개발되었으며 페타바이트 규모의 테이블을 위해 설계된 
-개방형 테이블 형식으로 설계 되어 모든 파일 포맷을 관리 구성 및 추적하는 
-방법을 결정하여 snapshot 방식으로 파일을 관리한다.   
+Netflix에서 설계한 오픈소스 프로젝트로, 대규모 데이터 환경에서도 효율적으로 
+운영될 수 있도록 개발되었다.   
 
 `간단히 요약하자면 Iceberg는 오픈 소스 테이블 포맷을 의미하며 구조상 
 대용량 데이터를 쉽게 다룰 수 있는 이점이 있는데, Iceberg의 
@@ -23,8 +22,6 @@ Netflix에서 개발되었으며 페타바이트 규모의 테이블을 위해 �
 Iceberg는 Hadoop 및 Apache Spark와 같은 분산 처리 시스템에서 사용되며, 
     대규모 데이터셋에 대한 효율적인 저장, 버전관리, 스키마 변화 관리 및 
     쿼리 처리를 제공한다.   
-
-
 
 그 외에도 Uber에서 개발한 Hudi, Databricks에서 지원하는 delta lake 가 존재하며,
     이 글에서는 Iceberg에 대해서 다룰 예정이다.
@@ -267,81 +264,6 @@ WHEN NOT MATCHED THEN insert *
 [링크](https://iomete.com/resources/reference/iceberg-tables/writes) 에서
 더 많은 쿼리 예시를 살펴보자.
 
-- - - 
-
-## 5. Iceberg Maintenance   
-
-Apache Iceberg를 사용할 때, 데이터 변경이 발생할 때마다 스냅샷이 
-생성되어 s3와 같은 스토리지에 저장된다.   
-이 스냅샷들이 누적되면서 저장 공간을 많이 차지하며 성능에 영향을 끼칠 수 있기 때문에  
-    실무에서는 주기적으로 스냅샷을 정리하는 것이 중요하다.   
-
-이를 위해 Iceberg는 스냅샷과 데이터 파일 관리를 위한 
-몇 가지 방법을 제공한다.   
-
-### 5-1) Expire Snapshots(스냅샷 만료)    
-
-Iceberg는 오래된 스냅샷을 삭제하는 메커니즘을 제공하며, 
-    일정 기간 이전의 스냅샷을 만료시킴으로써 스토리지 비용을 줄일 수 있다.   
-
-아래와 같이 특정 날짜 이전의 모든 스냅샷을 삭제하여 테이블의 
-메타데이터를 정리하고 스토리지 사용량을 줄이는데 사용된다.   
-
-
-```
-CALL <catalog_name>.<namespace>.expire_snapshots('<table_name>', TIMESTAMP '<expiration_time>')
-
-- catalog_name: Iceberg의 카탈로그의 이름   
-- namespace: Iceberg 테이블이 포함된 데이터베이스 이름  
-- table_name: 스냅샷을 만료시킬 Iceberg 테이블의 이름   
-- expiration_time: 삭제할 스냅샷의 기준 날짜이며, 이 날짜 이전에 생성된 모든 스냅샷이 삭제된다.   
-```
-
-아래 예시는 2023년 1월 1일 이전에 생성된 모든 스냅샷을 삭제한다.   
-
-```sql
-CALL my_catalog.my_database.expire_snapshots('my_table', TIMESTAMP '2023-01-01 00:00:00')
-```
-
-다만, 작업 중 간혹 org.apache.iceberg.exceptions.NotFoundException: File does not exist Avro 와 
-같은 오류가 발생할 수 있는데, 이는 특정 스냅샷 파일이 사라졌을 때 생기는 문제이다.   
-`이를 방지하기 위해 아래와 같이 최근 2개의 스냅샷을 유지한 상태에서 오래된 스냅샷을 제거하는 방식으로 
-관리하는 게 좋다.`      
-
-아래는 스냅샷 관리 시, 만료 기간이 지났음에도 가장 최근 
-스냅샷 만큼 유지하는 옵션이 있으며, 아래 예시를 보자.   
-
-```
-CALL system.expire_snapshots(table => '{table}', older_than => TIMESTAMP '2023-01-01 00:00:00', retain_last => 2)
-
-- retain_last: 2023년 1월 1일 이전의 생성된 모든 스냅샷을 삭제하되, 가장 최근 2개의 스냅샷은 삭제하지 않고 유지   
-```
-
-
-
-
-### 5-2) Remove Orphan Files(고아 파일 제거)    
-
-Iceberg의 메타데이터와 연결되지 않은 고아 파일(Orphan Files)이 
-있을 수 있다. 이러한 파일을 정리하지 않으면 스토리지가 낭비될 수 있기 
-때문에, 주기적으로 고아 파일을 삭제하는 것이 좋다.   
-
-> 스냅샷을 만료시킨 후, 해당 스냅샷이 참조하던 파일들이 남아 있을 수 있다.   
-
-```
-CALL <catalog_name>.<namespace>.remove_orphan_files('<table_name>', TIMESTAMP '<expiration_time>')
-```
-
-
-### 5-3) Table Compaction(테이블 압축)    
-
-데이터 파일을 정리하고, 작은 파일들을 합치는 작업(Compaction)을 
-주기적으로 수행하여 읽기 성능을 최적화하고, 스토리지 효율성을 
-높일 수 있다.   
-
-```sql
-CALL catalog.schema.rewrite_data_files('table_name');
-```
 
 
 - - -
