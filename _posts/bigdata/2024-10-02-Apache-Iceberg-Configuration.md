@@ -18,7 +18,7 @@ background: '/img/posts/mac.png'
 아래와 같이 iceberg 테이블 생성 예시를 통해 
 [주요 옵션](https://iceberg.apache.org/docs/latest/configuration/#reserved-table-properties)에 대해서 살펴보자.  
 
-```
+```sql
 CREATE TABLE my_catalog.my_db.my_table (
     id BIGINT,
     created_at TIMESTAMP
@@ -26,7 +26,8 @@ CREATE TABLE my_catalog.my_db.my_table (
 USING iceberg
 PARTITIONED BY (days(created_at))
 TBLPROPERTIES (
-    'format-version' = '2',  
+    'format-version' = '2', 
+    'external.table.purge'='true',
     'write.target-file-size-bytes' = '134217728', -- 128MB
     'write.metadata.delete.after-commit.enabled' = 'true',
     'write.metadata.previous-versions-max' = 10
@@ -38,6 +39,12 @@ TBLPROPERTIES (
     'history.expire.max-snapshot-age-ms' = '2592000000',
     'history.expire.min-snapshots-to-keep' = 5
 );
+```
+
+테이블 생성 후 테이블에 대한 상세 정보는 아래와 같이 확인 가능하다.   
+
+```sql
+describe formatted db.sample
 ```
 
 #### external.table.purge   

@@ -8,6 +8,11 @@ date: 2024-10-09
 background: '/img/posts/mac.png'
 ---
 
+이번글에서는 spark에서 iceberg 테이블 사용 방법을 다룰 예정이며, 
+    spark(버전 3.4.1)과 iceberg(1.4.3) 기준으로 실습을 진행한다.      
+
+- - - 
+
 ## 1. Spark 에서 Iceberg 사용   
 
 Spark에서 Iceberg 테이블을 사용하기 위한 코드를 살펴보자.  
@@ -36,7 +41,7 @@ hive를 사용하는 경우는 기존에 hive 생태계를 사용하고 있어�
 자체적으로 hdfs나 s3와 같은 파일 시스템을 통해 메타데이터 파일을 관리`한다.   
 메타데이터는 테이블의 메타데이터 디렉토리에 json 파일 형식으로 저장된다.    
 
-또한, call 과 같이 iceberg에서 제공하는 새로운 sql command를 사용하기 위해 
+또한, procedures 와 같이 iceberg에서 제공하는 새로운 sql command를 사용하기 위해 
 spark.sql.extensions을 추가해주었다.   
 
 - - - 
@@ -45,7 +50,7 @@ spark.sql.extensions을 추가해주었다.
 
 
 ```python
-// Iceberg 테이블 생성
+-- Iceberg 테이블 생성
 spark.sql("""
   CREATE TABLE my_catalog.db.my_table (
     id BIGINT,
@@ -61,7 +66,7 @@ spark.sql("""
 ## 3. Merge
 
 ```python
-// Iceberg 테이블에 조건부 업데이트/삽입 (MERGE INTO)
+-- Iceberg 테이블에 조건부 업데이트/삽입 (MERGE INTO)
 spark.sql("""
   MERGE INTO my_catalog.db.my_table t
   USING updates u

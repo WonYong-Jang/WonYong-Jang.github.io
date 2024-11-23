@@ -58,7 +58,7 @@ catalog는 특정 데이터 소스에 접근을 가능하게 만들어주는 설
 Iceberg는 스냅샷 기능을 통해 특정 시점의 테이블 형상을 파일로 기록해주는데, 
     이는 `특정 시점에 대한 rollback이 가능`하게 해준다.          
 
-
+> metadata/ 디렉토리에 저장되는 JSON 파일    
 
 ##### manifest list   
 
@@ -84,6 +84,8 @@ SELECT * FROM "mydb"."iceberg_table$files";
 
 `위와 같은 쿼리로 스냅샷 히스토리 조회가 가능하며, 이를 통해 해당 테이블의 트랜잭션이 언제 발생하였는지, 
     얼마나 많은 파일의 업데이트가 이뤄졌는지 쉽게 파악할 수 있다.`    
+
+> metadata/ 디렉토리에 저장되는 avro 파일   
 
 
 ##### manifest file   
