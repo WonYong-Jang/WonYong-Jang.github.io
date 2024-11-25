@@ -267,20 +267,25 @@ CALL spark_catalog.system.expire_snapshots(
 -- retain_last: 2023년 1월 1일 이전의 생성된 모든 스냅샷을 삭제하되, 가장 최근 2개의 스냅샷은 삭제하지 않고 유지
 ```
 
-
-
-
-### 3-2) Remove Orphan Files(고아 파일 제거)
+### 3-2) Remove Orphan Files(고아 파일 제거)   
 
 Iceberg의 메타데이터와 연결되지 않은 고아 파일(Orphan Files)이
 있을 수 있다. 이러한 파일을 정리하지 않으면 스토리지가 낭비될 수 있기
 때문에, 주기적으로 고아 파일을 삭제하는 것이 좋다.
 
-> 스냅샷을 만료시킨 후, 해당 스냅샷이 참조하던 파일들이 남아 있을 수 있다.
+> spark 와 같은 분산처리 시스템에서 task 또는 job 실패시 orphan file로 
+남을 수 있다.   
 
 ```sql
 CALL spark_catalog.system.remove_orphan_files('db.sample')
 ```
+
+`주의해야할 점은 iceberg 파일이 현재 쓰기 작업 중이라면, 
+    그 파일은 orphan 상태로 인식될 수 있다. 이때 해당 명령을 
+    실행하면 쓰기 작업이 실패할 수 있으며, 이는 
+    메타데이터 손상으로 이어져 테이블을 읽지 못하게 된다.`    
+
+
 
 
 ### 3-3) Table Compaction(테이블 압축)
