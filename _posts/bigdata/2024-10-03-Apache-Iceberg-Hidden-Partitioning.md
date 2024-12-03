@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Iceberg] Apache Iceberg - Hidden Partitioning"
-subtitle: "시간에 따른 메타데이터 심층 탐구" 
+subtitle: "hive 파티셔닝과 비교 / 시간에 따른 메타데이터 심층 탐구" 
 comments: true
 categories : BigData
 date: 2024-10-03
@@ -24,7 +24,7 @@ iceberg 에서 제공하는 hidden partitioning을 살펴보기 위해
 +----------------+----------------------+------------------+
 ```
 
-위 데이터를 저장할 테이블을 생성해보자.   
+위 데이터를 저장할 hive 테이블을 생성해보자.   
 
 ```sql
 CREATE TABLE sales_data (
@@ -36,7 +36,7 @@ cust_id        string
 PARTITIONED by (day_part string)
 ```
 
-또한, 테이블에 데이터를 저장하기 위해 특정 포맷에 맞게 변환해주어야 한다.  
+hive 테이블은 데이터를 저장하기 위해 파티션 특정 포맷에 맞게 변환해주어야 한다.    
 
 ```sql
 INSERT OVERWRITE TABLE sales_data
@@ -53,31 +53,36 @@ FROM temp_view;
 이제 파티션된 테이블에서 데이터를 쿼리하기 위해서 
 아래와 같이 명시적으로 파티션을 적용해주어야 한다.   
 `즉, 우리는 partition pruning 을 이용하여 효율적인 
-쿼리를 위해 매번 partiton에 대한 포맷정보를 기억하고 있어야 한다.`    
+쿼리를 위해 매번 partiton에 대한 포맷 정보를 기억하고 있어야 한다.`    
 
 ```sql
-select * from sales_data where part_day = '2023-04-25' and <other-filters>   
+select * from sales_data where part_day = '2023-04-25' 
+and <other-filters>   
 ```
 
 `즉, 실제 파티션에 대한 포맷 및 타입이 다를 경우 기대와 다른 전체 테이블을 
 스캔하여 성능 저하가 발생할 수 있다.`   
 
+> 예를 들면 2023-04-25 포맷이 아닌 20230425 를 이용하여 조회하면 다른 쿼리 결과와 
+성능 저하가 발생할 수 있다.     
+
 - - - 
 
 ## 2. Iceberg's hidden partitioning   
 
-`Hive 와 같이 Iceberg에서는 명시적으로 partition value에 대해서 
+`Iceberg에서는 명시적으로 partition value에 대해서 
 제공할 필요가 없다.`   
 
 아래 예제를 살펴보자.   
 
 ```python
 ddl = """
-CREATE TABLE dev.sales_data
-(trnsaction_id  int,
-transaction_dt  timestamp, 
-amount          double, 
-cust_id         string)
+CREATE TABLE dev.sales_data (
+        trnsaction_id  int,
+        transaction_dt  timestamp, 
+        amount          double, 
+        cust_id         string
+)
 USING iceberg
 PARTITIONED BY (day(transaction_dt))
 """
@@ -87,8 +92,8 @@ spark.sql(ddl)
 spark.sql("DESCRIBE EXTENDED dev.sales_data").show(20,False) 
 ```   
 
-위에서는 iceberg에서 제공하는 다양한 [transform](https://iceberg.apache.org/spec/#partition-transforms) type 을 
-이용하여 파티션을 생성하였다.  
+위에서는 iceberg에서 제공하는 다양한 [transform](https://iceberg.apache.org/spec/#partition-transforms) type 중 
+하나를 이용하여 파티션을 생성하였다.     
 
 이제 데이터를 테이블에 저장해보자.   
 
@@ -128,17 +133,48 @@ spark.table('dev.sales_data').filter((col('transaction_dt')>='2023-04-25 00:00:0
 2023-04-25 파티션의 데이터를 가져올 수 있다.`  
 
 `Spark Job UI 에서 실제로 3개의 파티션 중에 2개의 파티션을 skip 한 부분을 
-확인해볼 수 있다.`        
+확인할 수 있고 number of scanned data files가 1개로 표기되었기 때문에 
+1개의 파일만 스캔하였다.`           
 
 <img width="700" alt="스크린샷 2024-11-25 오후 3 57 52" src="https://github.com/user-attachments/assets/d74be889-1c4e-426f-818b-edda06f7ee5d">   
 
 <img width="816" alt="스크린샷 2024-11-25 오후 3 58 05" src="https://github.com/user-attachments/assets/e78b5a5e-6f41-4f71-8304-9a215a96eb9a">     
 
+정리해보면, `사용자가 파티션 컬럼을 직접 지정해주지 않아도 
+파티션 생성이 가능해서 hidden partition이라고 하며, 
+    사용자가 파티션 포맷을 정확하게 알지 못하여도 쿼리가 
+    가능하다.`     
 
 
+그럼 만약 파티션이 변경된다면 어떻게 될까?   
+
+예를 들어 2022년에는 월(month) 단위 파티션을 사용하고, 
+    2023년부터 일(day)단위 파티션으로 변경된 경우는 아래와 같다.   
 
 
+<img width="800" alt="스크린샷 2024-11-26 오전 8 57 29" src="https://github.com/user-attachments/assets/3644d428-9956-40e9-a6c4-9747d10b9ced">   
 
+```sql
+-- 파티션 변경 전, 후의 데이터를 모두 조회하는 상황   
+select * 
+from db.table
+where data > 2022-12-22 -- 파티션 변경 전의 month 단위 파티션 기준의 plan
+and < 2023-01-22;       -- 파티션 변경 후의 day 단위 파티션 기준의 plan    
+```
+
+`위 그림과 같이 파티션 변경 전의 old data 와 metadata file은 영향을 
+받지 않고, 이전과 동일하게 파티션 사용이 가능하다.`  
+
+`파티션 변경 후 write 된 data는 변경된 파티션 구조로 
+저장되고 관련된 metadata file도 생성된다.(이전 파티션에 대한 metadata 와 별도로 관리)`      
+
+`두 파티션의 메타데이터가 따로 관리되며 만약 파티션 변경 전후의 데이터를 
+동시에 조회하는 경우, 자동으로 plan을 나눠서 실행해준다.`  
+
+> 위와 같은 것이 가능한 이유는 metadata와 data file을 따로 관리하기 때문이다.    
+
+> apache hive 같은 경우 디렉터리 기반으로 파티션을 관리를 하기 파티션이 
+변경되면 디렉터리 구조를 다시 만들어야 한다.   
 
 - - -
 
