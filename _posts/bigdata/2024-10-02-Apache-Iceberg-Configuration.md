@@ -269,7 +269,9 @@ CALL spark_catalog.system.expire_snapshots(
         retain_last => 2
 )
 
--- retain_last: 2023년 1월 1일 이전의 생성된 모든 스냅샷을 삭제하되, 가장 최근 2개의 스냅샷은 삭제하지 않고 유지
+-- retain_last: defaults to 1 
+-- older_than: default: 5 days ago
+-- 2099년 12월 31일 이전의 생성된 모든 스냅샷을 삭제하되, 가장 최근 2개의 스냅샷은 삭제하지 않고 유지
 ```
 
 ### 3-2) Remove Orphan Files(고아 파일 제거)   
@@ -291,6 +293,19 @@ CALL spark_catalog.system.remove_orphan_files('db.sample')
     메타데이터 손상으로 이어져 테이블을 읽지 못하게 된다.`    
 
 
+
+```python
+expiration_timestamp = datetime.now() - timedelta(days=7)
+
+df=spark.sql(f"""
+    CALL spark_catalog.system.remove_orphan_files(
+        table => '{table}',
+        older_than => TIMESTAMP '{expiration_timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")}'
+    )
+""")
+
+-- older_than: defaults to 3 days ago
+```
 
 
 ### 3-3) Table Compaction(테이블 압축)
