@@ -292,7 +292,7 @@ CALL spark_catalog.system.remove_orphan_files('db.sample')
     실행하면 쓰기 작업이 실패할 수 있으며, 이는 
     메타데이터 손상으로 이어져 테이블을 읽지 못하게 된다.`    
 
-
+`따라서 아래와 같이 older_than 파라미터를 적절하게 설정해줘야 한다.`   
 
 ```python
 expiration_timestamp = datetime.now() - timedelta(days=7)
@@ -304,7 +304,7 @@ df=spark.sql(f"""
     )
 """)
 
--- older_than: defaults to 3 days ago
+## older_than: defaults to 3 days ago
 ```
 
 
