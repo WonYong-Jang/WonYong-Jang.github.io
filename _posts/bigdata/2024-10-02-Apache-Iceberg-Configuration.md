@@ -97,14 +97,18 @@ Spark, Flink 등 호환 되는지 확인이 필요하다.
 
 커밋 후 사용되지 않는 `메타데이터 파일을 자동으로 삭제할지 여부를 설정한다.`      
 메타데이터가 빠르게 축적되는 대규모 테이블에서는 이를 true로 활성화 하여 
-메타데이터 파일을 관리할 수 있다.   
+메타데이터 파일을 관리할 수 있다.  
+
+<img width="604" alt="스크린샷 2024-12-05 오전 8 46 16" src="https://github.com/user-attachments/assets/2503be00-659d-4b76-98e9-ac37beed0208">
+
 
 > 메타데이터 파일은 테이블의 상태를 기록한 메타데이터의 JSON 파일이다.   
 > default: false   
 
 #### write.metadata.previous-versions-max   
 
-`메타데이터 파일 버전의 개수를 제한한다.`   
+`write.metadata.delete.after-commit.enabled 옵션이 활성화 되어 있다면 
+메타데이터 파일 버전의 개수를 제한한다.`   
 `새 메타데이터가 생성될 때 이 값을 초과하는 이전 버전이 있으면, 
     자동으로 가장 오래된 메타데이터 파일이 삭제된다.`     
 
@@ -234,7 +238,10 @@ Iceberg는 오래된 스냅샷을 삭제하는 메커니즘을 제공하며,
     일정 기간 이전의 스냅샷을 만료시킴으로써 스토리지 비용을 줄일 수 있다.
 
 아래와 같이 특정 날짜 이전의 모든 스냅샷을 삭제하여 테이블의
-메타데이터를 정리하고 스토리지 사용량을 줄이는데 사용된다.
+메타데이터를 정리하고 스토리지 사용량을 줄이는데 사용된다.  
+
+<img width="516" alt="스크린샷 2024-12-05 오전 8 52 54" src="https://github.com/user-attachments/assets/9f349dc9-30d2-4905-928e-eaead2e6ad9b">
+
 
 
 ```
@@ -278,7 +285,10 @@ CALL spark_catalog.system.expire_snapshots(
 
 Iceberg의 메타데이터와 연결되지 않은 고아 파일(Orphan Files)이
 있을 수 있다. 이러한 파일을 정리하지 않으면 스토리지가 낭비될 수 있기
-때문에, 주기적으로 고아 파일을 삭제하는 것이 좋다.
+때문에, 주기적으로 고아 파일을 삭제하는 것이 좋다.   
+
+<img width="600" alt="스크린샷 2024-12-05 오전 8 50 25" src="https://github.com/user-attachments/assets/b5902bb7-7bce-458c-b07e-81832074ac98">
+
 
 > spark 와 같은 분산처리 시스템에서 task 또는 job 실패시 orphan file로 
 남을 수 있다.   
@@ -313,6 +323,9 @@ df=spark.sql(f"""
 데이터 파일을 정리하고, 작은 파일들을 합치는 작업(Compaction)을
 주기적으로 수행하여 읽기 성능을 최적화하고, 스토리지 효율성을
 높일 수 있다.
+
+<img width="608" alt="스크린샷 2024-12-05 오전 9 08 59" src="https://github.com/user-attachments/assets/e8b8620d-b9f2-4b10-aded-76e779533f37">
+
 
 `실시간성 스트리밍 데이터에서 주로 필요하며, 작은 용량의 파일이 
 여러개 들어올 때 compaction 기능을 사용한다.`  
@@ -358,6 +371,8 @@ select * from "db"."table_name$partitions"
 
 - - -
 
+<https://www.tabular.io/blog/table-maintenance-the-key-to-keeping-your-iceberg-tables-healthy-and-performant/>   
+<https://www.dremio.com/blog/maintaining-iceberg-tables-compaction-expiring-snapshots-and-more/>   
 <https://toss.tech/article/datalake-iceberg>   
 <https://wikidocs.net/228567>   
 <https://iomete.com/resources/reference/iceberg-tables/maintenance>   
