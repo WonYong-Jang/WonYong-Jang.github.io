@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Broadcast, Accumulator 공유변수 "   
-subtitle: "braodcast, accumulator, closure"    
+subtitle: "broadcast, accumulator, closure"    
 comments: true
 categories : Spark
 date: 2021-07-08

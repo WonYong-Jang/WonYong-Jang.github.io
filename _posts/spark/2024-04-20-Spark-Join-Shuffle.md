@@ -8,45 +8,45 @@ date: 2024-04-20
 background: '/img/posts/mac.png'   
 ---
 
-## 1. 스파크의 조인 타입   
+## 1. 스파크에서 제공하는 조인 종류     
 
 스파크에서 조인은 아래와 같은 조인 타입을 제공한다.   
 
-#### 1-1) inner join(내부 조인)
+##### 1-1) inner join(내부 조인)
 
 왼쪽과 오른쪽 데이터셋에 키가 있는 로우를 유지   
 
-#### 1-2) outer join(외부 조인)   
+##### 1-2) outer join(외부 조인)   
 
 왼쪽이나 오른쪽 데이터셋에 키가 있는 로우를 유지   
 
-#### 1-3) left outer join(왼쪽 외부 조인)   
+##### 1-3) left outer join(왼쪽 외부 조인)   
 
 왼쪽 데이터셋에 키가 있는 로우를 유지   
 
-#### 1-4) right outer join(오른쪽 외부 조인)   
+##### 1-4) right outer join(오른쪽 외부 조인)   
 
 오른쪽 데이터셋에 키가 있는 로우를 유지   
 
-#### 1-5) left semi join   
+##### 1-5) left semi join   
 
 왼쪽 데이터셋의 키가 오른쪽 데이터셋에 있는 경우에는 키가 일치하는 왼쪽 데이터셋만 유지    
 
-#### 1-6 left anti join   
+##### 1-6 left anti join   
 
 왼쪽 데이터셋의 키가 오른쪽 데이터셋에 없는 경우에는 키가 일치하지 않는 왼쪽 데이터셋만 유지   
 
-#### 1-7) natural join   
+##### 1-7) natural join   
 
 두 데이터셋에서 동일한 이름을 가진 컬럼을 암시적으로 결합하는 조인   
 
-#### 1-8) cross join / cartesian join   
+##### 1-8) cross join / cartesian join   
 
 왼쪽 데이터셋의 모든 로우와 오른쪽 데이터셋의 모든 로우를 조합   
 
 - - - 
 
-## 2. 스파크의 조인 수행 방식    
+## 2. 스파크의 일반적인 조인 수행 방식    
 
 일반적으로 join은 동일한 키의 데이터가 동일한 파티션 내에 있어야 하므로 비용이 비싼 작업이다.    
 조인할 키의 데이터가 동일한 파티션에 있지 않다면 셔플이 필요하고, 이를 통해 동일한 
@@ -78,12 +78,15 @@ background: '/img/posts/mac.png'
 
 <img width="310" alt="스크린샷 2024-04-29 오후 3 16 37" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/268f4f1e-2a99-45f0-8126-1cb9f8924331">   
 
+> 하둡에서는 map-side join이라고도 부른다.   
+
 - - - 
 
-## 3. 조인 전략    
+## 3. 일반적인 조인 전략    
 
-먼저, nested loop join, merge join, hash join을 먼저 살펴보고 
-spark 에서 사용되는 조인 전략에 대해서 살펴보자.   
+일반적으로 사용되는 nested loop join, merge join, hash join을 먼저 살펴보고 
+spark 에서 사용되는 조인 전략에 대해서 살펴보자.     
+
 
 ### 3-1) Nested Loop Join    
 
@@ -122,9 +125,22 @@ hash function은 O(1)의 시간이 들 것이고, 결과적으로 O(T1+ T2) 만�
 
 <img width="500" alt="스크린샷 2024-04-30 오후 4 05 50" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/c0f901c7-ad20-4262-a90b-bce4932fb982">      
 
+- - -   
+
+## 4. Spark 에서의 조인 전략    
+
 이제 스파크에서 주로 사용되는 join 전략에 대해 살펴보자.   
 
-### 3-4) Shuffle Sort Merge Join   
+<img width="730" alt="스크린샷 2024-12-08 오후 6 24 10" src="https://github.com/user-attachments/assets/fdc7730b-ad36-4184-8aff-7027ee24bda6">   
+
+위 사진을 보면, 등가조인과 비등가조인일 때로 우선 분리된다.   
+
+`즉, spark에서 대용량 데이터를 이용하여 비등가 조인(like 검색, <, >, <=, >=)을 할 경우 
+비효율적인 조인 방식을 사용하기 때문에 성능상 문제가 발생할 수 있다.`    
+
+
+
+### 4-1) Shuffle Sort Merge Join   
 
 두 테이블이 모두 큰 경우 사용 되며, 두 테이블 모두 조인 키 기반으로 repartition 이 
 발생한다.    
@@ -144,16 +160,19 @@ shuffle sort merge join 을 사용한다.
 spark.conf.set("spark.sql.join.preferSortMergeJoin","false")
 ```
 
-shuffle sort merge join 은 조인 작업 전에 조인 키를 기준으로 shuffle 시켜 
-정렬되며, 조인 키를 
-기반으로 두 데이터 세트를 병합한다.   
+shuffle sort merge join 은 첫번째로 shuffle 과정을 진행한다.   
+동일한 조인 키를 가지는 데이터셋을 동일한 executor로 이동시킨다.   
+그 후 executor node에서 노드상의 데이터셋 파티션을 조인키 기반으로 정렬 후 
+조인키 기반으로 병합한다.   
+`따라서 정렬이 적용되므로 조인 키들의 정렬이 가능한 데이터 타입이어야 한다.`   
+
 
 <img width="700" alt="스크린샷 2024-04-20 오후 12 32 28" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/df897b0b-d54c-40d7-a974-1b8d491cc2ad">   
 
 <img width="700" alt="스크린샷 2024-04-20 오후 12 32 48" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/f4e469cc-08c6-4eb4-92df-04994aae2aa4">  
 
 
-### 3-5) Broadcast Hash Join    
+### 4-2) Broadcast Hash Join    
 
 `위에서 설명한 broadcast 변수를 driver에서 생성하여 각 executor로 복제해 놓고, 해시 조인을 실행하는 방식이다.`       
 
@@ -165,6 +184,8 @@ shuffle sort merge join 은 조인 작업 전에 조인 키를 기준으로 shuf
 spark.conf.set("spark.sql.autoBroadcastJoinThreshold", [your threshold in Bytes])
 ```
 
+> 사용자가 hint를 지정하거나, 지정하지 지정하지 않았더라도 한쪽 테이블 사이즈가 위 설정보다 
+작으면 실행될 수 있다.    
 
 위 설정과 같이 default로 10MB 이하의 데이터 셋이 broadcast 변수로 생성되며, 
     Spark 엔진 또는 [Adaptive Query Exectuion](https://wonyong-jang.github.io/spark/2024/04/15/Spark-Adaptive-Query-Execution.html)에 의해 
@@ -176,7 +197,7 @@ import org.apache.spark.sql.functions.broadcast
 val joinDF = bigDF.join(broadcast(smallDF), "joinKey")
 ```
 
-### 3-6) Partial Manual Broadcast Hash Join     
+### 4-3) Partial Manual Broadcast Hash Join     
 
 소수의 키에 데이터가 크게 몰려 있어서 메모리에 올릴 수 없는 경우, 
     몰려 있는 키만 빼고 일반 키들만으로 braodcast join을 하는 방법도 
@@ -185,14 +206,14 @@ val joinDF = bigDF.join(broadcast(smallDF), "joinKey")
 합치는 방법이다.   
 이 방법은 다루기 힘든 심하게 skewed 된 데이터를 다룰 때 고려해 볼 수 있을 것이다.   
 
-### 3-7) Broadcast Nested Loop Join
+### 4-4) Broadcast Nested Loop Join
 
 Broadcast hash 조인과 유사하게 작은 데이터 셋이 전체 워커 노드로 전달 되지만, 
 hash 기반 조인이 아닌, nested loop join이 진행된다.   
 
 데이터 셋이 크다면 굉장히 비효율적인 방식이다.   
 
-### 3-8) Cartesian Product Join    
+### 4-5) Cartesian Product Join    
 
 Shuffle and Replication Nested Loop Join 이기도 하며 데이터 셋이 
 Broadcast 되지 않는다는 점을 제외하면 Broadcast Nested Loop Join과 
