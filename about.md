@@ -7,7 +7,7 @@ background: '/img/bg-index.jpg'
 
 ## 👨‍💻 Sr. Data Engineer      
 
-6년차 Data Engineer 로서 하루 평균 2000만건 이상의 데이터를 
+7년차 Data Engineer 로서 하루 평균 2000만건 이상의 데이터를 
 Spark Streaming 및 AWS 인프라를 통해 
 실시간으로 처리하는 파이프라인 구축 경험을 가지고 있습니다.   
 
@@ -66,52 +66,66 @@ Spark Streaming 및 AWS 인프라를 통해
 
 > 2021.02.01 ~ 현재 
 
-- Leading data pipeline revamp project   
-    - Processed rows per second(AS-IS: 800 -> TO-BE: 10,000)   
-        - [<u>https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html</u>](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)     
-    - 불필요한 Shuffle 제거   
-    - 재처리 구조 개선     
-    - 데이터 정합성 메트릭 구성    
-    - Migrate from spark streaming to structured streaming.   
-        - [<u>https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)     
+[Construct data pipeline for large-scale batch processing]
+
+- 기존 hive 테이블을 iceberg 테이블로 전환    
+    - hive 테이블은 데이터 업데이트가 어렵기 때문에 중간 테이블이 
+    생겨 리드 타임 및 파이프라인 복잡성 증가       
+    - iceberg 테이블로 전환하여 트랜잭션 제공 및 테이블 간소화     
+    - 유연한 스키마 변경 제공
+- spark를 활용한 효율적인 join 전략    
+
+
+[Leading streaming data pipeline revamp project]   
+
+- Processed rows per second(AS-IS: 800 -> TO-BE: 10,000)   
+    - [<u>https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html</u>](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)     
+- 불필요한 Shuffle 제거   
+- 재처리 구조 개선     
+- 데이터 정합성 메트릭 구성    
+- Migrate from spark streaming to structured streaming.   
+    - [<u>https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)     
        
           
-- Elastic Search와 Airflow 스케줄을 이용한 실시간 집계 결과값 제공   
-    - 데이터 웨어하우스에서 데이터 추출 및 S3 저장   
-    - S3 데이터 로드하여 Elastic Search 인덱싱   
-    - 하루 평균 1,500백만건 데이터를 api로 실시간 집계 결과값 서빙   
-    - nGrinder를 이용한 성능 테스트 
+[Elastic Search와 Airflow 스케줄을 이용한 실시간 집계 결과값 제공]   
+
+- 데이터 웨어하우스에서 데이터 추출 및 S3 저장   
+- S3 데이터 로드하여 Elastic Search 인덱싱   
+- 하루 평균 1,500백만건 데이터를 api로 실시간 집계 결과값 서빙   
+- nGrinder를 이용한 성능 테스트 
 
 
-- 상담 가능성 높은 상품 예측 및 call routing 서비스 반영        
-    - Accuracy: (60% -> 92%)
-    - Precision: (42% -> 77%)
-    - Recall: (30% -> 68%)
+[상담 가능성 높은 상품 예측 및 call routing 서비스 반영]   
 
-- Bus Route Recommendation Service       
-    - Fulfillment Center 지원자에게 버스가 제공되며, 지원자 거주지 기준으로 자동으로 가까운 버스 추천  
-    - 기존에는 상담사가 직접 지원자의 거주지와 가까운 버스 정류장을 찾아서 전달하기 때문에 상담시간 지연 발생   
-    - 지원자의 거주지를 위, 경도로 변환 후 버스 정류장의 위, 경도와 비교하여 거리 및 우선순위에 따라 추천   
-    - Haversine formula 알고리즘을 이용하여 가까운 거리 계산      
-    - Redis를 활용하여 버스 정류장 데이터를 캐싱하여 성능 개선   
-    - 상담사의 상담 준비시간(After Call Work)을 60% 개선    
-        - As-Is : 2.5 min   
-        - To-Be : 1 min (셔틀버스노선 확인 시간 감소)    
+- Accuracy: (60% -> 92%)
+- Precision: (42% -> 77%)
+- Recall: (30% -> 68%)
+
+[Bus Route Recommendation Service]    
+
+- Fulfillment Center 지원자에게 버스가 제공되며, 지원자 거주지 기준으로 자동으로 가까운 버스 추천  
+- 기존에는 상담사가 직접 지원자의 거주지와 가까운 버스 정류장을 찾아서 전달하기 때문에 상담시간 지연 발생   
+- 지원자의 거주지를 위, 경도로 변환 후 버스 정류장의 위, 경도와 비교하여 거리 및 우선순위에 따라 추천   
+- Haversine formula 알고리즘을 이용하여 가까운 거리 계산      
+- Redis를 활용하여 버스 정류장 데이터를 캐싱하여 성능 개선   
+- 상담사의 상담 준비시간(After Call Work)을 60% 개선    
+    - As-Is : 2.5 min   
+    - To-Be : 1 min (셔틀버스노선 확인 시간 감소)    
           
 
-- Build customer service data pipeline with Kafka, Spark streaming and DocumentDB       
-    - 기존 batch 기반으로 API를 반복적으로 호출하는 방식에서 AWS event bridge를 사용하여 3rd party data pipeline 구축     
-    - Spark Streaming의 마이크로 배치(10초)를 통해 Data 수집 및 Kafka publishing 하여 타 도메인에서 사용할 수 있도록 제공     
-    - API 기반의 데이터 처리 방식 대비 약 60배의 퍼포먼스 개선  
-        - As-Is : 250/sec   
-        - To-Be : 15,000/sec     
-    - API error로 인해 발생하던 exception 100% 감소   
-        - As-Is: 1000/day   
-        - To-Be: 0/day   
-    - Airflow를 통해 3rd party domain의 장애 발생 및 Event bridge로 데이터 전달 누락, 이벤트 처리 실패에 대한 retry 프로세스 적용     
-    - Data 저장을 위한 AWS storage cost 절감     
-        - As-Is : $12,264 /Month (AuroraDB r5.12xlarge)      
-        - To-Be : $3,901 /Month (DocumentDB r5.4xlarge)     
+[Build customer service data pipeline with Kafka, Spark streaming and DocumentDB]       
+- 기존 batch 기반으로 API를 반복적으로 호출하는 방식에서 AWS event bridge를 사용하여 3rd party data pipeline 구축     
+- Spark Streaming의 마이크로 배치(10초)를 통해 Data 수집 및 Kafka publishing 하여 타 도메인에서 사용할 수 있도록 제공     
+- API 기반의 데이터 처리 방식 대비 약 60배의 퍼포먼스 개선  
+    - As-Is : 250/sec   
+    - To-Be : 15,000/sec     
+- API error로 인해 발생하던 exception 100% 감소   
+    - As-Is: 1000/day   
+    - To-Be: 0/day   
+- Airflow를 통해 3rd party domain의 장애 발생 및 Event bridge로 데이터 전달 누락, 이벤트 처리 실패에 대한 retry 프로세스 적용     
+- Data 저장을 위한 AWS storage cost 절감     
+    - As-Is : $12,264 /Month (AuroraDB r5.12xlarge)      
+    - To-Be : $3,901 /Month (DocumentDB r5.4xlarge)     
 
 
 <br>   
