@@ -1,16 +1,21 @@
 ---
 layout: post
 title: "[Spark] Join Strategies 과 Shuffle"   
-subtitle: "shuffle join, broadcast join / shuffle sort merge join, broadcast hash join"             
+subtitle: "shuffle join, broadcast join / shuffle sort merge join, broadcast hash join / join hint"             
 comments: true   
 categories : Spark   
 date: 2024-04-20   
 background: '/img/posts/mac.png'   
 ---
 
+이번글에서는 Spark에서 제공하는 여러 조인 전략 및 Hint와 
+어떤 전략으로 join을 선택하는지 등을 살펴보자.   
+
+- - - 
+
 ## 1. 스파크에서 제공하는 조인 종류     
 
-스파크에서 조인은 아래와 같은 조인 타입을 제공한다.   
+스파크에서 조인은 아래와 같은 조인 종류를 제공한다.   
 
 ##### 1-1) inner join(내부 조인)
 
@@ -52,9 +57,11 @@ background: '/img/posts/mac.png'
 조인할 키의 데이터가 동일한 파티션에 있지 않다면 셔플이 필요하고, 이를 통해 동일한 
 키의 데이터는 동일한 파티션에 위치하게 된다.   
 
-즉, 조인의 비용은 키의 개수와 올바른 파티션으로 위치하기 위해 움직이는 규모에 비례해서 커진다.     
+`즉, 조인의 비용은 키의 개수와 올바른 파티션으로 위치하기 위해 움직이는 규모에 비례해서 커진다.`        
 
 스파크는 조인 시 크게 두 가지 방식으로 조인을 진행한다.    
+
+> 더 세부적인 조인 방식은 아래에서 설명할 예정이다.   
 
 ### 2-1) Shuffle join    
 
@@ -86,7 +93,6 @@ background: '/img/posts/mac.png'
 
 일반적으로 사용되는 nested loop join, merge join, hash join을 먼저 살펴보고 
 spark 에서 사용되는 조인 전략에 대해서 살펴보자.     
-
 
 ### 3-1) Nested Loop Join    
 
@@ -129,16 +135,18 @@ hash function은 O(1)의 시간이 들 것이고, 결과적으로 O(T1+ T2) 만�
 
 ## 4. Spark 에서의 조인 전략    
 
-이제 스파크에서 주로 사용되는 join 전략에 대해 살펴보자.   
+이제 Spark 에서 주로 사용되는 join 전략에 대해 살펴보자.   
 
 <img width="730" alt="스크린샷 2024-12-08 오후 6 24 10" src="https://github.com/user-attachments/assets/fdc7730b-ad36-4184-8aff-7027ee24bda6">   
 
 위 사진을 보면, 등가조인과 비등가조인일 때로 우선 분리된다.   
 
 `즉, spark에서 대용량 데이터를 이용하여 비등가 조인(like 검색, <, >, <=, >=)을 할 경우 
-비효율적인 조인 방식을 사용하기 때문에 성능상 문제가 발생할 수 있다.`    
+비효율적인 조인 방식을 사용하기 때문에 성능상 문제가 발생할 수 있다.`   
 
+그 후 조인 Hint가 있는지를 확인하여 조인이 결정된다.     
 
+> 지정한 Hint는 모든 Join 타입에 지원하지 않을 수 있기 때문에 항상 적용되진 않는다.   
 
 ### 4-1) Shuffle Sort Merge Join   
 
@@ -147,11 +155,15 @@ hash function은 O(1)의 시간이 들 것이고, 결과적으로 O(T1+ T2) 만�
 
 > default shuffle partition은 200 이기 때문에 200개의 셔플 파티션을 사용한다.    
 
-spark 2.3 부터 shuffle hash join 보다 더 좋은 성능을 내는 
-shuffle sort merge join 을 사용한다.   
+`spark 2.3 부터 shuffle hash join 보다 더 좋은 성능을 내는 
+shuffle sort merge join 을 기본적으로 사용한다.`       
 
-`과거에 shuffle hash join 과 달리 memory가 아닌 disk를 이용할 수 있기 
-때문에 OOM이 발생하지 않는다.`       
+`Shuffle sort merge join은 과거에 
+shuffle hash join 과 달리 memory가 아닌 disk를 이용할 수 있기 
+때문에 OOM이 발생하지 않는다.`      
+
+> Hashing 작업은 메모리가 요구되며 hash table을 유지해야 하기 때문에 
+오버헤드가 발생할 가능성이 높다.   
 
 이를 확인하기 위해 아래 옵션을 이용하여 off 시키고 shuffle hash join을 
 테스트 해볼 수 있다.     
@@ -162,14 +174,20 @@ spark.conf.set("spark.sql.join.preferSortMergeJoin","false")
 
 shuffle sort merge join 은 첫번째로 shuffle 과정을 진행한다.   
 동일한 조인 키를 가지는 데이터셋을 동일한 executor로 이동시킨다.   
-그 후 executor node에서 노드상의 데이터셋 파티션을 조인키 기반으로 정렬 후 
-조인키 기반으로 병합한다.   
+그 후 executor node에서 각 파티션을 조인키 기반으로 정렬 한다.  
+마지막으로 조인키 기반으로 병합한다.   
+
 `따라서 정렬이 적용되므로 조인 키들의 정렬이 가능한 데이터 타입이어야 한다.`   
 
 
 <img width="700" alt="스크린샷 2024-04-20 오후 12 32 28" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/df897b0b-d54c-40d7-a974-1b8d491cc2ad">   
 
 <img width="700" alt="스크린샷 2024-04-20 오후 12 32 48" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/f4e469cc-08c6-4eb4-92df-04994aae2aa4">  
+
+Spark UI에서 아래와 같이 확인할 수 있다.  
+
+<img width="500" alt="스크린샷 2024-12-12 오전 9 14 48" src="https://github.com/user-attachments/assets/6f4bf60b-71ff-4642-8c45-d8604ff55304" />
+
 
 
 ### 4-2) Broadcast Hash Join    
@@ -191,11 +209,14 @@ spark.conf.set("spark.sql.autoBroadcastJoinThreshold", [your threshold in Bytes]
     Spark 엔진 또는 [Adaptive Query Exectuion](https://wonyong-jang.github.io/spark/2024/04/15/Spark-Adaptive-Query-Execution.html)에 의해 
     Broadcast Hash join이 실행되지만 그렇지 못한 경우는 직접 명시를 해주어야 한다.   
 
-```
+```python
 import org.apache.spark.sql.functions.broadcast
-  
+
+# broadcast hint를 명시 
 val joinDF = bigDF.join(broadcast(smallDF), "joinKey")
 ```
+
+
 
 ### 4-3) Partial Manual Broadcast Hash Join     
 
@@ -211,13 +232,34 @@ val joinDF = bigDF.join(broadcast(smallDF), "joinKey")
 Broadcast hash 조인과 유사하게 작은 데이터 셋이 전체 워커 노드로 전달 되지만, 
 hash 기반 조인이 아닌, nested loop join이 진행된다.   
 
-데이터 셋이 크다면 굉장히 비효율적인 방식이다.   
+데이터 셋이 크다면 굉장히 비효율적인 방식이다.  
+
+- `right outer join 에서 왼쪽 테이블이 브로드캐스트된다.`      
+- `left outer, left semi, left anti join 에서 오른쪽 테이블이 브로드캐스트 된다.`      
+
+<img width="352" alt="스크린샷 2024-12-12 오전 8 55 34" src="https://github.com/user-attachments/assets/0e75bb3c-0b34-4514-bd91-7d3347d59edc" />
+
 
 ### 4-5) Cartesian Product Join    
 
-Shuffle and Replication Nested Loop Join 이기도 하며 데이터 셋이 
-Broadcast 되지 않는다는 점을 제외하면 Broadcast Nested Loop Join과 
-매우 유사하게 동작한다.
+Join 키가 존재하지 않는 경우, Cartesian Join이 선택된다.
+
+<img width="285" alt="스크린샷 2024-12-12 오전 9 01 35" src="https://github.com/user-attachments/assets/7acbf53e-b43e-4326-9952-97b2e16a5516" />   
+
+- - -   
+
+## Conclusion   
+
+조인 타입에 의해 제공하는 조인 전략은 아래 표에서 확인해보자.   
+
+<img width="650" alt="스크린샷 2024-12-12 오전 9 04 53" src="https://github.com/user-attachments/assets/f5609cb4-13aa-4101-967f-b1be840a04fb" />     
+
+Spark는 내부적으로 가장 적절한 Join 알고리즘을 선택하지만 
+그렇지 않은 경우는 개발자가 Hint를 주어서 조인 전략을 변경할 수 있다.  
+하지만 조인과 데이터 특성을 이해하지 못한다면 
+OOM 등의 문제를 발생시킬 수 있기 때문에 데이터에 대한 이해와 Spark에서 
+제공하는 조인 전략에 대해 이해하고 있어야 한다.   
+
 
 
 
