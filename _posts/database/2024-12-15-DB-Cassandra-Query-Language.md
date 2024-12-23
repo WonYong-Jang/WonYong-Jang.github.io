@@ -55,7 +55,10 @@ Primary key와 Partiton key의 선택은 클러스터에 데이터를
 `partition key가 노드에 데이터를 분산하는데 사용`된다.   
 카산드라는 데이터 분배를 위해 일관된 해싱을 사용하여 데이터를 분배한다.  
 `Partition key는 Primary key의 첫번째 필드로 결정되며, 
-          적은 Partition은 Query에 대한 응답을 빠르게 한다.`   
+          적은 Partition은 Query에 대한 응답을 빠르게 한다.`  
+
+<img width="500" alt="스크린샷 2024-12-15 오후 4 41 45" src="https://github.com/user-attachments/assets/cda12a6a-a2b9-455b-9ed6-10b3e79eaca8" />
+
 
 아래 예제에서 테이블 t 는 Primary key인 id를 가지고 있다.   
 
