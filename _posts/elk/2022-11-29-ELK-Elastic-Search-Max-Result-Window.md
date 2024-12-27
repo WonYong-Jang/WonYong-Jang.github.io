@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[ELK] 엘라스틱 서치 인덱스 10,000개 이상 검색하기"
-subtitle: "max result window, search after, scroll api, composite aggregation"    
+subtitle: "max result window, search after, point in time, scroll api, composite aggregation"    
 comments: true
 categories : ELK
 date: 2022-11-29
@@ -171,6 +171,14 @@ ES Search에서 정렬을 하고 조회를 하게 되면, hit 값에 sortValues�
 
 이 때 중요한 점은, PIT(Point In Time) 값을 함께 설정해주어 동일한 시점에 
 검색을 한 것과 같은 효과를 내주어야 한다는 것이다.  
+
+##### PIT (Point in Time) 란?     
+
+Elasticsarch 7.10 버전부터 사용이 가능하며, 인덱스의 
+특정 시점의 데이터 상태를 캡처하여 복원할 수 있는 기능이다.   
+
+`Search After 요청 사이에 인덱스 변경사항이 일어나면 결과 데이터가 
+일관되지 않을 수 있어 데이터 일관성을 맞추기 위해 사용한다.`   
 
 
 > 주의: collapse나 aggregation은 search after를 지원하지 않는다.  
