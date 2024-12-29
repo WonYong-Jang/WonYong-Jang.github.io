@@ -584,8 +584,33 @@ regexp 쿼리는 정규 표현식 term 쿼리를 사용할 수 있다.
 즉, "0개 이상의 자리수를 갖는 모든 문자열 + street" 인 문자여를 찾는 쿼리가 된다.
 ```
 
-그 밖의 ES 정규식 문법에 대해서는 [링크](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-dsl-regexp-query.html#regexp-syntax)를 참고하자.   
+그 밖의 ES 정규식 문법에 대해서는 [링크](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/query-dsl-regexp-query.html#regexp-syntax)를 참고하자.  
 
+### 4-7) wildcard
+
+wildcard 또한 term level 쿼리이며, 와일드 카드 패턴 매칭만을 이용하여 
+검색을 제공한다.    
+더 복잡한 패턴 매칭이 필요한 경우 regexp를 사용해야 한다.   
+
+
+```
+// *, ? 만을 사용할 수 있다.   
+
+{
+    "query": {
+        "wildcard": {
+            "address": "*street*"
+        }
+    }
+}
+```
+
+`주의할 점은 regexp, wildcard 모두 색인된 모든 토큰을 검사하기 때문에 
+검색 성능에 문제가 발생할 수 있다.`   
+
+`따라서, n-gram 토큰화로 색인하고 일반적인 키워드 검색으로 검색을 하거나, 
+    반드시 사용해야 하는 경우는 street* 와 같이 접두어를 사용하도록 
+    진행해야 한다.`      
 
 - - - 
 

@@ -242,23 +242,33 @@ primary shard만 존재하고 replica는 생성되지 않는다.
 
 ### 설치
 
-아래 설치 내용은 macOS 기준이다.
+설치는 도커를 이용하여 실습을 진행해보자.   
 
 ```
-$ brew install elasticsearch // http://localhost:9200
+version: '3'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.24
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
 
-$ brew install kibana        // http://localhost:5601
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.24
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
 
-$ brew services start elasticsearch
-$ brew services start kibana   
+volumes:
+  esdata:
+    driver: local
 ```
 
-elasticsearch의 로그를 확인하기 위해서는 아래 경로에서 
-확인 가능하다.   
-
-```
-$ cd /usr/local/var/log/
-```
 
 엘라스틱 서치와 키바나를 설치했다면 Restful API로 document를 추가하는 간단한 예제를 
 해보자.   
