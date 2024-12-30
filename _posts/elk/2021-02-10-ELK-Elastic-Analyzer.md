@@ -325,16 +325,30 @@ PUT my_index3
 
 ## 텀 벡터 (termvectors API)   
 
-`색인된 도큐먼트의 역 인덱스의 내용을 확인할 때는 도큐먼트 별로 termvectors API를 
-이용해서 확인이 가능하다.`       
+`Term Vectors API는 텍스트 필드에 대한 토큰화, 빈도, 위치, 오프셋 등의 
+정보를 확인할 수 있다.`   
 
-```
-// <인덱스>/<도큐먼트 타입>/<도큐먼트id>/_termvectors?fields=<필드명>   
-GET my_index2/_doc/1/_termvectors?fields=message
-```   
+특정 문서나 텍스트에서 생성된 token 정보 확인 및 분석 과정에서 유용하다.   
+
+```sql
+POST my-index/_termvectors/<document_id>
+{
+  "fields": ["contents"],
+  "term_statistics": true,
+  "field_statistics": true,
+  "positions": true,
+  "offsets": true
+}
+
+# term_statistics: 토큰의 전역 빈도와 문서 수를 반환  
+# field_statistics: 필드의 전체적인 통계를 반환   
+# positions: 토큰의 위치 정보를 반환   
+# offsets: 토큰의 시작 및 끝 위치를 반환   
+```  
 
 
-여러개의 필드를 같이 확인하고 싶을 때는 ?fields=field1, field2 처럼 
+
+여러개의 필드를 같이 확인하고 싶을 때는 fields에 배열에 추가하여 처럼 
 쉼표로 나열해서 볼 수 있다.   
 
 
