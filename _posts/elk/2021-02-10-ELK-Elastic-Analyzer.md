@@ -340,10 +340,10 @@ POST my-index/_termvectors/<document_id>
   "offsets": true
 }
 
-# term_statistics: 토큰의 전역 빈도와 문서 수를 반환  
-# field_statistics: 필드의 전체적인 통계를 반환   
-# positions: 토큰의 위치 정보를 반환   
-# offsets: 토큰의 시작 및 끝 위치를 반환   
+-- term_statistics: 토큰의 전역 빈도와 문서 수를 반환  
+-- field_statistics: 필드의 전체적인 통계를 반환   
+-- positions: 토큰의 위치 정보를 반환   
+-- offsets: 토큰의 시작 및 끝 위치를 반환   
 ```  
 
 
