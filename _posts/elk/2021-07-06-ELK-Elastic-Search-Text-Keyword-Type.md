@@ -86,13 +86,7 @@ PUT my_index/_mapping/_doc
 많은 heap memory를 소비하게 된다. 일단 field가 heap에 로딩되면 그것은 
 segment의 lifetime동안 남아 있게된다. 따라서 비용이 높은 프로세스가 된다.`     
 
-`또한, 특정 query에 매치되는 document의 field 뿐 아니라 모든 document의 field를 메모리에 적재한다.`    
-
-모든 field를 적재하는 이유는 요청 때마다 매번 메모리에 적재하여 사용하는 것보다 미리 모든 
-field를 모두 적재해 놓으면, 그 다음에 수행되는 query에도 사용하기 용이하기 때문이다. 물론 
-새로운 document가 인덱싱 되면 그 document의 field도 적재가 된다.   
-
-색인되는 모든 field를 메모리에 적재하는 특징 때문에, 굉장히 많은 메모리를 소비하는 것은 
+해당 field를 메모리에 적재하는 특징 때문에, 굉장히 많은 메모리를 소비하는 것은 
 물론 문제다. 이는 Memory 부족으로 인한 OOM이나, CircuitBreakingException의 원인이 될 수 있다.   
 
 하지만, 이러한 메모리 부족 문제는 클러스터에 노드를 추가하는 등의 수평적 확장을 통해 
