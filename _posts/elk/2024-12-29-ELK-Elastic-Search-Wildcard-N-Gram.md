@@ -314,6 +314,8 @@ PUT /test-index
 }
 ```
 
+> 위에서 tokenizer를 standard로 했지만, letter, whitespace, uax_url_email 등이 있다.   
+
 ```
 PUT /test-index/_mapping
 {

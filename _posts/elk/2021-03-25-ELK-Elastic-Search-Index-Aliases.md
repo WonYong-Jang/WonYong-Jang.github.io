@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[ELK] ElasticSearch의 Index Aliases 활용 "
-subtitle: "인덱스 별명(Index Aliases)를 이용한 Log Lotation"    
+subtitle: "인덱스 별명(Index Aliases)를 이용한 Log Lotation / elasticsearch-rest-client 를 이용하여 atomic하게 alias index 변경"    
 comments: true
 categories : ELK
 date: 2021-03-25
@@ -94,6 +94,39 @@ POST /_aliases
 2건씩 나오게 된다.`   
 `반대로 기존 별명을 먼저 지우면 클라이언트에서 검색 요청이 들어왔을 때 해당 별명이 없으므로 
 오류가 발생한다.`    
+
+즉, 위 쿼리와 같이 single atomic operation으로 동작해야 문제가 없으며 
+코틀린에서는 아래와 같이 구현할 수 있다.  
+
+```kotlin
+implementation("org.elasticsearch.client:elasticsearch-rest-client:7.17.22")
+```
+
+```kotlin
+import co.elastic.clients.elasticsearch.indices.*
+
+fun switchIndexAlias(aliasName: String, targetIndex: String, previousIndex): Boolean {
+    if(!existIndex(targetIndex) {
+        // ... 
+    }
+
+    // alias에 맵핑된 기존 인덱스를 모두 제거하고 싶다면 * 를 사용할 수 있다.
+    // previousIndex에 log-* 와 같이 전달한다면, log- 로 시작하는 인덱스는 모두 alias에서 제거된다.   
+    val actions = listOf(
+        Action.of { it.remove { builder -> builder.index(previousIndex).alias(aliasName) }},
+        Action.of { it.add { builder -> builder.index(targetIndex).alias(aliasName) }},
+    )
+
+    val request = UpdateAliasesRequest.of { it.actions(actions) }
+    return elasticsearchClient.indices().updateAliases(request).acknowledged()
+}
+
+fun existIndex(targetIndex: String): Boolean {
+    val existRequest = ExistsRequest.of { it.index(targetIndex) }
+    return elasticsearchClient.indices().exists(existsRequest).value()   
+}
+```
+
 
 
 - - - 
@@ -279,6 +312,7 @@ $ curl -X POST "localhost:9200/_aliases" -H 'Content-Type: application/json' -d'
 
 **Reference**    
 
+<https://www.elastic.co/guide/en/elasticsearch/reference/7.17/aliases.html>   
 <https://ridicorp.com/story/index-aliases>   
 
 {% highlight ruby linenos %}
