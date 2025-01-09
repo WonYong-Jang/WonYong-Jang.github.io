@@ -291,7 +291,11 @@ PUT /test-index
         "my_ngram_tokenizer": {
           "type": "ngram",
           "min_gram": 1,
-          "max_gram": 10
+          "max_gram": 10,
+          token_chars : [
+              "letter",
+              "digit"
+          ]
         }
       },
       "analyzer": {
@@ -314,7 +318,11 @@ PUT /test-index
 }
 ```
 
-> 위에서 tokenizer를 standard로 했지만, letter, whitespace, uax_url_email 등이 있다.   
+> 위에서 search analyzer 의 tokenizer를 standard로 했지만, 
+    letter, whitespace, uax_url_email 등으로 변경할 수 있다.  
+
+`위와 같이 ngram tokenizer에서 token_chars 를 이용하여 ngram 대상 을 지정할 수 있다. 여기서는 
+숫자와 문자만 허용했고, 특수문자와 공백을 제외하여 ngram 하였다.`   
 
 ```
 PUT /test-index/_mapping
