@@ -292,7 +292,7 @@ PUT /test-index
           "type": "ngram",
           "min_gram": 1,
           "max_gram": 10,
-          token_chars : [
+          "token_chars" : [
               "letter",
               "digit"
           ]
