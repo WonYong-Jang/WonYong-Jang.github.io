@@ -260,11 +260,62 @@ GET index/_search
 
 `집계의 경우도 동일하게 결과값 10000개 이상을 검색할 때 제한이 발생한다.`   
 
-따라서 composite 집계를 이용할 수 있다.   
+따라서 composite 집계를 이용할 수 있다.  
 
+```
+GET test-index/_search
+{
+  "size": 0,
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "contents": "가나"
+          }
+        }
+      ]
+    }
+  },
+  "aggs": {
+    "custom-composite-aggs": {
+      "composite": {
+        "sources": [
+          {
+            "contents": {
+              "terms": {
+                "field": "contents.keyword"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+```
 
-집계 결과를 보면 after key를 포함하고 있고, 해당 키값을 넣어서 쿼리를 하게 되면 해당 키 다음 부터 조회가 가능하다.   
+Output
+
+```
+"aggregations" : {
+    "custom-composite-aggs" : {
+      "after_key" : {
+        "contents-aggs" : "가나마"
+      },
+      "buckets" : [
+        {
+          "key" : {
+            "contents-aggs" : "가나 다라마사"
+          },
+          "doc_count" : 1
+        },
+// ... 
+```
+
+`집계 결과를 보면 after key를 포함하고 있고, 해당 키값을 넣어서 쿼리를 하게 되면 해당 키 다음 부터 조회가 가능`하다.   
 이런 방법으로 전체를 조회하거나 원하는 페이지를 조회할 수 있다.   
+
 
 
 - - - 

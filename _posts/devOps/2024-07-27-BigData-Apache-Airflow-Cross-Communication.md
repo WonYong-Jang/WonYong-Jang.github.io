@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Airflow] 아파치 Airflow - Xcom "
-subtitle: "Cross Communication / Task 간 데이터 공유(push, pull)"    
+subtitle: "Cross Communication / Task 간 데이터 공유(push, pull) / Avoid top level code"    
 comments: true
 categories : DevOps
 date: 2024-07-27
@@ -176,6 +176,84 @@ bash_xcom_pull = BashOperator(
     dag=dag
 )
 
+```
+
+- - - 
+
+## 3. top level code   
+
+airflow는 주기적으로 모든 dag 정보를 읽어 들여 서버 동기화를 한다.  
+
+> min_file_process_interval 설정에 따라 다르며 현재 default는 30초이다.   
+
+그 과정에서 top level code 들은 계속 로드를 진행하며, 특히 
+database connection 또는 외부 api 호출은 전체 클러스터 부하를 가져올 수 있다.   
+
+`따라서 top level code를 피하기 위해 모든 코드는 함수, 클래스, 또는 with dag 문 안에 
+캡슐화 해야한다.`   
+
+[airflow best practice](https://airflow.apache.org/docs/apache-airflow/stable/best-practices.html)를 
+참고해보자.   
+
+아래 예제는 외부 api 호출을 top level code로 작성한 bad practice 이다.   
+
+```python
+from airflow import DAG
+from airflow.decorators import task
+
+
+def expensive_api_call():
+    print("Hello from Airflow!")
+    sleep(1000)
+
+
+my_expensive_response = expensive_api_call()
+```
+
+이는 아래와 같이 task가 실행될 때만 호출하도록 해야 한다.  
+
+```python
+def expensive_api_call():
+    sleep(1000)
+    return "Hello from Airflow!"
+
+
+with DAG(
+    dag_id="example_python_operator",
+    schedule=None,
+    start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
+    catchup=False,
+    tags=["example"],
+) as dag:
+
+    @task()
+    def print_expensive_api_call():
+        my_expensive_response = expensive_api_call()
+        print(my_expensive_response)
+```
+
+`또한 import 부분도 주의해야 하며, pandas, numpy, torch, tensorflow와 같은 무거운 import도 top level code를 
+피해야 한다.`   
+
+```python
+# It's ok to import modules that are not expensive to load at top-level of a DAG file
+import random
+import pendulum
+
+# Expensive imports should be avoided as top level imports, because DAG files are parsed frequently, resulting in top-level code being executed.
+#
+# import pandas
+# import torch
+# import tensorflow
+#
+
+...
+
+
+@task()
+def do_stuff_with_pandas_and_torch():
+    import pandas
+    import torch
 ```
 
 

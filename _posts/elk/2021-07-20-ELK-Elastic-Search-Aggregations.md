@@ -12,8 +12,9 @@ Elasticsearch 는 검색엔진으로 개발되었지만 지금은 로그분석�
 다양한 목적의 데이터 시스템으로 사용되고 있다.    
 Elasticsearch가 이렇게 다양한 용도로 활용이 될 수 있는 이유는 
 데이터를 단순히 검색만 하는 것이 아니라 여러가지 연산을 할 수 있는 
-Aggregation 기능이 있기 때문이다. Kibana 에서는 바 차트, 파이 차트 등으로 
-데이터를 시각화 할 수 있는데 여기서 사용하는 것이 이 기능이다.    
+Aggregation 기능이 있기 때문이다.    
+Kibana 에서는 바 차트, 파이 차트 등으로 
+데이터를 시각화 할 수 있는데 여기서 사용하는 것이 이 기능이다.      
 
 Aggregation의 사용방법은 search API 에서 query 문과 같은 수준에 지정자 
 aggregations 또는 aggs 를 명시하고 그 아래 임의의 aggregation 이름을 
@@ -21,10 +22,11 @@ aggregations 또는 aggs 를 명시하고 그 아래 임의의 aggregation 이�
 
 `Aggregation 에는 크게 Metrics 그리고 Bucket 두 종류가 있다.`   
 Aggregations 구문이나 옵션에 metrics 이거나 bucket 이라고 따로 명시를 
-하지는 않는다. `Aggregation 종류들 중 숫자 또는 날짜 필드의 값을 가지고 
+하지는 않는다.    
+`Aggregation 종류들 중 숫자 또는 날짜 필드의 값을 가지고 
 계산을 하는 aggregation 들은 metrics aggregation 이라고 분류하고, 
     범위나 keyword 값 등을 가지고 도큐먼트들을 그룹화 하는 aggregation 들을 
-    bucket aggregation 이라고 분류 한다.`      
+    bucket aggregation 이라고 분류 한다.`          
 
 Metrics 와 Bucket Aggregations 들을 설명하기 위해 
 아래 데이터를 my_stations 인덱스에 인덱싱해보자.     
