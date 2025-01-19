@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[ELK] 집계 - Aggregations"
-subtitle: "Metrics, Bucket Aggregations( Range, Histogram, Terms ), sub aggregations, pipeline aggregations"    
+subtitle: "Metrics, Bucket Aggregations( Range, Histogram, Terms ), cardinality, sub aggregations, pipeline aggregations"    
 comments: true
 categories : ELK
 date: 2021-07-20
@@ -179,7 +179,10 @@ Output
 ### 1-3) cardinality   
 
 `필드의 값이 모두 몇 종류인지 분포값을 알려면 cardinality aggregation을 
-사용해서 구할 수 있다.`   
+사용해서 구할 수 있다.`  
+
+`즉, 중복을 제거하여 count를 구할 때 유용하다.`   
+
 `Cardinality는 일반적으로 text 필드에서는 사용할 수 없으며 숫자 필드나 
 keyword, ip 필드 등에 사용이 가능하다.`   
 사용자 접속 로그에서 IP 주소 필드를 가지고 실제로 접속한 사용자가 
