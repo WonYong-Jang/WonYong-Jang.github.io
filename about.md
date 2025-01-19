@@ -73,33 +73,32 @@ Spark Streaming 및 AWS 인프라를 통해
     생겨 리드 타임 및 파이프라인 복잡성 증가       
     - iceberg 테이블로 전환하여 트랜잭션 제공 및 테이블 간소화     
     - 유연한 스키마 변경    
-- spark를 활용한 효율적인 join 전략    
+- spark를 활용한 효율적인 join 전략   
+- 엑셀을 이용한 수작업을 시스템 자동화하여 97% 리드타임 단축    
+    - AS-IS: 8 hour (약 100만건 기준)     
+    - TO-BE: 10 min      
 
 
 [Leading streaming data pipeline revamp project]   
 
 - Processed rows per second(AS-IS: 800 -> TO-BE: 10,000)   
-    - [<u>https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html</u>](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)     
+    - [<u>Spark Streaming Incident Review</u>](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)     
 - 불필요한 Shuffle 제거   
 - 재처리 구조 개선     
 - 데이터 정합성 메트릭 구성    
 - Migrate from spark streaming to structured streaming.   
-    - [<u>https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)     
+    - [<u>Structured Streaming 전환</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)     
        
           
-[Elastic Search와 Airflow 스케줄을 이용한 실시간 집계 결과값 제공]   
+[Development of search services using Elastic search, Airflow, and Spark]   
 
-- 데이터 웨어하우스에서 데이터 추출 및 S3 저장   
-- S3 데이터 로드하여 Elastic Search 인덱싱   
-- 하루 평균 1,500백만건 데이터를 api로 실시간 집계 결과값 서빙   
+- Spark를 이용하여 하이브 테이블 조인 결과를 ES 에 인덱싱(daily 100만건)      
+    - [<u>Wildcard 쿼리 대신 n-gram으로 성능 개선</u>](https://wonyong-jang.github.io/elk/2024/12/29/ELK-Elastic-Search-Wildcard-N-Gram.html)   
+- ES 인덱스 관리(Template, Alias, Lifecycle)      
+    - [<u>템플릿을 이용하여 인덱스의 Alias, Lifecycle 관리하기</u>](https://wonyong-jang.github.io/elk/2021/03/27/ELK-Elastic-Search-Index-Template.html)         
+- 웹 어플리케이션에서 모든 검색 패턴에 대해 0.5 이내에 검색을 제공   
+    - [<u>검색 및 집계 데이터를 페이지네이션을 통해 제공</u>](https://wonyong-jang.github.io/elk/2022/11/29/ELK-Elastic-Search-Max-Result-Window.html)   
 - nGrinder를 이용한 성능 테스트 
-
-
-[상담 가능성 높은 상품 예측 및 call routing 서비스 반영]   
-
-- Accuracy: (60% -> 92%)
-- Precision: (42% -> 77%)
-- Recall: (30% -> 68%)
 
 [Bus Route Recommendation Service]    
 
@@ -114,6 +113,7 @@ Spark Streaming 및 AWS 인프라를 통해
           
 
 [Build customer service data pipeline with Kafka, Spark streaming and DocumentDB]       
+
 - 기존 batch 기반으로 API를 반복적으로 호출하는 방식에서 AWS event bridge를 사용하여 3rd party data pipeline 구축     
 - Spark Streaming의 마이크로 배치(10초)를 통해 Data 수집 및 Kafka publishing 하여 타 도메인에서 사용할 수 있도록 제공     
 - API 기반의 데이터 처리 방식 대비 약 60배의 퍼포먼스 개선  
