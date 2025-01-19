@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[ELK] ElasticSearch의 인덱스 템플릿(Template) 설정하기 "
-subtitle: "mapping, setting 및 alias 정보를 template으로 설정 후 인덱스에 자동으로 적용하기"    
+subtitle: "mapping, setting 및 alias 정보를 template으로 설정 후 인덱스에 자동으로 적용하기 / lifecycle policy 추가 및 템플릿 적용"    
 comments: true
 categories : ELK
 date: 2021-03-27
@@ -118,6 +118,8 @@ PUT _template/summary-template
 `위 템플릿에서 인덱스 패턴을 지정해 주었기 때문에, 아래와 같이 인덱스가 생성될 때 자동으로 지정한 mappings 및 settings 가 
 적용된다.`      
 
+> 위 코드에서 lastic search 7.0 부터 _doc 부분을 제거해야 한다.    
+
 > 물론 일별 뿐 아니라 주 단위 월 단위 모두 가능하다.   
 
 ```
@@ -148,7 +150,60 @@ summary    summary-20230503 -      -             -
 ```
 
 더 자세한 내용은 [공식문서](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-put-template.html)를 
-참고해보자.   
+참고해보자.  
+
+- - - -
+
+## 3. LifyCycle Policy 생성 및 템플릿에 추가   
+
+인덱스가 daily로 생성이 되어 쌓인다고 가정해보면, 적절한 retention 기간을 정하고 
+그에 따라 주기적으로 제거해주어야 한다.   
+이를 자동으로 제거해주는 기능이 kibana의 lifecycle 관리 메뉴에서 제공한다.   
+
+<img width="1400" alt="Image" src="https://github.com/user-attachments/assets/ce652e06-26bf-433e-9634-003de4538a4e" />    
+
+`Index Lifecycle Policies 화면에서 Create Policy 버튼을 클릭하여 정책을 생성하자.`   
+
+<img width="1176" alt="Image" src="https://github.com/user-attachments/assets/fb9e6cc0-2775-4fb7-8746-48091113400e" />   
+
+<img width="1168" alt="Image" src="https://github.com/user-attachments/assets/b1d428f7-47dd-4c32-897e-97fafe9ff709" />   
+
+위 그림과 같이 이름을 작성하고, 휴지통 버튼을 클릭하면, Delete Phase를 설정할 수 있다.  
+여기서는 30일이 지난 인덱스에 대해서 자동으로 삭제되도록 하였다.   
+
+아래와 같이 생성한 policy를 인덱스에 추가해줄 수 있다.   
+
+```
+PUT mylogs-pre-ilm*/_settings
+{
+  "index": {
+    "lifecycle": {
+      "name": "summary-policy"
+    }
+  }
+}
+```
+
+`위를 템플릿에 추가하여 인덱스가 생성될 때 자동으로 lifecycle이 적용되도록 할 수도 있다.`   
+
+```
+PUT /_template/my-log-template
+{
+  "index_patterns": [
+    "my-log-*"
+  ],
+  "settings": {
+    "index": {
+      "lifecycle": {
+        "name": "test-policy",
+      }
+    }
+  },
+  "mappings": {
+// ... 
+```
+
+
 
 
 - - - 
@@ -157,6 +212,7 @@ summary    summary-20230503 -      -             -
 
 <https://www.elastic.co/guide/en/elasticsearch/reference/current/index-templates.html>   
 <https://www.elastic.co/guide/en/elasticsearch/reference/current/dynamic-templates.html>    
+<https://www.elastic.co/guide/en/elasticsearch/reference/current/set-up-lifecycle-policy.html>   
 
 {% highlight ruby linenos %}
 
