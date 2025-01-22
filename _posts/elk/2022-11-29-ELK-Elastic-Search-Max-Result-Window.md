@@ -260,7 +260,7 @@ GET index/_search
 
 `집계의 경우도 동일하게 결과값 10000개 이상을 검색할 때 제한이 발생한다.`   
 
-따라서 composite 집계를 이용할 수 있다.  
+따라서 이를 해결하기 위해 composite 집계를 이용할 수 있다.  
 
 ```
 GET test-index/_search
