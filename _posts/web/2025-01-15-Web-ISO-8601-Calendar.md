@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Web] 달력 주차 ISO 8601 를 이용하여 표준화 하기"
-subtitle: "연간 주차 계산(24W52) / year week"
+subtitle: "연간 주차 계산(24W52) / year week 구할 때 주의사항 "
 comments: true
 categories : Web
 date: 2025-01-15
