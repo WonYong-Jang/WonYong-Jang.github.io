@@ -30,22 +30,22 @@ Spark Streaming 및 AWS 인프라를 통해
 
 - Java, Kotlin, Scala, Python   
 - Spring Boot/MVC 
-- JPA, Querydsl
+- JPA, Querydsl   
 - Junit4/5, Mockito, Spock, Kotest, ScalaTest        
 - Gradle, Maven   
 
 ##### DevOps   
 
-- DocumentDB(MongoDB), RDS(Aurora), Mysql     
-- Jenkins, CircleCI, Airflow   
+- DocumentDB(MongoDB), Aurora(Mysql)    
+- Jenkins, CircleCI, Airflow, Airbyte   
 - Elastic Cache (Redis), S3, EC2, Cloud Watch   
 - Nginx, Tomcat   
 - Spark Streaming/Batch, Structured Streaming     
-- AWS Event Bridge, Kinesis, Kafka
+- AWS Event Bridge, Kinesis, Kafka    
 - Hive, Trino(Presto), Iceberg         
-- ELK Stack   
+- Elastic Search, Kibana      
 - Grafana, Graylog, Prometheus, nGrinder   
-- Git/Github 
+- Git/Github    
 
 ##### Frontend
 
@@ -74,7 +74,7 @@ Spark Streaming 및 AWS 인프라를 통해
     - iceberg 테이블로 전환하여 트랜잭션 제공 및 테이블 간소화     
     - 유연한 스키마 변경    
 - spark를 활용한 효율적인 join 전략   
-- 엑셀을 이용한 수작업을 시스템 자동화하여 97% 리드타임 단축    
+- 엑셀을 이용한 메뉴얼 작업을 시스템 자동화하여 97% 리드타임 단축    
     - AS-IS: 8 hour (약 100만건 기준)     
     - TO-BE: 10 min      
 
@@ -83,20 +83,21 @@ Spark Streaming 및 AWS 인프라를 통해
 
 - Processed rows per second(AS-IS: 800 -> TO-BE: 10,000)   
     - [<u>Spark Streaming Incident Review</u>](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)     
-- 불필요한 Shuffle 제거   
-- 재처리 구조 개선     
-- 데이터 정합성 메트릭 구성    
+- 불필요한 Shuffle 제거    
+- 동시성 이슈 및 데이터 순서 불일치 해결   
+- 재처리 구조 개선       
+- 데이터 정합성 메트릭 구성      
 - Migrate from spark streaming to structured streaming.   
     - [<u>Structured Streaming 전환</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)     
        
           
 [Development of search services using Elastic search, Airflow, and Spark]   
 
-- Spark를 이용하여 하이브 테이블 조인 결과를 ES 에 인덱싱(daily 100만건)      
+- Spark를 이용하여 하이브 테이블간 집계 결과를 ES 에 인덱싱(daily 100만건)      
     - [<u>Wildcard 쿼리 대신 n-gram으로 성능 개선</u>](https://wonyong-jang.github.io/elk/2024/12/29/ELK-Elastic-Search-Wildcard-N-Gram.html)   
 - ES 인덱스 관리(Template, Alias, Lifecycle)      
     - [<u>템플릿을 이용하여 인덱스의 Alias, Lifecycle 관리하기</u>](https://wonyong-jang.github.io/elk/2021/03/27/ELK-Elastic-Search-Index-Template.html)         
-- 웹 어플리케이션에서 모든 검색 패턴에 대해 0.5 이내에 검색을 제공   
+- 웹 어플리케이션에서 모든 검색 패턴에 대해 0.5 s 이내에 검색을 제공   
     - [<u>검색 및 집계 데이터를 페이지네이션을 통해 제공</u>](https://wonyong-jang.github.io/elk/2022/11/29/ELK-Elastic-Search-Max-Result-Window.html)   
 - nGrinder를 이용한 성능 테스트 
 
