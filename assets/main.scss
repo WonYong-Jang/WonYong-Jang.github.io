@@ -4,6 +4,10 @@
 
 @import "styles";
 
+div#disqus_thread iframe[sandbox] {
+        max-height: 0px !important;
+}
+
 .highlight .hll { background-color: #49483e }
 .highlight  { background: #272822; color: #f8f8f2 }
 .highlight .c { color: #75715e } /* Comment */
