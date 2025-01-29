@@ -75,7 +75,7 @@ background: '/img/bg-index.jpg'
     - 유연한 스키마 변경    
 - spark를 활용한 효율적인 join 전략   
 - 엑셀을 이용한 메뉴얼 작업을 시스템 자동화하여 97% 리드타임 단축    
-    - AS-IS: 8 hour (약 1,000만건 기준)     
+    - AS-IS: 8 hour (약 100만건 기준)     
     - TO-BE: 10 min      
 
 
@@ -93,7 +93,7 @@ background: '/img/bg-index.jpg'
           
 [Development of search services using Elastic search, Airflow, and Spark]   
 
-- Spark를 이용하여 하이브 테이블간 집계 결과를 ES 에 인덱싱(daily 100만건)      
+- Spark를 이용하여 하이브 테이블간 집계 결과를 ES 에 인덱싱(daily 1,000만건)      
     - [<u>Wildcard 쿼리 대신 n-gram으로 성능 개선</u>](https://wonyong-jang.github.io/elk/2024/12/29/ELK-Elastic-Search-Wildcard-N-Gram.html)   
 - ES 인덱스 관리(Template, Alias, Lifecycle)      
     - [<u>템플릿을 이용하여 인덱스의 Alias, Lifecycle 관리하기</u>](https://wonyong-jang.github.io/elk/2021/03/27/ELK-Elastic-Search-Index-Template.html)         
