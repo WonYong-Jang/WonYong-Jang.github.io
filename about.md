@@ -180,6 +180,9 @@ background: '/img/bg-index.jpg'
 - [Spark Streaming 처리 지연 장애 리뷰](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)       
 
 
+#### Elastic Search    
+
+- [ElasticSearch에서 cardinality 사용시 주의사항과 해결방안](https://wonyong-jang.github.io/elk/2025/01/22/ELK-Elastic-Search-Scripted-Metric.html)   
 
 <br>   
 - - -   
