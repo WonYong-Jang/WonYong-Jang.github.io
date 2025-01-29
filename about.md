@@ -75,7 +75,7 @@ background: '/img/bg-index.jpg'
     - 유연한 스키마 변경    
 - spark를 활용한 효율적인 join 전략   
 - 엑셀을 이용한 메뉴얼 작업을 시스템 자동화하여 97% 리드타임 단축    
-    - AS-IS: 8 hour (약 100만건 기준)     
+    - AS-IS: 8 hour (약 1,000만건 기준)     
     - TO-BE: 10 min      
 
 
@@ -182,7 +182,7 @@ background: '/img/bg-index.jpg'
 
 #### Elastic Search    
 
-- [ElasticSearch에서 cardinality 사용시 주의사항과 해결방안](https://wonyong-jang.github.io/elk/2025/01/22/ELK-Elastic-Search-Scripted-Metric.html)   
+- [<u>ElasticSearch에서 cardinality 사용시 주의사항과 해결방안</u>](https://wonyong-jang.github.io/elk/2025/01/22/ELK-Elastic-Search-Scripted-Metric.html)      
 
 <br>   
 - - -   
