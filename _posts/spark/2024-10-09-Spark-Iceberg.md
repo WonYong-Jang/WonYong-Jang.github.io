@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Spark에서 Iceberg 테이블 다루기"
-subtitle: "테이블 생성 및 업데이트, 병합 쿼리 / partitionOverwriteMode, storeAssignmentPolicy" 
+subtitle: "테이블 생성(create) / partitionOverwriteMode, storeAssignmentPolicy(ANSI, legacy, strict) / insert overwrite 와 merge into" 
 comments: true
 categories : Spark
 date: 2024-10-09
@@ -26,7 +26,6 @@ spark = SparkSession.builder \
     .config("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog") \
     .config("spark.sql.catalog.spark_catalog.type", "hive") \
     .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
-
     .getOrCreate()
 ```
 
@@ -45,18 +44,22 @@ hive를 사용하는 경우는 기존에 hive 생태계를 사용하고 있어�
 
 반면 `hadoop으로 설정하면 hive 메타스토어를 사용하지 않고, Iceberg가 
 자체적으로 hdfs나 s3와 같은 파일 시스템을 통해 메타데이터 파일을 관리`한다.   
-메타데이터는 테이블의 메타데이터 디렉토리에 json 파일 형식으로 저장된다.    
+iceberg의 메타데이터는 테이블의 메타데이터 디렉토리에 json 파일 형식으로 저장된다.    
+
+더 자세한 내용은 [링크](https://wonyong-jang.github.io/bigdata/2024/10/01/Apache-Iceberg.html)에서 확인하자.   
 
 또한, procedures 와 같이 iceberg에서 제공하는 새로운 sql command를 사용하기 위해 
 spark.sql.extensions을 추가해주었다.   
 
 - - - 
 
-## 2. 테이블 생성   
+## 2. 테이블 생성  
+
+spark를 통해 iceberg 테이블 생성은 아래와 같이 가능하다.   
 
 
 ```python
--- Iceberg 테이블 생성
+## Iceberg 테이블 생성
 spark.sql("""
   CREATE TABLE my_catalog.db.my_table (
     id BIGINT,
@@ -71,17 +74,34 @@ spark.sql("""
 
 ## 3. Merge
 
+iceberg 테이블에 행을 조건부로 업데이트, 삭제 또는 삽입할 수 있다.  
+source 테이블의 정보로 target 테이블을 업데이트를 진행한다.  
+
+`iceberg 공식문서에서는 insert overwrite 보다는 merge into를 권장하고 있으며, 
+    이는 영향을 받은 데이터 파일만 교체할 수 있고 테이블의 파티션이 변경될 경우 동적으로 데이터를 
+    overwrite 할 수 있기 때문이라고 한다.`      
+
+
+
 ```python
--- Iceberg 테이블에 조건부 업데이트/삽입 (MERGE INTO)
+## Iceberg 테이블에 조건부 업데이트/삽입 (MERGE INTO)
 spark.sql("""
-  MERGE INTO my_catalog.db.my_table t
-  USING updates u
-  ON t.id = u.id
+  MERGE INTO my_catalog.db.my_table target  # target table
+  USING updates source                      # source
+  ON target.id = source.id                  # condition to find updates for target rows   
   WHEN MATCHED THEN UPDATE SET *
   WHEN NOT MATCHED THEN INSERT *
 """)
 ```
 
+위와 같이 매칭되는 rows들을 모두 업데이트 또는 삽입을 할 수도 있으며, 
+    특정 조건을 추가하여 특정 컬럼만 업데이트할 수도 있다.   
+
+```python
+WHEN MATCHED AND s.op = 'delete' THEN DELETE
+WHEN MATCHED AND t.count IS NULL AND s.op = 'increment' THEN UPDATE SET t.count = 0
+WHEN MATCHED AND s.op = 'increment' THEN UPDATE SET t.count = t.count + 1
+```
 
 - - - 
 
@@ -93,10 +113,13 @@ spark에서 iceberg를 사용할 때
 `주의해야 할 점은 spark 3.0 이상 부터 spark.sql.storeAssignmentPolicy 
 옵션을 ansi 로 설정하는 것이 요구된다.`   
 
-`해당 옵션은 ANSI SQL 표준을 따르며, 데이터 타입 불일치 등이 발생하면 예외를 던진다.`  
-따라서 데이터 무결성을 위해 해당 옵션이 권장되며 기본값은 legacy로 설정되어 있다.   
+`해당 옵션은 ANSI SQL 표준을 따르며, 데이터 타입 불일치 등이 발생하면 예외를 던진다.` 
+`ANSI 방식은 string을 int로 변환하거나 double 을 boolean 변환 등을 허용하지 않는다.`   
+따라서 데이터 무결성을 위해 해당 옵션이 권장되며 Spark 3.0 버전부터는 default로 ANSI 정책을 
+사용하도록 변경되었다.  
 
-데이터 insert를 할 때 사용되는 옵션이며, legacy로 설정할 경우 타입 캐스팅을 허용한다.  
+
+`데이터 insert를 할 때 사용되는 옵션이며, legacy로 설정할 경우 타입 캐스팅을 허용한다.`      
 예를 들면 string to int or double to boolean 를 허용하기 때문에
 데이터 무결성에 문제가 발생할 수 있다.  
 
@@ -105,18 +128,22 @@ spark에서 iceberg를 사용할 때
 
 
 ```python
-.config("spark.sql.storeAssignmentPolicy", "ansi") // sparkSession에 추가  
+.config("spark.sql.storeAssignmentPolicy", "ansi") # sparkSession에 추가  
 ```
 
 ### 4-1) Insert Overwrite   
 
 spark에서 아래 옵션을 이용해서 파티션을 동적 또는 정적으로 overwrite 할 수 있다.   
 
-```
-.config("spark.sql.sources.partitionOverwriteMode", "dynamic") // dynamic or static
+```python
+.config("spark.sql.sources.partitionOverwriteMode", "dynamic") # dynamic or static
 ```
 
-default overwrite는 static 모드이며, 먼저 static mode 예시를 보자.  
+`default overwrite는 static 모드이며, insert overwrite 보다는 merge into를 권장하고 있지만 
+insert overwrite를 사용해야 한다면 dynamic overwrite mode를 권장한다.`     
+
+static mode를 정확하게 이해하지 못하고 사용할 경우는 전체 파티션이 삭제될 수 있기 때문이며, 
+    이는 아래 예시를 통해서 살펴보자.   
 
 ```python
 ddl = """create table iceberg.customer (country string, customerid bigint, customername string) 
@@ -145,7 +172,7 @@ spark.conf.get("spark.sql.sources.partitionOverwriteMode")
 +-------+----------+------------+
 ```
 
-`주의해야 할점은 파티션 없이 아래와 같이 insert overwrite 할 경우는 
+`주의해야 할점은 파티션 절 없이 아래와 같이 insert overwrite 할 경우는 
 모든 파티션이 교체된다.`   
 
 ```python
@@ -169,7 +196,7 @@ spark.sql("select * from iceberg.customer").show()
 +-------+----------+------------+
 ```
 
-위 결과를 보면 파티션 절이 없이 때문에 기존에 존재하던 
+위 결과를 보면 파티션 절 없이 사용했기 때문에 기존에 존재하던 
 모든 rows 들이 제거된다.  
 
 `이를 해결하기 위해서 partitionOverwriteMode가 static 모드 일때 
@@ -235,10 +262,13 @@ spark.sql("select * from iceberg.customer").show()
 
 - - -
 
+Reference
+
 <https://wikidocs.net/228567>   
 <https://iomete.com/resources/reference/iceberg-tables/maintenance>   
 <https://magpienote.tistory.com/255>    
-<https://iceberg.apache.org/docs/latest/spark-queries/>   
+<https://iceberg.apache.org/docs/latest/spark-queries/>  
+<https://iceberg.apache.org/docs/1.5.0/spark-writes/#merge-into-syntax>   
 <https://developers-haven.tistory.com/50>   
 
 {% highlight ruby linenos %}
