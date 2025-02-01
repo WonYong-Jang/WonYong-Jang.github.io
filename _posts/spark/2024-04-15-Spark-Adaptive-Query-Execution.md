@@ -135,13 +135,17 @@ Spark 3.x 이후 버전에서는 아래와 같이 [AQE](https://spark.apache.org
 
 > Spark 3.2 부터는 default로 활성화 되어 있다.   
 
+아래 옵션들은 모두 해당 옵션이 활성화 되어 있어야 사용이 가능하다.   
+
+```
+spark.conf.set("spark.sql.adaptive.enabled",true)
+```
+
 ### 2-1) coalescing shuffle partitions 활성화   
 
 아래와 같이 활성화 가능하다.   
 
 ```scala
-spark.conf.set("spark.sql.adaptive.enabled",true)
-
 // spark.sql.adaptive.enabled 옵션과 모두 true라면 shuffle 이후의 partition의 크기를 
 // spark.sql.adative.advisoryPartitionSizeInBytes에 맞추도록 하여 너무 작고 많은 partiton의 생성을 방지한다.   
 spark.conf.set("spark.sql.adaptive.coalescePartitions.enabled",true)
@@ -158,6 +162,8 @@ spark.sql.adaptive.coalescePartitions.initialPartitionNum // default: none
 
 하나의 파티션 설정은 아래 옵션으로 크기가 결정되며, 기본값 64 MB 크기에 
 가깝게 파티션 수가 정해진다.   
+`spark coalesces small shuffle partitions or splits skewed shuffle partition 등은 
+해당 옵션에 모두 영향을 끼치기 때문에 이 옵션을 먼저 확인 및 튜닝을 해야 한다.`   
 
 ```scala
 spark.sql.adaptive.advisoryPartitionSizeInBytes // default: 64 MB   
@@ -179,6 +185,7 @@ spark.sql.adaptive.coalescePartitions.parallelismFirst
 spark.sql.adaptive.coalescePartitions.minPartitionSize
 ```
 
+
 ### 2-2) skew join 활성화   
 
 활성화 옵션은 아래와 같다.   
@@ -188,15 +195,27 @@ spark.conf.set("spark.sql.adaptive.enabled",true)
 spark.conf.set("spark.sql.adaptive.skewJoin.enabled",true)
 ```
 
-활성화 되기 위한 조건에 대한 옵션은 아래와 같다.   
+아래 옵션에 해당 된다면, `skew join으로 간주하여 여러 작은 task로 
+나누어 처리하도록 한다.`      
+따라서 skew join이 발생한다면 아래 옵션들을 조절하면서 튜닝을 해야 한다.  
 
 ```
-// default
-// 다른 파티션들과 비교했을 때 5배 이상 큰 경우 skew join을 사용   
-spark.sql.adaptive.skewJoin.skewedPartitionFactor=5 (compared to medium partition size)
+// default: 5.0
+// 다른 파티션들 중 median partition size 에서 factor 값을 곱한 것보다 크며,
+// spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes 보다 클 경우 skew 파티션으로 간주   
+spark.sql.adaptive.skewJoin.skewedPartitionFactor=5.0 (compared to medium partition size)
 
-// 파티션이 256MB 보다 클 경우    
-spark.sql.adaptive.skewJoin.skewedPartitionThresholdingBytes=256MB
+
+// default: 256MB
+// skewedPartitionFactor를 median partition size에 곱한 값보다 커야하며, 
+// skewedPartitionThresholdInBytes 보다 크다면 skew 파티션으로 간주   
+// spark.sql.adaptive.advisoryPartitionSizeInBytes 보다 크게 설정되어야 한다.   
+spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes=256MB
+
+
+// default: false
+// true로 설정하면, 추가로 shuffle을 발생시키더라도 skew join을 위한 optimize를 진행한다.   
+spark.sql.adaptive.forceOptimizeSkewedJoin=true
 ```
 
 

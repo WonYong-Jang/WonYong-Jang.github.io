@@ -39,7 +39,8 @@ background: '/img/posts/mac.png'
 
 ##### 1-6 left anti join   
 
-왼쪽 데이터셋의 키가 오른쪽 데이터셋에 없는 경우에는 키가 일치하지 않는 왼쪽 데이터셋만 유지   
+왼쪽 데이터셋의 키가 오른쪽 데이터셋에 없는 경우에는 키가 일치하지 않는 왼쪽 데이터셋만 유지    
+중복된 데이터를 제거한 나머지 데이터만 남겨서 연산을 할 때 유용하다.   
 
 ##### 1-7) natural join   
 
@@ -76,8 +77,17 @@ background: '/img/posts/mac.png'
 `작은 데이터 세트를 broadcast 변수로 driver에서 생성하여 
 클러스터의 각 executor 별로 복제해 놓고 join 하는 방식이다.`   
 
-따라서, broadcast 되는 대상 테이블이 크다면 driver의 메모리가 부족하여 
-비정상 종료 될 수 있다.   
+따라서, broadcast 되는 대상 테이블이 크다면 비정상 종료가 될 수 있다.     
+
+아래와 같이 기본 설정값을 증설하면 해결될 수 있지만,  
+    할당 받은 driver의 메모리 등이 부족하다면 동일하게 
+    문제가 발생할 수 있기 때문에 클러스터의 리소스를 고려하여 
+    증설하여야 한다.   
+
+```
+spark.sql.broadcastTimeout=600 # default: 300초(5분)
+spark.sql.autoBroadcastJoinThreshold=100MB  # default: 10MB
+```
 
 `driver에서 broadcast 변수로 생성하여 각 executor로 전송할 때 
 네트워크 비용이 발생하지만, 그 이후 join을 진행할 때는 네트워크를 통한 
@@ -142,7 +152,10 @@ hash function은 O(1)의 시간이 들 것이고, 결과적으로 O(T1+ T2) 만�
 위 사진을 보면, 등가조인과 비등가조인일 때로 우선 분리된다.   
 
 `즉, spark에서 대용량 데이터를 이용하여 비등가 조인(like 검색, <, >, <=, >=)을 할 경우 
-비효율적인 조인 방식을 사용하기 때문에 성능상 문제가 발생할 수 있다.`   
+비효율적인 조인 방식을 사용하기 때문에 성능상 문제가 발생할 수 있다.`  
+
+`위 사진과 같이 비등가 조인을 할 경우 성능이 느린 broadcast nested loop join, catesian join 등이 
+실행될 수 있기 때문에 최대한 지양해야 한다.`    
 
 그 후 조인 Hint가 있는지를 확인하여 조인이 결정된다.     
 
