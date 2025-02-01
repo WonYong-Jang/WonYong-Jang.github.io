@@ -186,14 +186,13 @@ spark.conf.set("spark.sql.join.preferSortMergeJoin","false")
 ```
 
 shuffle sort merge join 은 첫번째로 shuffle 과정을 진행한다.   
-동일한 조인 키를 가지는 데이터셋을 동일한 executor로 이동시킨다.   
-그 후 executor node에서 각 파티션을 조인키 기반으로 정렬 한다.  
-마지막으로 조인키 기반으로 병합한다.   
+- 동일한 조인 키를 가지는 데이터셋을 동일한 executor로 이동시킨다.    
+- 그 후 executor node에서 각 파티션을 조인키 기반으로 정렬 한다.  
+- 마지막으로 조인키 기반으로 병합한다.   
 
 `따라서 정렬이 적용되므로 조인 키들의 정렬이 가능한 데이터 타입이어야 한다.`   
 
-
-<img width="700" alt="스크린샷 2024-04-20 오후 12 32 28" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/df897b0b-d54c-40d7-a974-1b8d491cc2ad">   
+<img width="650" alt="Image" src="https://github.com/user-attachments/assets/daf7ba76-eae5-47e7-a48c-08836c1b8ae2" />   
 
 <img width="700" alt="스크린샷 2024-04-20 오후 12 32 48" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/f4e469cc-08c6-4eb4-92df-04994aae2aa4">  
 
@@ -215,21 +214,63 @@ Spark UI에서 아래와 같이 확인할 수 있다.
 spark.conf.set("spark.sql.autoBroadcastJoinThreshold", [your threshold in Bytes])
 ```
 
-> 사용자가 hint를 지정하거나, 지정하지 지정하지 않았더라도 한쪽 테이블 사이즈가 위 설정보다 
+> 사용자가 hint를 지정하거나, 지정하지 않았더라도 한쪽 테이블 사이즈가 위 설정보다 
 작으면 실행될 수 있다.    
 
 위 설정과 같이 default로 10MB 이하의 데이터 셋이 broadcast 변수로 생성되며, 
     Spark 엔진 또는 [Adaptive Query Exectuion](https://wonyong-jang.github.io/spark/2024/04/15/Spark-Adaptive-Query-Execution.html)에 의해 
     Broadcast Hash join이 실행되지만 그렇지 못한 경우는 직접 명시를 해주어야 한다.   
 
+`broadcast 힌트를 사용할 경우 autoBroadcastJoinThreshold 설정과 관계없이 broadcast join이 실행된다.`      
+
 ```python
 import org.apache.spark.sql.functions.broadcast
 
-# broadcast hint를 명시 
+# 데이터프레임에서 broadcast hint를 명시 
 val joinDF = bigDF.join(broadcast(smallDF), "joinKey")
+
+# 또는 hint 메소드로 사용 가능
+val joinDF = bigDF.join(smallDF.hint("broadcast"), "joinKey")
 ```
 
+또는 spark sql 에서는 아래와 같이 hint 사용이 가능하다.   
 
+```python
+# Join Hints for broadcast join
+SELECT /*+ BROADCAST(t1) */ * FROM t1 INNER JOIN t2 ON t1.key = t2.key;
+SELECT /*+ BROADCASTJOIN (t1) */ * FROM t1 left JOIN t2 ON t1.key = t2.key;
+SELECT /*+ MAPJOIN(t2) */ * FROM t1 right JOIN t2 ON t1.key = t2.key;
+
+
+# 아래와 같이 양쪽 테이브에 모두 broadcast 힌트를 적용할 경우, 
+# 더 작은 테이블이 브로드캐스트 된다.   
+SELECT /*+ BROADCAST(table1), BROADCAST(table2) */ *
+FROM table1
+JOIN table2 ON table1.id = table2.id;
+```
+
+마지막으로 아래와 같이 다른 조인 hint를 동시에 사용했을 때, spark는 
+어떤 조인 전략을 선택할까?   
+
+`spark는 기본적으로 hint 우선순위에 따라 결정되며, 아래 순서로 우선순위가 
+지정되어 있다.`   
+
+1) BROADCAST   
+2) MERGE  
+3) SHUFFLE_HASH  
+4) SHUFFLE_REPLICATE_NL   
+
+```python
+SELECT /*+ BROADCAST(t1), MERGE(t1, t2) */ * FROM t1 INNER JOIN t2 ON t1.key = t2.key;
+```   
+
+즉, 위 코드에서 우선순위에 따라 broadcast hint가 선택되며, 콘솔에서 
+경고 메시지가 발생한다.   
+
+```
+org.apache.spark.sql.catalyst.analysis.HintErrorLogger: Hint (strategy=merge)
+is overridden by another hint and will not take effect.
+```   
 
 ### 4-3) Partial Manual Broadcast Hash Join     
 
@@ -255,7 +296,9 @@ hash 기반 조인이 아닌, nested loop join이 진행된다.
 
 ### 4-5) Cartesian Product Join    
 
-Join 키가 존재하지 않는 경우, Cartesian Join이 선택된다.
+Join 키가 존재하지 않는 경우, Cartesian Join이 선택된다.   
+즉, 각 그룹 내의 모든 데이터 항목들 사이에서 가능한 모든 조합을 생성한다는 것을 
+의미한다.   
 
 <img width="285" alt="스크린샷 2024-12-12 오전 9 01 35" src="https://github.com/user-attachments/assets/7acbf53e-b43e-4326-9952-97b2e16a5516" />   
 
