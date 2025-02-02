@@ -31,13 +31,16 @@ background: '/img/posts/mac.png'
 
 그 후 Optimized Logical Plan은 최적화 과정이 이루어짐을 의미한다.    
 
-> 최적화(Catalyst Optimizer)에 대한 내용은 아래에서 더 자세히 다룰 예정이다.   
+> 최적화(Catalyst Optimizer)에 대한 내용은 아래에서 더 자세히 다룰 예정이며, 
+    Constant Folding, Predicate Pushdown, Projection Pruning, Null Propagation 등 
+    다양한 기법들이 적용된다.   
 
 Optimized Logical Plan 거치고 나면 `물리 계획(Physical Plans)`를 세우게 된다.      
 
 `물리 계획이란 Logical Plan을 클러스터가 알아 들을 수 있도록 변경하는 plan이다.`      
 
-> 예를 들면 어느 경로에서 어떤식으로 파일을 읽어서 처리할 건지에 대한 계획이다.   
+> 예를 들면 어느 경로에서 어떤식으로 파일을 읽어서 처리할 것인지에 대한 부분이며, 
+    어떻게 파티셔닝하고 어떤 join 전략을 선택할지에 대한 부분을 예로 들 수 있다.   
 
 여러 물리 계획을 세운 후 그 중에서 `비용이 적게 드는 모델(Cost Model)`을 선택하게 되며, 
     `선택된 모델을 가지고(Selected Physical Plan)` 실제로 RDD 베이스 코드를 만들어 낸다.  

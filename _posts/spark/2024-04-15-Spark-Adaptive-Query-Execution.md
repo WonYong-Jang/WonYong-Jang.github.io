@@ -15,7 +15,20 @@ background: '/img/posts/mac.png'
 아래와 같은 기능을 제공한다.`       
 
 > 참고로 기존의 Spark SQL의 쿼리 옵티마이저는 spark 1.x 에서는 rule-based, spark 2.x 에서는 
-rule-based 외에 cost-based 을 포함해 최적화를 실행하였다.   
+rule-based 외에 cost-based 을 포함해 최적화를 실행하였다.    
+
+기존 옵티마이저의 문제는 아래 같은 상황이다.  
+
+- A 와 B 테이블을 Join하여 C 테이블 생성  
+- D 와 E 테이블을 Join하여 F 테이블 생성  
+- C 와 F 테이블을 Join하여 G 테이블 생성  
+
+A, B, D, E 테이블의 경우 테이블에 기록된 통계 정보를 기반으로 join 최적화가 가능하지만, 
+    이를 기반으로 런타임에 생성되는 C와 F 테이블의 정보는 유추가 불가능했다.   
+그렇기 때문에 C 와 F 테이블이 join 되는 순간 최적화가 필요했고, `AQE는 
+실행 전 한번만 최적화를 진행하지 않고, 런타임에 점진적으로 최적화를 수행한다.`      
+
+이제 AQE 에서 제공하는 최적화 기법에 대해서 살펴보자.   
 
 - Dynamically coalescing shuffle partitions   
 - Dynamically switching join strategies   
@@ -47,13 +60,73 @@ shuffle 파티션을 200개나 만들 필요가 없다.
 
 <img width="700" alt="스크린샷 2024-04-16 오전 11 25 13" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/82972449-6109-442c-906e-b2dbb832d8cf">      
 
-Spark UI의 SQL 탭에서 AQE가 개입하여 최적화한 결과를 살펴보자.  
-Exchange에서 실제로 shuffle이 일어나고, AQEShuffleRead가 추가된 것을 
-확인할 수 있다.   
-`AQE가 개입하여 partition의 크기를 기본 값 64MB에 근접하도록 
-number of partitions을 10000에서 5000으로 줄여서 최적화 하였다.`     
+이제 여러 차례 shuffle 이 발생할 때, AQE가 어떻게 
+개입하여 최적화 하는지 Spark UI의 SQL 탭에서 결과를 살펴보자.     
 
-<img width="850" alt="스크린샷 2024-04-16 오후 2 03 09" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/d955562e-9ee0-4c8c-8bcb-4d5a1d3751a5">   
+##### 첫번째 shuffle   
+
+`Exchange에서 실제로 shuffle이 일어나고, AQEShuffleRead가 추가된 것을
+확인할 수 있다.`
+
+`AQE가 개입하여 partition의 크기를 기본 값 64MB에 근접하도록 
+number of partitions을 10000에서 5000으로 줄여서 최적화 하였다.`   
+
+> 하나의 파티션 기본 크기는 64MB 이다.  
+
+<img width="1100" alt="Image" src="https://github.com/user-attachments/assets/09df0a57-1421-47a1-b35b-dc91e729a7aa" />    
+
+5000개의 partition이 생성되는 stage를 보면 위의 사진과 같이 
+평균적으로 60MB 근처에서 partition의 크기가 결정되는 것을 알 수 있다.   
+
+<img width="850" alt="스크린샷 2024-04-16 오후 2 03 09" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/d955562e-9ee0-4c8c-8bcb-4d5a1d3751a5">  
+
+##### 두번째 shuffle     
+
+위의 shuffle 이후 두번째로 shuffle이 발생하며, 
+    이번에는 join 전에 AQE가 개입하여 최적화를 진행하였다.   
+
+<img width="1000" alt="Image" src="https://github.com/user-attachments/assets/3b3b9d80-3475-4c52-b290-dfcb78e1646d" />     
+
+Exchange에서 shuffle이 일어나고 다음 AQEShuffleRead에서 partition의 수를 
+10000 -> 358로 감소시킨다.   
+
+여기서 흥미로운 점은 앞 단계에서 partition의 수를 5000으로 줄였지만 
+다시 shuffle을 하면서 partition의 수가 10000이 되었다는 점이다.   
+
+`spark.sql.shuffle.partitions의 값을 10000으로 설정했기 때문에 
+shuffle이 발생할때 마다 partition의 수가 10000이 된다.`   
+
+연관된 설정으로 spark.sql.adaptive.coalescePartitions.initialPartitionNum이 있는데 
+default 값은 spark.sql.shuffle.partitions 값을 따라 간다.   
+
+`두 옵션 모두 설정되어 있다면 spark.sql.adaptive.coalescePartitions.initialPartitionNum가 
+우선적으로 적용된다.`    
+
+##### 세번째 shuffle   
+
+세 번째 shuffle에서 partition의 수가 10000 -> 118 로 줄어들었다.   
+
+<img width="400" alt="Image" src="https://github.com/user-attachments/assets/2d50c0e6-cfac-4c95-8d9b-eb3454eda97c" />    
+
+여기서도 한 가지 흥미로운 점은 partition 사이즈가 총 120MB 정도인데, 
+    partition의 수가 2개가 아닌 118개가 되었다는 점이다.  
+
+이와 관련된 설정값으로 spark.sql.adaptive.coalescePartitions.parallelismFirst가 있으며, 
+    default로 true이다.   
+
+`이 설정을 true로 설정할 경우 병렬성을 우선적으로 고려해서 할당한 코어를 
+최대한 많이 사용하려고 한다.`   
+`spark.sql.adaptive.advisoryPartitionSizeInBytes로 설정되는 최종 파티션 크기는 무시되며, 
+    spark.sql.adaptive.coalescePartitions.minPartitionSize (default 1MB)로 최종 
+    파티션 크기가 결정된다.`   
+
+위에서 default 값으로 1MB이므로 120MB/1MB인 약 118개의 파티션이 생성된다.   
+
+`default는 true이지만, spark 공식문서에서는 이 값을 false로 설정할 것을 권장하고 있다.`   
+
+false로 설정할 경우 아래와 같이 2개의 파티션을 생성하는 것을 확인할 수 있다.  
+
+<img width="795" alt="Image" src="https://github.com/user-attachments/assets/2e26cc8f-6105-422d-94fe-64bdeecf4313" />   
 
 
 ### 1-2) Dynamically switching join strategies      
@@ -199,22 +272,22 @@ spark.conf.set("spark.sql.adaptive.skewJoin.enabled",true)
 나누어 처리하도록 한다.`      
 따라서 skew join이 발생한다면 아래 옵션들을 조절하면서 튜닝을 해야 한다.  
 
-```
-// default: 5.0
-// 다른 파티션들 중 median partition size 에서 factor 값을 곱한 것보다 크며,
-// spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes 보다 클 경우 skew 파티션으로 간주   
+```python
+# default: 5.0
+# 다른 파티션들 중 median partition size 에서 factor 값을 곱한 것보다 크며,
+# spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes 보다 클 경우 skew 파티션으로 간주   
 spark.sql.adaptive.skewJoin.skewedPartitionFactor=5.0 (compared to medium partition size)
 
 
-// default: 256MB
-// skewedPartitionFactor를 median partition size에 곱한 값보다 커야하며, 
-// skewedPartitionThresholdInBytes 보다 크다면 skew 파티션으로 간주   
-// spark.sql.adaptive.advisoryPartitionSizeInBytes 보다 크게 설정되어야 한다.   
+# default: 256MB
+# skewedPartitionFactor를 median partition size에 곱한 값보다 커야하며, 
+# skewedPartitionThresholdInBytes 보다 크다면 skew 파티션으로 간주   
+# spark.sql.adaptive.advisoryPartitionSizeInBytes 보다 크게 설정되어야 한다.   
 spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes=256MB
 
 
-// default: false
-// true로 설정하면, 추가로 shuffle을 발생시키더라도 skew join을 위한 optimize를 진행한다.   
+# default: false
+# true로 설정하면, 추가로 shuffle을 발생시키더라도 skew join을 위한 optimize를 진행한다.   
 spark.sql.adaptive.forceOptimizeSkewedJoin=true
 ```
 
