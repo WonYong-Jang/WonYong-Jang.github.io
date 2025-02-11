@@ -13,18 +13,45 @@ background: '/img/posts/mac.png'
 Executor는 Worker 노드에서 실행되는 JVM 프로세스 역할을 한다. 따라서 JVM 메모리 관리를 
 이해하는 것이 중요하다.    
 
-JVM 메모리 관리는 두가지로 나눌 수 있다.   
+JVM 메모리 관리는 두가지로 나눌 수 있다.  
+
+<img width="500" alt="Image" src="https://github.com/user-attachments/assets/b4da2cb3-7db4-4cbb-8551-cef7062e84e3" />   
 
 ##### On-Heap Memory Management(In-Memory)   
 
-`Object는 JVM heap에 할당되고 GC에 바인딩된다.`      
+`Object는 JVM heap에 할당되고 GC에 바인딩된다.`     
+
+> 따라서 GC가 자주 발생하는 경우는 on-heap 메모리를 늘려야 한다.   
+
+어플리케이션 대부분에 데이터가 on-heap 메모리에 저장된다.  
+`spark.executor.memory는 스파크의 설정 옵션 중 하나로, executor에 할당되는 
+메모리를 설정하는데에 사용되는 config 값이다.`   
+
 
 ##### Off-Heap Memory Management(External-Memory)   
 
 `Object는 직렬화에 의해 JVM 외부의 메모리에 할당되고 Application에 의해 
 관리되며 GC에 바인딩되지 않는다.`      
 
+기본적으로 executor memory를 설정하면 memoryOverhead 크기는 아래와 같이 설정된다.   
+
+```python
+MAX(spark.executor.memory*0.1, 384MB)   
+
+# On-Heap과 Off-Heap
+# 만약 executor-memory=5g로 설정했다면 
+# on-heap: 5G
+# off-heap: max(5g*0.1, 384MB) = 500MB
+```
+
+`spark.executor.memoryOverhead 값 지정을 통해 직접 설정해줄 수도 있다.`   
+
+
+
+
 일반적으로 Object의 읽기 및 쓰기 속도는 On-Heap > Off-Heap > DISK 순서로 빠르다.   
+
+- - -   
 
 ## 1. Spark의 Memory 관리   
 
