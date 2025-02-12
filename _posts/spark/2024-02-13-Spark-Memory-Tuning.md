@@ -8,7 +8,11 @@ date: 2024-02-13
 background: '/img/posts/mac.png'
 ---
 
-## Executor의 메모리   
+## 1. Spark Executor Memory
+
+Spark는 JVM 위에서 실행되며, PySpark를 사용하는 경우에는 외부에 Python 프로세스가 존재할 수 있으나 
+Driver 또는 Executor 를 위한 JVM이 실행되는건 동일하다.   
+
 
 Executor는 Worker 노드에서 실행되는 JVM 프로세스 역할을 한다. 따라서 JVM 메모리 관리를 
 이해하는 것이 중요하다.    
@@ -17,7 +21,7 @@ JVM 메모리 관리는 두가지로 나눌 수 있다.
 
 <img width="500" alt="Image" src="https://github.com/user-attachments/assets/b4da2cb3-7db4-4cbb-8551-cef7062e84e3" />   
 
-##### On-Heap Memory Management(In-Memory)   
+### 1-1) On-Heap Memory Management(In-Memory)   
 
 `Object는 JVM heap에 할당되고 GC에 바인딩된다.`     
 
@@ -25,14 +29,53 @@ JVM 메모리 관리는 두가지로 나눌 수 있다.
 
 어플리케이션 대부분에 데이터가 on-heap 메모리에 저장된다.  
 `spark.executor.memory는 스파크의 설정 옵션 중 하나로, executor에 할당되는 
-메모리를 설정하는데에 사용되는 config 값이다.`   
+메모리를 설정하는데에 사용되는 config 값이다.`    
+
+우선 Spark Executor의 JVM Heap 메모리를 크게 다음과 같이 나눌 수 있다.   
+
+<img width="499" alt="Image" src="https://github.com/user-attachments/assets/44d23256-e14b-451d-9c8c-38572ed3d265" />    
+
+#### 1-1-1) Spark Memory(spark.memory.fraction=0.6, default)   
+
+`Spark의 메모리가 부족할 경우 Executor가 사용하는 전체 JVM 메모리 사이즈를 늘리거나, 
+    spark.memory.fraction 값을 올릴 수 있다.`   
+
+##### Execution Memory
+
+- spark.memory.storageFraction 를 제외한 spark.memory.fraction 의 나머지    
+- 데이터 집계 과정에서 Shuffle, Aggregation, Sort 등을 위해 사용한다.   
+
+##### Storage Memory(spark.memory.storageFraction=0.5, default)   
+
+- 캐싱 또는 Broadcast, Driver로 보내는 결과들이 이 영역의 메모리를 사용한다.  
+- 캐싱을 많이 사용한다면 Storage Memory가 부족하여서 spark.memory.storageFraction 값을 
+늘릴수도 있겠지만, spark 1.6부터는 [Unified Memory Management](https://issues.apache.org/jira/browse/SPARK-10000)가 
+도입되면서 위 사진과 같이 통합되었기 때문에 큰 효과가 없을 수 있다.   
+
+위에서 언급한 것과 같이 spark 1.6 부터 spark memory 영역이 통합되면서 
+캐싱(Storage)을 사용하지 않을 경우에는 Execution(집계)를 위해 Storage Memory 영역을 사용할 수 있게 되었고, 
+    캐싱(Storage)을 많이 사용한다면 Execution Memory 영역을 필요시 더 사용할 수 있게 되었다.   
+
+`즉, spark.memory.storageFraction 값은 이제 절대적인 Storage Memory 양이 아니라, Evition 되지 않는 최대 
+메모리 양을 지정하는 옵션이 되었다.`   
+
+#### 1-1-2) User Memory
+
+- 전체 JVM Heap 에서 spark.memory.fraction 와 Reserved Memory를 제외한 영역   
+- Spark 가 사용하는 내부 메타데이터, 사용자 생성 데이터 구조 저장이나 UDF 및 OOM을 
+방지하기 위한 대비영역으로 사용된다.   
+
+#### 1-1-3) Reserved Memory (300 MiB)     
 
 
-##### Off-Heap Memory Management(External-Memory)   
+### 1-2) Off-Heap Memory Management(External-Memory)   
 
 `Object는 직렬화에 의해 JVM 외부의 메모리에 할당되고 Application에 의해 
 관리되며 GC에 바인딩되지 않는다.`      
 
+Spark 내부의 [Tungsten](https://wonyong-jang.github.io/spark/2021/05/04/Spark-DataFrame-Tungsten.html)이라 불리는 
+실행엔진은 off-heap 메모리 관리 기능을 제공한다.   
+  
 기본적으로 executor memory를 설정하면 memoryOverhead 크기는 아래와 같이 설정된다.   
 
 ```python
@@ -53,7 +96,7 @@ MAX(spark.executor.memory*0.1, 384MB)
 
 - - -   
 
-## 1. Spark의 Memory 관리   
+## 2. Spark의 Memory 관리   
 
 Spark의 기존 메모리 관리는 정적인 메모리 분할(Memory fraction)을 통해 
 구조화 되어 있다.   
@@ -126,6 +169,7 @@ executor 당 많은 수의 코어를 쓰면 동시에 스레드가 많아지면�
 
 **Reference**   
 
+<https://1ambda.blog/2021/12/27/practical-spark-10/>    
 <https://jaemunbro.medium.com/spark-executor-%EA%B0%9C%EC%88%98-%EC%A0%95%ED%95%98%EA%B8%B0-b9f0e0cc1fd8>   
 <https://jaemunbro.medium.com/apache-spark-partition-%EA%B0%9C%EC%88%98%EC%99%80-%ED%81%AC%EA%B8%B0-%EC%A0%95%ED%95%98%EA%B8%B0-3a790bd4675d>  
 <https://spidyweb.tistory.com/328>   
