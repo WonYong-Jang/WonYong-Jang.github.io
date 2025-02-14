@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] On Kubernetes"   
-subtitle: "EMR Cluster 에서의 Spark와 비교"       
+subtitle: "EMR Cluster 에서의 Spark와 비교 / EKS(Elastic Kubernetes Service)"       
 comments: true   
 categories : Spark   
 date: 2024-03-03   
@@ -58,7 +58,40 @@ DR 을 대비하여 여러 EMR Cluster로 구성된 Multi AZ를
 `세 번째는 Performance 이며, YARN 보다 Kubernetes에서 Spark Job을 
 실행하는게 약 5%의 성능 향상을 이뤘다고 한다.`    
 [링크](https://aws.amazon.com/ko/blogs/containers/optimizing-spark-performance-on-kubernetes/)를 통해 더 자세한 
-내용을 확인해 보자.   
+내용을 확인해 보자.  
+
+- - - 
+
+## 2. EMR과 EKS 의 Memory 관리      
+
+Spark는 일반적으로 YARN(EMR) 과 Kubernetes(EKS) 환경에서 실행되며, 
+    두 환경의 리소스 관리 방식이 다르다.   
+
+`EMR의 경우 YARN은 Executor의 메모리 사용량이 약간 초과하더라도 Container의 
+여유 메모리를 사용하여 조정을 하지만, EKS의 경우 할당된 메모리 한도를 
+넘어서면 그 즉시 OOM Kill을 발생시킨다.`        
+
+`따라서 EKS 에서는 executor memory의 약 20% 정도를 spark.executor.memoryOverhead 로 
+증가시키는 것을 권장한다.`   
+
+따라서 EKS에서는 아래와 같이 메모리를 구성하는 것이 좋다.   
+
+- spark.executor.memoryOverhead = 20% of executor-memory   
+- spark.default.parallelism = (num-executors) * (executor-cores)  
+
+`spark.default.parallelism은 RDD 사용시 적용이 되고, spark.sql.shuffle.partitions 는 
+DataFrame, Dataset 에서 shuffle이 발생하는 연산에서 파티션 개수를 정한다는 차이가 있다.`      
+
+```python
+('executor-memory', '14G',)
+('num-executors', '300',)
+('executor-cores', '4'),
+
+
+('conf', 'spark.executor.memoryOverhead=3G'), # (executor-memory) * 20% => 14G * 20% => 3G   
+('conf', 'spark.default.parallelism=1200')    # (num-executors) * (executor-cores) => 300 * 4 
+```
+
 
 - - - 
 

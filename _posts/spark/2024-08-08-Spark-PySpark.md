@@ -203,6 +203,9 @@ spark-submit \
 ## 어플리케이션에 필요한 외부 라이브러리를 추가   
 --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0 \
 
+## 또는 외부 라이브러리를 직접 다운로드하여 참조할 수 있다.
+--conf spark.jars=s3://my-bucket/kafka:2.4.0,s3://my-bucket/mysql:6
+
 ## Python 파일 또는 모듈의 ZIP 아카이브를 추가
 ## 파이썬 코드와 함께 필요한 라이브러리를 클러스터에 배포할 수 있다.   
 --py-files packages.zip \
@@ -219,6 +222,14 @@ spark-submit \
 ## environment 라는 심볼릭 링크가 생성   
 --archives pyspark_conda_env.tar.gz#environment \
 main.py
+```
+
+위의 경우는 EMR Cluster에 Spark를 submit 하는 경우이며, EKS Cluster의 경우는 아래와 같이 진행할 수 있다.  
+
+```python
+('conf', 'spark.archives=s3://my-bucket/lib/pyspark_venv.tar.gz#environment'),
+('conf', 'spark.kubernetes.driverEnv.PYSPARK_PYTHON=./environment/bin/python'),
+('conf', 'spark.executorEnv.PYSPARK_PYTHON=./environment/bin/python')
 ```
 
 

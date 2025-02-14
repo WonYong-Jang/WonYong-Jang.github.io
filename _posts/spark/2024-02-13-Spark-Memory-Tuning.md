@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Memory 관리 및 튜닝"   
-subtitle: "Spark 실행시 적절한 Driver와 Executor 개수"    
+subtitle: "Spark 실행시 적절한 Driver와 Executor 개수 / PySpark에서의 Memory"    
 comments: true
 categories : Spark
 date: 2024-02-13
@@ -89,7 +89,8 @@ MAX(spark.executor.memory*0.1, 384MB)
 
 `spark.executor.memoryOverhead 값 지정을 통해 직접 설정해줄 수도 있다.`   
 
-
+`PySpark를 사용할 경우 Python Process의 메모리(spark.executor.pyspark.memory) 등 
+Non-JVM 메모리 영역을 지정한다.`      
 
 
 일반적으로 Object의 읽기 및 쓰기 속도는 On-Heap > Off-Heap > DISK 순서로 빠르다.   
@@ -164,6 +165,23 @@ executor 당 많은 수의 코어를 쓰면 동시에 스레드가 많아지면�
 `따라서 executor당 코어를 최대 5개로 하는 것을 권장하며, 이를 넘게 되면 
 성능 향상에 도움되지 않으며 CPU 자원을 불필요하게 소모하게 된다.`   
 
+- - - 
+
+## 3. PySpark Memory and Arrow   
+
+<img width="438" alt="Image" src="https://github.com/user-attachments/assets/02fb02c2-0d9a-481d-897d-213685ac2b93" />   
+
+PySpark를 사용한다면 다음 두 가지의 메모리 옵션을 설정할 수 있다.   
+
+- spark.python.worker.memory (512m, default) 는 JVM 내에서 Python Worker 의 집계를 
+위해 사용되는 영역이다.    
+
+- spark.executor.pyspark.memory (설정되지 않음, default) 는 실제 Python Process의 메모리이다.   
+
+`spark.executor.pyspark.memory는 기본값이 설정되어 있지 않으므로 PySpark 사용시 
+DataFrame 대신 일반 Python 객체와 함수를 이용해 가공하는 등 메모리를 많이 
+사용할 경우 메모리 이슈가 발생할 수 있다.`   
+
 
 - - - 
 
@@ -173,6 +191,7 @@ executor 당 많은 수의 코어를 쓰면 동시에 스레드가 많아지면�
 <https://jaemunbro.medium.com/spark-executor-%EA%B0%9C%EC%88%98-%EC%A0%95%ED%95%98%EA%B8%B0-b9f0e0cc1fd8>   
 <https://jaemunbro.medium.com/apache-spark-partition-%EA%B0%9C%EC%88%98%EC%99%80-%ED%81%AC%EA%B8%B0-%EC%A0%95%ED%95%98%EA%B8%B0-3a790bd4675d>  
 <https://spidyweb.tistory.com/328>   
+<https://medium.com/walmartglobaltech/decoding-memory-in-spark-parameters-that-are-often-confused-c11be7488a24>    
 
 {% highlight ruby linenos %}
 
