@@ -17,13 +17,14 @@ Driver 또는 Executor 를 위한 JVM이 실행되는건 동일하다.
 Executor는 Worker 노드에서 실행되는 JVM 프로세스 역할을 한다. 따라서 JVM 메모리 관리를 
 이해하는 것이 중요하다.    
 
-JVM 메모리 관리는 두가지로 나눌 수 있다.  
+`executor의 memory(JVM)는 on-heap memory, off-heap memory, overhead memory로 
+크게 3가지 독립 영역으로 나뉘게 된다.`       
 
-<img width="500" alt="Image" src="https://github.com/user-attachments/assets/b4da2cb3-7db4-4cbb-8551-cef7062e84e3" />   
+<img width="700" alt="Image" src="https://github.com/user-attachments/assets/2014bfa0-8401-4a1c-a03f-149ae01e4577" />      
 
 ### 1-1) On-Heap Memory Management(In-Memory)   
 
-`Object는 JVM heap에 할당되고 GC에 바인딩된다.`     
+`Object는 JVM heap에 할당되고 GC에 의해 관리된다.`        
 
 > 따라서 GC가 자주 발생하는 경우는 on-heap 메모리를 늘려야 한다.   
 
@@ -42,12 +43,12 @@ JVM 메모리 관리는 두가지로 나눌 수 있다.
 
 ##### Execution Memory
 
-- spark.memory.storageFraction 를 제외한 spark.memory.fraction 의 나머지    
-- 데이터 집계 과정에서 Shuffle, Aggregation, Sort 등을 위해 사용한다.   
+- 함수로는 join, sort, aggregtaion(transformations, actions의 함수들)과 같은 함수 호출을 
+통해 사용되는 영역이다.   
 
 ##### Storage Memory(spark.memory.storageFraction=0.5, default)   
 
-- 캐싱 또는 Broadcast, Driver로 보내는 결과들이 이 영역의 메모리를 사용한다.  
+- `캐싱 또는 Broadcast 의 데이터를 저장하는 영역이다.`         
 - 캐싱을 많이 사용한다면 Storage Memory가 부족하여서 spark.memory.storageFraction 값을 
 늘릴수도 있겠지만, spark 1.6부터는 [Unified Memory Management](https://issues.apache.org/jira/browse/SPARK-10000)가 
 도입되면서 위 사진과 같이 통합되었기 때문에 큰 효과가 없을 수 있다.   
@@ -56,79 +57,66 @@ JVM 메모리 관리는 두가지로 나눌 수 있다.
 캐싱(Storage)을 사용하지 않을 경우에는 Execution(집계)를 위해 Storage Memory 영역을 사용할 수 있게 되었고, 
     캐싱(Storage)을 많이 사용한다면 Execution Memory 영역을 필요시 더 사용할 수 있게 되었다.   
 
-`즉, spark.memory.storageFraction 값은 이제 절대적인 Storage Memory 양이 아니라, Evition 되지 않는 최대 
-메모리 양을 지정하는 옵션이 되었다.`   
+즉, spark.memory.storageFraction 값은 이제 절대적인 Storage Memory 양이 아니라, Evition 되지 않는 최대 
+메모리 양을 지정하는 옵션이 되었다.    
 
 #### 1-1-2) User Memory
 
-- 전체 JVM Heap 에서 spark.memory.fraction 와 Reserved Memory를 제외한 영역   
-- Spark 가 사용하는 내부 메타데이터, 사용자 생성 데이터 구조 저장이나 UDF 및 OOM을 
-방지하기 위한 대비영역으로 사용된다.   
+- `전체 JVM Heap 에서 spark.memory.fraction 와 Reserved Memory를 제외한 영역`      
+- `Spark 가 사용하는 내부 메타데이터, 사용자 생성 데이터 구조 저장이나 UDF 및 OOM을 
+방지하기 위한 대비영역으로 사용된다.`      
 
-#### 1-1-3) Reserved Memory (300 MiB)     
+#### 1-1-3) Reserved Memory (300 MiB)    
+
+- spark 엔진 내부동작을 위해 남겨놓는 reserved 용량, 해당 영역은 300MB가 고정으로 할당된다.   
+
+위에서 설명한 spark.memory.fraction은 각 메모리 영역의 비율을 설정하게 된다.   
+`만약 spark.memory.fraction=0.6 인 경우, storage memory + execution memory 영역이 60%, User Memory 영역이 
+40% 를 차지한다.`      
 
 
 ### 1-2) Off-Heap Memory Management(External-Memory)   
 
-`Object는 직렬화에 의해 JVM 외부의 메모리에 할당되고 Application에 의해 
-관리되며 GC에 바인딩되지 않는다.`      
+`off-heap memory는 JVM(on heap memory) 영역과는 별도로 존재하며, Spark container(Executor) 내에 위치한다.`      
 
-Spark 내부의 [Tungsten](https://wonyong-jang.github.io/spark/2021/05/04/Spark-DataFrame-Tungsten.html)이라 불리는 
-실행엔진은 off-heap 메모리 관리 기능을 제공한다.   
-  
-기본적으로 executor memory를 설정하면 memoryOverhead 크기는 아래와 같이 설정된다.   
+<img width="500" alt="Image" src="https://github.com/user-attachments/assets/b4da2cb3-7db4-4cbb-8551-cef7062e84e3" />   
 
-```python
-MAX(spark.executor.memory*0.1, 384MB)   
+off-heap memory는 특정([Tungsten](https://wonyong-jang.github.io/spark/2021/05/04/Spark-DataFrame-Tungsten.html) 데이터를 저장하거나, 혹은 
+        on-heap memory(JVM 영역)에서의 빈번한 GC로 인한 Overhead를 감소시킬 목적으로 사용된다.   
 
-# On-Heap과 Off-Heap
-# 만약 executor-memory=5g로 설정했다면 
-# on-heap: 5G
-# off-heap: max(5g*0.1, 384MB) = 500MB
-```
+spark.memory.offHeap.enabled=true(default = false)로 설정되어 있어야 사용 가능하다.    
+단, 해당 설정이 true라고 하더라도, default는 0 (bytes) 이다.   
+즉, spark.memory.offHeap.size를 통해 추가 설정 해줘야 한다.   
 
-`spark.executor.memoryOverhead 값 지정을 통해 직접 설정해줄 수도 있다.`   
+### 1-3) Overhead Memory   
 
-`PySpark를 사용할 경우 Python Process의 메모리(spark.executor.pyspark.memory) 등 
-Non-JVM 메모리 영역을 지정한다.`      
-
+오버헤드 메모리는 executor에서 container의 overhead를 감안해서 여유분으로 
+남겨놓은 메모리 공간이다.   
+`보통, 전체 spark.executor.memory 의 10% 정도로 설정하고, default 값도 10% 이다.`      
+`spark.executor.memoryOverhead 혹은 spark.executor.memoryOverheadFactor 설정을 통해 세팅을 한다.`   
 
 일반적으로 Object의 읽기 및 쓰기 속도는 On-Heap > Off-Heap > DISK 순서로 빠르다.   
 
+만약 spark.memory.fraction 비율을 너무 줄일 경우, spill이 자주 발생할 수 있다. 
+즉 데이터를 저장할 공간이 부족해져 성능을 저해할 수 있다.   
+
+> 따라서, 최초에는 default로 설정으로 진행 후, 이후에 모니터링을 통해 튜닝을 진행하는게 
+일반적인 튜닝 방법이다.   
+
+<img width="646" alt="Image" src="https://github.com/user-attachments/assets/369d0995-7e3b-4c35-8480-80aeb37888d5" />   
+
+Spill 이란, 데이터를 저장할 메모리 공간(Storage memory 혹은 execution memory)이 부족할 경우 데이터를 
+담을 공간이 없을 때 발생한다.   
+Spill 은 부족한 메모리 영역에 저장 못한 데이터를 Disk 영역(HDFS)에 저장하기 때문에 Spill이 많이 
+발생할 경우 성능에 매우 치명적이다.(Disk I/O 발생)   
+
+해결 방법은 여러 측면을 봐야하지만 `가장 대표적으로는 파티션의 사이즈를 줄이는 것으로 튜닝을 하는 것이다.`      
+파티션의 사이즈를 줄이는 이유는 한번에 처리할 데이터의 양을 줄일 수 있어 메모리 영역에 저장되는 
+데이터 사이즈를 감소시킬 수 있다.  
+하지만 파티션의 사이즈를 줄여서 파티션의 수가 늘어나게 되면 오히려 더 많은 task가 생성 및 수행 되기 때문에 
+여러 테스트를 통해 파티션의 사이즈 및 수를 조절해 나가야 한다.   
+
 - - -   
-
-## 2. Spark의 Memory 관리   
-
-Spark의 기존 메모리 관리는 정적인 메모리 분할(Memory fraction)을 통해 
-구조화 되어 있다.   
-
-<img width="800" alt="스크린샷 2024-02-13 오후 11 35 24" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/15148d1f-2921-401e-9984-d40d06c367ca">  
-
-
-메모리 공간은 3개의 영역으로 분리되어 있으며, 각 영역의 크기는 JVM Heap 크기를 
-Spark Configuration에 설정된 고정 비율로 나누어 정해진다.   
-
-<img width="900" alt="스크린샷 2024-02-13 오후 10 01 04" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/ca761a71-6892-4b29-8c1e-173c1dcea7b0">      
-
-- spark.executor.memory: executor가 사용할 수 있는 총 메모리 크기를 정의한다.   
-
-- Execution(Shuffle): 이 영역은 Shuffle, Join, Sort, Aggregation 등을 수행할 때의 중간 데이터를 
-버퍼링하는데에 사용된다. 
-    - 이 영역의 크기는 spark.shuffle.memoryFraction(기본값: 0.2)를 통해 설정   
-
-- Storage: 이 영역은 주로 추후에 다시 사용하기 위한 데이터 블록들을 Caching하기 위한 용도로 사용된다.  
-    - Cache, Broadcast, Accumulator를 위한 데이터 저장 비율   
-    - spark.storage.memoryFraction(기본값: 0.6)을 통해 설정   
-
-- Other: 나머지 메모리 공간은 주로 사용자 코드에서 할당되는 데이터나 Spark에서 내부적으로 사용하는 
-메타데이터를 저장하기 위해 사용된다.   
-
-`각 영역 메모리에 상주된 데이터들은 자신이 위치한 메모리 영역이 가득 찬다면 
-Disk로 Spill 된다.`   
-'Storage 영역의 경우 Cache 된 데이터는 전부 Drop되게 된다. 모든 경우에서 데이터 Drop이 발생하면 I/O 증가 혹은 
-Recomputation으로 인한 성능 저하가 나타나게 된다.'    
-
-- - - 
 
 ## 2. 적절한 Driver와 Executor 사이즈   
 
