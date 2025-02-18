@@ -174,9 +174,35 @@ java.lang.OutOfMemoryError: Java heap space
 `또한, group by, window function 전 해당 집계에서 사용하는 key를 기준으로 repartition(X, "key")를 시도해 볼 수도 있다.`      
 
 
-- - -   
+- - - 
 
-## 2. 적절한 Driver와 Executor 사이즈   
+## 2. spark.memory.fraction, spark.memory.storageFraction 튜닝    
+
+
+### 2-1) 감소시켜야 하는 경우   
+
+`Out of Memory가 발생하게 되면 무조건 spark.memory.fraction 과 spark.memory.storageFraction 값을 
+증가시켜야 할 것 같지만 아래의 경우는 오히려 감소 시켜야 문제가 해결된다.`   
+
+`spark.memory.fraction 니 높으면, Exectuion/Storage 메모리가 증가하지만 Overhead memory가 
+감소하게 된다.`  
+
+Overhead memory는 shuffle 데이터를 압축 해데할 때 필요한 공간이다.  
+
+- shuffle 데이터를 압축 해제(unzip)할 때 OOM이 발생하는 경우   
+
+
+### 2-2) 증가시켜야 하는 경우   
+
+spark.memory.fraction 값이 낮으면 Execution Memory가 부족하여 데이터를 디스크에 spill 하는 현상이 
+발생한다.   
+
+- join, aggregation, sort 작업에서 OOM 이 발생하는 경우    
+- Execution Memory 부족으로 인해 Spill 이 많이 발생(디스크 I/O 증가로 성능 저하)  
+
+- - - 
+
+## 3. 적절한 Driver와 Executor 사이즈   
 
 먼저, Executor에 관한 몇 가지 기본 전제를 확인해보자.   
 
@@ -192,16 +218,16 @@ java.lang.OutOfMemoryError: Java heap space
 그럼 다수의 작은 사이즈의 executor로 구성하는게 좋을까, 소수의 큰 사이즈의 executor로 
 구성하는게 좋을까?   
 
-### 2-1) 다수의 작은 executor VS 소수의 큰 executor 
+### 3-1) 다수의 작은 executor VS 소수의 큰 executor 
 
-#### 2-1-1) 다수의 작은 executor 의 경우 발생할 수 있는 문제   
+#### 3-1-1) 다수의 작은 executor 의 경우 발생할 수 있는 문제   
 
 하나의 파티션을 처리할 자원이 충분하지 않을 수 있으며, OOM 또는 disk spill 이 
 생길 수 있다.     
 
 `따라서 자원이 허용된다면, executor는 최소 4GB 이상으로 설정하는 것을 권장한다.`   
 
-#### 2-1-2) 소수의 큰 executor 의 경우 발생할 수 있는 문제   
+#### 3-1-2) 소수의 큰 executor 의 경우 발생할 수 있는 문제   
 
 너무 큰 executor는 힙 사이즈가 클수록 GC가 시작되는 시점을 
 지연시켜 Full GC로 인한 지연이 더욱 길어질 수 있다.    
@@ -213,7 +239,7 @@ executor 당 많은 수의 코어를 쓰면 동시에 스레드가 많아지면�
 
 - - - 
 
-## 3. PySpark Memory and Arrow   
+## 4. PySpark Memory and Arrow   
 
 <img width="438" alt="Image" src="https://github.com/user-attachments/assets/02fb02c2-0d9a-481d-897d-213685ac2b93" />   
 
