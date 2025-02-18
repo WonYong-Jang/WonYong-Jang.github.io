@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Memory 관리 및 튜닝"   
-subtitle: "Spark 실행시 적절한 Driver와 Executor 개수 / PySpark에서의 Memory"    
+subtitle: "Spark 실행시 적절한 Driver와 Executor 개수 / on-heap, off-heap, overHead memory /PySpark에서의 Memory"    
 comments: true
 categories : Spark
 date: 2024-02-13
@@ -39,7 +39,10 @@ Executor는 Worker 노드에서 실행되는 JVM 프로세스 역할을 한다. 
 #### 1-1-1) Spark Memory(spark.memory.fraction=0.6, default)   
 
 `Spark의 메모리가 부족할 경우 Executor가 사용하는 전체 JVM 메모리 사이즈를 늘리거나, 
-    spark.memory.fraction 값을 올릴 수 있다.`   
+    spark.memory.fraction 값을 올릴 수 있다.`  
+
+`주의해야 할 점은 Out of Memory 메모리 오류가 발생하게 되면 무조건 spark.memory.fraction 을 
+증가시키면 안되며, 오히려 줄여야 하는 경우도 있으니 각 역할을 정확히 이해하는 것이 중요하다.`   
 
 ##### Execution Memory
 
@@ -51,7 +54,9 @@ Executor는 Worker 노드에서 실행되는 JVM 프로세스 역할을 한다. 
 - `캐싱 또는 Broadcast 의 데이터를 저장하는 영역이다.`         
 - 캐싱을 많이 사용한다면 Storage Memory가 부족하여서 spark.memory.storageFraction 값을 
 늘릴수도 있겠지만, spark 1.6부터는 [Unified Memory Management](https://issues.apache.org/jira/browse/SPARK-10000)가 
-도입되면서 위 사진과 같이 통합되었기 때문에 큰 효과가 없을 수 있다.   
+도입되면서 위 사진과 같이 통합되었기 때문에 큰 효과가 없을 수 있다.  
+
+> 만약 메모리가 부족하다고 판단이 되면 비용이 허락하는 한도 내에서 전체 메모리를 늘려보는 것도 방법이다.   
 
 위에서 언급한 것과 같이 spark 1.6 부터 spark memory 영역이 통합되면서 
 캐싱(Storage)을 사용하지 않을 경우에는 Execution(집계)를 위해 Storage Memory 영역을 사용할 수 있게 되었고, 
@@ -114,7 +119,60 @@ Spill 은 부족한 메모리 영역에 저장 못한 데이터를 Disk 영역(H
 파티션의 사이즈를 줄이는 이유는 한번에 처리할 데이터의 양을 줄일 수 있어 메모리 영역에 저장되는 
 데이터 사이즈를 감소시킬 수 있다.  
 하지만 파티션의 사이즈를 줄여서 파티션의 수가 늘어나게 되면 오히려 더 많은 task가 생성 및 수행 되기 때문에 
-여러 테스트를 통해 파티션의 사이즈 및 수를 조절해 나가야 한다.   
+여러 테스트를 통해 가장 적합한 파티션의 사이즈 및 수를 조절해 나가야 한다.    
+
+또 다른 예제를 살펴보자.   
+
+다음과 같은 오류 메세지를 발견했을 때 어떤 옵션을 조절하면 좋을까?   
+
+```python
+spark.executor.instances = 10
+spark.executor.cores = 10
+spark.executor.memory = 30g (GiB)
+```
+
+아래와 같은 오류 메시지가 Parquet Write 를 하는 과정에서 발생했으며 join, aggregation 등 로직에는 
+문제가 없었다.  
+
+```
+ExecutorLostFailure (executor 7 exited caused by one of the running tasks) Reason: Container killed by YARN for exceeding memory limits. 33.2 GB of 33 GB physical memory used. Consider boosting spark.yarn.executor.memoryOverhead or disabling yarn.nodemanager.vmem-check-enabled because of YARN-4714.
+```
+
+메모리 관련 설정은 아래와 같이 설정되어 있었다.   
+
+```python
+spark.memory.memoryOverhead = 0.1
+spark.memory.fraction = 0.8
+spark.memory.storageFraction = 0.5
+spark.memory.offHeap.enabled = false
+```
+
+join, aggregation 등에서 memory 가 터졌다면 heap OOM 메시지가 발생했을 것이다.  
+일반적인 경우엔 memory가 넘친다면 disk spill 을 이용해 속도는 느리겠지만 집계할 수 있다.   
+
+off-heap 에서 오류가 났으므로 전체 메모리 사이즈는 동일하게 유지하고 on-heap 을 줄여 off-heap을 
+늘려보자.   
+
+```python
+spark.executor.memory=25g 
+spark.memory.memoryOverhead=8g  
+# 전체 = 33 GiB 로 기존과 동일   
+```  
+
+수정 후에는 이제 off-heap 이 아니라 heap OOM 이 발생한다.  
+
+```
+21/11/26 23:19:51 ERROR util.SparkUncaughtExceptionHandler: Uncaught exception in thread Thread[read-ahead,5,main]
+java.lang.OutOfMemoryError: Java heap space
+```
+
+`spark.executor.memory 를 줄이면 메모리 영역 중 Execution 메모리(group by, window, aggregation 등)가 줄어든다.`    
+
+만약 메모리는 넉넉한데 group by, window function 등에서 skew 가 발생한다면 어떤 옵션을 수정해야 할까?   
+
+`첫번째로 spark.sql.shuffle.partitons 숫자를 늘려 skew 확률을 낮춰야 한다.`     
+`또한, group by, window function 전 해당 집계에서 사용하는 key를 기준으로 repartition(X, "key")를 시도해 볼 수도 있다.`      
+
 
 - - -   
 

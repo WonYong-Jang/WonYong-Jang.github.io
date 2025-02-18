@@ -22,7 +22,15 @@ EMR에서 기본적으로 만들어진 AMI를 사용하고, 보안을 위해 이
 또한, 목적에 따라 여러 클러스터를 구성하거나 
 DR 을 대비하여 여러 EMR Cluster로 구성된 Multi AZ를 
 구축하였을 때 많은 EMR 클러스터 비용이 발생하는 등의 문제가 있기 때문에 
-쿠버네티스로 전환을 고려해 보기로 하였다.   
+쿠버네티스로 전환을 고려해 보기로 하였다.  
+
+> EMR Cluster는 하나의 AZ 에만 프로비저닝 할 수 있기 때문에, DR 을 대비하기 위해 
+다른 AZ에 동일한 EMR 클러스터를 구성하여 active active cluster 를 구성하여 해결 할 수는 있다.    
+> 하나의 AZ 에 문제가 발생하였을 때 다른 AZ 를 통해 job 을 실행 할 수 있도록 하였다.    
+
+`또한 EMR Cluster 는 클러스터 하나당 단일 spark 버전만 지원하기 때문에 
+여러 spark 버전을 사용해야 한다면 spark 관리가 어렵다.`     
+
 
 <img width="1000" alt="스크린샷 2024-03-03 오후 4 59 36" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/f3900cad-ca4d-4db5-95ad-ac07f7163b91">
 
