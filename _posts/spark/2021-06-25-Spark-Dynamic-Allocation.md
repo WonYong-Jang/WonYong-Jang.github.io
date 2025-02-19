@@ -86,8 +86,14 @@ spark.dynamicAllocation.initialExecutors
 
 그 외에 옵션은 아래와 같다.  
 
+
+cachedExecutorIdleTimeout 기본값인 infinity 대신 다른 값을 설정하면 설정된 시간만큼 사용되지 않으면 
+제거될 것이다.  
+infinity로 기본값이 설정된 이유는 executor가 한번 제거되고 나면 캐시되었던 데이터들을 쓰기 위해 
+재연산이 필요하기 때문에 스파크 캐시 데이터를 갖고 있는 executor 를 제거하지 않는다.   
+
 ```
-// default infinity   
+// default: infinity   
 // If an executor with cached blocks has been idle for longer than this duration, 
 // it will be removed.
 // this configuration helps manage executors holding cached data and defaults to infinity, meaning that by default, executor with cached blocks won't be removed.   
