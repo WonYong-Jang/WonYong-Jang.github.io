@@ -8,6 +8,15 @@ date: 2024-02-13
 background: '/img/posts/mac.png'
 ---
 
+Spark 는 in-memory 에서 작동하기 때문에 빠르지만 잘못된 설정에 의해서 
+불안정해 질 수 있다.   
+메모리 관리, cpu core 수의 관리를 통해 out of memory 가 발생하지 않는 선에서 
+job이 성공적으로 수행될 수 있도록 해야 하며, 
+    적절한 캐싱 전략, 직렬화, executor 파티션 갯수 선정을 통해 
+    많은 컴퓨팅 자원을 점유하지 않도록 해야 한다.   
+
+- - - 
+
 ## 1. Spark Executor Memory
 
 Spark는 JVM 위에서 실행되며, PySpark를 사용하는 경우에는 외부에 Python 프로세스가 존재할 수 있으나 
@@ -46,12 +55,12 @@ Executor는 Worker 노드에서 실행되는 JVM 프로세스 역할을 한다. 
 
 ##### Execution Memory
 
-- 함수로는 join, sort, aggregtaion(transformations, actions의 함수들)과 같은 함수 호출을 
-통해 사용되는 영역이다.   
+- `함수로는 join, sort, aggregtaion(transformations, actions의 함수들)과 같은 함수 호출을 
+통해 사용되는 영역이다.`       
 
 ##### Storage Memory(spark.memory.storageFraction=0.5, default)   
 
-- `캐싱 또는 Broadcast 의 데이터를 저장하는 영역이다.`         
+- `Cache, Broadcast, Accumulator 의 데이터를 저장하는 영역이다.`         
 - 캐싱을 많이 사용한다면 Storage Memory가 부족하여서 spark.memory.storageFraction 값을 
 늘릴수도 있겠지만, spark 1.6부터는 [Unified Memory Management](https://issues.apache.org/jira/browse/SPARK-10000)가 
 도입되면서 위 사진과 같이 통합되었기 때문에 큰 효과가 없을 수 있다.  
@@ -59,17 +68,18 @@ Executor는 Worker 노드에서 실행되는 JVM 프로세스 역할을 한다. 
 > 만약 메모리가 부족하다고 판단이 되면 비용이 허락하는 한도 내에서 전체 메모리를 늘려보는 것도 방법이다.   
 
 위에서 언급한 것과 같이 spark 1.6 부터 spark memory 영역이 통합되면서 
-캐싱(Storage)을 사용하지 않을 경우에는 Execution(집계)를 위해 Storage Memory 영역을 사용할 수 있게 되었고, 
-    캐싱(Storage)을 많이 사용한다면 Execution Memory 영역을 필요시 더 사용할 수 있게 되었다.   
+Storage memory와 Execution Memory는 필요시 서로의 메모리를 점유할 수 있다.   
+여기서 Execution memory는 Storage memory를 빼앗아 사용할 수 있지만 그 반대는 불가능하다.
 
-즉, spark.memory.storageFraction 값은 이제 절대적인 Storage Memory 양이 아니라, Evition 되지 않는 최대 
-메모리 양을 지정하는 옵션이 되었다.    
+따라서 Execution memory가 부족할 경우 spark.memory.storageFraction 값을 줄이는 것이 효과적인 방법이 
+될 수 있다.   
 
 #### 1-1-2) User Memory
 
 - `전체 JVM Heap 에서 spark.memory.fraction 와 Reserved Memory를 제외한 영역`      
 - `Spark 가 사용하는 내부 메타데이터, 사용자 생성 데이터 구조 저장이나 UDF 및 OOM을 
-방지하기 위한 대비영역으로 사용된다.`      
+방지하기 위한 대비영역으로 사용된다.`     
+
 
 #### 1-1-3) Reserved Memory (300 MiB)    
 
@@ -178,16 +188,11 @@ java.lang.OutOfMemoryError: Java heap space
 
 ## 2. spark.memory.fraction, spark.memory.storageFraction 튜닝    
 
-
 ### 2-1) 감소시켜야 하는 경우   
 
-`Out of Memory가 발생하게 되면 무조건 spark.memory.fraction 과 spark.memory.storageFraction 값을 
-증가시켜야 할 것 같지만 아래의 경우는 오히려 감소 시켜야 문제가 해결된다.`   
 
-`spark.memory.fraction 니 높으면, Exectuion/Storage 메모리가 증가하지만 Overhead memory가 
-감소하게 된다.`  
 
-Overhead memory는 shuffle 데이터를 압축 해데할 때 필요한 공간이다.  
+Overhead memory는 shuffle 데이터를 압축 해제할 때 필요한 공간이다.  
 
 - shuffle 데이터를 압축 해제(unzip)할 때 OOM이 발생하는 경우   
 

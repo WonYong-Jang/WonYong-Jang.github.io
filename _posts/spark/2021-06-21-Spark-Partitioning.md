@@ -99,6 +99,9 @@ task를 처리하는 시간 동안 아무런 처리를 하지 않게 된다.
 Spark는 기본적으로 spark.sql.files.maxPartitionBytes 값 (Default: 128 MB)을 
 설정하면 이를 토대로 데이터를 끊어서 읽는다.  
 
+Partition의 종류를 input partition, output partition, shuffle partition으로 나눌 수 있는데 
+이 경우는 input partition에 해당 된다.     
+
 > 해당 설정은 Parquet, JSON, ORC 등의 file-based sources를 사용할 때 효과가 있다.   
 
 하지만 실제 테스트를 진행해보면 그 결과가 다를 수 있다.   
