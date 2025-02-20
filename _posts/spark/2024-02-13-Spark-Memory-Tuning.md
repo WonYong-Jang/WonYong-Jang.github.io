@@ -118,8 +118,6 @@ spark.memory.offHeap.enabled=true(default = false)로 설정되어 있어야 사
 > 따라서, 최초에는 default로 설정으로 진행 후, 이후에 모니터링을 통해 튜닝을 진행하는게 
 일반적인 튜닝 방법이다.   
 
-<img width="646" alt="Image" src="https://github.com/user-attachments/assets/369d0995-7e3b-4c35-8480-80aeb37888d5" />   
-
 Spill 이란, 데이터를 저장할 메모리 공간(Storage memory 혹은 execution memory)이 부족할 경우 데이터를 
 담을 공간이 없을 때 발생한다.   
 Spill 은 부족한 메모리 영역에 저장 못한 데이터를 Disk 영역(HDFS)에 저장하기 때문에 Spill이 많이 
@@ -186,24 +184,57 @@ java.lang.OutOfMemoryError: Java heap space
 
 - - - 
 
-## 2. spark.memory.fraction, spark.memory.storageFraction 튜닝    
+## 2. Spark 리소스 이슈 별 해결 방안    
 
-### 2-1) 감소시켜야 하는 경우   
+#### GC overhead limit exceeded (OOM)
+
+GC 시간이 너무 길어지면서 성능이 저하되고, 결국 GC overhead limit exceeded 오류가 발생한 경우이다.   
+`spark executor가 계속해서 GC를 수행하느라 실제 작업을 거의하지 못하는 상태이다.`   
+
+시도해 볼 수 있는 해결방법은 아래와 같다.   
+
+- execution memory 사용을 줄여 JVM GC 부담을 완화하는 방법으로 spark.memory.fraction 을 낮춘다.   
+- spark.memory.storageFraction 을 낮춘다.   
+
+#### OutOfMemoryError: Java heap space (OOM)   
+
+JVM heap 메모리 부족으로 executor가 죽는 경우이며, 보통 executor memory 부족으로 인해 발생한다.   
+할당된 메모리에 비해 executor에 처리하는 데이터가 너무 많은 경우 이기 때문에 아래와 같이 해결할 수 있다.  
+
+- executor 메모리 증가(spark.executor.memory)   
+- spark.memory.fraction 증가    
+- 데이터 파티션 수를 증가(spark.sql.shuffle.partition)   
+
+##### OutOfMemoryError: unable to create new native thread   
+
+Spark의 Executor가 너무 많은 스레드를 생성하면서 네이티브 OS 리소스를 초과한 경우이다.   
+executor가 너무 많은 작업을 동시에 처리하려고 하기 때문에 아래와 같이 해결할 수 있다.   
+
+- spark.executor.cores 값을 줄인다.   
 
 
+#### ExecutorLostFailure (executor 0 exited due to SIGKILL)   
 
-Overhead memory는 shuffle 데이터를 압축 해제할 때 필요한 공간이다.  
+OOM이 원인일 가능성이 있으며, Executor가 비정상적으로 종료되는 경우이다.   
 
-- shuffle 데이터를 압축 해제(unzip)할 때 OOM이 발생하는 경우   
+해결 방법은 아래와 같다   
 
+- spark.executor.memoryOverhead 값 증가 
+- spark.memory.fraction 증가  
 
-### 2-2) 증가시켜야 하는 경우   
+#### org.apache.spark.shuffle.FetchFailedException   
 
-spark.memory.fraction 값이 낮으면 Execution Memory가 부족하여 데이터를 디스크에 spill 하는 현상이 
-발생한다.   
+shuffle 과정에서 데이터 가져올 때 실패한 경우이며, 대량의 데이터를 shuffle 할 때 주로 발생한다.   
 
-- join, aggregation, sort 작업에서 OOM 이 발생하는 경우    
-- Execution Memory 부족으로 인해 Spill 이 많이 발생(디스크 I/O 증가로 성능 저하)  
+shuffle 과정에서 메모리 부족으로 spill 이 발생하며, executor가 죽는 케이스가 있을 수 있다.   
+이런 경우 spark.shuffle.service.enabled 옵션이 비활성화 되어 있다면 executor 종료 시 shuffle 데이터가 
+유실되어 가져오지 못할 수 있다.  
+
+해결 방법은 아래와 같다.  
+
+- spark.memory.fraction 을 늘려 execution memory를 확보 한다.  
+- spark.shuffle.service.enabled=true 로 설정하여 executor 종료 후에도 데이터를 유지한다.   
+- 
 
 - - - 
 
