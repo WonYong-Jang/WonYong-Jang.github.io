@@ -15,7 +15,7 @@ background: '/img/bg-index.jpg'
 여러 incident를 경험하면서 스트리밍 성능 최적화를 진행하였고   
 그 결과, 기존 대비 10배 이상의 성능 향상 경험을 가지고 있습니다.   
 
-항상 일을 진행할 때 협업과 커뮤니케이션이 프로젝트의 성패를 
+데이터 엔지니어로서 기술적인 역량 뿐만 아니라 협업이 프로젝트의 성패를 
 좌우한다고 믿고 있습니다.   
 저는 주어진 일에 문제가 발생하였을 때 문제를 공유하고, 
 협업을 통해 문제를 해결하기 위해 끊임없이 노력하기 때문에 
@@ -66,7 +66,7 @@ background: '/img/bg-index.jpg'
 
 > 2021.02.01 ~ 현재 
 
-[Construct data pipeline for large-scale batch processing]
+[Spark Batch 와 Apache Iceberg 테이블을 이용한 데이터 파이프라인]    
 
 - 기존 hive 테이블을 iceberg 테이블로 전환    
     - hive 테이블은 데이터 업데이트가 어렵기 때문에 중간 테이블이 
@@ -79,7 +79,7 @@ background: '/img/bg-index.jpg'
     - TO-BE: 10 min      
 
 
-[Leading streaming data pipeline revamp project]   
+[Daily Events Count 2,000만건의 Spark Structured Streaming]      
 
 - Processed rows per second(AS-IS: 800 -> TO-BE: 10,000)   
     - [<u>Spark Streaming Incident Review</u>](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)     
@@ -91,8 +91,9 @@ background: '/img/bg-index.jpg'
     - [<u>Structured Streaming 전환</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)     
        
           
-[Development of search services using Elastic search, Airflow, and Spark]   
+[Batch Size 1,000만건의 Spark Batch 와 Elastic Search, Airflow를 이용한 검색 서비스]       
 
+- Daily로 1,000 만건 이상의 데이터를 여러 검색 패턴으로 검색이 가능하도록 Elastic Search 와 Spark Batch Job 을 통해 개발    
 - Spark를 이용하여 하이브 테이블간 집계 결과를 ES 에 인덱싱(daily 1,000만건)      
     - [<u>Wildcard 쿼리 대신 n-gram으로 성능 개선</u>](https://wonyong-jang.github.io/elk/2024/12/29/ELK-Elastic-Search-Wildcard-N-Gram.html)   
 - ES 인덱스 관리(Template, Alias, Lifecycle)      
@@ -100,6 +101,7 @@ background: '/img/bg-index.jpg'
 - 웹 어플리케이션에서 모든 검색 패턴에 대해 0.5 s 이내에 검색을 제공   
     - [<u>검색 및 집계 데이터를 페이지네이션을 통해 제공</u>](https://wonyong-jang.github.io/elk/2022/11/29/ELK-Elastic-Search-Max-Result-Window.html)   
 - nGrinder를 이용한 성능 테스트 
+
 
 [Bus Route Recommendation Service]    
 
