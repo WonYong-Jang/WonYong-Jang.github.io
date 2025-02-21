@@ -291,7 +291,14 @@ spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes=256MB
 spark.sql.adaptive.forceOptimizeSkewedJoin=true
 ```
 
+AQE에 의해 skew로 감지되려면 skewedPartitionThresholdInBytes 와 skewedPartitionFactor 옵션 모두 
+만족해야 한다.   
 
+`파티션 크기가 skewedPartitionThresholdInBytes 보다 커야하며, 파티션 크기의 
+중앙값과 skewedPartitionFactor 곱 한 값보다 커야 한다.`   
+
+> 여기서 중앙값(median)은 모든 파티션들을 오름차순 해놓고 중간 값을 선정한다.  
+> 홀수 개의 파티션이면 중간 값이며, 짝수 개의 파티션이면 중간 두개의 평균 값이다.   
 
 - - - 
 

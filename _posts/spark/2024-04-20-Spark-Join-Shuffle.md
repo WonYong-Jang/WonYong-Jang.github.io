@@ -23,7 +23,14 @@ background: '/img/posts/mac.png'
 
 ##### 1-2) outer join(외부 조인)   
 
-왼쪽이나 오른쪽 데이터셋에 키가 있는 로우를 유지   
+왼쪽 테이블과 오른쪽 테이블의 모든 레코드를 가져오며, 매칭되는 값이 없으면 null을 채운다.   
+데이터 정합성을 검증하거나 누락된 데이터를 보완하는 데 유용하다.  
+
+```python
+val result = df1.join(df2, Seq("id"), "full")
+# or 
+val result = df1.join(df2, Seq("id"), "outer")
+```
 
 ##### 1-3) left outer join(왼쪽 외부 조인)   
 
@@ -40,7 +47,11 @@ background: '/img/posts/mac.png'
 ##### 1-6 left anti join   
 
 왼쪽 데이터셋의 키가 오른쪽 데이터셋에 없는 경우에는 키가 일치하지 않는 왼쪽 데이터셋만 유지    
-중복된 데이터를 제거한 나머지 데이터만 남겨서 연산을 할 때 유용하다.   
+`중복된 데이터를 제거한 나머지 데이터만 남겨서 연산을 할 때 유용하다.`   
+
+```python
+val result = df1.join(df2, Seq("id"), "left_anti")
+```
 
 ##### 1-7) natural join   
 
