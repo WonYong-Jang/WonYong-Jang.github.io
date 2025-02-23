@@ -193,8 +193,12 @@ GC 시간이 너무 길어지면서 성능이 저하되고, 결국 GC overhead l
 
 시도해 볼 수 있는 해결방법은 아래와 같다.   
 
-- execution memory 사용을 줄여 JVM GC 부담을 완화하는 방법으로 spark.memory.fraction 을 낮춘다.   
-- spark.memory.storageFraction 을 낮춘다.   
+- spark.executor.memory를 증가
+- spark.executor.memoryOverhead 증가
+
+`다만 Pyspark, Pandas UDF, 또는 많은 데이터 변환 과정에서 
+Spark가 직접 관리하지 않는 메모리(Heap 영역 외) 에서 OOM이 
+발생하는 경우는 오히려 spark.memroy.fraction 값을 낮추는게 효율적일 수도 있다.`    
 
 #### OutOfMemoryError: Java heap space (OOM)   
 
