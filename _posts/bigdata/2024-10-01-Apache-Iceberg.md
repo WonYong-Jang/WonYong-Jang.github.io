@@ -41,6 +41,7 @@ catalog는 특정 데이터 소스에 접근을 가능하게 만들어주는 설
     `Iceberg catalog는 현시점의 테이블 metadata를 찾을 수 있게` 도와 준다.  
 그리고 쿼리가 실행되면 쿼리가 찾는 metadata file을 찾기 위해 사용된다.   
 
+
 ### 2-2) metadata layer
 
 ##### metadata file  
@@ -268,6 +269,7 @@ WHEN NOT MATCHED THEN insert *
 
 - - -
 
+<https://tech.kakao.com/posts/656>   
 <https://wikidocs.net/228567>   
 <https://magpienote.tistory.com/255>    
 <https://iceberg.apache.org/docs/latest/spark-queries/>   
