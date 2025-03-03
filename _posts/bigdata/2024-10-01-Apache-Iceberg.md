@@ -100,14 +100,16 @@ SELECT * FROM "mydb"."iceberg_table$files";
 `실제 데이터 파일을 저장하는 곳`으로, 테이블에 정의된 파일 포맷(orc, parquet)형식으로 데이터 파일을 저장해 준다.    
 manifest file의 메타 정보를 이용하여 필요한 데이터 파일에 접근할 수 있게 된다.   
 
-정리해보면 Iceberg는 metadata -> manifest 를 거쳐서 원하는 데이터를 쉽게 찾을 수 있다.    
+정리해보면 Iceberg는 metadata -> manifest 를 거쳐서 원하는 데이터를 쉽게 찾을 수 있다.   
 
-select 쿼리가 발생하면 아래와 같은 프로세스로 데이터를 조회한다.   
+`select 쿼리가 발생하면 아래와 같은 프로세스로 데이터를 조회`한다.      
 
-- catalog에 접근하여 현재 metadata pointer를 체크한다.   
-- pointer가 가르키는 metadata file을 읽는다. (스키마, 파티션, 스냅샷 정보)   
-- manifest list의 파티션 정보로 필터링 후 필터링된 manifest를 거쳐서 데이터 
-파일을 가져온다.   
+<img width="1500" alt="Image" src="https://github.com/user-attachments/assets/f065fcf2-5432-4da8-a0e5-639a98d1e1b6" />   
+
+- catalog에 접근하여 현재 메타데이터 파일을 가르키는 metadata pointer를 체크한다.     
+- pointer가 가르키는 metadata file을 읽어서 현재 스냅샷을 확인한다. (스키마, 파티션, 스냅샷 정보)    
+- manifest list 파일을 읽어서 최종 스냅샷이 참조하는 manifest file 목록을 확인한다.   
+- 최종 1개의 manifest 파일을 확인하여 최종적으로 데이터 파일 확인한다.    
 
 - - - 
 
@@ -239,10 +241,30 @@ CALL spark_catalog.system.set_current_snapshot('db.sample', 1);
 CALL catalog_name.system.cherrypick_snapshot('my_table', 1);
 ```
 
-### 4-4) Upsert 와 Delete 
+### 4-4) Upsert 와 Delete  
 
+iceberg의 주요 기능인 upsert와 delete 쿼리가 발생할 때 동작 방식에 대해 살펴보자.   
 
 <img width="1400" alt="스크린샷 2024-10-01 오후 10 12 45" src="https://github.com/user-attachments/assets/5c1972b7-6a22-4e19-8441-68c8df5aa8b3">     
+
+- `최종 스냅샷이 s1이라고 할 때, s1이 참조하는 데이터 파일을 메모리에 로드 후 변경된 내용을 
+새로운 데이터 파일로 생성한다.`       
+- `새로 생성된 데이터 파일과 변경되지 않은 데이터 파일을 가르키는 manifest 파일을 생성한다.`   
+- `새로 생성한 manifest 파일과 기존의 manifest 파일을 가르키는 manifest list 파일을 생성한다.`   
+- `최종적으로 새로운 스냅샷 s2가 포함 된 metadata file 이 생성된다.`   
+- `마지막으로 catalog에 metadata pointer를 새로 생성한 metadata 파일로 변경하면서 종료 된다.`   
+
+그럼 metadata pointer가 변경 되기 전, 즉 upsert 가 진행중인 과정에 사용자가 쿼리를 통해 조회하면 어떻게 될까?   
+
+`s2 스냅샷에 대해 upsert를 진행하고 있더라도 아직 완료되지 않았기 때문에,  
+   metadata pointer가 현재 최종 스냅샷인 s1을 참조하고 있게 된다. 즉, ACID 를 보장될 수 있게 된다.`   
+
+
+
+
+
+
+
 
 upsert 는 아래와 같이 merge 쿼리를 제공하며 전통적인 sql에서 사용하는 구문과 유사하다.    
 
