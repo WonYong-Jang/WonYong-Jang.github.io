@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[BigData] File Format - Parquet, ORC"   
-subtitle: "Parquet(파케이), ORC(Optimized Row Columnar) / 컬럼 기반(Columnar) 저장 포맷과 열 기반(Row-based) 저장 포맷"       
+title: "[BigData] File Format - Parquet, ORC, Avro"   
+subtitle: "Parquet(파케이), ORC(Optimized Row Columnar) / 컬럼 기반(Columnar) 저장 포맷과 열 기반(Row-based) 저장 포맷 / 파일 압축(gzip, snappy)"       
 comments: true
 categories : BigData
 date: 2024-02-02
@@ -15,7 +15,7 @@ Parquet, ORC, Avro의 공통점과 차이점은 아래와 같다.
 
 ##### 공통점   
 
-- 기계가 읽을 수 있는 바이너리 포맷이다.  
+- 기계가 읽을 수 있는 바이너리 포맷이며, 모두 하둡에 저장하는데에 최적화 되어 있다.  
 - 여러개의 디스크로 나뉘어질 수 있으며 이는 빅데이터의 분석처리에 용이하다.   
 - 스키마 파일을 가지고 있다.  
 
@@ -110,7 +110,23 @@ $ brew install duckdb
 
 $ duckdb
 $ D * from read_parquet('/Users/jang-won-yong/Downloads/cities.parquet') limit 3   
-```
+```  
+
+### 1-3) 장단점   
+
+##### Advantages  
+
+- Efficient Compression: 고배율로 압축이 가능하다.    
+- Optimized for Queries: 컬럼 기반으로 읽을 경우 효율적이다.   
+- Integration: Spark, Hive, Impala 와 같은 빅데이터 프레임워크와 호환이 뛰어나다.   
+
+##### Disadvantages   
+
+- Write Overhead: CSV 와 같은 간단한 파일 포맷과 비교해서 더 많은 CPU 자원을 사용한다.  
+- Not Human-Readable: 바이너리 포맷이기 때문에 사람이 분석 및 디버깅이 어렵다.  
+- Small Files Issue: 많은 small file 을 만들어내는 구조라면 쓰기 성능에 영향을 끼칠 수 있기 때문에 
+큰 파일이 생기는 구조일때 사용해야 한다.   
+
 
 - - - 
 
@@ -125,7 +141,65 @@ ORC 파일 확인하기 위해서 [orc-tools](https://orc.apache.org/docs/java-t
 이용하여 확인 가능하다.   
 
 [링크](https://repo1.maven.org/maven2/org/apache/orc/orc-tools/1.9.2/)에서 orc-tools-1.9.2-uber.jar 를 
-다운 받은 후 사용할 수 있다.   
+다운 받은 후 사용할 수 있다.  
+
+### 2-2) ORC 장단점   
+
+##### Advantanges  
+
+- ORC는 Apache Hive를 위해 설계되었으며, Hive에 최적화되어 있다.   
+- High Compression: 일반적으로 Parquet에 비해 우수한 압축률로 알려져 있다.
+
+##### Disadvantages  
+
+- Parquet에 비해 다양한 데이터 처리 엔진에서의 호환성이 낮을 수 있다.   
+- 중첩 데이터의 처리에서 Parquet만큼 유연성을 제공하지 못한다.    
+
+- - - 
+
+## 3. Apache Avro  
+
+`Apache Avro 는 row 기반으로 저장되는 포맷이다.`   
+
+### 3-1) Avro 장단점  
+
+##### Advantages   
+
+- Schema Evolution: 스키마는 JSON 포맷을 사용하기 때문에 변경에 대해 유연하다.   
+- Fast: real time과 같이 빠르게 처리되는 processing에 대해서 serializing and deserializing data 가 효율적이다.   
+- Parquet 및 ORC 에 비해 압축 효율은 떨어지지만 쓰기 속도는 더 빠르다.   
+
+
+##### Disadvantages   
+
+- Human Readability: 데이터 파일 자체는 바이너리 포맷이기 때문에 사람이 읽기 어렵다.   
+- Less Optimized for Queries: row 기반이기 때문에 parquet 포맷과 같이 컬럼 기반으로 분석하는 경우는 비효율적이다.    
+- 압축 비율이 Parquet, ORC 보다 낮다.    
+
+- - - 
+
+## 4. 파일 압축(gzip, snappy)   
+
+
+
+### 4-1) Gzip
+
+- snappy 보다 더 많은 cpu 리소스를 사용하지만 더 높은 압축을 할 수 있다.  
+- 높은 압축률을 제공하지만, 압축/해제 속도가 느리다    
+- 주로 백업 데이터나 데이터 전달 용도로 사용한다.   
+- 실시간 쿼리가 필요한 분석 작업에는 잘 사용되지 않는다.   
+
+> 파일 형식 중 하나인 tar 와 함께 .tar.gz 형식으로 자주 사용된다.   
+
+### 4-2) Snappy   
+
+- 가장 많이 사용되는 압축 방식이며, 빠른 압축 및 해제 속도를 제공한다.   
+
+
+### 4-3) Zstandard (ZSTD)   
+
+- gzip과 비슷한 압축률을 제공하지만 압축/해제를 할 때는 더 빠르다.
+- 대규모 데이터 레이크에서 저장 비용 절감이 필요한 경우 사용한다.  
 
 - - - 
 
