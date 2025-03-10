@@ -313,6 +313,18 @@ CALL spark_catalog.system.remove_orphan_files('db.sample')
     실행하면 쓰기 작업이 실패할 수 있으며, 이는 
     메타데이터 손상으로 이어져 테이블을 읽지 못하게 된다.`    
 
+이런 문제는 주로 아래와 같은 상황에서 발생할 수 있다.   
+
+##### 스트리밍 작업 중단과 데이터 입수 재개 타이밍 문제   
+
+스트리밍 데이터가 
+
+##### older_than 설정이 너무 짧은 경우   
+
+Iceberg는 기본적으로 3일 이상된 파일을 orphan file로 간주한다.   
+하지만 해당 설정을 너무 짧게 설정하면, 쓰기 중인 파일이 삭제 대상에 
+포함될 가능성이 높아진다.     
+
 `따라서 아래와 같이 older_than 파라미터를 적절하게 설정해줘야 한다.`   
 
 ```python
@@ -326,7 +338,18 @@ df=spark.sql(f"""
 """)
 
 ## older_than: defaults to 3 days ago
-```
+```   
+
+##### 메타데이터 업데이트 지연    
+
+Iceberg 는 데이터를 저장한 뒤 메타데이터를 갱신한다. 이 갱신 과정이 
+지연되면, 메타데이터에 아직 등록되지 않은 파일이 orphan files로 간주 될 수 있다.   
+
+`위의 문제를 방지하기 위해 스트리밍 파이프라인을 잠시 중단한 뒤 
+고아 파일 제거 명령을 실행할 수도 있다.`      
+`또는 dry_run 옵션을 사용해 삭제 대상 파일을 미리 확인한 후, 검토를 거쳐 
+안전하다고 판단되면 삭제 작업을 진행하게 되면 스트리밍 작업을 중단하지 
+않고도 문제없이 작업을 수행할 수 있다.`    
 
 
 ### 3-3) Table Compaction(테이블 압축)
@@ -345,6 +368,17 @@ df=spark.sql(f"""
 
 ```sql
 CALL spark_catalog.system.rewrite_data_files('db.sample');
+```
+
+CDC 테이블처럼 delete 파일이 발생하는 경우, 유지보수 작업을 진행할 때 
+입수 작업을 잠시 중단하는 것이 안전하다.   
+`데이터 쓰기 작업과 rewrite 작업이 동시에 이루어지면 메타데이터 손상될 
+위험이 있기 때문이다.`     
+`또한, delete 파일을 효율적으로 정리하기 위해 delete-file-threshold 옵션을 0으로 
+설정하여 불필요한 파일을 제거할 수 있다.`    
+
+```sql
+CALL system.rewrite_data_files(table => '{table}', options => map('target-file-size-bytes', '251658240', 'delete-file-threshold', '0'))
 ```
 
 더 자세한 내용은 [공식문서](https://iceberg.apache.org/docs/1.7.0/spark-procedures/#rewrite_data_files)를 참고하자.   

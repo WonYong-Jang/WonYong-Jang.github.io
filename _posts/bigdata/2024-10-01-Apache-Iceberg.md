@@ -47,7 +47,9 @@ catalog는 특정 데이터 소스에 접근을 가능하게 만들어주는 설
 ##### metadata file  
 
 `테이블 형상은 metadata file로 관리되며, 테이블 내용에 변경이 생기면 
-새로운 metadata file이 만들어지고 기존의 것을 대체 한다.`        
+새로운 metadata file이 만들어지고 기존의 것을 대체 한다.`       
+
+> DML/DDL 발생할 때마다 새로운 metadata.json이 생성된다.   
 
 `metadata file은 스키마, 파티션, 스냅샷에 대한 정보`를 가지고 있다.      
 
@@ -291,6 +293,7 @@ WHEN NOT MATCHED THEN insert *
 
 - - -
 
+<https://medium.com/snowflake/understanding-iceberg-table-metadata-b1209fbcc7c3>   
 <https://tech.kakao.com/posts/656>   
 <https://wikidocs.net/228567>   
 <https://magpienote.tistory.com/255>    
