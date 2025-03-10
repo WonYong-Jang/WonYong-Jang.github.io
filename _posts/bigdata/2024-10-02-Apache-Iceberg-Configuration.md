@@ -379,6 +379,10 @@ CDC 테이블처럼 delete 파일이 발생하는 경우, 유지보수 작업을
 
 ```sql
 CALL system.rewrite_data_files(table => '{table}', options => map('target-file-size-bytes', '251658240', 'delete-file-threshold', '0'))
+
+# target-file-size-bytes: This will set the intended size of the output files. (default: 512 MB)    
+# max-concurrent-file-group-rewrites: 동시에 write할 파일 갯수를 지정하며 기본값은 5 이기 때문에 더 빠르게 compaction이 필요하다면 해당 설정을 증가시킬 수 있다.   
+# 
 ```
 
 더 자세한 내용은 [공식문서](https://iceberg.apache.org/docs/1.7.0/spark-procedures/#rewrite_data_files)를 참고하자.   
@@ -416,6 +420,7 @@ select * from "db"."table_name$partitions"
 
 - - -
 
+<https://www.oreilly.com/library/view/apache-iceberg-the/9781098148614/ch04.html>   
 <https://www.tabular.io/blog/table-maintenance-the-key-to-keeping-your-iceberg-tables-healthy-and-performant/>   
 <https://www.dremio.com/blog/maintaining-iceberg-tables-compaction-expiring-snapshots-and-more/>   
 <https://toss.tech/article/datalake-iceberg>   
