@@ -317,7 +317,9 @@ CALL spark_catalog.system.remove_orphan_files('db.sample')
 
 ##### 스트리밍 작업 중단과 데이터 입수 재개 타이밍 문제   
 
-스트리밍 데이터가 
+스트리밍 데이터가 한동안 들어오지 않다가 다시 쓰기 작업이 
+시작되는 시점에 해당 명령을 실행하면, 새로 생성 중인 파일이 
+아직 메타데이터에 등록되지 않아 고아 파일로 잘못 간주될 수 있다.   
 
 ##### older_than 설정이 너무 짧은 경우   
 
@@ -373,17 +375,21 @@ CALL spark_catalog.system.rewrite_data_files('db.sample');
 CDC 테이블처럼 delete 파일이 발생하는 경우, 유지보수 작업을 진행할 때 
 입수 작업을 잠시 중단하는 것이 안전하다.   
 `데이터 쓰기 작업과 rewrite 작업이 동시에 이루어지면 메타데이터 손상될 
-위험이 있기 때문이다.`     
+위험이 있기 때문이다.`    
+
 `또한, delete 파일을 효율적으로 정리하기 위해 delete-file-threshold 옵션을 0으로 
 설정하여 불필요한 파일을 제거할 수 있다.`    
 
 ```sql
 CALL system.rewrite_data_files(table => '{table}', options => map('target-file-size-bytes', '251658240', 'delete-file-threshold', '0'))
 
-# target-file-size-bytes: This will set the intended size of the output files. (default: 512 MB)    
-# max-concurrent-file-group-rewrites: 동시에 write할 파일 갯수를 지정하며 기본값은 5 이기 때문에 더 빠르게 compaction이 필요하다면 해당 설정을 증가시킬 수 있다.   
-# 
+-- target-file-size-bytes: This will set the intended size of the output files. (default: 512 MB)    
+-- max-concurrent-file-group-rewrites: 동시에 write할 파일 갯수를 지정하며 기본값은 5 이기 때문에 더 빠르게 compaction이 필요하다면 해당 설정을 증가시킬 수 있다.    
 ```
+
+`위와 같이 유지보수 시간을 단축하기 위해 동시에 write할 파일 갯수를 증가시키거나, 
+    전체 데이터를 재정리하는 대신 where 옵션을 이용하여 특정 날짜 이후의 데이터만 
+    정리할 수 있다.`   
 
 더 자세한 내용은 [공식문서](https://iceberg.apache.org/docs/1.7.0/spark-procedures/#rewrite_data_files)를 참고하자.   
 
