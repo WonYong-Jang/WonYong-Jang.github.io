@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Globalization을 위한 Timezone 설정, TIMESTAMP_NTZ"
-subtitle: "G11N / 파일 포맷(Parquet, Avro, ORC)에 따른 timestamp 처리시 이슈" 
+subtitle: "G11N / 파일 포맷(Parquet, Avro, ORC)에 따른 timestamp 처리시 이슈 / iceberg 에서 timestamp 이슈" 
 comments: true
 categories : Spark
 date: 2025-03-15
@@ -193,6 +193,30 @@ spark.sql("""SELECT convert_timezone('Asia/Seoul', timestamp_ntz'2025-03-15 10:0
 # 2025-03-15 19:00:00   
 ```
 
+- - -
+
+## 5. iceberg 에서 timestamp 사용시 주의사항   
+
+iceberg 테이블 생성은 spark에서도 가능하지만 hive 에서도 가능하다.  
+`hive 에서 테이블 생성을 아래와 같이 생성시 timestamp_ntz 타입으로 생성되기 때문에 
+이를 정확하게 이해해야 한다.`     
+
+```sql
+create table iceberg_table (
+    `type` string,
+    `t` timestamp
+)
+```
+
+`위 테이블의 컬럼 타입을 확인해보면 timestamp_ntz 로 생성이 되며, timezone 을 
+고려한 timestamp 타입을 사용하려면 아래와 같이 테이블을 생성해주어야 한다.`   
+
+```sql
+create table iceberg_table (
+    `type` string,
+    `t` timestamp with local time zone
+)
+```
 
 - - -
 
