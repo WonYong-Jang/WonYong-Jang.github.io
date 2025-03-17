@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Globalization을 위한 Timezone 설정, TIMESTAMP_NTZ"
-subtitle: "G11N / 파일 포맷(Parquet, Avro, ORC)에 따른 timezone 처리" 
+subtitle: "G11N / 파일 포맷(Parquet, Avro, ORC)에 따른 timestamp 처리시 이슈" 
 comments: true
 categories : Spark
 date: 2025-03-15
@@ -23,8 +23,9 @@ Spark sql 엔진에서 사용되는 날짜 연산들에 대해서만 적용해 �
 .config("spark.sql.session.timeZone", "UTC")
 ```
 
-그러나, Spark 2.4 부터는 아래와 같이 JVM 전체 대상으로 적용해주기 때문에 
-옵션을 같이 적용해주는 것이 좋다.   
+그러나, Spark 2.4 부터는 아래와 같이 JVM 전체 대상으로 
+적용할수 있는 옵션을 제공하기 때문에 해당 옵션을 
+같이 적용해주는 것이 좋다.   
 
 ```python
 .config("spark.driver.extraJavaOptions", "-Duser.timezone=UTC")
@@ -58,8 +59,9 @@ print(time.tzname)
 print(datetime.now()) # 지정된 타임존에 따라 시간 출력 
 ```
 
-하지만 위의 경우 time.tzset() 는 window machine 에서는 사용이 불가능하기 때문에 
-아래와 같이 공통 함수로 사용할 수 있도록 제공하는 것을 권장한다.   
+하지만 위의 경우 time.tzset() 는 window machine 에서는 사용이 불가능하며, 
+    각 프로젝트마다 타임존을 설정해주는 코드가 적용되어야 하기 때문에 
+아래와 같이 공통 함수 또는 yaml 파일 등을 통해 관리해주는 것이 권장된다.   
 
 
 ```python
@@ -71,6 +73,11 @@ DEFAULT_TZ = pytz.timezone("Asia/Taipei")
 def now():
     return datetime.now(DEFAULT_TZ)
 ```
+
+> pytz 에서 timezone 결과를 보면 +08:28로 이슈가 있기 때문에 파이썬 3.9 부터는 zoneinfo 를 
+사용하는 것이 권장된다.  
+> 현재 python 3.8을 사용해야하며  
+    타임존 결과는 이슈가 있지만, datetime.now() 를 계산하는 과정은 이슈가 없기 때문에 위처럼 사용하였다.   
 
 - - - 
 
@@ -92,13 +99,70 @@ spark.sql("""select to_utc_timestamp(current_timestamp(), 'Asia/Seoul')""")
 # local timezone 과 관계없이 주어진 시간 기준으로 date 반환  
 spark.sql("""SELECT to_date("2025-03-15T20:00:00.000+0900")""")
 # output: 2025-03-15   
-
-
 ```
 
 - - - 
 
-## TIMESTAMP_NTZ 타입 
+## 3. Spark Timezone Issue   
+
+Spark 3.x 부터 날짜 관련된 이슈가 대부분 해결되었지만 
+[링크](https://issues.apache.org/jira/browse/SPARK-34675) 를 확인해보면 
+여러 포맷에서 timezone을 다루는 방식 차이에서 문제가 발생할 수 있다.   
+
+`Spark 에서 JVM 과 Spark Session Timezone 설정이 다를 경우 발생할 수 있는 문제가 있으며, 
+    Spark는 여러 데이터 소스로부터 데이터를 처리하고 데이터 소스에서 사용하는 설정 및 파일 포맷의 
+    처리 방식이 모두 다르기 때문에 발생할 수 있는 문제이다.`      
+
+아래 예제를 보자.   
+    
+```python
+--conf spark.sql.session.timeZone='UTC'
+--conf spark.driver.extraJavaOptions='-Duser.timezone=UTC'
+--conf spark.executor.extraJavaOptions='-Duser.timezone=UTC'
+```
+
+timezone 을 UTC로 설정해두고 각 포맷별로 테이블을 생성하여 timestamp 타입에 
+데이터를 넣어보자.  
+
+```python
+spark.sql("create table spark_parquet(type string, t timestamp) stored as parquet")
+spark.sql("create table spark_orc(type string, t timestamp) stored as orc")
+spark.sql("create table spark_avro(type string, t timestamp) stored as avro")
+spark.sql("create table spark_text(type string, t timestamp) stored as textfile")
+
+spark.sql("insert into spark_parquet values ('FROM SPARK-EXT PARQUET', '1989-01-05 01:02:03')")
+spark.sql("insert into spark_orc values ('FROM SPARK-EXT ORC', '1989-01-05 01:02:03')")
+spark.sql("insert into spark_avro values ('FROM SPARK-EXT AVRO', '1989-01-05 01:02:03')")
+spakr.sql("insert into spark_text values ('FROM SPARK-EXT TEXT', '1989-01-05 01:02:03')")
+```
+
+이후 UTC 설정이 아닌 spark session에서 데이터 조회시 결과를 살펴보자.   
+
+```python
+--conf spark.sql.session.timeZone='Asia/Seoul'
+--conf spark.driver.extraJavaOptions='-Duser.timezone=Asia/Seoul'
+--conf spark.executor.extraJavaOptions='-Duser.timezone=Asia/Seoul'
+```
+
+결과를 살펴보면 parquet 포맷은 시간대를 반영하여 타임스탬프를 표시하지만, 
+    다른 포맷(orc, avro, csv, text) 은 원래의 UTC 타임스탬프를 그대로 표시한다.   
+
+`이렇게 불일치가 발생하는 이유는 각 파일 포맷마다 시간대를 처리하는 방식의 차이에서 비롯된다.`  
+
+위 케이스 외에도 외부의 여러 데이터 포맷과 환경에 따라서 데이터 이동 과정에서 
+날짜 데이터에 의도하지 않는 변환이 발생할 수 있다.  
+
+따라서 현재 팀 내에서는 아래와 같이 spark에서 날짜 타입을 다루도록 convention 으로 지정하였다.   
+
+- spark 에서 사용하는 hive, iceberg 테이블의 날짜 데이터는 문자열로 다루며, 
+    이 때 반드시 ISO8601 포맷과 timezone가 포함된 offset 을 같이 다루도록 한다.  
+    - spark 에서 날짜 관련 연산이 필요하면, 해당 offset을 이용하여 parse 하여 사용하면 된다.  
+- timestamp 타입으로 다뤄야 할 경우는 timestamp_ntz 를 사용하여 의도하지 않는 변환을 막는다.   
+
+
+- - - 
+
+## 4. TIMESTAMP_NTZ 타입 
 
 `spark 3.4 부터 제공되며, 기존 timestamp 타입은 타임존을 고려하는 방식이며, 
       JVM 및 session timezone의 영향을 받지만 해당 타입은 timezone 
@@ -128,6 +192,7 @@ select convert_timezone('Asia/Seoul', 'UTC', TIMESTAMP_NTZ '2025-03-15 19:00:00'
 spark.sql("""SELECT convert_timezone('Asia/Seoul', timestamp_ntz'2025-03-15 10:00:00')""").show(truncate=False)
 # 2025-03-15 19:00:00   
 ```
+
 
 - - -
 
