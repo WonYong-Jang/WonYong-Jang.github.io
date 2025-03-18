@@ -113,6 +113,9 @@ State Backend는 상태 저장 작업에서 상태를 저장하는 방식과 위
 
 - - -
 
+
+<https://flink.apache.org/>   
+<https://tech.kakao.com/posts/656>   
 <https://sungjk.github.io/2024/09/18/apache-flink.html>   
 <https://www.samsungsds.com/kr/insights/flink.html>   
 
