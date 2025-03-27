@@ -66,9 +66,14 @@ Iceberg는 스냅샷 기능을 통해 특정 시점의 테이블 형상을 파�
 ##### manifest list   
 
 스냅샷(특정 시점의 테이블 형상을 기록한 파일)은 하나의 manifest list를 참조하며, 
-    manifest list는 하나 이상의 manifest file에 대한 메타 정보를 저장하고 있다.   
+    manifest list는 하나 이상의 manifest file에 대한 메타 정보를 저장하고 있다.  
 
-`쉽게 생각하면, manifest list를 통해 스냅샷과 연관된 manifest file 위치를 찾아내는 것이다.`   
+> manafiest list는 snapshot 당 1개씩 존재한다.   
+
+`manifest list를 통해 스냅샷과 연관된 manifest file 위치를 찾아내는 있다.`   
+
+> manifest list가 없다면 특정 스냅샷이 어떤 데이터 파일을 포함하는지 알기 위해 모든 manifest file을 읽어야 하므로, 
+    manifest list 역할은 스냅샷이 참조하는 manifest file의 목록을 유지하여 빠른 조회를 가능하게 한다.  
 
 ```sql
 -- 테이블 스냅샷 조회(시점별 스냅샷에 대한 manifest list 확인 가능)
