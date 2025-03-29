@@ -259,7 +259,7 @@ iceberg의 주요 기능인 upsert와 delete 쿼리가 발생할 때 동작 방�
 새로운 데이터 파일로 생성한다.`       
 - `새로 생성된 데이터 파일과 변경되지 않은 데이터 파일을 가르키는 manifest 파일을 생성한다.`   
 - `새로 생성한 manifest 파일과 기존의 manifest 파일을 가르키는 manifest list 파일을 생성한다.`   
-- `최종적으로 새로운 스냅샷 s2가 포함 된 metadata file 이 생성된다.`   
+- `새로운 스냅샷 s2가 포함 된 metadata file 이 생성된다.`   
 - `마지막으로 catalog에 metadata pointer를 새로 생성한 metadata 파일로 변경하면서 종료 된다.`   
 
 그럼 metadata pointer가 변경 되기 전, 즉 upsert 가 진행중인 과정에 사용자가 쿼리를 통해 조회하면 어떻게 될까?   
