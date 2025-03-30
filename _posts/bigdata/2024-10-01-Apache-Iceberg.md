@@ -268,12 +268,6 @@ iceberg의 주요 기능인 upsert와 delete 쿼리가 발생할 때 동작 방�
    metadata pointer가 현재 최종 스냅샷인 s1을 참조하고 있게 된다. 즉, ACID 를 보장될 수 있게 된다.`   
 
 
-
-
-
-
-
-
 upsert 는 아래와 같이 merge 쿼리를 제공하며 전통적인 sql에서 사용하는 구문과 유사하다.    
 
 ```sql
@@ -294,6 +288,24 @@ WHEN NOT MATCHED THEN insert *
 
 [링크](https://iceberg.apache.org/docs/1.6.0/spark-writes/) 에서
 더 많은 쿼리 예시를 살펴보자.
+
+- - - 
+
+### 4-5) Partition, Schema Evolution   
+
+기존 하이브 테이블은 파티셔닝을 변경할 수 없다.   
+그래서 일별 단위에서 시간별 단위로 변경하려면 새로운 테이블을 만들어야 한다.  
+이것을 해결하기 위해서 iceberg는 [partition evolution](https://wonyong-jang.github.io/bigdata/2024/10/03/Apache-Iceberg-Hidden-Partitioning.html)를 
+제공한다.   
+그리고 schema evolution을 제공하기 때문에 테이블에 컬럼을 추가 또는 삭제하거나 
+컬럼명을 변경, 컬럼 순서 등 변경이 가능하다.   
+
+`이것이 가능한 이유는 메타데이터를 파일(json/avro)로 관리하기 때문이며, 
+    변경사항에 대해 기존 메타데이터 파일을 수정하지 않고, 
+    새로운 메타데이터 파일을 생성하여 관리한다.`      
+
+> 기존 hive의 경우 변경이 발생하면 기존 메타데이터 파일 및 데이터 파일을 
+변경하기 어렵기 때문에 유연하게 스키마 또는 파티션을 변경할 수 없다.    
 
 
 
