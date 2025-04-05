@@ -22,7 +22,6 @@ job이 성공적으로 수행될 수 있도록 해야 하며,
 Spark는 JVM 위에서 실행되며, PySpark를 사용하는 경우에는 외부에 Python 프로세스가 존재할 수 있으나 
 Driver 또는 Executor 를 위한 JVM이 실행되는건 동일하다.   
 
-
 Executor는 Worker 노드에서 실행되는 JVM 프로세스 역할을 한다. 따라서 JVM 메모리 관리를 
 이해하는 것이 중요하다.    
 
@@ -33,7 +32,7 @@ Executor는 Worker 노드에서 실행되는 JVM 프로세스 역할을 한다. 
 
 ### 1-1) On-Heap Memory Management(In-Memory)   
 
-`Object는 JVM heap에 할당되고 GC에 의해 관리된다.`        
+`on-heap 메모리는 JVM 의 GC 관리 하에 있는 메모리 영역이다.`            
 
 > 따라서 GC가 자주 발생하는 경우는 on-heap 메모리를 늘려야 한다.   
 
@@ -77,7 +76,7 @@ Storage memory와 Execution Memory는 필요시 서로의 메모리를 점유할
 #### 1-1-2) User Memory
 
 - `전체 JVM Heap 에서 spark.memory.fraction 와 Reserved Memory를 제외한 영역`      
-- `Spark 가 사용하는 내부 메타데이터, 사용자 생성 데이터 구조 저장이나 UDF 및 OOM을 
+- `Spark 가 사용하는 내부 메타데이터, UDF, 사용자 생성 데이터 구조 저장 및 OOM을 
 방지하기 위한 대비영역으로 사용된다.`     
 
 
@@ -94,6 +93,10 @@ Storage memory와 Execution Memory는 필요시 서로의 메모리를 점유할
 
 `off-heap memory는 JVM(on heap memory) 영역과는 별도로 존재하며, Spark container(Executor) 내에 위치한다.`      
 
+> off-heap 메모리는 JVM 영역과는 별도로 존재하기 때문에, GC 관리 밖의 메모리를 사용하여 stop-the-world 를 
+최소화 할 수 있다는 점에서 성능 향상을 할 수 있다.   
+> 다만 on-heap 메모리보다는 성능이 느리다.   
+
 <img width="500" alt="Image" src="https://github.com/user-attachments/assets/b4da2cb3-7db4-4cbb-8551-cef7062e84e3" />   
 
 off-heap memory는 특정([Tungsten](https://wonyong-jang.github.io/spark/2021/05/04/Spark-DataFrame-Tungsten.html) 데이터를 저장하거나, 혹은 
@@ -109,6 +112,12 @@ spark.memory.offHeap.enabled=true(default = false)로 설정되어 있어야 사
 남겨놓은 메모리 공간이다.   
 `보통, 전체 spark.executor.memory 의 10% 정도로 설정하고, default 값도 10% 이다.`      
 `spark.executor.memoryOverhead 혹은 spark.executor.memoryOverheadFactor 설정을 통해 세팅을 한다.`   
+
+`Spark on Kubernetes 환경에서 사용시 spark.executor.memoryOverhead 를 20% 정도까지 증가 시키는 것을 
+권장한다.`   
+EMR Cluster의 경우 executor 메모리 사용량이 약간 초과하더라도 container의 여유 메모리를 사용하여 
+조정을 하지만 Kubernetes에서 사용시 할당된 메모리 한도를 넘어서면 그 즉시 OOM Kill을 시키기 때문이다.   
+
 
 일반적으로 Object의 읽기 및 쓰기 속도는 On-Heap > Off-Heap > DISK 순서로 빠르다.   
 
@@ -238,7 +247,6 @@ shuffle 과정에서 메모리 부족으로 spill 이 발생하며, executor가 
 
 - spark.memory.fraction 을 늘려 execution memory를 확보 한다.  
 - spark.shuffle.service.enabled=true 로 설정하여 executor 종료 후에도 데이터를 유지한다.   
-- 
 
 - - - 
 
