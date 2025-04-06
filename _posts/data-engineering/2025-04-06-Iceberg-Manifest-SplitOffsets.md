@@ -1,10 +1,10 @@
 ---
 layout: post
 title: "[Iceberg] Manifest 구조와 데이터 파일"
-subtitle: "Iceberg 1.4.0 issue 분석 / splitOffsets " 
+subtitle: "Iceberg 1.4.0 issue 분석 / Iceberg에서 splitOffsets 역할" 
 comments: true
 categories : Data-Engineering   
-date: 2025-04-05
+date: 2025-04-06
 background: '/img/posts/mac.png'
 ---
 
@@ -33,27 +33,50 @@ java.lang.IllegalArgumentException: requirement failed: length (-6235972) cannot
 데이터 파일을 rewrite 하면서 문제는 해결되었다.`   
 
 ```
-
+CALL spark_catalog.system_rewrite_data_files(table => 'db.table', options => map('target-file-size-bytes', '251658240', 'delete-file-threshold', '0'))    
 ```
 
 그럼 이러한 이슈가 왜 발생했고, 어떻게 수정되었는지 살펴보자.   
 
-[#8834](https://github.com/apache/iceberg/pull/8834)를 자세히 살펴보면 
+[#8834](https://github.com/apache/iceberg/pull/8834)를 자세히 살펴보면 manifest 로부터  
 split offsets을 읽는 과정에서 발생한 버그로 확인했다.   
 
-[#8336](https://github.com/apache/iceberg/pull/8336) 에서 BaseFile 객체의 split offsets을  
-캐싱하도록 변경하였는데, Avro 리더가 BaseFile 인스턴스를 재사용하면서 
-첫 번째 오프셋이 모든 파일에 재사용되면서 문제가 발생할 수 있음을 확인했다.   
+[#8336](https://github.com/apache/iceberg/pull/8336) 에서 BaseFile 객체의 split offsets을 캐싱하도록 변경하였는데, 
+Avro 리더가 BaseFile 인스턴스를 재사용하면서 첫 번째 오프셋이 모든 파일에 재사용되면서 문제가 발생할 수 있음을 확인했다.     
 
-여기서 Avro 포맷은 manifest 를 의미하며 data file 의 정보를 기록하고 있다.   
+```
+Snapshot (manifest list, e.g. snap-123.avro)
+│
+├── Manifest File 1 (manifest-abc.avro)
+│   ├── DataFile 1 (data-001.parquet)
+│   ├── DataFile 2 (data-002.parquet)
+│
+├── Manifest File 2 (manifest-def.avro)
+│   ├── DataFile 3 (data-003.parquet)
+│   └── DataFile 4 (data-004.parquet)
+```
 
-또한, `BaseFile은 iceberg에서 DataFile의 구현체이며 parquet, orc 파일 등을 나타낸다.`  
+여기서 Avro 포맷은 manifest file 을 의미하며 data file 의 정보를 기록하고 있다.   
+
+또한, `BaseFile은 iceberg에서 DataFile, DeleteFile 등을 나타내는 인터페이스이다.`     
 `즉, file path, file format, partition 정보, splitOffsets, record count, size 등의 
 정보를 가지고 있다.`      
 
+```sql
+select * from "db"."table$files";
+
+-- 아래 정보들을 확인할 수 있다.   
+-- upper_bounds, lower_bounds
+-- split_offsets
+-- file_path
+-- partition
+-- record_count
+-- file_size_in_bytes   
+```
+
 이 이슈를 정리해보면 아래와 같다.   
 
-- Avro 파일을 읽는 과정에서 BaseFile 객체가 재사용되었다.  
+- Avro 파일(manifest)을 읽는 과정에서 BaseFile 객체가 재사용되었다.  
 - splitOffsets 정보가 있는 여러 파일이 순차적으로 매니페스트에 기록된다.   
 - 첫번째 파일의 splitOffsets 값이 그대로 다른 파일에도 복사되어 문제가 발생한다.   
 
@@ -87,6 +110,7 @@ splitOffsets = [0, 1048576, 2097152] // 각 row group의 시작 위치
 
 `이는 Query Planning 시 pruning 이나 parallel read에 활용된다.`   
 `즉, 파일을 split 단위로 분산 처리할 수 있도록 도와준다.`   
+
 
 
 - - -
