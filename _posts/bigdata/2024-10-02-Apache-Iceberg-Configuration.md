@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Iceberg] Apache Iceberg 주요 설정 및 테이블 생성, 복구, 유지보수"
-subtitle: "테이블 생성 및 주요 설정 / snapshot 및 메타데이터 관리 옵션 / 테이블 복구 및 유지보수 / 테이블 전환" 
+subtitle: "테이블 생성 및 주요 설정 / snapshot 및 메타데이터 관리 옵션 / 테이블 복구 및 유지보수 / 테이블 전환 / copy-on-write, merge-on-read" 
 comments: true
 categories : BigData
 date: 2024-10-02
@@ -126,7 +126,7 @@ Spark, Flink 등 호환 되는지 확인이 필요하다.
     - `분석 작업 위주로 데이터를 자주 읽고, 업데이트 및 삭제가 드문 경우 copy-on-read를 사용하여 빠른 처리가 가능하도록 설정할 수 있다.`   
     - `다른 데이터 처리 작업 없이 바로 파일을 읽으면 되므로 read 성능이 좋다.`      
     - 변경된 데이터 파일을 다시 write 해야하므로 업데이트가 자주 발생하는 테이블에는 적합하지 않다.   
-    - 데이터 변경(업데이트 or 삭제)가 발생하면 변경 내용을 적용해서 새로운 데이터 파일을 생성한다.   
+    - 데이터 변경(업데이트 or 삭제)이 발생하면 변경 row가 포함된 파일에서 변경 내용을 적용해서 새로운 데이터 파일을 생성한다.    
 
 <img width="650" alt="Image" src="https://github.com/user-attachments/assets/1d218339-5650-45b8-8123-16443f558fb3" />    
 
