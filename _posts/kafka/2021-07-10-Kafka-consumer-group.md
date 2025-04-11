@@ -17,9 +17,13 @@ background: '/img/posts/mac.png'
 - - - 
 
 ## 컨슈머 그룹   
-
-카프카에서 컨슈머 그룹이라는 용어가 사용된다.   
+ 
 Kafka에서 Consumer Group은 동일한 토픽을 구독하는 Consumer들의 집합이다.   
+기존의 메시지 큐 솔루션에서는 Consumer가 메시지를 가져가면, 해당 메시지는 
+큐에서 삭제된다.   
+즉, 하나의 큐에 대하여 여러 Consumer가 붙어서 같은 메시지를 가져갈 수 없다.   
+하지만, Kafka는 Consumer Group 마다 해당 topic의 partition에 대한 별도의 
+offset을 관리할 수 있도록 제공한다.   
 
 컨슈머 그룹에 대해 보다 쉽게 이해하기 위해 반드시 필요한 용어 몇가지만 살펴보자.   
 
