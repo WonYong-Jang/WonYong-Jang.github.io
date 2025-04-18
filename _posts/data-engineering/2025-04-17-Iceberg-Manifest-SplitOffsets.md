@@ -4,7 +4,7 @@ title: "[Iceberg] Manifest 구조와 역할"
 subtitle: "manifest list 와 manifest file / Iceberg 1.4.0 issue 분석 / Iceberg에서 splitOffsets 역할" 
 comments: true
 categories : Data-Engineering   
-date: 2025-04-06
+date: 2025-04-17
 background: '/img/posts/mac.png'
 ---
 
