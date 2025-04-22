@@ -206,7 +206,7 @@ WHERE event_date = '2024-10-01';
 
 `Iceberg에서는 사용자가 직접 파티션 열을 지정하지 않아도 Iceberg가 
 내부적으로 파티션을 생성하고 관리한다.`    
-이는 Iceberg의 Hidden partition 기능 덕분이며, 데이터 타입에 따라 자동으로 
+이는 Iceberg의 [Hidden partition](https://wonyong-jang.github.io/bigdata/2024/10/03/Apache-Iceberg-Hidden-Partitioning.html) 기능 덕분이며, 데이터 타입에 따라 자동으로 
 적절한 파티셔닝을 수행하며, 쿼리 시 사용자는 이를 
 인식할 필요가 없다.   
 
@@ -304,25 +304,37 @@ WHEN NOT MATCHED THEN insert *
 ```
 
 [링크](https://iceberg.apache.org/docs/1.6.0/spark-writes/) 에서
-더 많은 쿼리 예시를 살펴보자.
+더 많은 쿼리 예시를 살펴보자.   
 
-- - - 
+### 4-5) Schema Evolution   
 
-### 4-5) Partition, Schema Evolution   
-
-기존 하이브 테이블은 파티셔닝을 변경할 수 없다.   
-그래서 일별 단위에서 시간별 단위로 변경하려면 새로운 테이블을 만들어야 한다.  
-이것을 해결하기 위해서 iceberg는 [partition evolution](https://wonyong-jang.github.io/bigdata/2024/10/03/Apache-Iceberg-Hidden-Partitioning.html)를 
-제공한다.   
-그리고 schema evolution을 제공하기 때문에 테이블에 컬럼을 추가 또는 삭제하거나 
-컬럼명을 변경, 컬럼 순서 등 변경이 가능하다.   
+iceberg는 스키마가 변경되는 것에 대해 안전하고 유연한 스키마 진화를 제공한다.  
 
 `이것이 가능한 이유는 메타데이터를 파일(json/avro)로 관리하기 때문이며, 
     변경사항에 대해 기존 메타데이터 파일을 수정하지 않고, 
     새로운 메타데이터 파일을 생성하여 관리한다.`      
 
-> 기존 hive의 경우 변경이 발생하면 기존 메타데이터 파일 및 데이터 파일을 
-변경하기 어렵기 때문에 유연하게 스키마 또는 파티션을 변경할 수 없다.    
+`따라서 스키마 또한 버전 관리를 하기 때문에 롤백이 가능하며 ACID 트랜잭션을 보장하여 데이터 일관성을 유지할 수 있다.`      
+
+기존 hive는 컬럼 이름 기반으로 스키마를 인식하기 때문에 컬럼의 이름이나 
+순서가 변경되면 데이터에 문제가 발생할 수 있다. 
+
+반면, iceberg 는 각 컬럼에 고유한 id를 부여하여 스키마를 관리하기 때문에 유연하고 안전한 스키마 변경이 가능해진다.   
+
+`하지만, 컬럼을 삭제하거나 순서를 변경하는 작업은 주의해야 하며 iceberg는 데이터 무결성을 보장하기 위해 이런 작업은 제약사항이 존재한다.`   
+
+맨 마지막 순서의 컬럼은 문제 없이 삭제가 가능하지만, 그 외에 컬럼을 
+삭제했을 경우는 문제가 발생할 수 있다.   
+
+```
+InvalidOperationExceiption(message: The following column have types incompatible with existing column in thier respective positions 
+```
+
+> iceberg는 컬럼을 내부적으로 id로 추적하지만 parquet, orc 파일 포맷은 컬럼의 물리적 순서(position) 정보를 내부에 포함하고 있다. 
+
+중간 컬럼을 삭제하면 위치가 밀려서 기존 데이터 파일과의 타입이 충돌이 
+발생하며, 컬럼 위치 변경 또한 동일한 문제가 발생할 수 있다.   
+
 
 
 
