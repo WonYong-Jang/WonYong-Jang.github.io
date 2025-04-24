@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Iceberg] Apache Iceberg 등장"
-subtitle: "Hive Table Format과 비교하여 Iceberg 의 특징(Snapshot, Hidden Partition) / 스냅샷 롤백 / Tag" 
+subtitle: "Hive Table Format과 비교하여 Iceberg 의 특징(Snapshot, Hidden Partition, Schema Evolution) / snapshot rollback / Tag" 
 comments: true
 categories : BigData
 date: 2024-10-01
