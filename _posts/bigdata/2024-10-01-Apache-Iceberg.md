@@ -335,8 +335,21 @@ InvalidOperationExceiption(message: The following column have types incompatible
 중간 컬럼을 삭제하면 위치가 밀려서 기존 데이터 파일과의 타입이 충돌이 
 발생하며, 컬럼 위치 변경 또한 동일한 문제가 발생할 수 있다.   
 
+- - -   
 
+## 5. Apache Iceberg, Apache Hudi, Delta Lake   
 
+마지막으로 오픈 테이블 포맷들 중 각 차이와 어떤 상황에서 도입이 권장되는지 
+살펴보자.   
+
+Apache Iceberg 의 경우 호환성이 뛰어나기 때문에 
+다양한 엔진에서 데이터 공유가 필요(Spark, Flink, Trino, Hive 등) 할 때 권장된다.   
+
+Apache Hudi 의 경우 upsert와 실시간 데이터 처리에 최적화되어 있기 때문에 
+주로 스트리밍 기반 작업이 많을 경우 권장된다.    
+
+Delta Lake 의 경우 Databricks 환경을 사용할 때 권장되며 Spark의 위주의 
+작업이 많을 경우 권장된다.   
 
 - - -
 
