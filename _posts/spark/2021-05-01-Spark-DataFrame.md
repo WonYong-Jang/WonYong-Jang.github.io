@@ -100,10 +100,11 @@ DataFrame은 데이터 소스(db, file 등)와 상관없이 데이터를 읽어�
 
 <img width="500" alt="스크린샷 2023-09-04 오전 11 57 54" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/50a4fc46-a3eb-4235-ab9b-82f4dbe6d9aa">     
 
-> 위에서 설명한 것처럼 RDD에서 map, reduceByKey 안에 작성한 것은 함수형 프로그래밍에 의해 우리가 작성한 
-코드이며, 해당 함수는 Spark 엔진은 전달 받아서 실행하는 역할만 한다.  
-> 반면, DataFrame 코드는 각각 표현식(expression)이기 때문에 Spark 엔진은 이를 파싱하여 실행계획을 세우고 
-Catalyst Optimizer가 개입하여 최적화 한다.   
+`위에서 설명한 것처럼 RDD에서 map, reduceByKey 안에 작성한 것은 함수형 프로그래밍에 의해 우리가 작성한 
+코드이며, 해당 함수는 Spark 엔진은 전달 받아서 실행하는 역할만 한다.`   
+
+`반면, DataFrame 코드는 각각 표현식(expression)이기 때문에 Spark 엔진은 이를 파싱하여 실행계획을 세우고 
+Catalyst Optimizer가 개입하여 최적화 한다.`      
 
 
 - - - 

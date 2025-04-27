@@ -21,9 +21,6 @@ DataFrame은 relational code만 작성할 수 있는 반면, `DataSet은 relatio
 
 <img width="500" alt="스크린샷 2023-09-10 오후 9 12 18" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/3d61871b-ca18-4033-b199-931edd03dd85">    
 
-[DataFrame](https://wonyong-jang.github.io/spark/2021/05/01/Spark-DataFrame.html)에서 설명한 것처럼 
-Spark 엔진은 functional code를 파싱하지 않기 때문에 catalyst optimizer가 최적화 하지 않는다.     
-하지만, RDD를 이용하여 코드를 작성하는 것보다는 빠른 성능을 보장 받을 수 있다.     
 
 
 > DataSet은 자바와 스칼라 언어에서만 사용 가능하며, 
