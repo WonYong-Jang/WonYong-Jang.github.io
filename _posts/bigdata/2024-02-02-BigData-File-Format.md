@@ -92,11 +92,10 @@ Parquet는 데이터를 저장하기 위해 hierarchical structure를 사용한�
 - Pages   
 
 Parquet 파일 하나는 1개 이상의 Row group이 있고, 
-Row group은 column 별로 저장되어 있다.
-Row group 단위로 데이터를 읽고 쓰는 것이 가능하며, 이는 스캔 속도를 
-높이는데 기여한다.
+[Row group](https://parquet.apache.org/docs/file-format/configurations/) 은 column 별로 저장되어 있다.   
+Row group 단위로 데이터를 읽고 쓰는 것이 가능하며, 이는 스캔 속도를 높이는데 기여한다.   
 
-> 일반적으로 Row group은 128MB ~ 512MB 사이로 설정하는 것이 권장되며, parquet.block.size 옵션으로 수정할 수 있다.   
+> 일반적으로 Row group은 512MB ~ 1GB 사이로 설정하는 것이 권장되며, parquet.block.size 옵션으로 수정할 수 있다.   
 
 column chunk는 여러 개의 page로 구성되며, 실제 데이터와 
 인코딩, 압축 정보 등이 저장된다.   
@@ -148,7 +147,11 @@ $ D * from read_parquet('/Users/jang-won-yong/Downloads/cities.parquet') limit 3
 ## 2. ORC   
 
 ORC(Optimized Row Columnar)는 컬럼 기반의 파일 저장 방식으로 
-Hadoop, Hive, Pig, Spark 등에 적용이 가능하다.   
+Hadoop, Hive, Pig, Spark 등에 적용이 가능하다. 
+
+<img src="/img/posts/data-engineering/스크린샷 2025-04-26 오후 10.18.45.png" width="500" height="500">   
+
+`parquet 에서 row group 단위로 하나의 파일에서 나눠서 읽을 수 있는 역할을 orc는 stripe 라는 이름으로 제공한다.`
 
 ### 2-1) ORC 파일 확인   
 
