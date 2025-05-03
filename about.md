@@ -71,9 +71,11 @@ background: '/img/bg-index.jpg'
 - 기존 hive 테이블을 iceberg 테이블로 전환    
     - hive 테이블은 데이터 업데이트가 어렵기 때문에 중간 테이블이 
     생겨 리드 타임 및 파이프라인 복잡성 증가       
-    - iceberg 테이블로 전환하여 트랜잭션 제공 및 테이블 간소화     
-    - 유연한 스키마 변경    
-- spark를 활용한 효율적인 join 전략   
+    - iceberg 테이블로 전환하여 ACID 트랜잭션 제공 및 데이터 파이프라인 간소화      
+    - 유연한 스키마 및 데이터 변경을 제공함으로서 비지니스에 빠르게 대응      
+    - [<u>iceberg 1.4.0 버전 이슈</u>](https://wonyong-jang.github.io/data-engineering/2025/04/17/Iceberg-Manifest-SplitOffsets.html) 확인 및 분석     
+
+- spark를 활용한 효율적인 join 전략     
 - 엑셀을 이용한 메뉴얼 작업을 시스템 자동화하여 97% 리드타임 단축    
     - AS-IS: 8 hour (약 100만건 기준)     
     - TO-BE: 10 min      
@@ -83,8 +85,8 @@ background: '/img/bg-index.jpg'
 
 - Processed rows per second(AS-IS: 800 -> TO-BE: 10,000)   
     - [<u>Spark Streaming Incident Review</u>](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)     
-- 불필요한 Shuffle 제거    
-- 동시성 이슈 및 데이터 순서 불일치 해결   
+- 비효율적인 Shuffle 및 DB I/O 개선   
+- 이벤트 데이터에 대한 동시성 이슈 및 데이터 순서 불일치 해결      
 - 재처리 구조 개선       
 - 데이터 정합성 메트릭 구성      
 - Migrate from spark streaming to structured streaming.   
@@ -97,7 +99,7 @@ background: '/img/bg-index.jpg'
 - Spark를 이용하여 하이브 테이블간 집계 결과를 ES 에 인덱싱(daily 1,000만건)      
     - [<u>Wildcard 쿼리 대신 n-gram으로 성능 개선</u>](https://wonyong-jang.github.io/elk/2024/12/29/ELK-Elastic-Search-Wildcard-N-Gram.html)   
 - ES 인덱스 관리(Template, Alias, Lifecycle)      
-    - [<u>템플릿을 이용하여 인덱스의 Alias, Lifecycle 관리하기</u>](https://wonyong-jang.github.io/elk/2021/03/27/ELK-Elastic-Search-Index-Template.html)         
+    - [<u>템플릿을 이용하여 인덱스의 Alias, Lifecycle 관리</u>](https://wonyong-jang.github.io/elk/2021/03/27/ELK-Elastic-Search-Index-Template.html)         
 - 웹 어플리케이션에서 모든 검색 패턴에 대해 0.5 s 이내에 검색을 제공   
     - [<u>검색 및 집계 데이터를 페이지네이션을 통해 제공</u>](https://wonyong-jang.github.io/elk/2022/11/29/ELK-Elastic-Search-Max-Result-Window.html)   
 - nGrinder를 이용한 성능 테스트 
