@@ -41,6 +41,16 @@ catalog는 특정 데이터 소스에 접근을 가능하게 만들어주는 설
     `Iceberg catalog는 현시점의 테이블 metadata를 찾을 수 있게` 도와 준다.  
 그리고 쿼리가 실행되면 쿼리가 찾는 metadata file을 찾기 위해 사용된다.   
 
+catalog의 주요 역할을 아래와 같다.   
+
+- Mapping Table Paths: db.table을 검색했을 때 대응하는 메타데이터 파일을 찾을 수 있게 도와준다.   
+
+- Atomic Operations Support: concurrent reads/writes 동안 테이블 상태를 일관성있게 유지해준다.   
+
+- Metadata Management: 메타데이터를 관리하고 저장한다.   
+
+
+
 
 ### 2-2) metadata layer
 

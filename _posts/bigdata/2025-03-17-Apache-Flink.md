@@ -11,7 +11,7 @@ background: '/img/posts/mac.png'
 이번 글에서는 Spark Streaming 과 Flink 의 차이점에 대해 
 살펴보고 Flink 아키텍처 등에 대해 자세히 살펴보자.     
 
-- - - 
+- - -    
 
 ## 1. Flink 와 Spark Streaming 차이   
 
@@ -24,7 +24,8 @@ background: '/img/posts/mac.png'
 아주 짧게 잡아 실시간처럼 처리하는 것이다.  
 
 네이티브 스트리밍이 우리가 직관적으로 알고 있는 이벤트 기반 실시간 
-처리 방법이다.   
+처리 방법이다.     
+
 
 ##### 성능   
 
@@ -52,6 +53,13 @@ Consume하는 속도를 이에 맞추어 줄이게 된다.
 Flink는 매우 낮은 대기 시간과 완전한 실시간 스트리밍을 필요로 하는 
 경우 적합하며, 실시간 데이터 스트림 처리에서 높은 성능을 요구하는 프로젝트에 
 추천된다.   
+
+##### Rescalability   
+
+Spark 는 SparkSession을 만들 때 리소스를 미리 지정하고 할당 받게 된다.   
+반면 Flink는 실행 도중 리소스 추가하거나 제거하거나 하여 유연하게 조절할 수 있다.   
+
+
 
 
 - - - 
@@ -88,7 +96,12 @@ JobManager 는 Flink 클러스터의 중앙 제어 장치로, 다음과 같은 �
 
 - 작업 계획 및 스케줄링: 사용자 어플리케이션(Job)을 실행 계획으로 변환하고, 이 계획을 여러 Task로 분할하여 TaskManager에게 할당한다.  
 - 리소스 관리: 클러스터의 리소스를 관리하고, TaskManager의 상태를 모니터링하며, 필요시 리소스를 할당한다.   
-- 장애 복구: 작업 중 장애가 발생하면 체크포인트를 기반으로 작업을 복구한다.   
+- 장애 복구: 작업 중 장애가 발생하면 체크포인트를 기반으로 작업을 복구한다.     
+
+- 3가지 컴포넌트로 구성되어 있다.   
+    - Resource Manager - task slot 관리   
+    - Dispatcher - Flink app을 등록하는 Rest API & Web UI   
+    - JobMaster - 1개의 JobGraph 관리   
 
 ##### Task Manager  
 
@@ -116,12 +129,22 @@ Checkpointing은 Flink에서 상태 저장(Stateful) 작업의 일관성을
 State Backend는 상태 저장 작업에서 상태를 저장하는 방식과 위치를 정의한다.   
 주로 메모리 또는 디스크에 상태를 저장한다.   
 
+- HashMapStateBackend   
+    - Java Heap에 저장   
+    - 메모리 사용으로 빠른 처리  
+
+- EmbeddedRocksDBStateBackend  
+    - RocksDB에 저장  
+    - Disk 와 Serialize 사용으로 성능은 떨어질 수 있지만 처리량은 높힐 수 있다.   
+
+
+
 - - - 
 
 ## 3. Checkpoint 와 Savepoint   
 
 checkpoint와 savepoint는 기본적으로 flink에서 연산을 하기 위해 사용하는 state에 대한 
-백업 용도로 쓰이고 있으며, 2가지 모두 같은 포맷으로 생성된다.   
+백업 용도로 쓰이고 있으며, 2가지 모두 같은 포맷으로 생성된다.      
 
 ##### Checkpoint   
 
@@ -129,7 +152,8 @@ checkpoint와 savepoint는 기본적으로 flink에서 연산을 하기 위해 �
 
 ##### Savepoint   
 
-`주로 job 을 업데이트하거나 재시작 할 때 사용된다.`  
+`사용자가 지정한 체크포인이며, 주로 job 을 업데이트하거나 
+재시작 할 때 사용된다.`  
 
 - - -
 
