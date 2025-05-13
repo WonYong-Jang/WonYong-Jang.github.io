@@ -83,26 +83,35 @@ background: '/img/bg-index.jpg'
 
 [Daily Events Count 2,000만건의 Spark Structured Streaming]      
 
-- Processed rows per second(AS-IS: 800 -> TO-BE: 10,000)   
+- 기존 Spark Streaming 데이터 파이프라인의 성능 및 구조 문제 분석   
     - [<u>Spark Streaming Incident Review</u>](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)     
 - 비효율적인 Shuffle 및 DB I/O 개선   
 - 이벤트 데이터에 대한 동시성 이슈 및 데이터 순서 불일치 해결      
 - 재처리 구조 개선       
 - 데이터 정합성 메트릭 구성      
-- Migrate from spark streaming to structured streaming.   
-    - [<u>Structured Streaming 전환</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)     
+- [<u>RDD 기반 Spark Streaming을 DataFrame 기반 Structured Streaming 전환</u>](https://wonyong-jang.github.io/spark/2022/03/07/Spark-Streaming-To-Structured-Streaming.html)     
+- 기존 대비 10배 이상 성능 향상     
+    - Processed rows per second(AS-IS: 800 -> TO-BE: 10,000)
        
           
 [Batch Size 1,000만건의 Spark Batch 와 Elastic Search, Airflow를 이용한 검색 서비스]       
 
 - Daily로 1,000 만건 이상의 데이터를 여러 검색 패턴으로 검색이 가능하도록 Elastic Search 와 Spark Batch Job 을 통해 개발    
 - Spark를 이용하여 하이브 테이블간 집계 결과를 ES 에 인덱싱(daily 1,000만건)      
-    - [<u>Wildcard 쿼리 대신 n-gram으로 성능 개선</u>](https://wonyong-jang.github.io/elk/2024/12/29/ELK-Elastic-Search-Wildcard-N-Gram.html)   
-- ES 인덱스 관리(Template, Alias, Lifecycle)      
-    - [<u>템플릿을 이용하여 인덱스의 Alias, Lifecycle 관리</u>](https://wonyong-jang.github.io/elk/2021/03/27/ELK-Elastic-Search-Index-Template.html)         
+- [<u>Wildcard 쿼리 대신 n-gram으로 검색 성능 개선</u>](https://wonyong-jang.github.io/elk/2024/12/29/ELK-Elastic-Search-Wildcard-N-Gram.html)   
+- [<u>ES 템플릿을 이용하여 인덱스의 Alias, Lifecycle 관리</u>](https://wonyong-jang.github.io/elk/2021/03/27/ELK-Elastic-Search-Index-Template.html)         
 - 웹 어플리케이션에서 모든 검색 패턴에 대해 0.5 s 이내에 검색을 제공   
     - [<u>검색 및 집계 데이터를 페이지네이션을 통해 제공</u>](https://wonyong-jang.github.io/elk/2022/11/29/ELK-Elastic-Search-Max-Result-Window.html)   
 - nGrinder를 이용한 성능 테스트 
+
+[고객 인입 데이터를 통한 고객 요청 분류 서비스]
+- 기존 Rule base 기반 서비스를 ML 전환하기 위한 PoC 진행   
+- 분류 알고리즘 중 Randon forest 로 학습 및 api 를 통한 서빙  
+- 상담 가능성이 높은 상품들을 상담사에게 제공 및 Call routing 서비스 적용   
+- Threshold 조절을 통해 비지니스에 적합한 Precision 과 Recall 메트릭 확인   
+    - Accuracy: (60% -> 92%)
+    - Precision: (42% -> 77%)
+    - Recall: (30% -> 68%)
 
 
 [Bus Route Recommendation Service]    
