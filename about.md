@@ -106,12 +106,12 @@ background: '/img/bg-index.jpg'
 
 [고객 인입 데이터를 통한 고객 요청 분류 서비스]
 - 기존 Rule base 기반 서비스를 ML 전환하기 위한 PoC 진행   
-- 분류 알고리즘 중 Randon forest 로 학습 및 api 를 통한 서빙  
+- 분류 알고리즘 중 Random forest 로 학습 및 api 를 통한 서빙  
 - 상담 가능성이 높은 상품들을 상담사에게 제공 및 Call routing 서비스 적용   
 - Threshold 조절을 통해 비지니스에 적합한 Precision 과 Recall 메트릭 확인   
     - Accuracy: (60% -> 92%)
-    - Precision: (42% -> 77%)
-    - Recall: (30% -> 68%)
+    - Precision: (42% -> 79%)
+    - Recall: (30% -> 62%)
 
 
 [Bus Route Recommendation Service]    
