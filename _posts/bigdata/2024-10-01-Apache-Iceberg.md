@@ -91,7 +91,7 @@ Iceberg는 스냅샷 기능을 통해 특정 시점의 테이블 형상을 파�
 `즉, 파티션에 대한 lower_bound, upper_bound 정보를 가지고 있기 때문에 쿼리가 실행될 때 partition pruning 이 가능해진다.`   
 
 `추가적으로 added_files_count, existing_files_count, deleted_files_count 등에 대한 정보를 가지고 있기 때문에, 쿼리에서 
-이미 삭제된 manifest file를 미리 스킵 할 수 있다.`   
+이미 삭제된 manifest file 을 미리 스킵 할 수 있다.`   
 
 ```sql
 -- 테이블 스냅샷 조회(시점별 스냅샷에 대한 manifest list 확인 가능)
@@ -116,11 +116,18 @@ SELECT * FROM "mydb"."iceberg_table$files";
 
 ##### manifest file   
 
-결국, `스냅샷은 하나 이상의 manifest file`로 이루어지게 된다.   
+`manifest list 는 하나 이상의 manifest file`로 이뤄지며 data file 들을 트래킹하는 역할을 한다.  
 
-`manifest file은 data file에 대한 모든 정보(data file 위치, 파티션 정보)와 통계 정보(null, nan 갯수)를 가지고 있다.`   
+`manifest file은 data file에 대한 모든 정보(data file 위치, 파티션 정보, 파일 포맷)와 통계 정보(null, nan 갯수)를 가지고 있다.`   
+즉 이러한 정보들을 가지고 있기 때문에 쿼리에서 전체 data file 들을 스캔하는게 아닌 필요한 data file 들만 스캔할 수 있게 된다.   
 
+`lower_bounds, upper_bounds 정보를 가지고 있기 때문에 data file에서 각 컬럼의 값의 minimum 과 maximum 을 기록하고 있다.`  
+`즉, range 등의 쿼리 요청에 대해서는 이 정보를 통해서 효율적으로 필요한 파일만 스캔할 수 있게 된다.`   
 
+`위의 manifest list 에서는 파티션 단위의 pruning을 진행하며, manifest file 에서는 data 단위의 pruning을 진행한다.`      
+
+정리해보면 manifest list 와 manifest file이 계층 구조로 이루어져 있고, 각 단계별로 효율적으로 필요한 데이터만 스캔하기 때문에 
+대용량 데이터에 대해서 빠르게 데이터를 조회할 수 있게 된다.   
 
 ### 2-3) data layer   
 
