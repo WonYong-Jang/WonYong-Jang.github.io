@@ -1,16 +1,37 @@
 ---
 layout: post
 title: "[AWS] VPC 와 Subnet 이해하기"
-subtitle: "VPC, Subnet, VPC 방화벽(Network ACL, Security Group) / IAM"
+subtitle: "VPC, Subnet, VPC 방화벽(Network ACL, Security Group) / IAM / Public Cloud, Private Cloud"
 comments: true
 categories : AWS
 date: 2022-07-10
 background: '/img/posts/mac.png'
 ---
 
+이번글에서는 AWS의 VPC 와 Subnet, SG, IAM 등에 대해서 자세히 살펴보자.   
+
+먼저 Public Cloud 와 Private Cloud의 차이점을 살펴보자.  
+
+Public Cloud는 AWS, GCP 처럼 누구나 인터넷을 통해 사용할 수 있는 클라우드이다.   
+이는 클라우드 공급자가 인프라 관리를 수행하여 이용 기업이 별도의 시스템관리를 하지 않아도 되는 
+특징을 가지고 있다.   
+이는 기업이 클라우드를 통해 IT 자원을 더욱 효율적으로 활용할 수 있도록 해주며 이용 기업은 
+인터넷을 통해 제공받기 때문에 위치와 규모에 구애를 받지 않는다.   
+
+
+반면, Private Cloud는 인터넷이 아닌 private 네트워크를 통해 접근하는 클라우드로, 외부인의 출입이 제한된 
+네트워크를 통해 우리 기업만의 보안과 성능을 갖춘 클라우드 인프라 환경을 구축하는 것이 목표인 경우에 주로 사용된다.   
+
+> 이번글에서는 Public cloud인 AWS 의 네트워크 구성에 대해서 살펴볼 예정이다.   
+
+- - - 
+
 ## 1. VPC(Virtual Private Cloud)     
 
-`VPC는 사용자가 정의하는 AWS 계정 사용자 전용 가상의 네트워크이다.`      
+`VPC는 사용자가 정의하는 AWS 계정 사용자 전용 가상의 네트워크이다.`     
+
+> Virtual Private Cloud 라는 이름이 혼동될 수 있는데, 정확히는 Public Cloud 상에서 사용자에게 제공되는 논리적으로 격리된 네트워크 공간이다.   
+
 사용자는 자기가 원하는대로 IP 주소 범위 선택, 서브넷 생성, 라우팅 테이블 및 네트워크 게이트웨이 구성 등 
 가상 네트워크 환경을 구성해 VPC를 생성할 수 있다.   
 

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Python] GIL 과 메모리 관리"  
-subtitle: "Global Interpreter Lock / Reference count 기반 메모리 관리"   
+subtitle: "Global Interpreter Lock / Reference count 기반 메모리 관리 / GC / Iterator, Generator, Coroutine"   
 comments: true
 categories : Data-Engineering   
 date: 2025-06-10
@@ -30,7 +30,7 @@ Lock을 해버리고 단 하나의 스레드에만 이 자원에 접근하는 �
 
 그렇다면 GIL 은 왜 필요할까?   
 
-파이썬에 존재하는 모든 것은 객체이며, `이 객체들에 대해 
+`파이썬에 존재하는 모든 것은 객체이며, 이 객체들에 대해 
 Reference count(참조 횟수)를 저장`하고 있다.  
 이 값은 각 객체들이 참조되는 횟수를 나타내며, 참조 여부에 따라 알아서 증감된다.  
 `어떤 객체에 대한 모든 참조가 해제되어 Reference count가 0이 된다면, 
@@ -44,7 +44,44 @@ Reference count(참조 횟수)를 저장`하고 있다.
 `즉, GIL은 Reference count 기반 메모리 관리가 멀티스레드에서 안전하지 않기 때문에 이를 lock을 통해 
 안전하게 관리하도록 도입하였다.`          
 
-> 참고로 java 와 대부분의 언어는 Reference count 기반 메모리 관리를 하지 않는다.   
+> 참고로 java 와 대부분의 언어는 Reference count 기반 메모리 관리를 하지 않는다.    
+
+
+- - - 
+
+## 2. Python 의 메모리 관리   
+
+`파이썬은 위에 언급한것 처럼 Reference Count 방식으로 메모리를 관리하지만, 
+    순환 참조(circular reference)는 해결하지 못한다.`      
+
+`따라서 이러한 부분은 Garbage Collection이 이를 보완하여 해결하게 된다.`   
+
+순환참조란 두 객체가 서로를 참조하면서 참조 카운트가 0이 되지 않는 상태를 말한다.   
+즉, 사용하지 않는 객체라하더라도 서로를 붙잡고 있어서 메모리 해제가 안되는 상황이다.   
+
+- - - 
+
+## 3. Python 에서 메모리를 효율적으로 사용하기    
+
+### 3-1) 제너레이터(Generator)    
+
+
+
+### 3-2) 코루틴(Coroutin)    
+
+코루틴을 이해하려면 Iterator 객체 부터 이해해야 하며, Iterator는 값을 순차적으로 꺼낼 수 있는 객체이다.   
+
+`[1, 2, 3] 과 같은 list를 정의하면 3개의 원소 전부 메모리에 할당 되는데 모든 값을 메모리에 할당하지 않기 
+위해 값이 필요한 시점마다 차례대로 반환할 수 있는 Iterator 객체를 만들었다.`   
+
+
+
+[코루틴](https://wonyong-jang.github.io/kotlin/2021/10/28/Kotlin-coroutine-start.html) 은 
+비동기 프로그래밍에서 많이 사용되는데, 이는 코루틴이 여러 개 동시에 실행될 수 있고, 
+    실행 중인 코루틴에서 다른 코루틴으로 전환될 수 있기 때문이다.   
+
+
+
 
 - - -
 
