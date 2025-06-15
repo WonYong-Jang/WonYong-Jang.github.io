@@ -65,6 +65,12 @@ Reference count(참조 횟수)를 저장`하고 있다.
 
 ### 3-1) 제너레이터(Generator)    
 
+제너레이터는 Python 객체의 한 종류로 효율적으로 메모리를 사용할 수 있도록 해준다.   
+
+`리스트와 비교해봤을 때 데이터의 크기가 큰 만큼 차이가 더 커지며, 
+    리스트는 모든 데이터를 담고 있는 반면, 제너레이터는 데이터가 필요할 때만 불러와서 
+    처리하기 때문에 메모리를 효율적으로 사용할 수 있다.`   
+
 
 
 ### 3-2) 코루틴(Coroutin)    
@@ -85,6 +91,7 @@ Reference count(참조 횟수)를 저장`하고 있다.
 
 - - -
 
+<https://denev6.tistory.com/entry/Generator-coroutine>   
 <https://tibetsandfox.tistory.com/43>   
 
 {% highlight ruby linenos %}
