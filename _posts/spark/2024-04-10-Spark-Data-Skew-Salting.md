@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Data Skew 해결을 위한 Salting 기법"   
-subtitle: "Data skewness"             
+subtitle: "데이터를 Even 하게 분산시키기"             
 comments: true   
 categories : Spark   
 date: 2024-04-10   
