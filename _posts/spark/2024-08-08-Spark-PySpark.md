@@ -11,7 +11,7 @@ background: '/img/posts/mac.png'
 `Apache Spark는 Scala 프로그래밍 언어로 작성되었고, 
     PySpark는 Python 환경에서 Apache Spark를 사용할 수 있는 인터페이스이다.`      
 
-> 사실상 Spark 용 Python API의 일종이다.   
+> Pyspark는 사실상 Spark 용 Python API의 일종이다.   
 
 
 <img width="800" alt="스크린샷 2024-08-10 오후 1 51 37" src="https://github.com/user-attachments/assets/8fd00141-f5d8-4202-8c00-279f0bdbbeae">   
@@ -58,7 +58,18 @@ PySpark에서 UDF(User Defined Function)을 사용할 때, Python 프로세스�
 
 - - - 
 
-## 2. 설치   
+## 2. 언어 선택에 따른 타입 체크    
+
+`Python은 동적 타입 언어이기 때문에 컴파일 시점에서 타입 체크를 수행하지 않는다.`     
+`반면, Scala는 정적 타입 언어로, 컴파일 시점에서 타입 체크를 진행한다.`     
+
+즉, PySpark를 사용할 경우 Scala, Java 기반의 Spark와는 다르게 
+타입체크는 런타임에 확인이 가능하기 때문에 
+언어 선택에 따른 차이를 명확히 알고 있어야 한다.   
+
+- - - 
+
+## 3. 설치   
 
 anaconda 를 이용하여 pyspark를 설치해보자.  
 
@@ -100,7 +111,7 @@ pyspark
 
 - - - 
 
-## 3. Python Package Management   
+## 4. Python Package Management   
 
 YARN, Kubernetes, Mesos 등을 이용하여 클러스터에 PySpark 어플리케이션을 실행 시킬 때, 
     소스 코드와 사용 라이브러리들이 executor에서 사용될 수 있어야 한다.   
@@ -114,7 +125,7 @@ YARN, Kubernetes, Mesos 등을 이용하여 클러스터에 PySpark 어플리케
 
 여기서는 Conda를 이용해 보자.   
 
-### 3-1) 내부 모듈 생성   
+### 4-1) 내부 모듈 생성   
 
 `--py-files 옵션으로 전달할 zip 파일을 생성해보자.`      
 
@@ -130,7 +141,7 @@ YARN, Kubernetes, Mesos 등을 이용하여 클러스터에 PySpark 어플리케
 zip -r packages.zip packages 
 ```
 
-### 3-2) 가상 환경 구성    
+### 4-2) 가상 환경 구성    
 
 `driver와 executor에서 사용할 conda 환경을 생성 후 archive file로 패키징해보자.`      
 
@@ -190,7 +201,7 @@ conda pack -f -o pyspark_conda_env.tar.gz
 
 `--archives 옵션을 이용하여 spark-submit을 하게 되면, executor 위에서 archive가 자동으로 unpack 된다.`  
 
-### 3-3) spark-submit   
+### 4-3) spark-submit   
 
 위에서 클러스터에 배포할 패키지들을 구성했다면 아래 예시를 통해서 
 spark-submit 옵션들을 살펴보자.   
@@ -235,7 +246,7 @@ main.py
 
 - - - 
 
-## 4. 주요 기능      
+## 5. 주요 기능      
 
 이제 pyspark 의 간단한 코드를 작성해보자.      
 아래 코드는 SparkSession을 이용하여 데이터 프레임을 생성후 출력하는 
@@ -264,7 +275,7 @@ df.show()
 spark.stop()
 ```
 
-### 3-1) SQL 사용과 Temp View    
+### 5-1) SQL 사용과 Temp View    
 
 DataFrame 외에 친근한 SQL 문으로 데이터를 다룰 수도 있다.   
 `이때 Temp View를 생성 하고 SparkSession.sql() 메서드를 통해 SQL을 작성할 수 있다.`   

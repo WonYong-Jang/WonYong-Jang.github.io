@@ -191,9 +191,11 @@ scc.stop(true, true)에서 첫번째 true가 의미하는 것은 spark conext가
 중지 되는 것을 의미하며, 두번째 true가 의미하는 것은 graceful shutdown을 
 의미한다.    
 
-`주의할 점은 stop()은 Executor 내에서 처리하면 deadlock이 
+`주의할 점은 stop()은 Executor 내에서 처리하면 deadlock 또는 비정상 종료를 
 발생시킬수 있으므로 Driver에서 처리 할수 있도록 하자.`     
 
+> Spark 의 동작 방식은 Driver 가 각 Executor 에게 SIGTERM 을 전달하여 
+종료하는 방식이며, 그 반대로 요청을 보내는 구조가 아니기 때문이다.   
 
 - - - 
 
