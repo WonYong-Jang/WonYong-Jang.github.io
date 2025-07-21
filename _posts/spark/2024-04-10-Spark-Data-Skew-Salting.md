@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] Data Skew 해결을 위한 Salting 기법"   
-subtitle: "데이터를 Even 하게 분산시키기"             
+subtitle: "데이터를 Even 하게 분산시키기 / Data Skew 발생시 문제"             
 comments: true   
 categories : Spark   
 date: 2024-04-10   
@@ -10,7 +10,10 @@ background: '/img/posts/mac.png'
 
 
 데이터 엔지니어링 과정에서 join, group by 와 같은 shuffle이 발생하는 
-연산을 사용할 때, 특정 key에 데이터가 집중되는 경우가 발생할 수 있다.    
+연산을 사용할 때, 특정 key에 데이터가 집중되는 경우가 발생할 수 있다.   
+
+> Spark는 파티션 단위로 메모리에 로드되며, join 등의 연산을 할 때 파티션에 같은 key를 위치시키기 
+때문에 특정 파티션으로 key가 몰리는 케이스가 발생한다.   
 
 `즉, Data Skew는 데이터가 파티션들 간에 고르게 분산되지 않은 상황을 말한다.`   
 
@@ -24,7 +27,27 @@ Spark 3.0 부터는 [Adaptive Query Execution](https://wonyong-jang.github.io/sp
 
 - - - 
 
-## 1. Data Skew 예시   
+## 1. Data Skew 발생시 문제   
+
+##### Straggling tasks  
+
+다른 파티션에 비해 skew 가 발생한 파티션은 전체 수행 시간을 delay 시키기 때문에 
+performance에 직접적인 영향을 끼친다.     
+
+##### Spill to Disk and Out of Memory errors   
+
+Spark는 실행시 메모리에 파티션 단위로 데이터를 로드하여 실행한다.  
+`하지만, 데이터 skew가 발생하여 사이즈가 굉장히 커진 파티션을 Executor에 
+로드할 때 Executor의 메모리를 초과하게 되면 spill이 발생하게 된다.` 
+
+> Spark에서 spill 이 발생하게 되면 메모리에 로드하지 못한 파티션은 disk에 저장을 하게 된다.   
+
+`전체 클러스터의 메모리 리소스는 적절하게 할당하더라도, 특정 파티션이 skew가 발생하여 굉장히 
+사이즈가 큰 파티션으로 인하여 spill 이 발생하고 최악의 경우는 OOM이 발생할 수 있게 된다.`      
+
+- - -   
+
+## 2. Data Skew 예시   
 
 Data Skew가 발생한 예시를 살펴보자.  
 
@@ -71,7 +94,7 @@ spark DataFrame으로 정의되어 있다고 가정하자.
 
 - - - 
 
-## 2. Salting Join - 기본   
+## 3. Salting Join - 기본   
 
 요리를 할 때 소금을 뿌림으로써 재료의 맛과 향을 더해줄 수 있다. spark의 salting 기법도 
 요리에서 소금을 뿌리는 것과 비슷하게 데이터가 더 잘 처리될 수 있도록 도와주는 역할을 한다.   
@@ -123,7 +146,7 @@ salting을 한마디로 말하면, 새로운 join key를 추가하여 데이터�
 
 - - - 
 
-## 3. Salting Join - 심화   
+## 4. Salting Join - 심화   
 
 앞에서, 적절한 salt size를 설정함으로써 salting은 꽤 효과적으로 
 동작할 수 있음을 확인했다.   
