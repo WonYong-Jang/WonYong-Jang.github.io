@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Python] Kafka & Spark 활용한 Realtime Datalake 구성하기"  
-subtitle: "NAT 인스턴스를 이용한 "   
+subtitle: "NAT 인스턴스를 이용한 클러스터 구성"   
 comments: true
 categories : Data-Engineering   
 date: 2025-07-05
