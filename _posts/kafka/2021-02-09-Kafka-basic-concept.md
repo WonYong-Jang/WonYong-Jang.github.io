@@ -258,20 +258,28 @@ Consumer는 소비자로써 메세지를 소비하는 주체이다. 역시 Produ
 > Replication 갯수를 많이 할수록 고가용성을 유지하므로 안전할 수 있지만, 그만큼 
 브로커 리소스 사용량도 많아지기 때문에 적절히 사용해야 한다.    
 
-local에 broker 3대를 띄우고(replica-factor=3)로 복제되는 경우를 살펴보자.  
+`일반적으로 Replication 갯수는 3개로 하는 것이 권장되며, 가용성이 매우 중요한 경우 
+5개를 설정하는 경우도 존재하나 브로커 개수를 초과하여 설정할 수 없다.`  
 
-`3대 이상의 브로커를 사용할 때 Replication 갯수를 3개로 하는 것을 추천한다.`      
+`Replication factor를 3개로 지정하면 leader 1개와 follower 2개로 구성되며 각 브로커 서버에 
+분산되어 저장된다.`   
+
+> 즉 브로커 개수가 3대 라면 Replication 갯수는 3개가 최대이다.   
 
 복제는 수평적 스케일 아웃이다. broker 3대에서 하나의 서버만 leader가 되고 
 나머지 둘은 follower 가 된다. producer가 메세지를 쓰고, consumer가 
 메세지를 읽는건 오로지 leader가 전적으로 역할을 담당한다.   
 
-**나머지 follower들의 역할은?**   
+`즉 파티션 마다 반드시 leader와 follower로 나뉘어져서 역할을 수행하게 된다.`   
 
-나머지 follower들은 leader와 싱크를 항상 맞춘다. 해당 option이 있다. 혹시나 
-leader가 죽었을 경우, 나머지 follower 중에 하나가 leader로 선출되어서 
-메세지의 쓰고/읽는 것을 처리한다.   
+** 그렇다면 나머지 follower들의 역할은?**   
 
+`나머지 follower들은 leader 로 부터 메시지를 받아와(polling) 동기화를 수행한다.`   
+
+> leader 가 follower에게 메시지를 전달하는게 아니라 follower가 polling 하여 싱크를 맞추는 방식이다.    
+
+`또한, leader가 죽었을 경우 나머지 follower 중에 하나가 leader로 선출되어서 
+메세지의 쓰고/읽는 것을 처리한다.`      
 
 - - - 
 
