@@ -41,7 +41,7 @@ $ deactivate
 
 ## 2. 카프카 클러스터 구성하기
 
-카프카 클러스터를 구성은 NAT 인스턴스 기반으로 진행할 예정이며, 
+카프카 클러스터 구성은 [NAT 인스턴스](https://docs.aws.amazon.com/ko_kr/vpc/latest/userguide/VPC_NAT_Instance.html) 기반으로 진행할 예정이며, 
 먼저 NAT에 대해서 살펴보자.   
 
 ### 2-1) NAT(Network Address Translation) 란? 
@@ -55,7 +55,7 @@ $ deactivate
 
 집에서 공유기 사용할 때도 NAT 를 사용하게 되며 컴퓨터, 노트북, 핸드폰 등이 연결이 되어 모두 사설 IP로 할당이 되어 있다.     
 `사설 IP로 할당이 되고 외부 인터넷 등을 연결할 때 NAT 가 공인 IP 로 변경해주게 된다.`  
-`그리고 컨텐츠 등을 들고 다시 돌아올때는 이를 사설 IP로 바꿔주게 된다.`    
+`그리고 컨텐츠 등을 들고 다시 돌아올때는 이를 다시 사설 IP로 바꿔주게 된다.`    
 `따라서 NAT가 있음으로써 사설 IP가 외부에 접근하여 돌아오게는 가능하지만, 반대로 외부에서 직접 접근이 불가능하게 하여 보안을 향상 시킬 수 있다.`   
 
 ### 2-2) AWS NAT 인스턴스 기반 카프카 클러스터  
@@ -73,8 +73,14 @@ private subnet 에서 인터넷 연결을 하기 위해 AWS NAT Gateway 서비�
 public subnet을 통해서만 접근이 가능하도록 구성했다.       
 또한, private subnet에 있는 kafka 등이 인터넷 접속이 필요할 때도 동일하게 public subnet을 통해서만 접근이 가능하다.   
 
+<img src="/img/posts/data-engineering/스크린샷 2025-07-28 오후 3.16.58.png">
+
+[링크](https://docs.aws.amazon.com/ko_kr/vpc/latest/userguide/work-with-nat-instances.html)를 참고하여 구성해보자.  
+
 - - -
 
+<https://docs.aws.amazon.com/ko_kr/vpc/latest/userguide/VPC_NAT_Instance.html>   
+<https://docs.aws.amazon.com/ko_kr/vpc/latest/userguide/work-with-nat-instances.html>   
 <https://www.inflearn.com/course/kafka-spark-realtime-datalake/dashboard>   
 
 {% highlight ruby linenos %}
