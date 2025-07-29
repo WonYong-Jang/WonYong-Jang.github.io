@@ -10,7 +10,7 @@ background: '/img/posts/mac.png'
 
 이번 글은 처음 카프카를 접했을 때 가장 이해가 안되고 어려웠던 Consumer Group에 대해서 
 다룰 예정이며 [링크](https://www.popit.kr/kafka-consumer-group/)를 참고하였다.   
-카프카 전반적인 개념은 [이전글](https://wonyong-jang.github.io/kafka/2021/02/09/Kafka-basic-concept.html)을 
+카프카 전반적인 개념은 [이전글](https://wonyong-jang.github.io/kafka/2021/02/09/Kafka-Basic-Concept.html)을 
 참고하자.   
 
 - - - 
