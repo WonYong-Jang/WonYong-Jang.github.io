@@ -77,11 +77,28 @@ public subnet을 통해서만 접근이 가능하도록 구성했다.
 
 [링크](https://docs.aws.amazon.com/ko_kr/vpc/latest/userguide/work-with-nat-instances.html)를 참고하여 구성해보자.  
 
+- - - 
+
+## 3. Confluent Kafka 를 이용하여 파이썬으로 구현하기    
+
+Confluent 사는 실리콘밸리에 있는 빅데이터 회사로, 아파치 카프카의 
+최초 개발자들(Jay Kreps 등)이 설립한 회사이다.    
+
+
+
+아파치 카프카는 자바 클라이언트를 포함하고 있고, Confluent Kafka는 자바 외에 
+다른 언어용 클라이언트도 포함하고 있다.  
+
+
+
+
 - - -
 
 <https://docs.aws.amazon.com/ko_kr/vpc/latest/userguide/VPC_NAT_Instance.html>   
 <https://docs.aws.amazon.com/ko_kr/vpc/latest/userguide/work-with-nat-instances.html>   
-<https://www.inflearn.com/course/kafka-spark-realtime-datalake/dashboard>   
+<https://www.inflearn.com/course/kafka-spark-realtime-datalake/dashboard>  
+<https://docs.confluent.io/kafka-clients/python/current/overview.html>   
+<https://docs.confluent.io/cloud/current/client-apps/examples.html>   
 
 {% highlight ruby linenos %}
 {% endhighlight %}
