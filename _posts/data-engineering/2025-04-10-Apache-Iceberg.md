@@ -231,7 +231,7 @@ WHERE event_date = '2024-10-01';
 
 `Iceberg에서는 사용자가 직접 파티션 열을 지정하지 않아도 Iceberg가 
 내부적으로 파티션을 생성하고 관리한다.`    
-이는 Iceberg의 [Hidden partition](https://wonyong-jang.github.io/bigdata/2024/10/03/Apache-Iceberg-Hidden-Partitioning.html) 기능 덕분이며, 데이터 타입에 따라 자동으로 
+이는 Iceberg의 Hidden partition 기능 덕분이며, 데이터 타입에 따라 자동으로 
 적절한 파티셔닝을 수행하며, 쿼리 시 사용자는 이를 
 인식할 필요가 없다.   
 
