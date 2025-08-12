@@ -142,7 +142,12 @@ $ npm audit fix
 or 
 
 $ npm audit fix --force
+
+
+$ bundle clean --force
+$ bundle install
 ```
+
 
 ## Copyright and License
 
