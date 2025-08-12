@@ -47,9 +47,7 @@ hive를 사용하는 경우는 기존에 hive 생태계를 사용하고 있어�
 
 > hadoop 카탈로그는 production 환경에서는 적절하지 않으며, 테스트시에만 사용하는 것이 권장된다.  
 
-
-
-더 자세한 내용은 [링크](https://wonyong-jang.github.io/bigdata/2024/10/01/Apache-Iceberg.html)에서 확인하자.   
+더 자세한 내용은 [링크](https://wonyong-jang.github.io/data-engineering/2025/04/10/Apache-Iceberg.html)에서 확인하자.   
 
 또한, procedures 와 같이 iceberg에서 제공하는 새로운 sql command를 사용하기 위해 
 spark.sql.extensions을 추가해주었다.   
