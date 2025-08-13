@@ -64,7 +64,7 @@ background: '/img/bg-index.jpg'
 
 #### 쿠팡 Data Intelligence Platform      
 
-> 2021.02.01 ~ 현재 
+> 2021.02.01 ~ 2025.08.01
 
 [Spark Batch 와 Apache Iceberg 테이블을 이용한 데이터 파이프라인]    
 
@@ -241,6 +241,6 @@ background: '/img/bg-index.jpg'
 
 ## 🏫  Education  
 
-- 2012.03 ~ 2018.06 국민대학교 소프트웨어공학과 졸업    
+- 2012.03 ~ 2019.02 국민대학교 소프트웨어공학과 졸업    
 
 

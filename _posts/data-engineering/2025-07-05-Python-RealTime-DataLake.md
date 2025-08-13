@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Python] Kafka & Spark 활용한 Realtime Datalake 구성하기"  
-subtitle: "NAT 인스턴스를 이용한 클러스터 구성 / Confluent Kafka 를 이용하여 파이썬으로 구현하기"   
+title: "[Python] Kafka & Spark 활용한 Realtime Datalake 구성하기 (1)"  
+subtitle: "NAT 인스턴스를 이용한 클러스터 구성 / Confluent Kafka 를 이용하여 파이썬으로 구현 / 아파치 카프카와 Confluent Kafka 의 메커니즘 비교(파티셔너, 옵션)"   
 comments: true
 categories : Data-Engineering   
 date: 2025-07-05
@@ -104,38 +104,117 @@ Zookeepr를 포함하고 있는 Apache Kafka 2.8x, Confluent Platform 6.2x 버�
 
 
 ```python
-from confluent_kafka import Producer
+class SimpleProducer:
 
-conf = {'bootstrap.servers': 'host1:9092,host2:9092'}   
+    def __init__(self, topic, duration=None):
+        self.topic = topic
+        self.duration = duration if duration is not None else 60
+        self.conf = {'bootstrap.servers': BROKER_LST}
 
-producer = Producer(conf)
+        self.producer = Producer(self.conf)
 
-producer.produce(topic, key="key", value="value")
+    # Optional per-message delivery callback (triggered by poll() or flush())
+    # when a message has been successfully delivered or permanently
+    # failed delivery (after retries).
+    def delivery_callback(self, err, msg):
+        if err:
+            sys.stderr.write('%% Message failed delivery: %s\n' % err)
+        else:
+            sys.stderr.write('%% Message delivered to %s [%d] @ %d\n' %
+                             (msg.topic(), msg.partition(), msg.offset()))
 
-def acked(err, msg):
-    if err is not None:
-        print("Failed to deliver message: %s: %s" % (str(msg), str(err)))
-    else:
-        print("Message produced: %s" % (str(msg)))
+    def produce(self):
+        cnt = 0
+        while cnt < self.duration:
+            try:
+                # Produce line (without newline)
+                self.producer.produce(
+                    topic=self.topic,
+                    key=str(cnt),
+                    value=f'hello world: {cnt}',
+                    on_delivery=self.delivery_callback)
 
-producer.produce(topic, key="key", value="value", callback=acked)
+            except BufferError:
+                sys.stderr.write('%% Local producer queue is full (%d messages awaiting delivery): try again\n' %
+                                 len(self.producer))
 
-# Wait up to 1 second for events. Callbacks will be invoked during
-# this method call if the message is acknowledged.
-producer.poll(1)
+            # Serve delivery callback queue.
+            # NOTE: Since produce() is an asynchronous API this poll() call
+            #       will most likely not serve the delivery callback for the
+            #       last produce()d message.
+            self.producer.poll(0)
+            cnt += 1
+            time.sleep(1)  # 1초 대기
+
+        # Wait until all messages have been delivered
+        sys.stderr.write('%% Waiting for %d deliveries\n' % len(self.producer))
+        self.producer.flush()
 ```
 
 `producer는 메시지 전송에 대해서 바로 진행하지 않고 메모리 공간 내에 
-buffer 설정 만큼 쌓아 두었다가 한번에 브로커에 전달한다.`  
+buffer 설정 만큼 쌓아 두었다가 한번에 브로커에 전달한다.`     
 
-그 후 브로커는 정상적으로 메시지를 전달 받았다면 ack 응답을 리턴해준다.  
+> 옵션은 linger.ms 이며, linger의 의미는 꾸물거리다 이다.    
+
+그 후 브로커는 정상적으로 메시지를 전달 받았다면 ack 응답을 리턴해준다.     
+
+`여기서 동기식 방식이라면 ack 응답을 받을 때까지 기다린 후 다음 메시지를 처리하지만 
+비동기 방식이라면 ack 응답을 쌓아두고 주기적으로 한번에 처리하게 된다.`   
+
+`따라서, 비동기 방식일 경우 위의 예시와 같이 반드시 callback 함수를 정의를 해주어야 하며, poll() 호출을 
+통해 callback 결과를 꺼내와야 한다.`      
+
+> 비동기 방식일 경우 poll() 함수를 주기적으로 호출하여 메모리에 쌓인 ack 응답값들을 비워주어야 한다.  
+
+`마지막으로 flush() 함수는 동기식 방식, 비동기방식 모두 프로그램이 끝나기 직전에 호출해주어야 한다.`   
+위에서 buffer 설정 만큼 메모리에 메시지를 쌓아두고 처리를 하게 되는데 
+프로그램 종료 직전에 메시지가 남아 있는 경우 처리를 해주어야 하기 때문이다.   
+
+- - - 
+
+## 4. Producer 메커니즘과 성능   
+
+producer 성능 튜닝 및 옵션 이해를 위해 동작 메커니즘을 이해하는 것이 중요하며, 자바 기반인 아파치 카프카와 Confluent Kafka 를 각각 비교해보자.  
+
+<img src="/img/posts/data-engineering/스크린샷 2025-08-12 오후 5.26.38.png">
+
+> 위의 그림과 같이 자바에서와 confluent kafka 가 사용하는 파티셔너가 다르다.  
+> Accumulator 라는 메모리 객체는 자바에서 부르는 용어이며, Confluent Kafka의 경우 단순히 Queue라 부르나 원리는 동일하다.  
+> Producer가 produce 메서드 호출시(자바에서는 send) 브로커로 즉시 전송되는 것이 아니라 Accumulator에 어느 정도 모은 후 전송한다.    
+
+### 4-1) 자바 기반 apache kafka의 파티셔너 
+
+`자바에서는 DefaultPartitoner 클래스가 기본 지정되며 필요시 Custom Partitoner 를 만들어서 사용이 가능하다.`      
+
+Default Partitioner에서도 메시지 Key가 존재할 때와 null 일때로 나뉜다.   
+
+`메시지 key가 존재할 때는 key 값 기반 hash 알고리즘(murmur2)에 의해 파티션이 결정된다.`   
+
+<img src="/img/posts/data-engineering/스크린샷 2025-08-12 오후 5.55.42.png">   
+
+> 같은 키값은 모두 같은 파티션으로 전달된다.   
+
+`또한, 메시지 key가 null일 경우는 버전에 따라 다르며, 2.4 하위 버전은 라운드 로빈 방식(Round-Robin)이며, 2.4 이상 버전은 유니폼 스티키 파티셔닝(UniformSticky Partitioning) 을 사용하게 된다.`   
+
+<img src="/img/posts/data-engineering/스크린샷 2025-08-12 오후 6.06.07.png">      
+
+여기서 라운드 로빈 방식은 단점이 존재한다.   
+`Kafka 는 성능 향상을 위해 Accumulator에 레코드를 모았다가 전송하는 배치 전송이 기본 방식인데, 라운드 로빈 방식은 파티션을 골고루 채우다보니 개별 파티션이 꽉 찰 때까지 시간이 소요되는 단점이 존재한다`   
+
+이를 개선하기 위해 아파치 카프카 2.4 에 Uniform Sticky 방식이 도입되었다.   
+
+<img src="/img/posts/data-engineering/스크린샷 2025-08-12 오후 6.09.08.png">   
+
+`스티키 방식은 랜덤하게 파티션을 하나 선택해서 먼저 채워나가는 방식이며, 그 다음 채워나갈 파티션 역시 랜덤하게 선택하게 된다.`   
+
+그럼 Accumulator는 브로커로 언제 전송될까?   
+
+`아래 그림으로 이해해보면 각 파티션별로 버스가 있고 버스는 승객(record)가 모두 차야(batch.size) 출발하지만 승객이 모두 차지 않아도 일정 시간이 지나면 출발이 가능하다(linger.ms)`   
+
+<img src="/img/posts/data-engineering/스크린샷 2025-08-12 오후 6.18.23.png">
 
 
-
-```python
-
-```
-
+### 4-2) Confluent Kafka의 파티셔너   
 
 - - -
 
