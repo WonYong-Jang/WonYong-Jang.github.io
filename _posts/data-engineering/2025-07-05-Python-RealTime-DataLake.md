@@ -76,9 +76,7 @@ public subnet을 통해서만 접근이 가능하도록 구성했다.
 
 - - - 
 
-## 3. Confluent Kafka 를 이용하여 파이썬으로 구현하기    
-
-Confluent 사는 실리콘밸리에 있는 빅데이터 회사로, 아파치 카프카의 최초 개발자들(Jay Kreps 등)이 설립한 회사이다.    
+## 3. Confluent Kafka 를 이용하여 파이썬으로 구현하기       
 
 아파치 카프카는 자바로 구현되어 있지만, Client(Producer, Consumer)는 파이썬과 같은 다른 언어로 구현이 가능한 여러 라이브러리가 존재한다.     
 
@@ -93,9 +91,12 @@ Confluent 사는 실리콘밸리에 있는 빅데이터 회사로, 아파치 카
 Zookeepr를 포함하고 있는 Apache Kafka 2.8x, Confluent Platform 6.2x 버전을 사용할 예정이다.       
 
 > 그 이후 버전부터는 Zookeeper를 제외한 KRaft 합의 알고리즘을 사용한다.    
+> Confluent 사는 실리콘밸리에 있는 빅데이터 회사로, 아파치 카프카의 최초 개발자들(Jay Kreps 등)이 설립한 회사이다. 
 
-파이썬은 내부적으로 librdkafka를 활용하여 구동되며, librdkafka 라이브러리는 순수 자바 Kafka 와 비교했을 때 
-옵션에 대해서 차이가 존재 한다.   
+파이썬은 내부적으로 librdkafka를 활용하여 구동되며, librdkafka 라이브러리는 순수 자바 Kafka 와 비교했을 때 옵션에 대해서 차이가 존재 한다.   
+
+> librdkafka는 C 언어를 기반으로 만들어진 라이브러리이다.   
+
 [Broker 옵션](https://docs.confluent.io/platform/current/installation/configuration/broker-configs.html) 과 [Topic 옵션](https://docs.confluent.io/platform/current/installation/configuration/topic-configs.html), 
 [Producer 옵션](https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html), [Consumer 옵션](https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html) 등은 
 기존 아파치 카프카와 다른 옵션이 존재하기 때문에 공식문서를 참고하자.     
@@ -161,10 +162,11 @@ buffer 설정 만큼 쌓아 두었다가 한번에 브로커에 전달한다.`
 `여기서 동기식 방식이라면 ack 응답을 받을 때까지 기다린 후 다음 메시지를 처리하지만 
 비동기 방식이라면 ack 응답을 쌓아두고 주기적으로 한번에 처리하게 된다.`   
 
-`따라서, 비동기 방식일 경우 위의 예시와 같이 반드시 callback 함수를 정의를 해주어야 하며, poll() 호출을 
-통해 callback 결과를 꺼내와야 한다.`      
+`따라서, 비동기 방식일 경우 위의 예시와 같이 반드시 callback 함수를 정의를 해주어야 하며, poll() 호출을 통해 callback 결과를 꺼내와야 한다.`      
 
 > 비동기 방식일 경우 poll() 함수를 주기적으로 호출하여 메모리에 쌓인 ack 응답값들을 비워주어야 한다.  
+
+`자바 기반 아파치 카프카의 경우 send() 함수는 poll 과정이 백그라운드로 수행되기 때문에 직접 구현해줄 필요는 없다.`   
 
 `마지막으로 flush() 함수는 동기식 방식, 비동기방식 모두 프로그램이 끝나기 직전에 호출해주어야 한다.`   
 위에서 buffer 설정 만큼 메모리에 메시지를 쌓아두고 처리를 하게 되는데 
@@ -182,11 +184,37 @@ producer 성능 튜닝 및 옵션 이해를 위해 동작 메커니즘을 이해
 > Accumulator 라는 메모리 객체는 자바에서 부르는 용어이며, Confluent Kafka의 경우 단순히 Queue라 부르나 원리는 동일하다.  
 > Producer가 produce 메서드 호출시(자바에서는 send) 브로커로 즉시 전송되는 것이 아니라 Accumulator에 어느 정도 모은 후 전송한다.    
 
-### 4-1) 자바 기반 apache kafka의 파티셔너 
+
+### 4-1) Producer 성능 관련 파라미터   
+
+Confluent Kafka Python의 전체 파라미터는 [링크](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md)에서 확인 가능하며, 
+자바 기반 아파치 카프카와 옵션을 비교해보자.   
+
+<img src="/img/posts/data-engineering/08-14/스크린샷 2025-08-14 오후 1.31.15.png">    
+
+위 옵션 중 중요한 max.in.flight.requests.per.connection 를 살펴보자.   
+`kafka는 레코드들을 묶어서 전송한다고 했고, 이를 전송시 브로커로부터 응답없이 동시에 전송할 수 있는 요청의 개수이다.`   
+
+`이 설정 값이 5로 설정되어 있다고 할 때, 레코드 묶음 단위(버스)를 전송하다가 중간의 묶음 단위가 실패할 경우 재처리를 진행하게 되며, 이때 순서가 변경될 수 있다.`   
+
+> 이 옵션은 Accumulator 단위가 아니라 파티션 단위 내에서의 레코드의 묶음이 대상이 된다.  
+
+
+또한, `max.request.size 는 Accumulator 단위로 전송 요청시 한번에 보낼 수 있는 최대 레코드의 크기이다.`   
+
+> batch.size는 버스 크기 이며, max.request.size는 브로커로 전달되고 있는 버스들의 총 크기라고 생각하면 된다.    
+
+전체 Producer 내부 구조와 옵션은 아래 그림으로 이해해보자.   
+
+<img src="/img/posts/data-engineering/08-14/스크린샷 2025-08-14 오후 1.31.44.png">
+
+`위에서 레코드의 묶음(버스)를 브로커에 전송했는데, 응답이 오지 않는다면 request.timeout.ms 만큼 기다린 후 retry.backoff.ms 만큼 대기 후 재시도를 하게된다.`   
+
+### 4-2) 자바 기반 apache kafka의 파티셔너 
 
 `자바에서는 DefaultPartitoner 클래스가 기본 지정되며 필요시 Custom Partitoner 를 만들어서 사용이 가능하다.`      
 
-Default Partitioner에서도 메시지 Key가 존재할 때와 null 일때로 나뉜다.   
+Default Partitioner 에서도 메시지 Key가 존재할 때와 null 일때로 나뉜다.   
 
 `메시지 key가 존재할 때는 key 값 기반 hash 알고리즘(murmur2)에 의해 파티션이 결정된다.`   
 
@@ -194,11 +222,11 @@ Default Partitioner에서도 메시지 Key가 존재할 때와 null 일때로 �
 
 > 같은 키값은 모두 같은 파티션으로 전달된다.   
 
-`또한, 메시지 key가 null일 경우는 버전에 따라 다르며, 2.4 하위 버전은 라운드 로빈 방식(Round-Robin)이며, 2.4 이상 버전은 유니폼 스티키 파티셔닝(UniformSticky Partitioning) 을 사용하게 된다.`   
+`반면에 메시지 key가 null일 경우는 버전에 따라 다르며, 2.4 하위 버전은 라운드 로빈 방식(Round-Robin)이며, 2.4 이상 버전은 유니폼 스티키 파티셔닝(Uniform Sticky Partitioning) 을 사용하게 된다.`   
 
 <img src="/img/posts/data-engineering/스크린샷 2025-08-12 오후 6.06.07.png">      
 
-여기서 라운드 로빈 방식은 단점이 존재한다.   
+위의 그림은 라운드 로빈 방식이며, 단점이 존재한다.   
 `Kafka 는 성능 향상을 위해 Accumulator에 레코드를 모았다가 전송하는 배치 전송이 기본 방식인데, 라운드 로빈 방식은 파티션을 골고루 채우다보니 개별 파티션이 꽉 찰 때까지 시간이 소요되는 단점이 존재한다`   
 
 이를 개선하기 위해 아파치 카프카 2.4 에 Uniform Sticky 방식이 도입되었다.   
@@ -214,7 +242,19 @@ Default Partitioner에서도 메시지 Key가 존재할 때와 null 일때로 �
 <img src="/img/posts/data-engineering/스크린샷 2025-08-12 오후 6.18.23.png">
 
 
-### 4-2) Confluent Kafka의 파티셔너   
+### 4-3) Confluent Kafka의 파티셔너   
+
+아파치 카프카와 Confluent Kafka 파티셔너를 비교한 그림을 보면 아래와 같다.   
+
+<img src="/img/posts/data-engineering/08-14/스크린샷 2025-08-14 오후 1.32.04.png">     
+
+### 4-4) 압축 옵션 이해   
+
+`Confluent 공식 사이트에 lz4 압축을 권고하고 있으며, gzip 압축은 권장하지 않고 있다.`  
+이는 cpu 사용율이 높아지는 오버헤드 때문이다.   
+
+압축 사용시 Producer 성능(초당 전송율) 또한 증가하며 Consumer의 수신(초당 수신율) 성능도 향상된다.  
+> 참고로 Consumer는 압축된 메시지, 비압축된 메시지가 섞여 들어와도 문제없이 컨숨이 가능하다.   
 
 - - -
 
