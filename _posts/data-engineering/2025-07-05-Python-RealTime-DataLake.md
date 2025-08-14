@@ -256,6 +256,49 @@ Default Partitioner 에서도 메시지 Key가 존재할 때와 null 일때로 �
 압축 사용시 Producer 성능(초당 전송율) 또한 증가하며 Consumer의 수신(초당 수신율) 성능도 향상된다.  
 > 참고로 Consumer는 압축된 메시지, 비압축된 메시지가 섞여 들어와도 문제없이 컨숨이 가능하다.   
 
+
+### 4-5) Producer 에러 처리 및 정합성 옵션      
+
+아래 그림과 같이 일부 설정값은 Confluent Python에서 제공하지 않거나 
+기본값이 다름에 주의하자.   
+
+<img src="/img/posts/data-engineering/08-14/스크린샷 2025-08-14 오후 3.33.22.png">
+
+`아래 acks 옵션에서 주의해야할 점은 acks를 all로 설정하고, min.insync.replicas 옵션을 1로 설정을 하게 되면 acks 옵션을 1로 설정한 것과 같아지게 된다.`.      
+
+> 일반적으로 min.insync.replicas를 2 로 설정하는 것이 권장 된다.   
+
+<img src="/img/posts/data-engineering/08-14/스크린샷 2025-08-14 오후 3.33.33.png">
+
+timeout 관련된 옵션을 조금 더 자세히 살펴보자.   
+send() 함수를 통해 데이터를 전달하게되면 accumulator에 데이터가 쌓인 후 데이터 묶음으로 브로커에 전달된다.
+
+`이때, accumulator에 메모리 공간이 없다면 max.block.ms 만큼 대기후 데이터를 넣게 된다.`
+`그리고 accumulator에서 데이터 묶음(버스가 다 찬다면)을 채우면 브로커에 전달할 수도 있지만 다 채우지 않고도 linger.ms 지나면 브로커로 전달 된다.`   
+
+`브로커로 전달했는데 request.timeout.ms 만큼 기다려도 응답이 오지 않을 경우 실패로 간주하게 된다.`   
+`실패 했다면 재시도를 하는데 retry 하는 간격은 retry.backoff.ms 만큼 대기하면서 재처리를 지속적으로 시도하게 된다.`   
+
+> 재처리를 지속적으로 한다면 t3 ~ t5 구간이 반복된다.   
+
+`delivery.timeout.ms 는 send()를 호출하고 accumulator에 들어가고 부터 ack 응답을 최종적으로 받기 까지 걸린 시간이다.`
+`이 설정값은 linger.ms + request.timeout.ms + retry.backoff.ms 를 합한 값보다 크게 설정을 해주어야 한다.`.      
+
+<img src="/img/posts/data-engineering/08-14/스크린샷 2025-08-14 오후 3.33.45.png">
+
+`멱등성이라는 것은 여러번 실행해도 결과가 같은것을 의미하며, kafka producer 에서 멱등성이 있다는 것은 여러번 produce를 해도 브로커에 저장된 결과가 동일함을 의미한다.`     
+
+> 아래 그림에서 batch data(0, 1, 2, 3, 4)는 데이터 묶음(버스)를 의미한다.   
+
+<img src="/img/posts/data-engineering/08-14/스크린샷 2025-08-14 오후 3.34.02.png">
+
+`enable.idempotence 옵션을 true로 설정하게 되면 메시지마다 pid와 seq를 이용하여 중복 저장을 방지하고 순서를 보장한다.`   
+단, 이 옵션을 true로 설정하려면 아래와 같은 조건이 필수적이다.
+
+- max.in.flight.requests.per.connection 값을 5 이하로 설정   
+- retires를 0보다 크게 설정 
+- acks를 all로 지정    
+
 - - -
 
 <https://docs.aws.amazon.com/ko_kr/vpc/latest/userguide/VPC_NAT_Instance.html>   
