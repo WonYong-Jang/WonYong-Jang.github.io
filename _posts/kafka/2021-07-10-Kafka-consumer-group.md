@@ -10,7 +10,7 @@ background: '/img/posts/mac.png'
 
 이번 글은 처음 카프카를 접했을 때 가장 이해가 안되고 어려웠던 Consumer Group에 대해서 
 다룰 예정이며 [링크](https://www.popit.kr/kafka-consumer-group/)를 참고하였다.   
-카프카 전반적인 개념은 [이전글](https://wonyong-jang.github.io/kafka/2021/02/09/Kafka-Basic-Concept.html)을 
+카프카 전반적인 개념은 [이전글](https://wonyong-jang.github.io/kafka/2021/02/09/Kafka-basic-concept.html)을 
 참고하자.   
 
 - - - 
@@ -29,7 +29,10 @@ offset을 관리할 수 있도록 제공한다.
 `먼저 컨슈머 그룹이란 컨슈머 인스턴스들을 대표하는 그룹이며, 컨슈머 인스턴스(Consumer Instance)란 
 하나의 프로세스 또는 하나의 서버라고 할 수 있다.`       
 
-> 여기서는 이해를 돕기 위해서 하나의 서버로 표현할 예정이다.   
+> 여기서는 이해를 돕기 위해서 하나의 서버로 표현할 예정이다.  
+> 멀티 쓰레딩으로 다수 컨슈머를 구성하는 것도 가능하며, 최근에는 쿠버네티스 Pod 로 배포하는 것이 
+흔한 아키텍처로 사용되고 있다.   
+> 동일한 group.id를 가진 컨슈머 인스턴스가 추가로 구동되면 Consumer Group에 추가되는 구조이다.   
 
 `또한, Offset이란 파티션안에 데이터 위치를 유니크한 숫자로 표시한 것을 offset이라 부르고, 
     컨슈머는 자신이 어디까지 데이터를 가져갔는지 offset을 이용해서 관리를 한다.`       
