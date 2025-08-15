@@ -178,6 +178,8 @@ and < 2023-01-22;       -- 파티션 변경 후의 day 단위 파티션 기준�
 
 - - -
 
+Reference
+
 <https://tech.kakao.com/posts/656>   
 <https://iceberg.apache.org/docs/latest/partitioning/#icebergs-hidden-partitioning>   
 <https://bigdataenthusiast.medium.com/apache-iceberg-hidden-partitioning-e42762caacae>   

@@ -91,6 +91,8 @@ Reference count(참조 횟수)를 저장`하고 있다.
 
 - - -
 
+Reference
+
 <https://denev6.tistory.com/entry/Generator-coroutine>   
 <https://tibetsandfox.tistory.com/43>   
 

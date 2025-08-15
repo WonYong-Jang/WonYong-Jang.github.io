@@ -426,6 +426,8 @@ select * from "db"."table_name$partitions"
 
 - - -
 
+Reference
+
 <https://www.oreilly.com/library/view/apache-iceberg-the/9781098148614/ch04.html>   
 <https://www.tabular.io/blog/table-maintenance-the-key-to-keeping-your-iceberg-tables-healthy-and-performant/>   
 <https://www.dremio.com/blog/maintaining-iceberg-tables-compaction-expiring-snapshots-and-more/>   

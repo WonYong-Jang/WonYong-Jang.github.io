@@ -158,6 +158,8 @@ S3, HDFS 같은 빅 데이터 플랫폼에 구축된다.`
 
 - - -
 
+Reference
+
 <https://www.biviz.ai/blog/read/?id=179>   
 <http://www.itdaily.kr/news/articleView.html?idxno=208876>   
 <https://www.cloocus.com/press_data-lakehouse-combines-dw-and-dl-advantages/>   

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Python] Kafka & Spark 활용한 Realtime Datalake 구성하기 (1)"  
-subtitle: "NAT 인스턴스를 이용한 클러스터 구성 / Confluent Kafka 를 이용하여 파이썬으로 구현 / 아파치 카프카와 Confluent Kafka 의 메커니즘 비교(파티셔너, 옵션)"   
+subtitle: "NAT 인스턴스를 이용한 클러스터 구성 / Confluent Kafka 를 이용하여 파이썬으로 구현 / 아파치 카프카와 Confluent Kafka 의 Producer 메커니즘 비교(파티셔너, 옵션)"   
 comments: true
 categories : Data-Engineering   
 date: 2025-07-05
@@ -300,6 +300,8 @@ send() 함수를 통해 데이터를 전달하게되면 accumulator에 데이터
 - acks를 all로 지정    
 
 - - -
+
+Reference
 
 <https://docs.aws.amazon.com/ko_kr/vpc/latest/userguide/VPC_NAT_Instance.html>   
 <https://docs.aws.amazon.com/ko_kr/vpc/latest/userguide/work-with-nat-instances.html>   

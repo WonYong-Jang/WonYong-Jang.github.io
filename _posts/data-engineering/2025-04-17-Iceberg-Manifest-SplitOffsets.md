@@ -272,6 +272,8 @@ splitOffsets = [0, 1048576, 2097152] // 각 row group의 시작 위치
 
 - - -
 
+Reference
+
 <https://github.com/apache/iceberg/pull/8834>   
 <https://github.com/apache/iceberg/issues/8863>   
 <https://github.com/apache/iceberg/issues/9689>  

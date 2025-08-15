@@ -380,6 +380,8 @@ Delta Lake 의 경우 Databricks 환경을 사용할 때 권장되며 Spark의 �
 
 - - -
 
+Reference
+
 <https://medium.com/snowflake/understanding-iceberg-table-metadata-b1209fbcc7c3>   
 <https://tech.kakao.com/posts/656>   
 <https://wikidocs.net/228567>   

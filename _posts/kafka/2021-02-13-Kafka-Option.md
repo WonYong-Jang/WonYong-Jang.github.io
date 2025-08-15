@@ -16,7 +16,7 @@ background: '/img/posts/mac.png'
 
 - - - 
 
-## 1. Consumer 주요 옵션   
+## 1. Consumer   
 
 
 Consumer 어플리케이션을 실행할 때 설정해야 할 필수 옵션과 선택 옵션이 있다.   
@@ -102,10 +102,12 @@ read_commited, read_uncommitted로 설정할 수 있다. read_committed로 설�
 파티션에 있는 모든 레코드를 읽는다.     
 기본값은 read_uncommitted이다.    
 
+
+
 - - - 
 
 
-## 2. Producer 주요 옵션   
+## 2. Producer
 
 Producer 동작과 관련된 옵션 중에 필수 옵션과 선택 옵션이 있다.     
 `Producer의 설정값들은 데이터를 브로커에 발송할 때, 발송하는 

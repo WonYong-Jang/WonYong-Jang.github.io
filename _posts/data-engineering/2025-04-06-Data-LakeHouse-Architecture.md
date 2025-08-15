@@ -58,6 +58,8 @@ background: '/img/posts/mac.png'
 
 - - -
 
+Reference
+
 <https://maru-itdeveloper.tistory.com/26>   
 
 {% highlight ruby linenos %}
