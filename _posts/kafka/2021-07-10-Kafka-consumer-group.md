@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Kafka] Apache Kafka Consumer Group"
-subtitle: "컨슈머 그룹을 사용하는 이유와 파티션 수의 관계 / 컨슈머 그룹 리밸런싱(Rebalancing)"       
+subtitle: "컨슈머 그룹을 사용하는 이유와 파티션 수의 관계 / 컨슈머 그룹 리밸런싱(Rebalancing) / Coordinator "       
 comments: true
 categories : Kafka
 date: 2021-07-10
@@ -331,7 +331,12 @@ default는 5분이며, poll() 호출 간의 최대 허용시간이다.
 
 > 다만, 데이터가 중복으로 발생할 수 있다 (at least once)   
 
+- - - 
 
+## 5. Coordinator 
+
+`Coordinator란 특정 Consumer Group을 관리하는 브로커이며 브로커 리스트 중 한대가 선정된다.`   
+`Consumer Group 마다 Coordinator 브로커가 선정되며 선정되는 브로커는 다를 수 있다.`   
 
 
 - - - 
