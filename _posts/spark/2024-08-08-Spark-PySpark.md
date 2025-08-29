@@ -116,7 +116,7 @@ pyspark
 YARN, Kubernetes, Mesos 등을 이용하여 클러스터에 PySpark 어플리케이션을 실행 시킬 때, 
     소스 코드와 사용 라이브러리들이 executor에서 사용될 수 있어야 한다.   
 
-클러스터에서 [python dependencies 를 관리](https://spark.apache.org/docs/latest/api/python/user_guide/python_packaging.html)하기 위한 여러가지 방법이 있다.   
+클러스터에서 [python dependencies 를 관리](https://archive.apache.org/dist/spark/docs/3.4.1/api/python/user_guide/python_packaging.html)하기 위한 여러가지 방법이 있다.   
 
 - Using PySpark Native Features   
 - Using Conda
