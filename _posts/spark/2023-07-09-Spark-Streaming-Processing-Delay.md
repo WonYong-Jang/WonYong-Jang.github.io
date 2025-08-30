@@ -322,7 +322,6 @@ kafka를 통한 저장 방식으로 변경하여 Spark Streaming 에서 많은 �
 따라서, 위에서 언급한 root cause와 이에 따른 action item들을 정리했고  
     action item을 하나씩 작업하여 개선해 나가야 될 것 같다.   
 
-<img src="/img/posts/spark/08-25/스크린샷 2025-08-23 오후 1.04.39.png">
 
 - - - 
 
