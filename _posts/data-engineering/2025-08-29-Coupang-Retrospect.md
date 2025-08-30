@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Retrospect] 쿠팡에서의 회고"  
+title: "[Retrospect] 쿠팡에서의 5년 회고"  
 subtitle: "pyspark environment, spark streaming pipeline"   
 comments: true
 categories : Data-Engineering   
@@ -26,12 +26,14 @@ background: '/img/posts/mac.png'
 
 #### 1-1) Tech Challenge
 
-- RDD 기반의 Spark Streaming을 Dataframe 기반의 Spark Strucutred Streaming으로 전환     
+- RDD 기반의 Spark Streaming을 Dataframe 기반의 Spark Structured Streaming으로 전환    
+- 스트리밍에서 발생하는 DB I/O 최소화    
+    - OLTP 용도로 사용이 필요한 데이터만 DocumentDB 에 저장하며, 그 외에 데이터는 Airbyte 를 이용하여 동기화하도록 전환    
 - Checkpoint를 hdfs에서 s3로 전환   
     - EMR Cluster의 hdfs 를 checkpoint로 사용할 경우 cluster 장애 발생 및 다른 az zone에 클러스터 생성하여 복구시 checkpoint loss 발생   
 - Kinesis firehose를 도입하여 이벤트 단위의 원본데이터 저장  
     - processing 된 데이터와 주기적으로 비교하여 데이터 정합성 확인  
-    - 해당 데이터를 이용하여 데이터 백필 진행 
+    - 해당 데이터를 이용하여 필요시 데이터 백필 진행    
 
 <img src="/img/posts/data-engineering/08-29/스크린샷 2025-08-29 오후 6.07.39.png">   
 
@@ -39,13 +41,14 @@ background: '/img/posts/mac.png'
 
 ## 2. Pyspark Environment
 
-기존에는 airflow 에서 제공하는 SparkSQLOperator을 주로 했었고, 여기서 확인된 문제는 아래와 같다.   
+기존에는 airflow 에서 제공하는 SparkSQLOperator 를 이용하여 Spark를 사용했었고, 
+    여기서 확인된 문제는 아래와 같다.   
 
 #### 2-1) Problem Statement   
 
-- 여러 단계의 변환, 조인이 발생하는 복잡한 쿼리에 대해서는 유지보수가 어려움  
+- 여러 단계의 변환, 조인이 발생하는 복잡한 쿼리에 대해서는 유지보수가 어려움    
+- 모듈화가 어려워서 로직 재사용이 어려움    
 - 컴파일 단계에서 타입, 컬럼 오류 확인이 어려움   
-- 함수화, 모듈화가 어려워서 로직 재사용이 어려움  
 - Spark 의 cache를 활용하여 성능 최적화가 어려움   
 
 #### 2-2) Tech Challenge   
