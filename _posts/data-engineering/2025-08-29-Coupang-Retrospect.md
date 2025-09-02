@@ -19,7 +19,8 @@ background: '/img/posts/mac.png'
 
 - Spark streaming에서의 processing delay 발생     
     - 복잡한 비지니스로 인하여 많은 DB I/O  
-    - RDD 기반이기 때문에 Catalyst Optimizer, AQE 를 통한 성능 향상이 어려움   
+    - RDD 기반이기 때문에 Catalyst Optimizer, Tunsten project, AQE 를 통한 성능 향상이 어려움    
+- 동시성 이슈 및 데이터 순서 보장이 되지 않는 이슈   
 - 재처리 프로세스 및 checkpoint 관리에 대한 이슈      
 - 데이터 정합성 확인이 어려운 구조   
 
@@ -28,18 +29,19 @@ background: '/img/posts/mac.png'
 
 - RDD 기반의 Spark Streaming을 Dataframe 기반의 Spark Structured Streaming으로 전환    
 - 스트리밍에서 발생하는 DB I/O 최소화    
-    - OLTP 용도로 사용이 필요한 데이터만 DocumentDB 에 저장하며, 그 외에 데이터는 Airbyte 를 이용하여 동기화하도록 전환    
+    - OLTP 용도로 사용이 필요한 데이터만 DocumentDB 에 저장하며, 그 외에 데이터는 Airbyte 를 이용하여 동기화하도록 전환     
+- Repartition을 통한 동시성 이슈 해결   
 - Checkpoint를 hdfs에서 s3로 전환   
     - EMR Cluster의 hdfs 를 checkpoint로 사용할 경우 cluster 장애 발생 및 다른 az zone에 클러스터 생성하여 복구시 checkpoint loss 발생   
-- Kinesis firehose를 도입하여 이벤트 단위의 원본데이터 저장  
-    - processing 된 데이터와 주기적으로 비교하여 데이터 정합성 확인  
-    - 해당 데이터를 이용하여 필요시 데이터 백필 진행    
+- Kinesis firehose를 도입하여 이벤트 단위의 원본데이터 저장    
+    - processing 된 데이터와 주기적으로 비교하여 데이터 정합성 확인    
+    - 해당 데이터를 이용하여 필요시 데이터 백필 진행      
 
-<img src="/img/posts/data-engineering/08-29/스크린샷 2025-08-29 오후 6.07.39.png">   
+<img src="/img/posts/data-engineering/08-29/스크린샷 2025-08-29 오후 6.07.39.png">     
 
 - - -   
 
-## 2. Pyspark Environment
+## 2. Pyspark Environment   
 
 기존에는 airflow 에서 제공하는 SparkSQLOperator 를 이용하여 Spark를 사용했었고, 
     여기서 확인된 문제는 아래와 같다.   
