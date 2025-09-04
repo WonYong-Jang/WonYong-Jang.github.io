@@ -57,16 +57,37 @@ background: '/img/posts/mac.png'
 #### 2-2) Tech Challenge   
 
 - Dataframe 기반으로 코드 작성할 수 있는 Pyspark 환경을 구성하여 복잡한 비지니스에 대해서 코드를 효율적을 관리하도록 구성    
+- Airflow 코드와 비지니스 로직을 분리하여 코드 복잡성 감소 및 테스트가 용이한 환경으로 구성   
+    - Airflow DAG 내에서 직접 비지니스 로직을 호출하면 테스트할 때 항상 Airflow Context에 의존해야 함   
+    - 분리하게 되면 Airflow 외에 Pyspark 에서 실행되는 비지니스 로직만 검증이 가능   
 - Trino 커넥션을 이용하여 기본적인 로컬 테스트가 가능하도록 구성   
 - CircleCI 를 통해 각 github 브랜치 별로 독립적으로 실행가능하도록 패키징하여 운영환경에 영향 없이 QA 가능한 구조로 구성   
 
 <img src="/img/posts/data-engineering/08-29/스크린샷 2025-08-29 오후 6.07.05.png">   
 
 
-
 [Python Package Management](https://archive.apache.org/dist/spark/docs/3.4.1/api/python/user_guide/python_packaging.html) 를 참고하여
 [환경 구성](https://wonyong-jang.github.io/spark/2024/08/08/Spark-PySpark.html) 하였다.   
 
+- - - 
+
+## 3. Migrate from hive to iceberg   
+
+#### 3-1) Problem Statement   
+
+- ACID 트랜잭션을 완벽하게 지원하지 않는 문제    
+- 스키마 확장성 미지원 
+    - hive 는 컬럼 이름 기반으로 스키마를 관리하는 반면 iceberg는 각 컬럼럼에 고유한 id를 
+    부여하여 스키마를 관리하기 때문에 유연하고 안전한 스키마 변경이 가능   
+- 과거 데이터에 대한 Tracking이 어려움   
+
+#### 3-2) Tech Challenge
+
+- ACID 트랜잭션을 지원  
+- Schema Evolution 제공   
+- Time Travel & Rollback 을 제공하기 때문에 과거 히스토리 조회 가능   
+- Expire snapshot, Orphan File 을 Daily로 정리해주는 배치를 통해 관리할 수 있도록 하며, 
+    스트리밍처럼 small file이 발생하는 경우도 Daily Compaction을 하도록 관리   
 
 - - -
 
