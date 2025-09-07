@@ -22,7 +22,8 @@ background: '/img/posts/mac.png'
     - RDD 기반이기 때문에 Catalyst Optimizer, Tunsten project, AQE 를 통한 성능 향상이 어려움    
 - 동시성 이슈 및 데이터 순서 보장이 되지 않는 이슈   
 - 재처리 프로세스 및 checkpoint 관리에 대한 이슈      
-- 데이터 정합성 확인이 어려운 구조   
+- 데이터 정합성 확인이 어려운 구조  
+    Auto Detecting 이 아닌 Manual Detecting 으로 데이터 정합성 확인이 가능   
 
 
 #### 1-1) Tech Challenge
@@ -86,8 +87,8 @@ background: '/img/posts/mac.png'
 - ACID 트랜잭션을 지원  
 - Schema Evolution 제공   
 - Time Travel & Rollback 을 제공하기 때문에 과거 히스토리 조회 가능   
-- Expire snapshot, Orphan File 을 Daily로 정리해주는 배치를 통해 관리할 수 있도록 하며, 
-    스트리밍처럼 small file이 발생하는 경우도 Daily Compaction을 하도록 관리   
+- Expire snapshot, Orphan file 을 Daily로 정리해주는 배치를 통해 관리할 수 있도록 하며, 
+    스트리밍처럼 small file이 발생하는 경우도 Compaction을 하도록 관리   
 
 - - -
 
