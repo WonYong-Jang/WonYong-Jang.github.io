@@ -1,0 +1,18 @@
+---
+layout: null
+---
+[
+  {% for post in site.posts %}
+    {
+      "title": {{ post.title | jsonify }},
+      "subtitle": {{ post.subtitle | jsonify }},
+      "content": {{ post.content | strip_html | jsonify }},
+      "excerpt": {{ post.excerpt | strip_html | jsonify }},
+      "url": "{{ site.baseurl }}{{ post.url }}",
+      "date": "{{ post.date | date: '%B %d, %Y' }}",
+      "category": "{{ post.categories | first }}",
+      "tags": "{{ post.tags | join: ', ' }}",
+      "author": "{% if post.author %}{{ post.author }}{% else %}{{ site.author }}{% endif %}"
+    }{% unless forloop.last %},{% endunless %}
+  {% endfor %}
+]
