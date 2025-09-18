@@ -283,6 +283,13 @@ org.apache.spark.sql.catalyst.analysis.HintErrorLogger: Hint (strategy=merge)
 is overridden by another hint and will not take effect.
 ```   
 
+또한 아래 조건을 모르고 사용한다면, Broadcast hash join을 의도하고 사용하더라도
+다른 조인 전략이 선택될 수 있다.   
+
+- `inner join 의 경우는 왼쪽, 오른쪽 테이블 모두 브로드 캐스트 대상이 될 수 있다.`
+- `right outer join 에서 왼쪽 테이블만 브로드캐스트 대상이 된다.`
+- `left outer, left semi, left anti join 에서 오른쪽 테이블만 브로드캐스트 된다.`   
+
 ### 4-3) Partial Manual Broadcast Hash Join     
 
 소수의 키에 데이터가 크게 몰려 있어서 메모리에 올릴 수 없는 경우, 
@@ -297,10 +304,9 @@ is overridden by another hint and will not take effect.
 Broadcast hash 조인과 유사하게 작은 데이터 셋이 전체 워커 노드로 전달 되지만, 
 hash 기반 조인이 아닌, nested loop join이 진행된다.   
 
-데이터 셋이 크다면 굉장히 비효율적인 방식이다.  
+데이터 셋이 크다면 굉장히 비효율적인 방식이다.     
 
-- `right outer join 에서 왼쪽 테이블이 브로드캐스트된다.`      
-- `left outer, left semi, left anti join 에서 오른쪽 테이블이 브로드캐스트 된다.`      
+> 주로 조인을 할 때 비등가 조인을 할 경우 발생한다.   
 
 <img width="352" alt="스크린샷 2024-12-12 오전 8 55 34" src="https://github.com/user-attachments/assets/0e75bb3c-0b34-4514-bd91-7d3347d59edc" />
 
