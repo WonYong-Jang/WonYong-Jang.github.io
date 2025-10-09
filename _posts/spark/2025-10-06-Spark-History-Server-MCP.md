@@ -129,6 +129,10 @@ export SPARK_HISTORY_OPTS="-Dspark.history.fs.logDirectory=/tmp/spark-events"
 ```
 
 ```shell
+# for spark history events dir    
+mkdir -p /tmp/spark-events
+chmod 755 /tmp/spark-events
+
 # Spark History Server Config   
 vi spark/conf/spark-defaults.conf
 
@@ -154,18 +158,35 @@ task --version
 node --version
 ```
 
+#### 2-4) Claude Desktop   
+
+
+```shell
+
+# Claude Desktop log
+cd ~/Library/Logs/Claude
+
+# vi /Users/jang-won-yong/dev/spark-mcp-demo/mcp-apache-spark-history-server/config.yaml
+
+
+# vi ~/Library/Application\ Support/Claude/claude_desktop_config.json
+
+
+```
+
 #### 2-4) Start Testing   
 
 ```shell
 # Setup and start testing
 ### task start-spark-bg            # Start Spark History Server with sample data (default Spark 3.5.5)
-
-# in spark dir
-SPARK_HOME/sbin/start-history-server.sh
-
 # Or specify a different Spark version:
-# task start-spark-bg spark_version=3.5.2
-task start-mcp-bg             # Start MCP Server
+# task start-spark-bg spark_version=3.5.5
+# in spark dir
+# http://localhost:18080
+$SPARK_HOME/sbin/start-history-server.sh
+
+# task start-mcp-bg             # Start MCP Server
+uvx --from mcp-apache-spark-history-server spark-mcp --verbose 2>&1 | tee spark_history.log 
 
 # Optional: Opens MCP Inspector on http://localhost:6274 for interactive testing
 # Requires Node.js: 22.7.5+ (Check https://github.com/modelcontextprotocol/inspector for latest requirements)
