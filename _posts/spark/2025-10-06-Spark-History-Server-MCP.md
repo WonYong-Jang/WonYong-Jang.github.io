@@ -1,26 +1,26 @@
 ---
 layout: post
-title: "[Spark] AWS와 Kubeflow가 제시하는 AI 기반의 디버깅"
-subtitle: "MCP Apache Spark History Server / Model Context Protocol" 
+title: "[Spark] Claude 로 Apache Spark 디버깅 자동화하기 위한 MCP 연동"
+subtitle: "MCP Apache Spark History Server / Check if it can be applied to our work" 
 comments: true
 categories : Spark
 date: 2025-10-06
 background: '/img/posts/mac.png'
 ---
 
-현재 데이터 파이프라인은 갈수록 대규모화되고 있으며, 이를 처리하는 핵심 기술로 Apache Spark가 
-널리 사용되고 있다.   
-하지만 Spark의 대규모 분산 처리구조는 복잡한 구성과 성능 이슈 해결 측면에서 많은 시간과 전문 지식을 요구한다.   
+현재 데이터 파이프라인은 갈수록 대규모화 되고 있으며, 이를 처리하는 핵심 기술로 Apache Spark가 널리 사용되고 있다.   
+하지만 Spark의 대규모 분산 처리 구조는 복잡한 구성과 성능 이슈 해결 측면에서 많은 시간과 전문 지식을 요구한다.   
 특히, Spark에서 ETL 파이프라인 실패나 지연 시 그 원인을 파악하려면 로그, Spark History Server UI, 모니터링 툴 등 다양한 인터페이스를 오가며 수동으로 진단해야 한다.   
 
-Spark의 ETL 작업이 실패할 경우 보통 아래와 같은 트러블 슈팅 과정을 거치게 된다.   
+Spark의 ETL 작업이 실패할 경우 보통 아래와 같은 
+트러블 슈팅 과정을 거치게 된다.   
 
-- Spark History Server UI 접속 
-- Jobs 탭, Stages 탭, Tasks 탭 전환하며 분석   
-- 각 Executor 로그 다운로드 및 검토   
-- 메모리/CPU 그래프 패턴 분석   
-- Stack Overflow, GPT 등을 통한 검색   
-- 해결책 도출 및 적용   
+- Spark History Server UI 접속    
+- Jobs, Stages, Tasks 탭 전환하며 분석   
+- Driver와 각 Executor 로그 확인    
+- 메모리/CPU 등의 메트릭 패턴은 별도의 모니터링 도구(Grafana 등)에서 확인   
+- Stack Overflow, AI 툴 등을 통한 검색    
+- 해결책 도출 및 적용    
 
 하지만 위 과정을 통해서 AWS가 지적한 3가지의 문제는 아래와 같다.   
 
@@ -33,15 +33,51 @@ Spark의 ETL 작업이 실패할 경우 보통 아래와 같은 트러블 슈팅
 - `Lazy evaluation of Spark transformations`   
     - 실행 계획이 복잡하고 로그 상의 연관성이 명확하지 않아 디버깅에 시간과 노력이 많이 든다.   
 
-이러한 한계를 해결하고자 AWS 에서는 Apache Spark History Server 데이터를 AI 기반으로 분석하고 디버깅할 수 있는 MCP 기능을 오픈소스로 
-제공하기 시작했다.   
-이 글에서는 Spark 디버깅의 자동화를 가능하게 해주는 MCP 서버에 대해 살펴보고, 실제 활용 사례와 배포 가이드를 소개한다.   
+> 디버깅하는데 정보들이 파편화되어 있어서 분석 효율이 저하되며, 분산처리를 하기 때문에 
+동일한 문제에 대해서 재현이 어렵고 병목 구간에 대해 쉽게 확인하기 어렵다.    
+> Spark History Server는 문제 해결을 위한 거의 모든 정보를 제공하지만, 
+    어떤 정보가 문제 해결에 필요한지는 알려주지 않기 때문에 엔지니어의 경험과 직관에 크게 의존하게 된다.   
+
+이러한 한계를 해결하고자 AWS 에서는 Apache Spark History Server 데이터를 AI 기반으로 분석하고 디버깅할 수 
+있는 MCP 기능을 [오픈소스](https://github.com/kubeflow/mcp-apache-spark-history-server)로 제공하기 시작했다.   
+
+`이 글에서는 Spark 디버깅의 자동화를 가능하게 해주는 MCP 서버에 대해 살펴보고, 
+    이를 현재 업무에 적용이 가능한지와 적용했을 때의 어떤 이점이 있는지 검증해보려고 한다.`   
 
 - - - 
 
-## 1. 왜 MCP 가 필요할까?    
+## 1. 적용 가능성과 적용시 이점      
 
-Model Context Protocal 는 Anthropic에서 발표한 프로토콜로 AI 와 외부 데이터 소스 및 도구들 간의 
+먼저 PoC를 통해서 로컬에서 Spark History Server를 실행 및 여러 spark job을 제출한다.  
+Spark History Server를 바라보는 MCP를 구성하고 이를 Claude CLI와 연동한다.  
+그 후 slow query, out of memory, data skew, shuffle 병목 등 여러 문제가 발생하는 job을 구성하여 제출 후 
+Claude CLI를 통해 문제 분석 및 해결책을 도출한다.   
+문제 분석 및 도출된 솔루션이 정상적으로 문제를 해결할 수 있는지 확인하게 되면 PoC 는 완료 된다. 
+
+적용 후 예상되는 이점은 아래와 같다.  
+
+- 장애 대응 시간 단축(MTTR 감소)
+    - Claude CLI에서 자연어로 원인 파악 및 해결책 도출    
+        - "Jop spark-xxx 이 왜 OOM이 발생했냐?"   
+        - "Stage 2에서 Task 간 실행 시간 편차가 큰 이유는?"   
+        - "어제 같은 ETL Job과 비교해서 오늘 성능이 저하된 원인은?"   
+- 주기적으로 ETL 성능 리포트 작성하여 확인 필요한 job에 대해서는 slack 알람 전송    
+    - 전일 대비 성능 저하된 Job   
+    - 처리량에 비해 리소스 낭비가 심한 Job(Cost Saving)  
+    - OOM, Data Skew 등 문제가 있는 Job
+    - 가장 느린 Job 상위 5개 선별  
+- 팀 내부 지식베이스 구축   
+    - 자주 발생하는 문제 및 해결책을 바탕으로 팀 위키 작성   
+
+> 위 PoC가 성공적으로 검증되었다면 업무에 적용하기 위해 중앙 MCP 서버를 구성하고 모든 팀원이 
+동일한 서버를 사용할 수 있도록 구성해야 할 것 같다.   
+
+- - - 
+
+
+## 2. 왜 MCP 가 필요할까?    
+
+Model Context Protocol 는 Anthropic에서 발표한 프로토콜로 AI 와 외부 데이터 소스 및 도구들 간의 
 원활한 통합을 가능하게 하는 개방형 프로토콜이다.    
 
 <img src="/img/posts/spark/10-08/스크린샷 2025-10-06 오후 4.43.05.png">   
@@ -62,7 +98,7 @@ Model Context Protocal 는 Anthropic에서 발표한 프로토콜로 AI 와 외�
 MCP 는 다양한 AI 에이전트와 통합 가능하다.  
 
 - Amazon Q Developer CLI
-- Claude Desktop   
+- Claude Desktop, CLI
 - LlamaIndex
 - Strands Agents
 - LangGraph    
@@ -79,21 +115,19 @@ HTTP 프로토콜을 기반으로 MCP 서버를 실행하는 방식이다.
 가장 기본적인 전송 방식으로, 로컬 MCP 서버를 실행할 때 사용된다.   
 `서버와 클라이언트가 같은 시스템 내에서 표준 입출력(STDIO)를 통해 통신한다.`   
 
-> Claude Desktop, Amazon Q CLI, 로컬 테스트 환경 등에 적합하다.   
-
-단점은 서버를 로컬에서 직접 실행해야 한다는 점이다. 
-
+> Claude Desktop, Amazon Q CLI, 로컬 테스트 환경 등에 적합하며, 보통 서버를 로컬에서 직접 실행하게 된다.  
 
 - - - 
 
-## 2. Local Testing Guide   
+## 3. Local Testing Guide   
 
-#### 2-1) Prerequisites   
+#### 3-1) Prerequisites   
 
+- Install Claude    
 - Docker must be running (for Spark History Server)   
 - Python 3.12+ with uv package manager   
 
-#### 2-2) Setup environment   
+#### 3-2) Setup environment   
 
 ```shell
 mkdir spark-mcp-demo
@@ -168,7 +202,7 @@ mcp:
   address: localhost
 ```
 
-#### 2-3) Check installation   
+#### 3-3) Check installation   
 
 정상적으로 모두 설치가 되어 있는지 확인해보자.   
 
@@ -180,9 +214,18 @@ task --version # Optional
 node --version 
 ```
 
-#### 2-4) Test spark-submit    
+#### 3-4) Test spark-submit   
 
-이제 test 할 spark 코드를 작성하여 spark-submit을 해보자.   
+먼저 Spark History Server를 실행해보자.   
+
+```shell
+# Setup and start testing
+# in spark dir
+# http://localhost:18080
+$SPARK_HOME/sbin/start-history-server.sh
+```
+
+그 후 test 할 spark 코드를 작성하여 spark-submit을 해보자.   
 
 ```shell
 vi test_normal.py
@@ -214,24 +257,41 @@ spark.stop()
 환경변수를 지정했다면 spark-submit 명령어만 입력하여 파이썬 파일을 제출할 수 있다.    
 
 ```shell
+# $
 spark/bin/spark-submit test_normal.py   
 ```
 
-#### 2-4) Claude Desktop   
+#### 3-4) Claude Desktop   
 
 [Claude Desktop](https://github.com/kubeflow/mcp-apache-spark-history-server/tree/main/examples/integrations/claude-desktop) 를 참고하여 
-설정하면 된다. 
-
-Claude Desktop의 경우 아래 json 파일에 설정을 추가해주어야 한다.   
+설정하면 되며, 아래와 같이 claude desktop 전용 설정 파일에 추가해주어야 한다.      
 
 ```shell
-# vi ~/Library/Application\ Support/Claude/claude_desktop_config.json
+vi ~/Library/Application\ Support/Claude/claude_desktop_config.json
+
+{
+  "mcpServers": {
+    "mcp-apache-spark-history-server": {
+      "command": "/Users/jang-won-yong/.local/bin/uvx",
+      "args": [
+        "--from",
+        "mcp-apache-spark-history-server",
+        "spark-mcp",
+        "--config",
+        "/Users/jang-won-yong/dev/spark-mcp-demo/mcp-apache-spark-history-server/config.yaml"
+      ],
+      "env": {
+        "SHS_MCP_TRANSPORT": "stdio",
+        "SHS_MCP_DEBUG": "true"
+      }
+    }
+  }
+}
 ```
 
-#### 2-5) Claude CLI   
+#### 3-5) Claude CLI   
 
-Claude Dekstop 외에도 CLI를 통해서 MCP를 연동할 수 있으며, config 파일은 
-절대 경로로 입력해주자.   
+Claude Dekstop 외에도 CLI를 통해서 MCP를 연동할 수 있으며, config 파일은 절대 경로로 입력해주자.   
 
 ```shell
 claude mcp add spark-history -s user -- \
@@ -248,6 +308,9 @@ claude mcp list
 
 # 해당 서버 상세
 claude mcp get spark-history
+
+# 해당 서버 삭제
+claude mcp remove spark-history
 ```
 
 Claude에서 발생하는 로그는 아래 경로에서 확인할 수 있으며, 설정 과정에서 문제가 발생하면 
@@ -258,23 +321,13 @@ Claude에서 발생하는 로그는 아래 경로에서 확인할 수 있으며,
 cd ~/Library/Logs/Claude
 ```
 
-#### 2-4) Start Testing   
+#### 3-4) Start PoC   
 
-```shell
-# Setup and start testing
-# in spark dir
-# http://localhost:18080
-$SPARK_HOME/sbin/start-history-server.sh
+이제 Claude CLI를 통해서 제출된 Spark 어플리케이션을 조회하여 MCP 연동이 
+되었는지 확인해보자.   
 
-# task start-mcp-bg             # Start MCP Server
-uvx --from mcp-apache-spark-history-server spark-mcp --verbose 2>&1 | tee spark_history.log 
 
-# Optional: Opens MCP Inspector on http://localhost:6274 for interactive testing
-# Requires Node.js: 22.7.5+ (Check https://github.com/modelcontextprotocol/inspector for latest requirements)
-task start-inspector-bg       # Start MCP Inspector
 
-# When done, run `task stop-all
-```
 
 - - -
 
