@@ -102,18 +102,13 @@ cd spark-mcp-demo
 git clone https://github.com/kubeflow/mcp-apache-spark-history-server.git
 cd mcp-apache-spark-history-server
 
-# Install Task (if not already installed)
-brew install go-task  # macOS
-# or see https://taskfile.dev/installation/ for other platforms
-
 # Install Python uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
+# vi ./zshrc
+export PATH=$HOME/.local/bin:$PATH
 
 # Install node (for MCP Inspector)
 brew install node
-
-# Setup dependencies
-task install
 
 # Install Spark 3.5.5
 # -f: fail on HTTP erros
@@ -123,46 +118,71 @@ curl -fL -o spark-3.5.5-bin-hadoop3.tgz \
 
 tar -xzf spark-3.5.5-bin-hadoop3.tgz   
 ln -s spark-3.5.5-bin-hadoop3 spark   
-```
+```  
+
+spark 설치를 완료 한 후 spark history server 실행 및 spark-submit을 자유롭게 진행하기 
+위해 아래와 같이 환경 변수를 줄 수도 있다.  
 
 ```shell
 # Spark environment (.zshrc)  
 export SPARK_HOME="$HOME/dev/spark-mcp-demo/spark"
 export PATH="$SPARK_HOME/bin:$SPARK_HOME/sbin:$PATH"
-export SPARK_HISTORY_OPTS="-Dspark.history.fs.logDirectory=/tmp/spark-events"
-```
+```  
+
+그 후 로컬에서 spark history server를 실행하고 관련 데이터를 저장하기 위한 경로를 
+추가해주고, spark 설정을 추가해주면 된다.   
 
 ```shell
 # for spark history events dir    
 mkdir -p /tmp/spark-events
 chmod 755 /tmp/spark-events
+```
 
+```shell
 # Spark History Server Config   
 vi spark/conf/spark-defaults.conf
 
 # Event Log 설정
 spark.eventLog.enabled=true
 spark.eventLog.dir=file:///tmp/spark-events
-spark.eventLog.compress=true
 
 # History Server 설정
 spark.history.fs.logDirectory=file:///tmp/spark-events
 spark.history.ui.port=18080
-spark.history.retainedApplications=50
-spark.history.fs.update.interval=10s
+```
+
+마지막으로 mcp 서버의 config 파일을 작성해주자.   
+mcp-apache-spark-history-server 디렉토리 내에 config.yaml 을 수정하거나,  
+파일이 없다면 새로운 파일로 생성해주면 된다.     
+
+```shell
+servers:
+  local:
+    default: true
+    url: "http://localhost:18080"
+mcp:
+  transports:
+    - stdio
+  port: "18888"
+  debug: true
+  address: localhost
 ```
 
 #### 2-3) Check installation   
 
+정상적으로 모두 설치가 되어 있는지 확인해보자.   
+
 ```shell
-java -version
+java --version
 spark-shell --version
 uv --version
-task --version
-node --version
+task --version # Optional
+node --version 
 ```
 
 #### 2-4) Test spark-submit    
+
+이제 test 할 spark 코드를 작성하여 spark-submit을 해보자.   
 
 ```shell
 vi test_normal.py
@@ -191,33 +211,57 @@ print(f"처리 완료")
 spark.stop()
 ```
 
+환경변수를 지정했다면 spark-submit 명령어만 입력하여 파이썬 파일을 제출할 수 있다.    
+
 ```shell
-spark/bin/spark-submit test_normal.py
+spark/bin/spark-submit test_normal.py   
 ```
 
 #### 2-4) Claude Desktop   
 
+[Claude Desktop](https://github.com/kubeflow/mcp-apache-spark-history-server/tree/main/examples/integrations/claude-desktop) 를 참고하여 
+설정하면 된다. 
+
+Claude Desktop의 경우 아래 json 파일에 설정을 추가해주어야 한다.   
 
 ```shell
-
-# Claude Desktop log
-cd ~/Library/Logs/Claude
-
-# vi /Users/jang-won-yong/dev/spark-mcp-demo/mcp-apache-spark-history-server/config.yaml
-
-
 # vi ~/Library/Application\ Support/Claude/claude_desktop_config.json
+```
 
+#### 2-5) Claude CLI   
 
+Claude Dekstop 외에도 CLI를 통해서 MCP를 연동할 수 있으며, config 파일은 
+절대 경로로 입력해주자.   
+
+```shell
+claude mcp add spark-history -s user -- \
+           uvx --from mcp-apache-spark-history-server spark-mcp \
+           --config /Users/jang-won-yong/dev/spark-mcp-demo/mcp-apache-spark-history-server/config.yaml
+```
+
+위와 같이 mcp 서버를 등록하게 되면 ~/.claude.json 에 추가된 것을 확인할 수 있으며, 
+    아래 명령을 통해 등록된 서버를 확인할 수 있다.   
+
+```shell
+# 등록 서버 목록 
+claude mcp list
+
+# 해당 서버 상세
+claude mcp get spark-history
+```
+
+Claude에서 발생하는 로그는 아래 경로에서 확인할 수 있으며, 설정 과정에서 문제가 발생하면 
+해당 에러로그를 살펴봐야 한다.  
+
+```shell
+# Claude log
+cd ~/Library/Logs/Claude
 ```
 
 #### 2-4) Start Testing   
 
 ```shell
 # Setup and start testing
-### task start-spark-bg            # Start Spark History Server with sample data (default Spark 3.5.5)
-# Or specify a different Spark version:
-# task start-spark-bg spark_version=3.5.5
 # in spark dir
 # http://localhost:18080
 $SPARK_HOME/sbin/start-history-server.sh
