@@ -116,9 +116,13 @@ brew install node
 task install
 
 # Install Spark 3.5.5
-curl -O https://dlcdn.apache.org/spark/spark-3.5.5/spark-3.5.5-bin-hadoop3.tgz
-tar -xzf spark-3.5.5-bin-hadoop3.tgz
-ln -s spark-3.5.5-bin-hadoop3 spark
+# -f: fail on HTTP erros
+# -L: redirect를 통해 자동으로 따라가서 진짜 아카이브를 받아온다.   
+curl -fL -o spark-3.5.5-bin-hadoop3.tgz \ 
+    https://dlcdn.apache.org/spark/spark-3.5.5/spark-3.5.5-bin-hadoop3.tgz   
+
+tar -xzf spark-3.5.5-bin-hadoop3.tgz   
+ln -s spark-3.5.5-bin-hadoop3 spark   
 ```
 
 ```shell
@@ -156,6 +160,39 @@ spark-shell --version
 uv --version
 task --version
 node --version
+```
+
+#### 2-4) Test spark-submit    
+
+```shell
+vi test_normal.py
+```
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder \
+    .appName("TestNormalJob") \
+    .config("spark.eventLog.enabled", "true") \
+    .config("spark.eventLog.dir", "file:///tmp/spark-events") \
+    .getOrCreate()
+
+# 간단한 데이터 처리
+data = [(i, f"user_{i}", i * 10) for i in range(1000)]
+df = spark.createDataFrame(data, ["id", "name", "value"])
+
+result = df.groupBy("name").agg(
+    avg("value").alias("avg_value"),
+    count("*").alias("count")
+)
+
+print(f"처리 완료")
+spark.stop()
+```
+
+```shell
+spark/bin/spark-submit test_normal.py
 ```
 
 #### 2-4) Claude Desktop   
