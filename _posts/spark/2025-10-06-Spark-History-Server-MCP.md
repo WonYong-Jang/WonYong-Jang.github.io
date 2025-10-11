@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[Spark] Claude 로 Apache Spark 디버깅 자동화하기 위한 MCP 연동"
-subtitle: "MCP Apache Spark History Server / Check if it can be applied to our work" 
+title: "[Spark] AI 기반 디버깅 및 최적화를 위한 Apache Spark History Server 용 MCP 연동"
+subtitle: "MCP Server for Apache Spark History Server with AI / Claude CLI / Check if it can be applied to our work" 
 comments: true
 categories : Spark
 date: 2025-10-06
@@ -12,8 +12,7 @@ background: '/img/posts/mac.png'
 하지만 Spark의 대규모 분산 처리 구조는 복잡한 구성과 성능 이슈 해결 측면에서 많은 시간과 전문 지식을 요구한다.   
 특히, Spark에서 ETL 파이프라인 실패나 지연 시 그 원인을 파악하려면 로그, Spark History Server UI, 모니터링 툴 등 다양한 인터페이스를 오가며 수동으로 진단해야 한다.   
 
-Spark의 ETL 작업이 실패할 경우 보통 아래와 같은 
-트러블 슈팅 과정을 거치게 된다.   
+Spark의 ETL 작업이 실패할 경우 보통 아래와 같은 트러블 슈팅 과정을 거치게 된다.   
 
 - Spark History Server UI 접속    
 - Jobs, Stages, Tasks 탭 전환하며 분석   
@@ -33,7 +32,7 @@ Spark의 ETL 작업이 실패할 경우 보통 아래와 같은
 - `Lazy evaluation of Spark transformations`   
     - 실행 계획이 복잡하고 로그 상의 연관성이 명확하지 않아 디버깅에 시간과 노력이 많이 든다.   
 
-> 디버깅하는데 정보들이 파편화되어 있어서 분석 효율이 저하되며, 분산처리를 하기 때문에 
+> 디버깅하는데 정보들이 파편화되어 있어서 분석 효율이 저하되며, Spark는 분산처리를 하기 때문에 
 동일한 문제에 대해서 재현이 어렵고 병목 구간에 대해 쉽게 확인하기 어렵다.    
 > Spark History Server는 문제 해결을 위한 거의 모든 정보를 제공하지만, 
     어떤 정보가 문제 해결에 필요한지는 알려주지 않기 때문에 엔지니어의 경험과 직관에 크게 의존하게 된다.   
@@ -42,34 +41,36 @@ Spark의 ETL 작업이 실패할 경우 보통 아래와 같은
 있는 MCP 기능을 [오픈소스](https://github.com/kubeflow/mcp-apache-spark-history-server)로 제공하기 시작했다.   
 
 `이 글에서는 Spark 디버깅의 자동화를 가능하게 해주는 MCP 서버에 대해 살펴보고, 
-    이를 현재 업무에 적용이 가능한지와 적용했을 때의 어떤 이점이 있는지 검증해보려고 한다.`   
+    이를 현재 업무에 적용이 가능한지와 적용했을 때의 어떤 이점이 있는지 확인할 예정이다.`       
 
 - - - 
 
 ## 1. 적용 가능성과 적용시 이점      
 
-먼저 PoC를 통해서 로컬에서 Spark History Server를 실행 및 여러 spark job을 제출한다.  
-Spark History Server를 바라보는 MCP를 구성하고 이를 Claude CLI와 연동한다.  
-그 후 slow query, out of memory, data skew, shuffle 병목 등 여러 문제가 발생하는 job을 구성하여 제출 후 
+먼저 아래와 같이 PoC 를 진행함으로서 실제 업무에 적용 가능성을 확인해보려고 한다.    
+
+- 로컬에서 Spark History Server를 실행 및 여러 spark job을 제출한다.  
+- Spark History Server를 바라보는 MCP 서버를 구성하고 이를 Claude CLI와 연동한다.  
+- slow query, out of memory, data skew, shuffle 병목 등 여러 문제가 발생하는 job을 구성하여 제출 후 
 Claude CLI를 통해 문제 분석 및 해결책을 도출한다.   
-문제 분석 및 도출된 솔루션이 정상적으로 문제를 해결할 수 있는지 확인하게 되면 PoC 는 완료 된다. 
+- 문제 분석 및 도출된 솔루션을 팀 내에서 리뷰를 진행하여 적용 가능성을 확인한다.  
 
 적용 후 예상되는 이점은 아래와 같다.  
 
-- 장애 대응 시간 단축(MTTR 감소)
+- `장애 복구 시간(Mean Time to Recovery) 단축`
     - Claude CLI에서 자연어로 원인 파악 및 해결책 도출    
         - "Jop spark-xxx 이 왜 OOM이 발생했냐?"   
         - "Stage 2에서 Task 간 실행 시간 편차가 큰 이유는?"   
         - "어제 같은 ETL Job과 비교해서 오늘 성능이 저하된 원인은?"   
-- 주기적으로 ETL 성능 리포트 작성하여 확인 필요한 job에 대해서는 slack 알람 전송    
+- `주기적으로 ETL 성능 리포트 작성하여 확인 필요한 job에 대해서는 slack 알람 전송`      
     - 전일 대비 성능 저하된 Job   
-    - 처리량에 비해 리소스 낭비가 심한 Job(Cost Saving)  
-    - OOM, Data Skew 등 문제가 있는 Job
-    - 가장 느린 Job 상위 5개 선별  
-- 팀 내부 지식베이스 구축   
+    - 처리량에 비해 리소스 낭비가 심한 Job (확인 가능하다면 Cost Saving 가능)  
+    - OOM, Data Skew 등 문제가 있는 Job   
+    - 가장 느린 Job 상위 5개 선별   
+- `팀 내부 지식베이스 구축`     
     - 자주 발생하는 문제 및 해결책을 바탕으로 팀 위키 작성   
 
-> 위 PoC가 성공적으로 검증되었다면 업무에 적용하기 위해 중앙 MCP 서버를 구성하고 모든 팀원이 
+> 위 PoC가 성공적으로 검증 되었다면 업무에 적용하기 위해 중앙 MCP 서버를 구성하고 모든 팀원이 
 동일한 서버를 사용할 수 있도록 구성해야 할 것 같다.   
 
 - - - 
@@ -123,7 +124,7 @@ HTTP 프로토콜을 기반으로 MCP 서버를 실행하는 방식이다.
 
 #### 3-1) Prerequisites   
 
-- Install Claude    
+- Install Claude CLI or Desktop    
 - Docker must be running (for Spark History Server)   
 - Python 3.12+ with uv package manager   
 
@@ -138,7 +139,7 @@ cd mcp-apache-spark-history-server
 
 # Install Python uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
-# vi ./zshrc
+# vi ./zshrc 환경 변수 추가  
 export PATH=$HOME/.local/bin:$PATH
 
 # Install node (for MCP Inspector)
@@ -163,8 +164,8 @@ export SPARK_HOME="$HOME/dev/spark-mcp-demo/spark"
 export PATH="$SPARK_HOME/bin:$SPARK_HOME/sbin:$PATH"
 ```  
 
-그 후 로컬에서 spark history server를 실행하고 관련 데이터를 저장하기 위한 경로를 
-추가해주고, spark 설정을 추가해주면 된다.   
+그 후 로컬에서 Spark History Server 의 데이터를 저장할 경로와 권한을 
+추가해준다.     
 
 ```shell
 # for spark history events dir    
@@ -172,9 +173,11 @@ mkdir -p /tmp/spark-events
 chmod 755 /tmp/spark-events
 ```
 
+spark 실행시 config 파일은 아래와 같이 추가해준다.   
+
 ```shell
 # Spark History Server Config   
-vi spark/conf/spark-defaults.conf
+vi $SPARK_HOME/conf/spark-defaults.conf
 
 # Event Log 설정
 spark.eventLog.enabled=true
@@ -185,7 +188,7 @@ spark.history.fs.logDirectory=file:///tmp/spark-events
 spark.history.ui.port=18080
 ```
 
-마지막으로 mcp 서버의 config 파일을 작성해주자.   
+마지막으로 MCP 서버의 config 파일을 작성해주자.     
 mcp-apache-spark-history-server 디렉토리 내에 config.yaml 을 수정하거나,  
 파일이 없다면 새로운 파일로 생성해주면 된다.     
 
@@ -210,16 +213,15 @@ mcp:
 java --version
 spark-shell --version
 uv --version
-task --version # Optional
-node --version 
+task --version # Optional  
+node --version # Optional  
 ```
 
 #### 3-4) Test spark-submit   
 
-먼저 Spark History Server를 실행해보자.   
+Spark History Server를 실행해보자.   
 
 ```shell
-# Setup and start testing
 # in spark dir
 # http://localhost:18080
 $SPARK_HOME/sbin/start-history-server.sh
@@ -257,8 +259,7 @@ spark.stop()
 환경변수를 지정했다면 spark-submit 명령어만 입력하여 파이썬 파일을 제출할 수 있다.    
 
 ```shell
-# $
-spark/bin/spark-submit test_normal.py   
+$SPARK_HOME/bin/spark-submit test_normal.py   
 ```
 
 #### 3-4) Claude Desktop   
@@ -299,7 +300,7 @@ claude mcp add spark-history -s user -- \
            --config /Users/jang-won-yong/dev/spark-mcp-demo/mcp-apache-spark-history-server/config.yaml
 ```
 
-위와 같이 mcp 서버를 등록하게 되면 ~/.claude.json 에 추가된 것을 확인할 수 있으며, 
+위와 같이 MCP 서버를 등록하게 되면 ~/.claude.json 에 추가된 것을 확인할 수 있으며, 
     아래 명령을 통해 등록된 서버를 확인할 수 있다.   
 
 ```shell
@@ -321,13 +322,111 @@ Claude에서 발생하는 로그는 아래 경로에서 확인할 수 있으며,
 cd ~/Library/Logs/Claude
 ```
 
-#### 3-4) Start PoC   
+- - -
 
-이제 Claude CLI를 통해서 제출된 Spark 어플리케이션을 조회하여 MCP 연동이 
-되었는지 확인해보자.   
+## 4. Proof of Concept      
+
+Claude CLI를 통해서 제출된 Spark 어플리케이션을 조회하여 MCP 연동이 
+되었는지 확인해보고 여러 케이스에 대해서 문제 분석과 적절한 해결책을 도출해주는지 
+확인해보자. 
+
+> PoC는 로컬에서 진행하기 때문에 Spark의 Driver만을 사용한다.    
 
 
+#### 4-1) 정상적인 Job   
 
+먼저 Claude CLI 를 이용하여 Spark History Server에 제출된 어플리케이션들을 아래와 같이 조회할 수 있다.  
+
+```
+> Spark History Server에서 어플리케이션들을 조회해줘.
+
+⏺ Spark History Server에서 애플리케이션 목록을 조회하겠습니다.
+  ⎿  {
+       "id": "local-1760161598647",
+       "name": "TestNormalJob",
+     … +17 lines (ctrl+o to expand)
+
+⏺ Spark History Server에 등록된 애플리케이션 목록입니다:
+
+  애플리케이션 정보
+
+  Application ID: local-1760161598647이름: TestNormalJob사용자: jang-won-yongSpark 버전: 3.5.5
+
+  실행 정보:
+  - 시작 시간: 2025-10-11 05:46:37 (GMT)
+  - 종료 시간: 2025-10-11 05:46:44 (GMT)
+  - 실행 시간: 6.9초
+  - 상태: 완료됨
+
+  현재 1개의 완료된 애플리케이션이 조회되었습니다. 이 애플리케이션에 대해 더 자세한 정보(jobs,
+  stages, executors 등)를 확인하시겠습니까?
+```
+
+> MCP 서버에서 제공하는 list_applications 를 이용하여 현재 어플리케이션들을 조회한 것을 확인할 수 있다.   
+
+조회된 어플리케이션을 자세히 분석해달라는 요청을 하게 되면 여러 방면으로 분석 후 결과를 제공해주게 된다.  
+
+#### 4-2) 처리량에 비해 리소스 낭비가 심한 Job   
+
+`Spark에서 데이터 처리량에 비해서 cpu, memory 등의 리소스를 너무 과도하게 사용하게 될 경우 
+비용 낭비로 이어질 수 있다.`     
+따라서, 이런 경우를 재현해보고 MCP 서버를 통해 문제 분석과 적절한 리소스 설정을 
+가이드 받아 보자.    
+
+```shell
+spark-submit \
+    --master local[8] \
+    --driver-memory 4g \
+    --executor-memory 4g \
+    --executor-cores 4 \
+    test_inefficient_resources.py
+```
+
+재현 코드는 아래와 같다.  
+
+```python                                                                                   46,1          Bot
+"""
+리소스는 과도하게 사용하지만 실제 처리량은 매우 적은 PySpark Job
+- 과도한 executor 메모리/CPU 할당
+- 극소량의 데이터만 처리
+- 대부분의 리소스가 idle 상태
+- 비용 대비 처리량이 극히 낮음
+"""
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col
+import time
+
+# 실제 처리량은 적지만 리소스는 과도하게 할당
+spark = SparkSession.builder \
+    .appName("Resource_Waste_Job") \
+    .getOrCreate()
+
+
+print("\n[데이터 로딩] 극소량 데이터 생성 중...")
+tiny_data = [(i, f"data_{i}", i * 10) for i in range(50)]  # 단 50개 row!
+df = spark.createDataFrame(tiny_data, ["id", "name", "amount"])
+
+print(f"처리할 데이터: {df.count()} rows")
+print(f"데이터 크기: 약 {len(str(tiny_data))} bytes")
+
+print("\n[작업 1] 간단한 필터링...")
+filtered = df.filter(col("amount") > 100)
+result_count = filtered.count()
+print(f"필터링 결과: {result_count} rows")
+
+print("\n[작업 2] 간단한 집계...")
+total = df.groupBy().sum("amount").collect()[0][0]
+print(f"총합: {total}")
+
+# 하지만 Job은 오래 실행되면서 리소스 점유
+for i in range(60, 0, -10):
+    print(f"  남은 시간: {i}초...")
+    time.sleep(10)
+
+print("Job 종료")
+spark.stop()
+```
 
 - - -
 
