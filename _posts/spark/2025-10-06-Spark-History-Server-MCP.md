@@ -384,15 +384,8 @@ spark-submit \
 
 재현 코드는 아래와 같다.  
 
-```python                                                                                   46,1          Bot
-"""
-리소스는 과도하게 사용하지만 실제 처리량은 매우 적은 PySpark Job
-- 과도한 executor 메모리/CPU 할당
-- 극소량의 데이터만 처리
-- 대부분의 리소스가 idle 상태
-- 비용 대비 처리량이 극히 낮음
-"""
 
+```python
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 import time
