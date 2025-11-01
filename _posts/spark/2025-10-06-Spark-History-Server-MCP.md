@@ -47,36 +47,6 @@ Spark의 ETL 작업이 실패할 경우 보통 아래와 같은 트러블 슈팅
 
 - - - 
 
-## 1. 적용 가능성과 적용시 이점      
-
-먼저 아래와 같이 PoC 를 진행함으로서 실제 업무에 적용 가능성을 확인해보려고 한다.    
-
-- 로컬에서 Spark History Server를 실행 및 여러 spark job을 제출한다.  
-- Spark History Server를 바라보는 MCP 서버를 구성하고 이를 Claude CLI와 연동한다.  
-- slow query, out of memory, data skew, shuffle 병목 등 여러 문제가 발생하는 job을 구성하여 제출 후 
-Claude CLI를 통해 문제 분석 및 해결책을 도출한다.   
-- 문제 분석 및 도출된 솔루션을 팀 내에서 리뷰를 진행하여 적용 가능성을 확인한다.  
-
-적용 후 예상되는 이점은 아래와 같다.  
-
-- `장애 복구 시간(Mean Time to Recovery) 단축`
-    - Claude CLI에서 자연어로 원인 파악 및 해결책 도출    
-        - "Jop spark-xxx 이 왜 OOM이 발생했냐?"   
-        - "Stage 2에서 Task 간 실행 시간 편차가 큰 이유는?"   
-        - "어제 같은 ETL Job과 비교해서 오늘 성능이 저하된 원인은?"   
-- `주기적으로 ETL 성능 리포트 작성하여 확인 필요한 job에 대해서는 slack 알람 전송`      
-    - 전일 대비 성능 저하된 Job   
-    - 처리량에 비해 리소스(cpu, memory 등) 과다 할당 Job (확인 가능하다면 Cost Saving 가능)    
-    - OOM, Data Skew 등 문제가 있는 Job   
-    - 가장 느린 Job 상위 5개 선별   
-- `팀 내부 지식베이스 구축`     
-    - 자주 발생하는 문제 및 해결책을 바탕으로 팀 위키 작성   
-
-> 위 PoC가 성공적으로 검증 되었다면 업무에 적용하기 위해 중앙 MCP 서버를 구성하고 모든 팀원이 
-동일한 서버를 사용할 수 있도록 구성해야 할 것 같다.   
-
-- - - 
-
 ## 1. 왜 MCP 가 필요할까?    
 
 Model Context Protocol 는 Anthropic에서 발표한 프로토콜로 AI 와 외부 데이터 소스 및 도구들 간의 
