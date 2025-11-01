@@ -463,12 +463,33 @@ spark.stop()
 ```
 
 #### 4-3) Out of Memory가 발생하는 경우    
-
-
 #### 4-4) Data Spill 문제가 발생하는 경우    
-
-
 #### 4-5) Data Skew 문제가 발생하는 경우   
+
+
+- - -
+
+## 5. DataFlint   
+
+DataFlint는 Apache Spark의 성능 모니터링 및 디버깅을 단순화하는 오픈소스 도구로, 기존 Spark Web UI에 
+직관적인 탭을 추가하여 복잡한 메트릭을 이해하기 쉬운 형태로 제공한다.   
+
+Spark History Server가 DataFlint 기능을 UI에 추가하기 위한 설정은 아래와 같이 
+DataFlint 패키지 설치 및 설정 파일을 추가해준다.   
+
+```shell
+wget https://repo1.maven.org/maven2/io/dataflint/spark_2.12/0.5.1/spark_2.12-0.5.1.jar
+```
+
+##### $SPARK_HOME/conf/spark-defaults.conf   
+
+```shell
+# ==============================
+# DataFlint 플러그인 설정 (추가)
+# ==============================
+spark.plugins io.dataflint.spark.SparkDataflintPlugin
+spark.jars /opt/spark/jars/spark_2.12-0.5.1.jar
+```
 
 
 
