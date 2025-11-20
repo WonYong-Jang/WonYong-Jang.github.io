@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] On Kubernetes"   
-subtitle: "EMR Cluster 에서의 Spark와 비교 / EKS(Elastic Kubernetes Service)"       
+subtitle: "EMR Cluster 에서의 Spark와 비교 / Spark on Yarn 과 Spark on K8s 비교"       
 comments: true   
 categories : Spark   
 date: 2024-03-03   
@@ -99,6 +99,16 @@ DataFrame, Dataset 에서 shuffle이 발생하는 연산에서 파티션 개수�
 ('conf', 'spark.executor.memoryOverhead=3G'), # (executor-memory) * 20% => 14G * 20% => 3G   
 ('conf', 'spark.default.parallelism=1200')    # (num-executors) * (executor-cores) => 300 * 4 
 ```
+
+- - -   
+
+## 3. Remote Shuffle Service(RSS)
+
+Spark의 shuffle 데이터는 기본적으로 executor 로컬 디스크에 저장되기 때문에 executor가 
+사라지면(Preemption, Scale in, Incident) 데이터가 함께 사라진다.   
+
+따라서, 이를 해결하기 위해서 Spark는 External / Remote Shuffle Service 를 도입하였다.  
+
 
 
 - - - 
