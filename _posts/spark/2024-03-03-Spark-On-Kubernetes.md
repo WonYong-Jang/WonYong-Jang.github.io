@@ -109,6 +109,8 @@ Spark의 shuffle 데이터는 기본적으로 executor 로컬 디스크에 저�
 
 따라서, 이를 해결하기 위해서 Spark는 External / Remote Shuffle Service 를 도입하였다.  
 
+클러스터 매니저 중 하나인 Yarn은 자체적으로 리소스 매니저가 External Shuffle Service 를 제공해주지만 
+K8s의 경우는 별도의 Shuffle Manager 가 존재하지 않는다.   
 
 
 - - - 
