@@ -10,9 +10,9 @@ background: '/img/posts/mac.png'
 
 현재 데이터 파이프라인은 갈수록 대규모화 되고 있으며, 이를 처리하는 핵심 기술로 Apache Spark가 널리 사용되고 있다.   
 하지만 Spark의 대규모 분산 처리 구조는 복잡한 구성과 성능 이슈 해결 측면에서 많은 시간과 전문 지식을 요구한다.   
-특히, Spark에서 ETL 파이프라인 실패나 지연 시 그 원인을 파악하려면 로그, Spark History Server UI, 모니터링 툴 등 다양한 인터페이스를 오가며 수동으로 진단해야 한다.   
+특히, Spark에서 파이프라인 실패나 지연 시 그 원인을 파악하려면 로그, Spark History Server UI, 모니터링 툴 등 다양한 인터페이스를 오가며 수동으로 진단해야 한다.     
 
-Spark의 ETL 작업이 실패할 경우 보통 아래와 같은 트러블 슈팅 과정을 거치게 된다.   
+Spark의 작업이 실패할 경우 보통 아래와 같은 트러블 슈팅 과정을 거치게 된다.   
 
 - Spark History Server UI 접속    
 - Jobs, Stages, Tasks 탭 전환하며 분석   
@@ -21,12 +21,12 @@ Spark의 ETL 작업이 실패할 경우 보통 아래와 같은 트러블 슈팅
 - Stack Overflow, AI 툴 등을 통한 검색    
 - 해결책 도출 및 적용    
 
-하지만 위 과정을 통해서 AWS가 지적한 3가지의 문제는 아래와 같다.   
+하지만 위 과정을 통해서 AWS가 지적한 3가지의 문제는 아래와 같다.     
 
 - `Complex connectivity and configuration options to a variety of resources with Spark`     
-    - Spark는 다양한 리소스와 연결되어 있으며, 그로 인해 설정이 최적화되지 않거나 올바르게 구성되지 않았을 때 실패의 근본 원인을 찾기가 어렵다.    
+    - Spark는 다양한 리소스와 연결되어 있으며, 그로 인해 설정이 최적화되지 않거나 올바르게 구성되지 않았을 때 실패의 근본 원인을 찾기가 어렵다.     
 
-- `Spark's in-memory processing model and distributed partitioning of datasets across its workers`   
+- `Spark's in-memory processing model and distributed partitioning of datasets across its workers`    
     - 인메모리 처리와 분산처리를 진행하기에 각 워커의 리소스가 파편화되어 병목 구간을 쉽게 확인하기 어렵다.    
 
 - `Lazy evaluation of Spark transformations`   
@@ -58,7 +58,46 @@ Model Context Protocol 는 Anthropic에서 발표한 프로토콜로 AI 와 외�
 실제 운영 데이터가 아닌 일반적인 권장사항을 제공했다.`   
 
 `MCP 활성화한 AI는 실제 운영 데이터 기반 인사이트를 제공이 가능하기 때문에 
-일반적인 모범 사례가 아닌 실제 운영 데이터 기반으로 분석하여 최적화를 해줄 수 있게 된다.`     
+일반적인 모범 사례가 아닌 실제 운영 데이터 기반으로 분석하여 디버깅 또는 최적화를 해줄 수 있게 된다.`    
+
+여러가지 사례를 살펴보자.   
+
+#### 1-1) 간헐적 DB Connection 실패    
+
+최근 변경사항이 없는 Spark 배치에서 간헐적으로 아래와 같은 에러가 발생하였다.   
+해당 배치는 DocumentDB 를 조회하여 처리하는 배치이며, 실패를 하더라도 Airflow 에서 재시도를 하게 되면 
+정상적으로 실행 되었다.    
+간헐적으로 실패가 발생하는 점과 아래 에러 로그만 봤을 때 DB Connection Pool 및 Timeout 설정을 점검하고 
+변경하는 것으로 문제 해결을 시도했다.   
+
+```
+java.sql.SQLException: Communications link failure
+sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+Caused by: java.net.SocketTimeoutException: connect timed out
+```
+
+`하지만, 설정 변경으로 해결되지 않았고 실패한 Job 들의 executor IP 대역이 동일하다는 패턴을 
+확인하고서야 네트워크 설정 문제임을 확인했다.`   
+
+최근에 인프라팀에서 새로운 subnet 대역이 추가되었고, 새로운 subnet 에서 DocumentDB로의 NACL outbound 트래픽이 
+차단되어 있음을 확인했다.  
+
+> Airflow 재시도 시 정상적인 subnet에 할당 되어 성공했었다.     
+
+위 상황에서 MCP 가 구성되어 있었다면 빠르게 원인 파악이 되지 않았을까?   
+
+```
+최근 실패한 Job들과 성공한 Job들을 비교하여 실패 원인을 분석해줘.
+```
+
+#### 1-2) spark.sql.files.maxPartitionBytes 증가와 함정  
+
+일반적인 권장사항은 Task 수를 줄이고 처리량을 높이려면 maxPartitionBytes를 128MB 
+
+#### 1-3) spark.memory.fraction 증가와 함정   
+
+
+
 
 > 예를 들어, 일반적으로 권장되는 Spark 설정(spark.sql.shuffle.partitions 변경 등)이 운영 환경에 따라 비효율적일 수 있는데, 
     MCP 기반 AI는 실제 Stage 별 Task 시간, Executor 메모리 사용량, Shuffle read/write 사이즈 등을 분석하여 최적의 옵션을 제안할 수 있다.    
