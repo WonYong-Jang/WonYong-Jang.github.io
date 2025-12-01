@@ -121,9 +121,18 @@ def maxSplitBytes(
   val totalBytes = selectedPartitions.flatMap(_.files.map(_.getLen + openCostInBytes)).sum
   val bytesPerCore = totalBytes / minPartitionNum
 
-  Math.min(defaultMaxSplitBytes, Math.max(openCostInBytes, bytesPerCore))
+  Math.min(
+          defaultMaxSplitBytes, // spark.sql.files.maxPartitionBytes   
+          Math.max(
+              openCostInBytes,  // spark.sql.files.openCostInBytes   
+              bytesPerCore      // totalBytes / minPartitionNum 
+          )
+  )
 }
-```
+```  
+
+`위 코드를 보게 되면, spark.sql.files.maxPartitionBytes 설정 외에도 maxSplitBytes를 
+구하기 위한 조건을 확인할 수 있다.`      
 
 ```
 # 변수명 : Spark 설정값에 대한 metadata
@@ -143,13 +152,13 @@ minPartitionNum
 변수 minPartitionNum 은 별도의 설정이 없다면 spark.default.parallelism 갯수와 
 동일하다.   
 
-즉, 해당 개수가 데이터 사이즈에 비해 너무 많다면 bytesPerCore 값이 작아질 것이다.   
+즉, minPartitionNum 개수가 데이터 사이즈에 비해 너무 크다면 bytesPerCore 값이 작아질 것이다.   
 
 > bytesPerCore = totalBytes / minPartitionNum    
 
-결국 코드 마지막 라인에서 최종적으로 결정될 maxSplitBytes 의 return 값이 
+`결국 코드 마지막 라인에서 최종적으로 결정될 maxSplitBytes 의 return 값이 
 4MB (default openCostInBytes) ~ 128MB(default maxPartitoinBytes) 사이의 
-값이 될 수도 있는 것이다.    
+값이 될 수도 있는 것이다.`       
 
 `따라서 확실하게 spark.sql.files.maxPartitionBytes 값이 
 maxSplitBytes로 사용되길 원한다면 spark.sql.files.minPartitionNum 값도 

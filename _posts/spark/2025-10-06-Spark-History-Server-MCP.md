@@ -82,7 +82,7 @@ Caused by: java.net.SocketTimeoutException: connect timed out
 최근에 인프라팀에서 새로운 subnet 대역이 추가되었고, 새로운 subnet 에서 DocumentDB로의 NACL outbound 트래픽이 
 차단되어 있음을 확인했다.  
 
-> Airflow 재시도 시 정상적인 subnet에 할당 되어 성공했었다.     
+> 재시도 시 Spark가 정상적인 subnet에 할당 되어 성공했었다.     
 
 위 상황에서 MCP 가 구성되어 있었다면 빠르게 원인 파악이 되지 않았을까?   
 
@@ -92,15 +92,35 @@ Caused by: java.net.SocketTimeoutException: connect timed out
 
 #### 1-2) spark.sql.files.maxPartitionBytes 증가와 함정  
 
-일반적인 권장사항은 Task 수를 줄이고 처리량을 높이려면 maxPartitionBytes를 128MB 
+spark.sql.files.maxPartitionBytes 는 Spark가 파일을 읽을 때 하나의 파티션에 할당할 수 있는 
+최대 바이트 수를 정의한다.   
+기본값은 128MB이며, 이 값을 조정하여 Task 수와 병렬 처리량을 제어할 수 있다.  
+
+많은 문서에서 해당 설정만으로 파일을 읽을 때 파티션의 크기를 결정할 수 있을 것처럼 
+설명하지만 아래 설정과 함께 봐야 한다.   
+
+- spark.sql.files.openCostInBytes (default: 4MB)   
+- spark.sql.files.minPartitionNum (default: spark.default.parallelism)   
+
+아래 코드를 확인해보면, spark.sql.files.maxPartitionBytes 설정만으로 파일을 
+읽을 때 파티션의 크기가 의도대로 조절되지 않을 수 있음을 알 수 있다.    
+
+```scala
+maxSplitBytes = Math.min(
+    defaultMaxSplitBytes,  // spark.sql.files.maxPartitionBytes
+    Math.max(
+        openCostInBytes,   // spark.sql.files.openCostInBytes
+        bytesPerCore       // totalBytes / minPartitionNum
+    )
+)
+``` 
+
 
 #### 1-3) spark.memory.fraction 증가와 함정   
 
 
 
 
-> 예를 들어, 일반적으로 권장되는 Spark 설정(spark.sql.shuffle.partitions 변경 등)이 운영 환경에 따라 비효율적일 수 있는데, 
-    MCP 기반 AI는 실제 Stage 별 Task 시간, Executor 메모리 사용량, Shuffle read/write 사이즈 등을 분석하여 최적의 옵션을 제안할 수 있다.    
 
 즉, 기존처럼 UI를 탐색하지 않아도 자연어로 spark-abcd 잡이 왜 실패했는가? 라고 묻는 것만으로도 AI가 
 로그, 실행 시간, 리소스 소비 내역 등을 종합 분석해 근본 원인을 알려준다.   
