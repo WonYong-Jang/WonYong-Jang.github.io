@@ -115,6 +115,8 @@ maxSplitBytes = Math.min(
 )
 ``` 
 
+spark.sql.files.minPartitionNum 을 설정하지 않으면 spark.default.parallelism(default: executor 갯수 x core 갯수) 
+    설정을 바라보게 되고, 해당 값은 실제 운영 환경 마다 다르다.   
 
 #### 1-3) spark.memory.fraction 증가와 함정   
 
