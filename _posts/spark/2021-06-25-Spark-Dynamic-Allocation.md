@@ -137,7 +137,13 @@ spark.dynamicAllocation.schedulerBacklogTimeout
 
 `다른 곳에서 먼저 리소스를 선점해 버리면, 리소스가 반환될 때까지 
 대기해야 하기 때문에 중요한 작업이라면 반드시 최소 할당할 리소스를 
-적절하게 설정하자.`   
+적절하게 설정하자.`  
+
+특히, `하나의 어플리케이션 내에 많은 Job들을 한번에 처리하는 경우는 spark.dynamicAllocation.initialExecutors 와 
+spark.dynamicAllocation.minExecutors 설정을 적절하게 높혀서 실행하는 것이 권장된다.`   
+`왜냐하면, 각 Job 마다 Stage/Task를 확인하여 필요한 Executor 갯수를 계산하게 되는데 Stage 마다 Executor 필요 갯수가 
+다르기 때문에 이를 조절하는 대기 시간이 필요하다.`   
+`또한, 요청한 리소스가 부족한 상황이라면 계속해서 대기해야 하는 상황이 발생하기 때문이다.`   
 
 또한, 반대로 특정기간 동안 executor에 task들이 할당 되지 않고 대기하고 있다면 
 Spark는 executor를 제거한다.   
