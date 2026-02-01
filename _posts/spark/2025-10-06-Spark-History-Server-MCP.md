@@ -415,8 +415,6 @@ Claude CLI를 통해서 제출된 Spark 어플리케이션을 조회하여 MCP �
 되었는지 확인해보고 여러 케이스에 대해서 문제 분석과 적절한 해결책을 도출해주는지 
 확인해보자. 
 
-> PoC는 로컬에서 진행하기 때문에 Spark의 Driver만을 사용한다.    
-
 
 #### 4-1) 정상적인 Job   
 
@@ -449,91 +447,11 @@ Claude CLI를 통해서 제출된 Spark 어플리케이션을 조회하여 MCP �
 
 > MCP 서버에서 제공하는 list_applications 를 이용하여 현재 어플리케이션들을 조회한 것을 확인할 수 있다.   
 
-조회된 어플리케이션을 자세히 분석해달라는 요청을 하게 되면 여러 방면으로 분석 후 결과를 제공해주게 된다.  
-
-#### 4-2) 처리량에 비해 리소스 과다 할당 Job   
-
-`Spark에서 데이터 처리량에 비해서 cpu, memory 등의 리소스를 너무 과도하게 사용하게 될 경우 
-비용 낭비로 이어질 수 있다.`     
-따라서, 이런 경우를 재현해보고 MCP 서버를 통해 문제 분석과 적절한 리소스 설정을 
-가이드 받아 보자.    
-
-```shell
-spark-submit \
-    --master local[8] \
-    --driver-memory 4g \
-    --executor-memory 4g \
-    --executor-cores 4 \
-    test_inefficient_resources.py
-```
-
-재현 코드는 아래와 같다.  
+조회된 어플리케이션을 자세히 분석해달라는 요청을 하게 되면 여러 방면으로 분석 후 결과를 제공해주게 된다.     
 
 
-```python
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
-import time
-
-# 실제 처리량은 적지만 리소스는 과도하게 할당
-spark = SparkSession.builder \
-    .appName("Resource_Waste_Job") \
-    .getOrCreate()
-
-
-print("\n[데이터 로딩] 극소량 데이터 생성 중...")
-tiny_data = [(i, f"data_{i}", i * 10) for i in range(50)]  # 단 50개 row!
-df = spark.createDataFrame(tiny_data, ["id", "name", "amount"])
-
-print(f"처리할 데이터: {df.count()} rows")
-print(f"데이터 크기: 약 {len(str(tiny_data))} bytes")
-
-print("\n[작업 1] 간단한 필터링...")
-filtered = df.filter(col("amount") > 100)
-result_count = filtered.count()
-print(f"필터링 결과: {result_count} rows")
-
-print("\n[작업 2] 간단한 집계...")
-total = df.groupBy().sum("amount").collect()[0][0]
-print(f"총합: {total}")
-
-# 하지만 Job은 오래 실행되면서 리소스 점유
-for i in range(60, 0, -10):
-    print(f"  남은 시간: {i}초...")
-    time.sleep(10)
-
-print("Job 종료")
-spark.stop()
-```
-
-#### 4-3) Out of Memory가 발생하는 경우    
-#### 4-4) Data Spill 문제가 발생하는 경우    
-#### 4-5) Data Skew 문제가 발생하는 경우   
-
-
-- - -
-
-## 5. DataFlint   
-
-DataFlint는 Apache Spark의 성능 모니터링 및 디버깅을 단순화하는 오픈소스 도구로, 기존 Spark Web UI에 
-직관적인 탭을 추가하여 복잡한 메트릭을 이해하기 쉬운 형태로 제공한다.   
-
-Spark History Server가 DataFlint 기능을 UI에 추가하기 위한 설정은 아래와 같이 
-DataFlint 패키지 설치 및 설정 파일을 추가해준다.   
-
-```shell
-wget https://repo1.maven.org/maven2/io/dataflint/spark_2.12/0.5.1/spark_2.12-0.5.1.jar
-```
-
-##### $SPARK_HOME/conf/spark-defaults.conf   
-
-```shell
-# ==============================
-# DataFlint 플러그인 설정 (추가)
-# ==============================
-spark.plugins io.dataflint.spark.SparkDataflintPlugin
-spark.jars /opt/spark/jars/spark_2.12-0.5.1.jar
-```
+마지막으로 mcp 서버를 이용한 분석시 timeout, oom 등의 문제가 발생한다면 
+[TROUBLESHOOTING](https://github.com/kubeflow/mcp-apache-spark-history-server/blob/main/TROUBLESHOOTING.md)를 참고하자.   
 
 
 

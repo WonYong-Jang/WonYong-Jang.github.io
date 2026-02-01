@@ -67,13 +67,13 @@ multi-tenant에 대한 지원은 [SPARK-45126](https://issues.apache.org/jira/br
     teamB/
 ```
 
-Spark 의 코드를 살펴보면, [ACL 로 접근제어하는 코드](https://github.com/apache-spark/spark/blob/master/core/src/main/scala/org/apache/spark/deploy/history/FsHistoryProvider.scala#L164)를 살펴볼 수 있는데 이는 단순하게 UI 접근제어이다.    
+Spark 의 코드를 살펴보면, [ACL 로 접근 제어하는 코드](https://github.com/apache-spark/spark/blob/master/core/src/main/scala/org/apache/spark/deploy/history/FsHistoryProvider.scala#L164)를 살펴볼 수 있는데 이는 단순하게 UI 접근제어이다.    
 이는 Spark History Server UI 에서 특정 사용자만 Spark Web UI 페이지에 접근 가능하도록 제한할 수 있는 기능이다.   
 
 `즉, 우리가 원하는 것은 각 팀별로 발생하는 eventLog는 자신의 팀의 eventLog만 확인 가능하며, 다른 팀의 eventLog는 볼 수 없는 것을 기대했지만 
 위 옵션을 사용하더라도 기본적으로 Spark History Server는 단일 디렉토리내에 모든 eventLog를 표기해주게 된다.`   
 
-> 위 옵션으로 제한을 하면 모든 eventLog는 표기되며 Spark Web UI를 보기 위해 클릭할 때만 접근 제한을 한다.   
+> 위 옵션으로 ACL 제한을 하면 모든 eventLog는 표기되며 Spark Web UI를 보기 위해 클릭할 때만 접근 제한을 한다.   
 
 `따라서 팀내에서 발생하는 eventLog를 따로 관리하고 Spark History Server에 필요한 분석 플러그인을 유연하게 추가 할수 있도록 
 서버를 직접 구성하여 운영하는 방향으로 결정하였다.`      
@@ -82,7 +82,29 @@ Spark 의 코드를 살펴보면, [ACL 로 접근제어하는 코드](https://gi
 
 ## 2. DataFlint 분석 플러그인    
 
+[DataFlint](https://github.com/dataflint/spark) 는 Spark Web UI와 History Server를 통해 
+다양한 메트릭을 시각적으로 보여주어 문제를 직관적으로 파악할 수 있게 도와주는 도구이다.   
 
+`DataFlint 은 human readable UI 를 제공하며 disk spill, data skew 등과 같은 performance issue에 대해서 
+직관적으로 확인할 수 있는 점이 가장 큰 장점이다.`      
+
+> 기존의 Spark Web UI 에서 disk spill이 발생하는 구간을 확인하기 위해서는 각각 stage를 클릭해보며 확인해야 되지만, DataFlint 는 
+전체 Flow를 보여주며 어떤 작업을 진행하면서 spill이 발생하는지 확인이 가능하다.   
+
+> 또한, 데이터를 읽고 쓰는 과정에서 small file 로 진행중이라면, 이를 사전에 alert로 제공하여 인지할수 있도록 한다.    
+
+`어플리케이션의 Memory Usage, Idle Cores, Task Error Rate 등과 같이 
+중요한 메트릭 정보를 요약하여 전달해주는 장점도 존재한다.`       
+
+`다만, DataFlint에서 아쉬운 부분은 Rest API를 제공하지 않는다는 점이다.`    
+
+> Rest API가 제공된다면, 팀내에 전체 어플리케이션들을 모니터링하면서 문제가 발생한 
+어플리케이션에 대해서 알람을 주어 자동화 할 수 있을 것 같았지만 현재는 Spark Web UI에서 DataFlint 탭을 
+통해서만 모니터링해야 했다.  
+> 아쉬운 부분에 대해서는 MCP와 AI Agent 등을 같이 적용하면 해결할 수 있다.   
+
+따라서, Spark History Server 에서 DataFlint 분석 플러그인을 추가하고, MCP 서버가 
+Spar History Server를 바라보고 분석할 수 있는 구조를 고려하여 개발을 진행하였다.   
 
 - - -   
 
@@ -108,11 +130,13 @@ spark.eventLog.compress=true
 spark.eventLog.compression.codec=zstd
 ```
 
-### 3-3) dataFlint 플러그인 추가   
+### 3-3) DataFlint 플러그인 추가   
 
-Spark 가 실행중일 때도 dataFlint 탭을 확인하기 위해서는 spark-submit할 때도 추가해주어야 한다.   
+Spark 가 실행중일 때도 DataFlint 탭을 확인하기 위해서는 spark-submit 할 때도 추가해주어야 한다.   
 
 ```scala
+spark.plugins=io.dataflint.spark.SparkDataflintPlugin
+spark.jars.pacages=io.dataflint:spark_2.12:0.8.2
 ```
 
 - - - 
@@ -144,13 +168,41 @@ s3 내부 백엔드에서 처리하기 때문에 이러한 영향이 없다.
 
 hdfs를 저장소로 사용할 때는 cleaner 옵션을 통해 삭제하면, NameNode metadata에서 먼저 제거되며, 실제 블록 제거는 
 이후 DataNode에 의해 비동기적으로 진행된다.   
-하지만, s3 의 경우 실제 delete api 호출이 지속적으로 발생하기 때문에 네트워크와 비용에 영향을 주게 된다.  
+하지만, s3 의 경우 실제 delete api 호출이 지속적으로 발생하기 때문에 네트워크와 비용에 영향을 주게 된다.    
+
+추가적으로 아래와 같이 Hybrid Store 설정을 추가하는 것이 권장된다.   
+
+```
+# Enable hybrid store to prevent OOM by using disk + memory storage
+spark.history.store.hybridStore.enabled true
+
+# Maximum memory usage for in-memory cache (adjust based on available RAM)
+spark.history.store.hybridStore.maxMemoryUsage 1g
+
+# Disk backend for overflow storage (ROCKSDB recommended for compatibility)
+spark.history.store.hybridStore.diskBackend ROCKSDB
+
+# Serialization format for disk storage (KRYO is more efficient than Java)
+spark.history.store.hybridStore.serializer KRYO
+
+# Local directory for disk-backed storage (ensure path exists and is writable)
+spark.history.store.path /path/to/local/history-store
+
+# Maximum disk usage to prevent runaway storage growth
+spark.history.store.maxDiskUsage 50g
+```
+
+```
+export SPARK_DAEMON_MEMORY=4g
+```
 
 
 - - -
 
 Reference
 
+<https://dataflint.gitbook.io/dataflint-for-spark>    
+<https://github.com/dataflint/spark>   
 
 {% highlight ruby linenos %}
 {% endhighlight %}
