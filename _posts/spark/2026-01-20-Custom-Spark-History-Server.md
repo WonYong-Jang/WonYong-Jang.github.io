@@ -168,32 +168,56 @@ s3 내부 백엔드에서 처리하기 때문에 이러한 영향이 없다.
 
 hdfs를 저장소로 사용할 때는 cleaner 옵션을 통해 삭제하면, NameNode metadata에서 먼저 제거되며, 실제 블록 제거는 
 이후 DataNode에 의해 비동기적으로 진행된다.   
-하지만, s3 의 경우 실제 delete api 호출이 지속적으로 발생하기 때문에 네트워크와 비용에 영향을 주게 된다.    
+하지만, s3 의 경우 실제 delete api 호출이 지속적으로 발생하기 때문에 hdfs 의 cleaner 보다 
+비용과 latency 측면에서 비효율적일 수 있다.   
 
 추가적으로 아래와 같이 Hybrid Store 설정을 추가하는 것이 권장된다.   
 
 ```
-# Enable hybrid store to prevent OOM by using disk + memory storage
-spark.history.store.hybridStore.enabled true
+# Enable hybrid store to prevent OOM by using disk + memory storage (default: false)   
+spark.history.store.hybridStore.enabled true  
 
-# Maximum memory usage for in-memory cache (adjust based on available RAM)
-spark.history.store.hybridStore.maxMemoryUsage 1g
+# default: 2g
+# HybridStore가 사용할 수 있는 최대 메모리 공간
+spark.history.store.hybridStore.maxMemoryUsage
+
 
 # Disk backend for overflow storage (ROCKSDB recommended for compatibility)
-spark.history.store.hybridStore.diskBackend ROCKSDB
+spark.history.store.hybridStore.diskBackend ROCKSDB 
 
-# Serialization format for disk storage (KRYO is more efficient than Java)
-spark.history.store.hybridStore.serializer KRYO
 
-# Local directory for disk-backed storage (ensure path exists and is writable)
+# History Server가 메모리에서 디스크 기반 KV-store에 UI 객체를 직렬화할 때 사용할 포맷
+# PROTOBUF는 3.4 이상에서 사용가능하며, 4.0 부터는 default로 변경되었다. 
+# 기존 JSON 보다 더 빠르며, compact 하다.   
+# https://github.com/apache/spark/pull/43609    
+spark.history.store.serializer PROTOBUF
+
+
+# SHS가 eventLog를 파싱해 만든 UI용 내부 객체를 모두 메모리에만 유지하지 않고, 
+# 지정한 로컬 경로의 디스크 기반 KV-store(LocalStore)에 직렬화해서 저장, 관리한다.   
+# 지정한 디렉터리에 RocksDB/LevelDB 등 백엔드 파일들이 생성된다.
 spark.history.store.path /path/to/local/history-store
 
-# Maximum disk usage to prevent runaway storage growth
+
+# Maximum disk usage to prevent runaway storage growth( default: 10g )
 spark.history.store.maxDiskUsage 50g
 ```
 
+기본적으로 Spark History Server는 eventLog를 UI에 필요한 상태로 메모리에 쌓는다.   
+로그가 많거나, 로그가 큰 경우 SHS JVM heap이 커지고, GC가 늘어나면서 UI 로딩이 느려지거나 OOM이 나기 쉽다.  
+
+> 이 옵션은 History Server의 event log 파싱/보관 방식에만 영향이 있고, 실행 중인 Spark 어플리케이션 동작 자체를 바꾸는 옵션은 아니다.   
+
+`HybridStore는 event log를 파싱할 때 먼저 in-memory store에 쓰고 백그라운드 스레드가 disk 기반 KV store로 덤프하는 구조이다.`  
+`즉, 파싱은 메모리에서 빠르게 하고, UI 조회 빈도가 낮은 오래된 상태는 디스크로 밀어내는 방식이다.`         
+
+주의해야할 점은 hybrid.maxMemoryUsage를 크게 줬을 때 UI 로딩이 느려지는 사례가 있기 때문에 크게 잡지 않는게 좋다.   
+또한, hybridStore의 메모리 영역은 SHS JVM 힙을 같이 쓰기 때문에 아래와 같이 힙 메모리 영역을 증가시켜야 할 수 있다.   
+
+
 ```
 export SPARK_DAEMON_MEMORY=4g
+# 또는, -Xmx 설정
 ```
 
 
