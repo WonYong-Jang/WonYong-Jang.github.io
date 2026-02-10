@@ -134,10 +134,20 @@ spark.eventLog.compression.codec=zstd
 
 Spark 가 실행중일 때도 DataFlint 탭을 확인하기 위해서는 spark-submit 할 때도 추가해주어야 한다.   
 
-```scala
+```java
 spark.plugins=io.dataflint.spark.SparkDataflintPlugin
 spark.jars.pacages=io.dataflint:spark_2.12:0.8.2
 ```
+
+### 3-4) spark.yarn.historyServer.address   
+
+`YARN 환경에서 사용 중이라면 해당 옵션을 이용하여 신규로 생성된 spark history server url을 전달해 주어야 한다.`      
+이 옵션은 Spark 어플리케이션의 history server 위치를 spark 에게 알려주는 설정 옵션이다.   
+
+```
+spark.yarn.historyServer.address=http://spark-history.mycompany.com:18080
+```
+
 
 - - - 
 
@@ -214,6 +224,7 @@ spark.history.store.maxDiskUsage 50g
 주의해야할 점은 hybrid.maxMemoryUsage를 크게 줬을 때 UI 로딩이 느려지는 사례가 있기 때문에 크게 잡지 않는게 좋다.   
 또한, hybridStore의 메모리 영역은 SHS JVM 힙을 같이 쓰기 때문에 아래와 같이 힙 메모리 영역을 증가시켜야 할 수 있다.   
 
+> hybrid.maxMemoryUsage 의 default 가 2g 이기 때문에 해당 값 보다는 높게 잡아 주는 것이 권장 된다.    
 
 ```
 export SPARK_DAEMON_MEMORY=4g
