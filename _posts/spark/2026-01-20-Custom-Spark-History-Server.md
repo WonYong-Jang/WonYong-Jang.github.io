@@ -139,19 +139,26 @@ spark.plugins=io.dataflint.spark.SparkDataflintPlugin
 spark.jars.pacages=io.dataflint:spark_2.12:0.8.2
 ```
 
-### 3-4) spark.yarn.historyServer.address   
+### 3-4) YARN 환경의 경우 history server url 지정    
 
-`YARN 환경에서 사용 중이라면 해당 옵션을 이용하여 신규로 생성된 spark history server url을 전달해 주어야 한다.`      
-이 옵션은 Spark 어플리케이션의 history server 위치를 spark 에게 알려주는 설정 옵션이다.   
+`YARN 환경에서 사용 중이라면 해당 옵션을 이용하여 신규로 생성된 spark history server url을 전달해 주는 것이 권장된다.`        
+이 옵션은 Spark 어플리케이션의 history server 위치를 spark 에게 알려주는 설정 옵션이다.  
+
 
 ```
 spark.yarn.historyServer.address=http://spark-history.mycompany.com:18080
 ```
 
+YARN ResourceManager가 제공하는 Tracking URL 은 어플리케이션이 실행 중일 때는 
+
+> 여기서 Tracking URL은 Reverse Proxy URL 이며, 
+    어플리케이션이 실행중일 때는 http://rm-host/proxy/application 과 같은 url 
 
 - - - 
 
-## 4. Spark History Server 설정    
+## 4. Spark History Server 설정
+
+### 4-1) 저장된 eventLog 경로 지정 및 retention 기간 설정    
 
 위에서 변경한 eventLog 경로를 Spark History Server가 로드할 수 있도록 아래 설정을 추가해준다.   
 
@@ -180,6 +187,8 @@ hdfs를 저장소로 사용할 때는 cleaner 옵션을 통해 삭제하면, Nam
 이후 DataNode에 의해 비동기적으로 진행된다.   
 하지만, s3 의 경우 실제 delete api 호출이 지속적으로 발생하기 때문에 hdfs 의 cleaner 보다 
 비용과 latency 측면에서 비효율적일 수 있다.   
+
+### 4-2) Hybrid Store 및 힙 메모리 설정 
 
 추가적으로 아래와 같이 Hybrid Store 설정을 추가하는 것이 권장된다.   
 
