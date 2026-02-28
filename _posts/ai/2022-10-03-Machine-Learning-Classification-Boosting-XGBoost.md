@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 분류 알고리즘 - 앙상블(Ensemble) 기법의 부스팅(Boosting) / XGBoost"
 subtitle: "XGBoost(eXtra Gradient Boost) / Early Stopping(조기 중단 기능)" 
 comments: true
-categories : ML
+categories : AI
 date: 2022-10-03
 background: '/img/posts/mac.png'
 ---

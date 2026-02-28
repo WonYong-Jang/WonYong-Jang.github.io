@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 사이킷런으로 수행하는 생존자 예측 실습"
 subtitle: "데이터 분석 및 전처리 / 교차검증 / 하이퍼 파라미터 최적화 / seaborn을 이용한 시각화" 
 comments: true
-categories : ML
+categories : AI
 date: 2022-09-19
 background: '/img/posts/mac.png'
 ---

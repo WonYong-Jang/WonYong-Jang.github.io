@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 베이지안 최적화(Bayesian Optimization)"
 subtitle: "GridSearchCV 하이퍼 파라미터 튜닝 문제점 / HyperOpt 패키지"    
 comments: true
-categories : ML
+categories : AI
 date: 2022-10-10
 background: '/img/posts/mac.png'
 ---

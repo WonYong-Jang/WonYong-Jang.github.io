@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 산탄데르 은행 고객 만족 예측"
 subtitle: "kaggle 분류 예측 실습 / k-fold 방식으로 early stopping 적용"    
 comments: true
-categories : ML
+categories : AI
 date: 2022-10-13
 background: '/img/posts/mac.png'
 ---

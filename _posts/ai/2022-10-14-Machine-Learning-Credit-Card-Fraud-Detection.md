@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 신용카드 사기 예측 실습"
 subtitle: "kaggle 분류 예측 실습(불균형 데이터) / SMOTE 오버 샘플링(imblearn), 이상치(Outlier) 데이터 제거, StandardScaler 또는 Log 변환"    
 comments: true
-categories : ML
+categories : AI
 date: 2022-10-14
 background: '/img/posts/mac.png'
 ---

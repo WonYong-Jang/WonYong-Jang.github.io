@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 분류 알고리즘(Classification) - 앙상블(Ensemble) 기법의 Voting과 Bagging"
 subtitle: "Voting, Bagging(bootstrap aggregation) / Random Forest" 
 comments: true
-categories : ML
+categories : AI
 date: 2022-09-30
 background: '/img/posts/mac.png'
 ---

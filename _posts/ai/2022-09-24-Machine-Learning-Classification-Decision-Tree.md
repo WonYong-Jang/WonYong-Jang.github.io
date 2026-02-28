@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 분류 알고리즘(Classification) - 결정 트리"
 subtitle: "결정트리(Decision Tree), 결정트리의 하이퍼 파라미터, 피처 중요도의 이해" 
 comments: true
-categories : ML
+categories : AI
 date: 2022-09-24
 background: '/img/posts/mac.png'
 ---

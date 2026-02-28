@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 사이킷런 모델 저장 및 로드"
 subtitle: "pickle, joblib"    
 comments: true
-categories : ML
+categories : AI
 date: 2022-10-18
 background: '/img/posts/mac.png'
 ---

@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 분류 알고리즘 - 앙상블(Ensemble) 기법의 부스팅(Boosting) / LightGBM"
 subtitle: "LightGBM을 이용하여 위스콘신 유방암 예측 실습"    
 comments: true
-categories : ML
+categories : AI
 date: 2022-10-04
 background: '/img/posts/mac.png'
 ---

@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 오버피팅의 개념과 해결 "
 subtitle: "Overfitting(과적합), Data Augmentation" 
 comments: true
-categories : ML
+categories : AI
 date: 2022-09-04
 background: '/img/posts/mac.png'
 ---

@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] Python 한글 형태소 분석기 - 코엔엘파이(KoNLPy)"
 subtitle: "Python package for Korean natural language processingi / 네이버 영화리뷰 감성 분석" 
 comments: true
-categories : ML
+categories : AI
 date: 2023-07-07
 background: '/img/posts/mac.png'
 ---

@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 텍스트 분석(Text Analysis)의 Feature Vectorization"
 subtitle: "텍스트 분석의 이해와 피처 벡터화 유형(BOW, Word2Vec), 희소행렬" 
 comments: true
-categories : ML
+categories : AI
 date: 2023-05-26
 background: '/img/posts/mac.png'
 ---

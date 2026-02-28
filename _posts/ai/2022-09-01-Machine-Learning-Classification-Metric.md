@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 분류(Classification) 모델 지표(metrics)의 의미와 계산법"
 subtitle: "Confusion Matrix / TP, FP, TN, FN / accuracy, precision, recall / ROC AUC" 
 comments: true
-categories : ML
+categories : AI
 date: 2022-09-01
 background: '/img/posts/mac.png'
 ---

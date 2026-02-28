@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 텍스트 분석(Text Analysis)의 Classification"
 subtitle: "Newsgroup 분류하기 / CountVectorizer, TfidfVectorizer / n gram, stop words" 
 comments: true
-categories : ML
+categories : AI
 date: 2023-05-28
 background: '/img/posts/mac.png'
 ---

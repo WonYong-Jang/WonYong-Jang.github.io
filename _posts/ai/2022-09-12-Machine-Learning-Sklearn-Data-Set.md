@@ -3,7 +3,7 @@ layout: post
 title: "[Machine Learning] 사이킷런의 데이터 세트 분리 및 검증"
 subtitle: "학습 데이터와 테스트 데이터 분리, 교차 검증(Stratified K Fold) 성능 평가, 하이퍼 파라미터 튜닝" 
 comments: true
-categories : ML
+categories : AI
 date: 2022-09-12
 background: '/img/posts/mac.png'
 ---
