@@ -453,7 +453,28 @@ Claude CLI를 통해서 제출된 Spark 어플리케이션을 조회하여 MCP �
 마지막으로 mcp 서버를 이용한 분석시 Time Out, OOM 등의 문제가 발생한다면 
 [TROUBLESHOOTING](https://github.com/kubeflow/mcp-apache-spark-history-server/blob/main/TROUBLESHOOTING.md)를 참고하자.   
 
+## 5. 정리   
 
+MCP 를 활용하여 Spark 어플리케이션 문제 분석을 했을 때 PoC의 결과는 성공적이였다.  
+`MCP 활용시 장점 중 하나는 disk spill 이나 data skew 등의 이슈가 어느정도 발생 하는지와 
+어느 stage에서 발생 하는지에 대한 정보를 빠르게 확인할 수 있다는 것이다.`   
+즉, 병목에 가장 문제가 되는 구간을 우선순위별로 정리 하여 솔루션을 제시해 줄 수 있게 된다.   
+
+> 기존 Spark History Server UI에서는 각 stage 마다 클릭해가며 메트릭을 확인해야 했다.   
+
+물론 전달받은 솔루션이 모두 정답은 아니며, 좋은 답변을 해주지 않을 수도 있다.   
+하지만, 좋은 답변을 얻으려면 구체적이고 명확한 프롬프트가 필수적이기 때문에 
+ai agent를 이용한 구체적인 프롬프트를 추가할 예정이다.  
+
+마지막으로 우리가 실무에서 얻은 방대한 Spark 튜닝 지식과 히스토리를 매번 프롬프트에 무한정 추가하는 
+것은 불가능하다.  
+토큰 제한(Context Window)이 있을 뿐더러 비효율적이기 때문이다.  
+따라서 휘발되는 지식을 외부 메모리(Vector DB)로 구조화하여 AI가 언제든 꺼내 쓸 수 있는 지식 베이스로 
+만들어야 할 것이다.   
+
+> AI에게 질문을 할 때마다 매번 Reset 상태로 분석을 시작한다.   
+> DataFrame Write 단계와 UDF 실행 시에는 On-heap 이 아닌 Off-heap 메모리를 집중적으로 사용한다 라는 
+중요한 기술적 맥락을 매번 새로 설명하지 않으면 AI는 겉핥기 식 답변만 내놓게 될 것이다.    
 
 - - -
 
