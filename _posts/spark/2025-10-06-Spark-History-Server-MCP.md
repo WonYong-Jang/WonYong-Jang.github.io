@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Spark] AI 기반 디버깅 및 최적화를 위한 Apache Spark History Server 용 MCP 연동"
+title: "[Spark] Apache Spark History Server에 AI 기반 MCP 연동으로 디버깅, 최적화 자동화하기"
 subtitle: "MCP Server for Apache Spark History Server with AI / Claude CLI / Check if it can be applied to our work" 
 comments: true
 categories : Spark
