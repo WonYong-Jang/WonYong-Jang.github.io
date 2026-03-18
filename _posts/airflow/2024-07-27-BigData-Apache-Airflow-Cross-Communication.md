@@ -3,7 +3,7 @@ layout: post
 title: "[Airflow] 아파치 Airflow - Xcom "
 subtitle: "Cross Communication / Task 간 데이터 공유(push, pull) / Avoid top level code"    
 comments: true
-categories : DevOps
+categories : Airflow
 date: 2024-07-27
 background: '/img/posts/mac.png'
 ---

@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "[DevOps] Jenkins Batch to Airflow"
+title: "[Airflow] Jenkins Batch to Airflow"
 subtitle: "젠킨스 배치의 문제점 / 젠킨스 배치를 airflow와 쿠버네티스(k8s) Job 으로 전환"
 comments: true
-categories : DevOps
+categories : Airflow
 date: 2024-08-02
 background: '/img/posts/mac.png'
 ---

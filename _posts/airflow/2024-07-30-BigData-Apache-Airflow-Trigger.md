@@ -3,7 +3,7 @@ layout: post
 title: "[Airflow] 아파치 Airflow - Trigger "
 subtitle: "Trigger DAG 이용하여 arguments 전달(dag_run) / "    
 comments: true
-categories : DevOps
+categories : Airflow
 date: 2024-07-30
 background: '/img/posts/mac.png'
 ---

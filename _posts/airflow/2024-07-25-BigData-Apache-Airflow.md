@@ -3,7 +3,7 @@ layout: post
 title: "[Airflow] 아파치 Airflow - Workflow "
 subtitle: "DAG(Directed Acyclic Graph) / 데이터 워크 플로우 관리 도구/ execution_date 의미 / backfill and catchup"    
 comments: true
-categories : DevOps
+categories : Airflow
 date: 2024-07-25
 background: '/img/posts/mac.png'
 ---
