@@ -10,16 +10,34 @@ background: '/img/posts/mac.png'
 
 ## 1. Airflow Architecture   
 
+<img src="/img/posts/airflow/스크린샷 2026-03-19 오후 10.45.21.png" width="500" height="500">  
+
+> 위 그림은 airflow 3.x의 아키텍처이다.   
+
 ### 1-1) Scheduler    
 
 `DAG 정의를 주기적으로 읽고, 실행해야 할 DAG Run과 Task Instance를 판단해  
 Metadata DB에 기록한다.`       
 
+`지정된 Scheduler에 따라 수행할 DAG 확인 후 Executor에 수행을 지시하게 된다.`  
+
+> dag_id, run_id, task_id 등의 정보를 Executor 수행을 지시한다.
+
+`그 후 Executor는 Worker 수행을 위한 Dispatcher 역할을 수행하게 된다.`    
+
+> 실제 일은 Worker가 진
+
 Dag 파일 처리 주기 관련 설정은 아래와 같다.   
 
-- scheduler_heartbeat_sec    
-    - scheduler가 DB에 heartbeat 신호를 남기고 태스크 스케줄링 루프를 도는 주기   
-
+```shell
+- scheduler_heartbeat_sec (Default: 5초)    
+    # Scheduler는 내부적으로 무한 루프를 돌면서 아래 작업들을 반복한다.
+    # 이러한 루프를 몇 초마다 한번씩 돌릴지를 결정하는 옵션이다.   
+    - DAG 실행 스케줄링
+    - Task 상태 확인
+    - Executor에 작업 전달
+    - DB 상태 sync   
+```
 
 즉, 스케줄러는 지속적으로 실행되는 서비스로, 프로덕션 환경에서는 항상 작동 중이어야 한다.   
 
@@ -48,10 +66,21 @@ scheduler:
 ### 1-2) DAG Processor  
 
 Scheduler의 서브 컴포넌트로서, DAG 파일을 파싱해 DAG 객체로 변환한다.   
-파싱된 DAG는 Metadata DB에 직렬화되어 Webserver나 Scheduler에서 불필요한 
+
+> dags 폴더에 있는 DAG 파일들을 주기적으로 모니터링하여 신규로 만들어진 DAG 는 Default로 
+5분 단위로 확인하며, 기존 DAG 재파싱 간격은 30초 단위로 확인한다.      
+
+```shell
+# 해당 옵션들은 airflow.cfg 또는 환경변수로 변경 가능   
+# 새 DAG 파일을 발견하는 주기(기본값: 5분)
+dag_dir_list_interval
+
+# 같은 DAG 파일을 다시 파싱하기 까지 최소 간격(기본값: 30초)   
+min_file_process_interval
+```
+
+파싱된 DAG는 Metadata DB에 직렬화되어 Webserver(api server)나 Scheduler에서 불필요한 
 재파싱을 방지한다.    
-
-
 
 ### 1-3) Webserver(API Server)
 
