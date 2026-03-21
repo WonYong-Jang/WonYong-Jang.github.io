@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Airflow] Architecture 이해하기"  
-subtitle: "airflow 2 와 airflow 3 아키텍처 비교 / DAG Serialization"   
+subtitle: "airflow 2 와 airflow 3 아키텍처 비교 / DAG Serialization / DAG processor "   
 comments: true
 categories : Airflow 
 date: 2025-09-02   
@@ -23,9 +23,19 @@ Metadata DB에 기록한다.`
 
 > dag_id, run_id, task_id 등의 정보를 Executor 수행을 지시한다.
 
-`그 후 Executor는 Worker 수행을 위한 Dispatcher 역할을 수행하게 된다.`    
+`Executor는 Scheduler로 부터 전달 받은 Task Instance를 전달 받고, Worker에게 전달하게 된다.`    
 
-> 실제 일은 Worker가 진
+> 즉, Executor는 Scheduler가 생성한 Task Instance 를 어디에서 실행할지 Dispatcher(전달/분배)하는 역할을 한다.  
+
+`Executor는 worker들을 Local 수행(LocalExecutor) 또는 분산 서버에서 수행(CeleryExecutor등) 할 수 있게 하며, 분산 서버 수행 시에는 
+Queue를 통해 dag_id, task_id, run_id 등의 정보를 분산된 Worker들에 message로 전달하며 
+LocalExecutor의 경우 직접 Worker Processor를 생성하여 수행을 지시한다.`   
+
+> LocalExecutor 의 경우 queue 사용 없이 Scheduler 컨테이너 안에 Executor 와 Worker가 모두 포함된 구조이다.   
+
+`Worker는 dag_id, run_id, task_id 등의 정보를 전달받고, 실행에 필요한 보다 상세한 스케줄 정보, 환경 변수 및 Serialized DAG를 API 서버 호출하여 가져오고 
+DAG 소스코드도 참조하여 이를 기반으로 실제 작업을 수행한다.`      
+
 
 Dag 파일 처리 주기 관련 설정은 아래와 같다.   
 
@@ -67,7 +77,7 @@ scheduler:
 
 Scheduler의 서브 컴포넌트로서, DAG 파일을 파싱해 DAG 객체로 변환한다.   
 
-> dags 폴더에 있는 DAG 파일들을 주기적으로 모니터링하여 신규로 만들어진 DAG 는 Default로 
+> dags 폴더에 있는 DAG 파일들을 주기적으로 모니터링하여 신규로 만들어진 DAG 는 Default로  
 5분 단위로 확인하며, 기존 DAG 재파싱 간격은 30초 단위로 확인한다.      
 
 ```shell
