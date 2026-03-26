@@ -173,7 +173,13 @@ BashOperator 에는 다음과 같은 속성이 존재한다.
 - bash_command : 실행할 Bash Command   
 - dag : 작업이 속할 DAG   
 
-`또한 t1 >> t2 는 t1이 실행된 후 t2를 실행한다는 의미이다.(t1이 t2의 Upstream Task)`    
+`또한 t1 >> t2 는 t1이 실행된 후 t2를 실행한다는 의미이다.(t1이 t2의 Upstream Task)`   
+
+위처럼 bit shift operator 외에도 chain() 형태로도 Dependency 정의가 가능하다.  
+
+```
+chain(extract, [transform_a, transform_b], [empty_a, empty_b], load)
+```
 
 
 ### 2-6) 생성된 DAG 확인하기    
