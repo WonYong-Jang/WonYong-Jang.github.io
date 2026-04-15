@@ -241,6 +241,34 @@ export SPARK_DAEMON_MEMORY=4g
 ```
 
 
+- - - 
+
+## 5. 운영 TroubleShooting  
+
+위와 같은 설정으로 k8s에 spark history server를 직접 운영 과정에서 메모리가 부족하여 파드가 Evicted 되는 현상을 확인했다.   
+
+> Pod was rejected: The node had condition: [MemoryPressure].
+
+기존에 pod에 대한 메모리 제한을 누락했기 때문에 메모리 사용이 증가함에 따라서 kubelet이 Pod 를 Eviction 시켰기 
+때문에 아래와 같이 설정을 추가해주었다.   
+
+```
+resources:
+    limits:
+        memory: "8Gi"
+        cpu: "2"
+    requests:
+        memory: "6Gi"
+        cpu: "1"
+```
+
+현재 사용하고 있는 pod의 memory, disk 사용량을 확인해 봤다.   
+
+```
+$ kfp get pod -l app=spark-history-server-prod --field-selector=status.phase=Running
+$ kfp exec spark-history-server-prod-6d6d45 -- du -sh /opt/history-store   
+```
+
 - - -
 
 Reference
