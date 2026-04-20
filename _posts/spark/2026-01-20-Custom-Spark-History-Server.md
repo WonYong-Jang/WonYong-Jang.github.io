@@ -141,18 +141,22 @@ spark.jars.pacages=io.dataflint:spark_2.12:0.8.2
 
 ### 3-4) YARN 환경의 경우 history server url 지정    
 
-`YARN 환경에서 사용 중이라면 해당 옵션을 이용하여 신규로 생성된 spark history server url을 전달해 주는 것이 권장된다.`        
-이 옵션은 Spark 어플리케이션의 history server 위치를 spark 에게 알려주는 설정 옵션이다.  
+YARN 환경에서 사용 중이라면 해당 옵션을 이용하여 신규로 생성된 spark history server url을 전달해 주는 것이 권장된다.   
+`이 옵션은 Spark 어플리케이션의 history server 위치를 spark 에게 알려주는 설정 옵션이다.`     
 
 
 ```
 spark.yarn.historyServer.address=http://spark-history.mycompany.com:18080
 ```
 
-YARN ResourceManager가 제공하는 Tracking URL 은 어플리케이션이 실행 중일 때는 
+`YARN ResourceManager가 제공하는 Tracking URL 은 어플리케이션이 실행 중일 때는 Spark UI 로 
+제공해주지만 어플리케이션이 종료 후에는 eventLog를 이용한 Spark History Server 를 통해 UI를 봐야 하기 때문이다.`      
 
-> 여기서 Tracking URL은 Reverse Proxy URL 이며, 
-    어플리케이션이 실행중일 때는 http://rm-host/proxy/application 과 같은 url 
+
+> 여기서 Tracking URL은 어플리케이션이 실행중일 때는 http://rm-host/proxy/application 과 같은 url 로 제공하며, 
+어플리케이션이 종료되고 나면 spark.yarn.historyServer.address 로 연결해주게 된다.   
+
+
 
 - - - 
 
@@ -186,7 +190,9 @@ s3 내부 백엔드에서 처리하기 때문에 이러한 영향이 없다.
 hdfs를 저장소로 사용할 때는 cleaner 옵션을 통해 삭제하면, NameNode metadata에서 먼저 제거되며, 실제 블록 제거는 
 이후 DataNode에 의해 비동기적으로 진행된다.   
 하지만, s3 의 경우 실제 delete api 호출이 지속적으로 발생하기 때문에 hdfs 의 cleaner 보다 
-비용과 latency 측면에서 비효율적일 수 있다.   
+비용과 latency 측면에서 비효율적일 수 있다.  
+
+
 
 ### 4-2) Hybrid Store 및 힙 메모리 설정 
 
@@ -240,6 +246,15 @@ export SPARK_DAEMON_MEMORY=4g
 # 또는, -Xmx 설정
 ```
 
+### 4-3) Spark History Server 의 Replica   
+
+`Spark History Server 는 구조적으로 scale out 을 전제로 설계된 컴포넌트가 아니기 때문에 replica를 증가시키는 경우는 여러 이슈에 대해서 검토가 필요하다.`  
+즉, 일반적인 경우에 replica 를 1로 운영하는게 권장된다.   
+[링크](https://docs.stackable.tech/home/stable/spark-k8s/usage-guide/history-server/)를 참고해보면, 
+여러 SHS를 띄워도 각 인스턴스는 동일한 일을 반복하며 중복으로 비용이 증가하게 된다고 한다.   
+또한, cleaner의 경우도 각 SHS 별로 중복으로 발생하면서 문제가 발생할 수 있음을 나타내고 있다.   
+
+
 
 - - - 
 
@@ -249,25 +264,47 @@ export SPARK_DAEMON_MEMORY=4g
 
 > Pod was rejected: The node had condition: [MemoryPressure].
 
-기존에 pod에 대한 메모리 제한을 누락했기 때문에 메모리 사용이 증가함에 따라서 kubelet이 Pod 를 Eviction 시켰기 
+기존에 pod에 대해서 리소스 제한이 없기 때문에 메모리 사용이 증가함에 따라서 kubelet이 Pod 를 Eviction 시킨 것을 확인했다.    
 때문에 아래와 같이 설정을 추가해주었다.   
 
 ```
 resources:
     limits:
-        memory: "8Gi"
+        memory: "12Gi"
         cpu: "2"
     requests:
-        memory: "6Gi"
-        cpu: "1"
+        memory: "4Gi"
+        cpu: "100m"
 ```
 
-현재 사용하고 있는 pod의 memory, disk 사용량을 확인해 봤다.   
+또한 근본적인 문제는 spark history server의 전체 메모리가 부족했기 때문에 메모리를 증설해주었다.  
 
-```
-$ kfp get pod -l app=spark-history-server-prod --field-selector=status.phase=Running
+```shell
+$ kfp top pods
+
+# rocksDB 사용하고 있는 disk 확인  
 $ kfp exec spark-history-server-prod-6d6d45 -- du -sh /opt/history-store   
 ```
+
+처음에는 메모리를 주기적으로 정리해주지 못하는 문제라고 생각되어 spark.history.fs.cleaner 를 추가하게 되면 메모리 정리까지 진행할 줄 알았는데, 
+    해당 옵션은 s3 lifecycle과 동일하게 파일만을 정리해주는 옵션이다.   
+
+따라서, 아래와 같은 옵션을 조정하여 메모리를 정리해 줄 수 있다.
+
+```shell
+# 메모리에 유지할 최대 application 개수   
+spark.history.retainedApplications   
+
+# 해당 옵션은 단순히 UI에 표시되는 어플리케이션 개수를 제한하는 옵션이며, 메모리와는 관련이 없다.  
+# 다만, UI에서 적게 앱을 보여주기 때문에 접근 가능한 앱 수가 줄어들어서 새로운 앱을 메모리에 올릴 경우가 줄어들 수 있다.   
+spark.history.ui.maxApplications   
+```
+
+즉, spark history server 은 주기적으로 저장된 event log 디렉토리를 스캔하며, 이때 모든 로그를 파싱해서 메모리에 올리지는 않는다.   
+대신 메타데이터 수준으로 목록만 인식하게 되며, 실제 파싱은 UI에서 앱을 클릭할 때 발생하게 된다.  
+이 때, 메모리에 캐싱을 하게 되며 spark.history.retainedApplications 만큼 유지한다.  
+또한, 파싱한 결과를 파일 형태로 저장(rocksDB) 하게 되며, 다음에 다시 열 때 s3에 파싱 없이 가져 올 수 있는 장점이 있다.  
+이 또한 spark.history.store.maxDiskUsage 만큼 저장하며 용량을 초과할 경우 오래된 파일을 밀어내게 된다.   
 
 - - -
 
