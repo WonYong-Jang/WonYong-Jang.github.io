@@ -238,6 +238,7 @@ spark.history.store.maxDiskUsage 50g
 
 주의해야할 점은 hybrid.maxMemoryUsage를 크게 줬을 때 UI 로딩이 느려지는 사례가 있기 때문에 크게 잡지 않는게 좋다.   
 또한, hybridStore의 메모리 영역은 SHS JVM 힙을 같이 쓰기 때문에 아래와 같이 힙 메모리 영역을 증가시켜야 할 수 있다.   
+`hybridStore 를 사용했을 때 메모리를 같이 사용하기 때문에 사용하지 않았을 때보다 많은 메모리 영역이 필요하게 되기 때문에 주의하자.`       
 
 > hybrid.maxMemoryUsage 의 default 가 2g 이기 때문에 해당 값 보다는 높게 잡아 주는 것이 권장 된다.    
 
@@ -246,14 +247,25 @@ export SPARK_DAEMON_MEMORY=4g
 # 또는, -Xmx 설정
 ```
 
+
 ### 4-3) Spark History Server 의 Replica   
 
-`Spark History Server 는 구조적으로 scale out 을 전제로 설계된 컴포넌트가 아니기 때문에 replica를 증가시키는 경우는 여러 이슈에 대해서 검토가 필요하다.`  
-즉, 일반적인 경우에 replica 를 1로 운영하는게 권장된다.   
+`Spark History Server 는 구조적으로 scale out 을 전제로 설계된 컴포넌트가 아니기 때문에 replica를 증가시키는 경우는 여러 이슈에 대해서 검토가 필요하다.`     
+즉, 일반적인 경우에 replica 를 1로 운영하는게 권장된다.     
 [링크](https://docs.stackable.tech/home/stable/spark-k8s/usage-guide/history-server/)를 참고해보면, 
 여러 SHS를 띄워도 각 인스턴스는 동일한 일을 반복하며 중복으로 비용이 증가하게 된다고 한다.   
 또한, cleaner의 경우도 각 SHS 별로 중복으로 발생하면서 문제가 발생할 수 있음을 나타내고 있다.   
 
+### 4-4) Event Log file을 Rolling 하여 저장   
+
+어플리케이션에서 발생한 eventLog file의 크기가 굉장히 큰 경우에 대해서는 SHS가 처음 파싱할 때 timeout 등의 문제가 발생할 수 있다.   
+
+따라서 spark-submit 옵션에서 eventLog file을 저장할 때 적절한 크기로 Rolling 하여 저장할 수 있다.   
+
+```
+spark.eventLog.rolling.enabled=true
+spark.eventLog.rolling.maxFileSize=128m
+```
 
 
 - - - 
@@ -305,6 +317,8 @@ spark.history.ui.maxApplications
 이 때, 메모리에 캐싱을 하게 되며 spark.history.retainedApplications 만큼 유지한다.  
 또한, 파싱한 결과를 파일 형태로 저장(rocksDB) 하게 되며, 다음에 다시 열 때 s3에 파싱 없이 가져 올 수 있는 장점이 있다.  
 이 또한 spark.history.store.maxDiskUsage 만큼 저장하며 용량을 초과할 경우 오래된 파일을 밀어내게 된다.   
+
+
 
 - - -
 
