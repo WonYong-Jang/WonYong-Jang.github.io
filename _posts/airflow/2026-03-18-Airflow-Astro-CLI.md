@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Airflow] "
+title: "[Airflow] 가장 쉽게 Airflow 로컬 환경 구성하기"
 subtitle: "Astro CLI"
 comments: true
 categories : Airflow
