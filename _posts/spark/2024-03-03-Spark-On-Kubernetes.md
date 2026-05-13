@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Spark] On Kubernetes"   
-subtitle: "EMR Cluster 에서의 Spark와 비교 / Spark on Yarn 과 Spark on K8s 비교"       
+subtitle: "Spark를 실행하기 위한 EMR, CDP on-premise, K8s 환경에 따른 차이 / Spark on Yarn 과 Spark on K8s 비교"       
 comments: true   
 categories : Spark   
 date: 2024-03-03   
@@ -125,7 +125,10 @@ YuniKorn Queue의 guaranteed/max 설정과 preemption 정책으로 YARN Dedicate
 
 ### 1-6) Karpenter Auto Scaling 및 Dynamic Resource Allocation 확인     
 
-워크로드에 따라 노드가 동적으로 확장/축소 되는지 확인한다.  
+워크로드에 따라 노드가 동적으로 확장/축소 되는지 확인한다.    
+
+> CDP on-premise 는 물리 노드가 고정되어 있는 반면 K8s는 Auto Scaling이 가능하다.   
+
 또한, Spark on k8s에서 Dynamic Resource Allocation 동작을 Spark on YARN 과 비교한다.   
 
 
