@@ -14,28 +14,28 @@ background: '/img/posts/mac.png'
 
 > 위 그림은 airflow 3.x의 아키텍처이다.   
 
-### 1-1) Scheduler    
+### 1-1) Scheduler & Executor   
 
 `DAG 정의를 주기적으로 읽고, 실행해야 할 DAG Run과 Task Instance를 판단해  
 Metadata DB에 기록한다.`       
 
 `지정된 Scheduler에 따라 수행할 DAG 확인 후 Executor에 수행을 지시하게 된다.`  
 
-> dag_id, run_id, task_id 등의 정보를 Executor 수행을 지시한다.
+> Executor는 Scheduler 안에 내장된 컴포넌트이며, Scheduler가 "이 Task 지금 실행해야 해" 라고 결정하면 Executor가 "그러면 여기서 실행할께" 를 담당한다.   
 
 `Executor는 Scheduler로 부터 전달 받은 Task Instance를 전달 받고, Worker에게 전달하게 된다.`    
-
-> 즉, Executor는 Scheduler가 생성한 Task Instance 를 어디에서 실행할지 Dispatcher(전달/분배)하는 역할을 한다.  
+`즉, Executor는 Scheduler가 생성한 Task Instance 를 어디에서 실행할지 Dispatcher(전달/분배)하는 역할을 한다.`     
 
 `Executor는 worker들을 Local 수행(LocalExecutor) 또는 분산 서버에서 수행(CeleryExecutor등) 할 수 있게 하며, 분산 서버 수행 시에는 
 Queue를 통해 dag_id, task_id, run_id 등의 정보를 분산된 Worker들에 message로 전달하며 
-LocalExecutor의 경우 직접 Worker Processor를 생성하여 수행을 지시한다.`   
+LocalExecutor의 경우 별도 Worker 가 존재하지 않으며, Scheduler가 Task를 직접 subprocess로 띄워서 실행하게 된다.`        
+
+
 
 > LocalExecutor 의 경우 queue 사용 없이 Scheduler 컨테이너 안에 Executor 와 Worker가 모두 포함된 구조이다.   
 
 `Worker는 dag_id, run_id, task_id 등의 정보를 전달받고, 실행에 필요한 보다 상세한 스케줄 정보, 환경 변수 및 Serialized DAG를 API 서버 호출하여 가져오고 
 DAG 소스코드도 참조하여 이를 기반으로 실제 작업을 수행한다.`      
-
 
 Dag 파일 처리 주기 관련 설정은 아래와 같다.   
 
