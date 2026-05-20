@@ -114,7 +114,11 @@ fact 테이블과 조인을 하여 shuffle 없이 성능을 최적화 한다.
 다른 node에서 해당 작업을 동시에 실행한다.`      
 `둘 중 하나의 task가 완료되면 나머지 task는 kill 시킨다.`      
 
-> 하지만, Speculative Execution은 overhead를 동반하기 때문에 대다수의 경우 선호되지 않는다.   
+하지만, Speculative Execution은 overhead를 동반하기 때문에 대다수의 경우 선호되지는 않지만 
+LinkedIn이 공개한 자료에 따르면 10,000대 이상 머신에서 40,000개 이상의 Spark 앱이 동시에 돌아가는 
+환경에서는 노드 성능 편차가 워낙 크기 때문에 speculation이 의미가 있었다고 한다.  
+
+> 단 기본값 그대로가 아니라, 보수적으로 튜닝하여서 사용  
 
 <img width="600" alt="스크린샷 2024-06-14 오후 10 54 36" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/959ed9c4-26e8-4332-8998-38fcfb9a3e7d">
 
@@ -126,8 +130,6 @@ slow tasks들에 대해서 복제 실행시켜서 전체 실행시간을 줄일 
 `또한, data skew, insufficient memory에 대해서는 해결할 수 없다.`   
 
 > 주로 특정 노드의 네트워크 지연, 디스크 I/O 병목 등이 발생하여 해당 task가 지연이 발생하는 케이스를 예로 들 수 있다.   
-
-
 
 
 ```python  
@@ -146,7 +148,10 @@ spark.speculation.quantile
 # 실행 중인 모든 task의 중앙값(median) 대비 이 배수보다 느린 task를 speculation 대상으로 판단  
 # 임계값 = median 실행시간 x multiplier  
 # 즉, 현재 실행 중인 task의 실행 시간이 이 임계값을 초과하면 해당 task를 다른 node에서 복제 실행한다.   
-spark.speculation.multiplier  
+spark.speculation.multiplier 
+
+# 30 초 미만 task는 제외 
+spark.speculation.minTaskRuntime=30s
 ```
 
 추가적으로 Spark 4.0 부터는 speculation이 덜 공격적으로 동작하도록 
