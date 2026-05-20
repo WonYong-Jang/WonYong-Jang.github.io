@@ -114,23 +114,47 @@ fact 테이블과 조인을 하여 shuffle 없이 성능을 최적화 한다.
 다른 node에서 해당 작업을 동시에 실행한다.`      
 `둘 중 하나의 task가 완료되면 나머지 task는 kill 시킨다.`      
 
-하지만, Speculative Execution은 overhead를 동반하기 때문에 대다수의 경우 선호되지 않는다.   
+> 하지만, Speculative Execution은 overhead를 동반하기 때문에 대다수의 경우 선호되지 않는다.   
 
 <img width="600" alt="스크린샷 2024-06-14 오후 10 54 36" src="https://github.com/WonYong-Jang/Pharmacy-Recommendation/assets/26623547/959ed9c4-26e8-4332-8998-38fcfb9a3e7d">
 
-`장점으로는 slow tasks들에 대해서 다시 시작시켜서 전체 처리시간을 
-단축시킬 수 있지만, 오직 hardware problems, overload 에 대해서만 
-효과가 있다.`    
+이는 특정 노드의 하드웨어적 결함으로 인해 해당 노드에 배치된 task가 오래 걸려
+전체 작업이 지연될 수 있다.
+`이러한 상황에서는 Speculative Execution 옵션을 활성화 하여
+slow tasks들에 대해서 복제 실행시켜서 전체 실행시간을 줄일 수 있다.`  
 
 `또한, data skew, insufficient memory에 대해서는 해결할 수 없다.`   
 
+> 주로 특정 노드의 네트워크 지연, 디스크 I/O 병목 등이 발생하여 해당 task가 지연이 발생하는 케이스를 예로 들 수 있다.   
 
-```
-spark.speculation=false     // default: false  
-spark.speculation.interval  // slow tasks 를 확인하는 주기, default: 100ms
-spark.speculation.quantile  // 전체 task가 해당 비율을 넘어가면 Speculative Execution을 고려   
+
+
+
+```python  
+# default: false
+spark.speculation=true
+
+# slow tasks 를 확인하는 주기, default: 100ms
+spark.speculation.interval
+
+# 해당 task 중 이 비율만큼 완료되어야 speculation을 시작한다. default=0.75
+# 예를 들면 0.9로 했을 때 전체 task 중 90% 완료가 되었을 때만 speculation이 발동된다.  
+# 이 조건이 충족되지 않으면 multiplier 조건과 무관하게 speulation은 발동되지 않는다.   
+spark.speculation.quantile
+
+# quantile 조건이 충족된 이후, 완료된 task 들의 중앙값(median)을 기준으로 판단한다.  
+# 실행 중인 모든 task의 중앙값(median) 대비 이 배수보다 느린 task를 speculation 대상으로 판단  
+# 임계값 = median 실행시간 x multiplier  
+# 즉, 현재 실행 중인 task의 실행 시간이 이 임계값을 초과하면 해당 task를 다른 node에서 복제 실행한다.   
+spark.speculation.multiplier  
 ```
 
+추가적으로 Spark 4.0 부터는 speculation이 덜 공격적으로 동작하도록 
+spark.speculation.multiplier=3, spark.speculation.quantile=0.9 로 default가 
+변경되었다.
+
+> Spark 4.0 에서 두 값이 모두 올라간 이유는 기존 기본값이 너무 공격적이여서 불필요한 speculation으로 리소스가 
+낭비되는 사례가 많았기 때문이다.   
 
 - - - 
 
