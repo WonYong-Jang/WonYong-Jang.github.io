@@ -14,3 +14,6 @@ _site/
 .jekyll
 .jekyll-cache/
 
+## Obsidian
+.obsidian/
+
