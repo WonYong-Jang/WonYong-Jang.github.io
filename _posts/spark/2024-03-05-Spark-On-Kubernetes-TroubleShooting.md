@@ -141,8 +141,81 @@ watch는 연결을 계속 유지하는 구조라 네트워크 순단, 세션 만
 즉, 종료 판정은 phase 기준으로, 실패 원인 분석은 containerStatuses 기준으로 역할을 나누는 것이다.
 
 예를 들면, 30초마다 driver pod 의 상태를 폴링 해오고, 현재 pod 내에 있는 컨테이너의 status 등을 모니터링하면서 각 status가 어떻게 변화하는지 로깅으로 출력해줄 수 있다.   
-또한, 실패가 발생하면(phase == Failed) containerStatuses에서 exitCode 와 종료 reason을 확인하고, 파드에서 실패 로그를 가져와 Slack alert으로 전달하는 등의 후처리 로직도 자유롭게 구성할 수 있게 된다.    
+또한, 실패가 발생하면(phase == Failed) containerStatuses에서 exitCode 와 종료 reason을 확인하고, 파드에서 실패 로그를 가져와 Slack alert으로 전달하는 등의 후처리 로직도 자유롭게 구성할 수 있게 된다.   
 
+- - -   
+
+## 3.  Ivy 패키지 다운로드 동작 방식 차이
+
+### 3-1) Root Cause
+
+기존 Spark on YARN 에서 잘 쓰던 Ivy 패키지 다운로드(--packages)가 Spark on K8s 로 옮기자 아래 에러를 내며 실패했다.   
+
+```
+java.io.FileNotFoundException:
+/opt/spark/.ivy2/cache/resolved-org.apache.spark-spark-submit-parent-<uuid>-1.0.xml
+(No such file or directory)
+```
+
+`근본 원인은 Spark on YARN 과 Spark on K8s 의 Ivy 동작 방식 차이에 있다.`
+`Ivy는 여러 패키지를 한꺼번에 해석할 때 이들을 묶는 가상 부모 모듈(spark-submit-parent-<uuid>)을 만들고, 그 해석 결과(resolved-..-1.0.xml)를 캐시 디렉터리에 써야 한다.`   
+`그런데 driver pod 안에서 이 쓰기가 일어나야 하는데 이미지의 .ivy2 디렉터리가 없거나 쓰기 권한이 없어 위 에러가 발생한 것이다.`   
+
+왜 driver pod 안에서 쓰기가 일어나는지를 이해하려면 YARN과 K8s의 동작 차이를 확인해야 한다.   
+
+#### 공통 과정 
+
+`--packages(= spark.jars.packages) 를 주면, Spark는 SparkSubmit 단계에서 Apache Ivy로 의존성을 해석한다.`   
+
+```
+지정한 라이브러리를 Maven 에서 받아 로컬 Ivy 캐시에 저장한다.
+<HOME>/.ivy2/cache 는 해석 메타데이터이며, <HOME>/.ivy2/jars 실제 jar 파일들이다.   
+받은 jar들의 경로를 spark.jars 에 자동 추가한다. driver, executor는 이 목록을 보고 jar를 클래스패스에 올린다.   
+Ivy Default Cache set to: <HOME>/.ivy2/cache 한줄이 이 과정이다.
+```
+
+여기까지는 YARN이든 K8s든 동일한 과정이다.   
+
+`차이는 어디서 해석하고, 어떻게 executor까지 전달하느냐에서 갈린다.`   
+
+#### Spark on YARN
+
+`해석이 spark-submit을 실행한 클라이언트(KPO Pod)에서 일어난다.`      
+spark-submit을 실행하는 계정의 홈 디렉터리 ~/.ivy2 에 jar가 내려받아지고, 그 다음 YARN의 distributed cache가 이 jar 들을 HDFS 스테이징 디렉터리에 올린 뒤 각 컨테이너로 localize 해준다.  
+
+> distributed cache는 YARN이 제공하는 파일 배포 메커니즘이며, 잡 실행에 필요한 파일을 클러스터의 여러 노드 컨테이너에 자동으로 복사해주는 기능이다.   
+
+![](/img/posts/common/Pasted%20image%2020260615091645.png)
+
+즉, jar를 노드들에 뿌려주는 기능이 플랫폼에 내장되어 있어서, --packages가 별도 설정 없이 동작하게 된다.   
+
+기존에 ivy 패키지를 어플리케이션 실행시마다 매번 다운로드를 해야하기 때문에, 제출 클라이언트(KPO Pod) 에 spark.jars.ivy 의 경로를 PVC 로 마운트 해두고, 그 한 곳의 캐시가 계속 재사용될 수 있도록 구성했었다.  
+
+#### Spark on K8s.  
+
+`K8s 에는 YARN distributed cache 영역이 없기 때문에 그 역할을 driver pod가 대신한다.`   
+따라서, cluster 모드의 핵심 차이가 여기 있다.    
+`Ivy 해석이 클라이언트(KPO Pod)가 아니라 driver pod 안에서 일어난다.`   
+
+![](/img/posts/common/Pasted%20image%2020260614175559.png)
+
+이유는 K8s cluster 모드의 구조 때문이다.   
+
+> 정확하게는, cluster 모드로 spark-submit 수행시 driver pod 스펙만 만들어서 K8s에 요청하고 종료하고, 띄워진 driver pod가 내부적으로 spark-submit을 client 모드로 다시 실행한다.   
+
+클라이언트의 spark-submit은 --packages 해석도 이 driver pod 안에서 진행하며, 이미지의 로컬 ivy 디렉터리(/opt/spark/.ivy2 또는 /root/.ivy2)를 대상으로 수행된다.   
+
+executor로의 전달도 다르다. distributed cache가 없으니, driver가 해석해 가진 jar를 자신의 파일 서버로 노출하고, executor는 시작 시 드라이버 주소(SPARK_DRIVER_URL)로 접속해 jar를 받아 간다.   
+
+### Solution
+
+따라서, K8s 에서는 driver pod 관점에서 두 가지를 확인, 보완해야 한다.   
+
+- ivy 캐시 쓰기 권한: spark.jars.ivy=/tmp/.ivy2 처럼 쓰기 가능한 경로를 지정하거나, 이미지에서 HOME/디렉터리 권한을 맞춘다.  
+- Maven egress: driver pod가 Maven central(또는 사내 Nexus/Artifactory) 로 나갈수 있는지 확인해야 한다.  
+
+다만 가장 견고한 방법은 런타임 해석에 의존하지 않는것이다.   
+의존성을 이미지에 미리 빌드하여 넣어두거나, s3 등 외부 저장소에 두고 받아 쓰는 방식으로 가면 해석, 다운로드 단계를 스킵하여 조금더 빠르게 어플리케이션을 실행할 수 있게 된다.   
 
 - - - 
 
