@@ -64,8 +64,16 @@ spark.celeborn.client.spark.shuffle.fallback.policy=NEVER
 
 YARN 온프레미스에서 동적 할당이 필요하면 ESS가 사실상 표준이지만, Kubernetes에는 이런 노드 단위 ESS가 기본 제공되지 않기 때문에 RSS를 사용할 수 있다.
 
-`spark.dynamicAllocation.shuffleTracking 은 Spark 3.0 부터 도입된 방식으로 셔플을 가진 Executor를 Spark가 추적해서, 그 데이터가 더 필요 없어질 때까지 회수를 막는 방식이다.` 
-`즉, ESS, RSS 없이 동적할당을 쓰기 위한 대체 수단이다.`
+`spark.dynamicAllocation.shuffleTracking 은 Spark 3.0 부터 도입된 방식으로 셔플 데이터를 가진 Executor를 추적해서, 그 데이터가 더 필요 없어질 때까지 회수를 막는 방식이다.`    
+`즉, ESS, RSS 에서 제공하는 DRA가 아닌 Spark 기본 동적할당(DRA)을 쓰기 위한 대체 수단이다.`
+
+Celeborn 문서를 보면 spark.dynamicAllocation.shuffleTracking.enabled=false를 강하게 권장하고 있고, `spark 3.5.0 이상에서는 아래와 같이 Celeborn이 DRA 지원 기능을 직접 제공`한다.   
+
+```
+spark.shuffle.sort.io.plugin.class org.apache.spark.shuffle.celeborn.CelebornShuffleDataIO
+```
+
+
 
 > ESS, RSS 모두 셔플 데이터를 서빙하는 주체가 Executor가 아니기 때문에 Executor를 회수해도 셔플 데이터가 살아남고 동적할당이 가능하기에 해당 옵션은 불필요하다.
 
