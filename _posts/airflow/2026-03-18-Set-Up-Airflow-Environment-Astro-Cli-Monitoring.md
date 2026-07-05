@@ -301,7 +301,6 @@ deploy/
   │       └── airflow.yaml        
 ```
 
-전체 코드는 [github](https://github.com/WonYong-Jang/airflow-pipeline/tree/main/deploy) 를 참고하자.   
 
 ##### deploy/values/airflow.yaml
 
@@ -362,7 +361,6 @@ config:
 최종적으로 아래 명령어로 실행시켜 준다.
 
 ```sh
-
 # 1. 파일 작성 후 git push
 # 2. ArgoCD 부트스트랩 (helm)
 helm repo add argo https://argoproj.github.io/argo-helm && helm repo update argo
