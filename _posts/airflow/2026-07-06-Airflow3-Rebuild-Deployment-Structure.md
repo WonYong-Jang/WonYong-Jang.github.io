@@ -1,20 +1,24 @@
 ---
 layout: post
-title: "[Airflow] Dag Bundle 과 Versioning 이해하기"
-subtitle: Apache Airflow 3.x 에 도입된 기능
+title: "[Airflow] Rebuilding Out Airflow Deployment Structure for Airflow 3"
+subtitle: Dag Bundle / Module Management / Cluster Policy / sys.path.append 배포 방식에서 Dag Bundle 로
 comments: true
 categories: Airflow
 date: 2026-07-06
 background: /img/posts/mac.png
 ---
+이 글에서는 Airflow 2.x 에서 진행하던 배포 방식을 개선하기 위해, Airflow 3.x 에서 제공하는 기능들에 대해서 살펴보며, 어떻게 개선할 수 있는지 살펴볼 예정이다.   
+
 Airflow 3.0 에서는 Dag를 관리하는 방식에 큰 변화가 생겼다.   
 기존 Airflow 2.x 에서는 dags 디렉터리에 있는 Python 파일을 Scheduler가 지속적으로 스캔하여 Dag를 생성했다.   
+
+> AIrflow 3.x 부터는 Scheduler가 아닌 Dag Processor가 파일을 지속적으로 스캔한다.
+
 이 방식은 단순하지만, 실행 중인 Dag Run이 코드 변경의 영향을 받을 수 있다는 문제가 있었다.   
 Airflow 3에서는 이러한 문제를 해결하기 위해 Dag Versioning과 Dag Bundle 이라는 두 가지 개념이 도입되었다.
 
-이 글에서는 두 기능의 관계와 차이점을 중심으로 설명할 예정이다.  
+이 개념들에 대해 살펴보며, 기존 배포 방식을 어떻게 개선할 수 있을지 살펴보자.
 - - -  
-
 
 ## 1. 기존 업무에서의 배포 구조 방식
 현재 팀에서 Airflow 배포 방식은 Airflow 2.x 에서 부터 branch 별 테스트 가능한 격리 환경이 필요했고, 그에 따라 sys.path.append 방식을 이용한 커스텀 배포 패턴을 사용하고 있었다.
@@ -24,18 +28,58 @@ git action의 self-hosted 러너가 Kubernetes 클러스터 안에서 직접 코
 개발자가 Airflow Dag를 개발하여 git push를 하게 되면 master 브랜치인 경우는 Airflow prod 환경으로 배포되며, 그 외에 개발 브랜치면 Airflow dev 환경에 배포가 되는 구조이다.   
 
 배포를 수행하는 러너 자체가 Kubernetes 클러스터 안에서 실행되며, Dag PVC(/opt/airflow/dags)를 직접 마운트 하고 있다.   
-Airflow dev 의 경우는 각 git branch 마다 격리된 환경에서 테스트를 진행할 수 있도록 하기 위한 구조를 제공했었다.
+Airflow dev 의 경우는 각 feature branch 마다 격리된 환경에서 테스트를 진행할 수 있도록 하기 위한 구조를 제공했었다.
 
 ```
-/opt/airflow/dags/projects/
+/opt/airflow/dags/my-company/
+|--common_utils
 |--master/
-|--NP-11945/
-|--NP-12068/
+|--feature-11945/
+|--feature-12068/
 ```
 
-위 배포 방식의 문제점은 git branch 마다 격리를 해주기 위하여 명시적으로 sys.path.apend 를 이용하여 상위 경로를 전달해줘야 한다는 점이다.
+`위 배포 방식의 문제점은 git branch 마다 격리를 해주기 위하여 Dag 마다 명시적으로 sys.path.apend 를 이용하여 상위 경로를 명시적으로 전달해줘야 한다는 점이다.`     
+
+```python
+import sys, os
+
+# my-company 를 path root 로
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from common_utils import get_connection
+```
+
+`그렇지 않고, 아래와 같이 자기 브랜치 폴더까지만 sys.path에 추가하면 common_utils 처럼 브랜치 폴더 바깥에 있는 공통 코드를 찾지 못하는 문제가 발생한다.`
+
+```python
+import sys, os
+# feature-11945/ 경로만 추가됨
+sys.path.append(os.path.dirname(__file__))
+# ModuleNotFoundError: No module named 'common_utils'
+# common_utils.py 는 feature-11945/ 안이 아니라 my-company/ 바로 아래 있기 때문
+from common_utils import get_connection
+```
+
+[Airflow Moodules Management](https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/modules_management.html) 문서에서도 PYTHONPATH 루트 아래 고유한 최상위 패키지(my_company) 하나를 두고, 그 안에 공유 코드와 DAG 코드를 함께 넣으라고 말하고 있다.
+현재 구조는 PYTHONPATH를 배포 설정으로 미리 등록하는 대신, Dag 파일 안에서 sys.path.append로 그 역할을 대신하도록 구성한 것이다.   
 
 > 이 구조는 뒤에서 설명할 GitDagBundle 이 정확히 대체하려는 패턴이다. 브랜치마다 Bundle을 등록하면 sys.path.append 없이도 완전히 격리된 네임스페이스를 구성할 수 있다.   
+
+또한, 브랜치 폴더 마다 Dag 파일이 구성되기 때문에 dag_id 가 브랜치 간에 겹치기 쉽다.   
+Airflow 메타데이터 DB의 dag 테이블은 dag_id를 PK로 쓰기 때문에, Dag Processor가 공유 PVC를 계속 스캔하는 한 어느 브랜치가 마지막으로 파싱됐느냐에 따라 같은 dag_id의 row가 서로 다른 브랜치 코드로 계속 덮어써 진다.
+따라서, 이 또한 dev 환경의 경우는 dag_id 에 브랜치 이름을 추가하여 고유하게 강제하는 로직이 들어가야 한다.
+
+```python
+import os
+branch = os.environ.get("AIRFLOW_DEPLOY_BRANCH", "master")
+with DAG(dag_id=f"example_etl_{branch}") as dag:
+```
+> branch 마다 격리된 환경으로 테스트를 해야 하기 때문에 이 로직은 Dag Bundle 을 사용하더라도 필요하다.
+
+
+마지막으로, Airflow 3 에서 제공하는 Dag Versioning을 사용함에도 불구하고, Versioning 기능을 제대로 활용하기 어렵다.  
+
+> Dag Versioning과 Dag Bundle에 대한 내용은 아래에서 자세히 다룰 예정이다.   
+
 
 - - - 
 ## 2. Airflow 2.x 의 한계
@@ -112,6 +156,9 @@ extract = SQLExecuteQueryOperator(
 Dag Bundle은 Dag 와 Dag 실행에 필요한 파일을 제공하는 소스(Backend) 추상화이다.   
 `Airflow3 부터는 기존의 dags/ 폴더에 파일을 두는 구조 대신, Dag 코드를 하나의 단위로 묶는 Dag Bundle 이라는 개념이 도입되었다.`   
 
+
+### 4-1) 기본 제공 Bundle 종류
+
 Dag Bundle 의 종류는 아래와 같다.
 
 - LocalDagBundle: 기존처럼 dags/ 폴더에서 로딩하며 버전관리를 하지 않는다.
@@ -119,14 +166,50 @@ Dag Bundle 의 종류는 아래와 같다.
 
 > 그 외에도 S3DagBundle, GCSDagBundle을 제고하며, BaseDagBundle을 상속한 커스텀 Bundle 도 지원한다. 
 
+```yaml
+# airflow.cfg — prod 환경 예시
+[dag_processor]
+dag_bundle_config_list = [
+  {
+    "name": "prod",
+    "classpath": "airflow.providers.git.bundles.git.GitDagBundle",
+    "kwargs": {
+      "tracking_ref": "master",
+      "git_conn_id": "my_git_conn"
+    }
+  }
+]
+```
+
 Dag Bundle 구조 덕분에 Airflow 는 Dag 실행 시 해당 시점의 Dag 코드 상태를 버전(v1, v2, ..) 으로 고정 할 수 있게 되었다.
 버전 관리형 Bundle을 쓰면 Task Instance를 Clear 하고 재실행할 때 UI 에서 "최신 Bundle 버전으로 실행할지, 원래 Run이 사용했던 버전으로 실행할지"를 선택할 수도 있다. 
+
+### 4-2) 왜 기본 GitDagBundle 만으로는 부족한가
+
+prod 처럼 브랜치가 master 하나뿐이라면 위 설정으로 끝이다.    
+문제는 dev 환경이다. 지금처럼 feature 브랜치가 계속 생기고 없어지는 구조에는 기본 GitDagBundle을 그대로 쓰려면, 브랜치 하나마다 Bundle을 하나씩 등록해야 한다. 
+
+```yaml
+[dag_processor]
+dag_bundle_config_list = [
+  {"name": "dev-NP-11945", "classpath": "...GitDagBundle", "kwargs": {"tracking_ref": "NP-11945", ...}},
+  {"name": "dev-NP-12068", "classpath": "...GitDagBundle", "kwargs": {"tracking_ref": "NP-12068", ...}}
+]
+```
+dag_bundle_config_list 는 정적 설정이다. PR이 머지될 때마다 이 리스트를 갱신하려면 config 변경 + Dag Processor(경우에 따라 Scheduler/API Server) 재시작이 필요하다.
+Helm 으로 배포한다면 사실상 매 PR 마다 Helm upgrade가 돌게 된다.
+
+`즉, dev의 경우는 BaseDagBundle을 상속한 커스텀 Bundle을 도입해서, 브랜치 하나마다 Bundle을 등록하는 대신 Bundle 하나가 활성 브랜치 전체를 동적으로 관리하게 만든다.`
+
+실제로 [Airflow Discussion(#54669)](https://github.com/apache/airflow/discussions/54669) 에 FeatureBranchGitDagBundle 이라는 이름으로 정확하게 이 방식을 구현해 공유한 사례가 있다.
 
 - - -
 Reference 
 
-<https://devocean.sk.com/blog/techBoardDetail.do?page=&boardType=undefined&query=&ID=168274&searchData=&subIndex=&searchText=&techType=&searchDataSub=&searchDataMain=&comment=&p=> 
 <https://github.com/apache/airflow/discussions/54669>
+<https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/dag-bundles.html>
+<https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/cluster-policies.html>
+<https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/modules_management.html>   
 . 
 {% highlight ruby linenos %}
 {% endhighlight %}
