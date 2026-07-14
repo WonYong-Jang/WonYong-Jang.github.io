@@ -228,9 +228,9 @@ Task A 실행 완료(v1)-> 새로운 코드가 반영됨 -> Task B (v2) 실행
 
 Dag Versioning은 Dag 정의의 변경 이력을 Airflow가 자동으로 추적하는 기능이다. 별도 설정 없이 Airflow 3에서 기본 동작한다.   
 
-`단, 모든 변경에서 새 버전이 생기는 건 아니다. 구조적 변경(structural change) 이 있고, 그 이후 새로운 Dag Run 이 생성될 때 새 버전이 만들어 진다.`
+`단, 모든 코드 변경이 새로운 Dag Version을 생성하는 것은 아니다. Dag Processor가 Dag를 다시 파싱했을 때 Serialized Dag(실행에 필요한 Dag 정의)가 이전과 달라진 경우에만 새로운 Dag Version이 생성된다.`
 
-`구조적 변경(structural change) 이란 태스크 추가, 제거, 태스크 ID 변경, 태스크 의존성 변경, Dag/Task 파라미터 변경 등 serialized Dag에 영향을 주는 변경을 말한다.`   
+`예를 들면, 태스크 추가, 제거, 태스크 ID 변경, 태스크 의존성 변경, Dag/Task 파라미터 변경 등 serialized Dag에 영향을 주는 변경을 말한다.`   
 
 python_callable 같은 함수 본문 내부의 로직은 Dag Versioning에 해당이 안된다.
 
@@ -272,6 +272,7 @@ Dag Bundle은 Dag 와 Dag 실행에 필요한 파일을 제공하는 소스(Back
 Dag Bundle 의 종류는 아래와 같다.
 
 - LocalDagBundle: 기존처럼 dags/ 폴더에서 로딩하며 버전관리를 하지 않는다.
+	- path를 명시하지 않으면 dags_folder(/opt/airflow/dags/) 설정 값을 그대로 사용
 - GitDagBundle: Git 저장소에서 Dag 코드를 불러오며 버전 관리를 진행한다.
 
 > 그 외에도 S3DagBundle, GCSDagBundle을 제공하며, BaseDagBundle을 상속한 커스텀 Bundle 도 지원한다. (버전 관리를 지원하는 기본 번들은 GitDagBundle 뿐이며, S3/GCS는 항상 최신 코드로 실행된다.)   
