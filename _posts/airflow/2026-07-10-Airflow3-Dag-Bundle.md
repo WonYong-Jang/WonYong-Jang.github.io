@@ -1,13 +1,14 @@
 ---
 layout: post
-title: "[Airflow] GitDagBundle"
-subtitle:
+title: "[Airflow] Understanding Airflow 3 DAG Bundles: Architecture, Internals, and Feature Branch Management"
+subtitle: LocalDagBundle, GitDagBundle / BaseDagBundle을 상속한 커스텀 Bundle / 여러 개발자가 동시에 테스트 할 수 있는 Airflow 환경 구성
 comments: true
 categories: Airflow
 date: 2026-07-10
 background: /img/posts/mac.png
 ---
-이 글에서는 Airflow 3 에서 부터 제공하는 Dag Bundle 에 대해서 자세히 살펴보자.
+현재 업무에서 문제가 되는 [Airflow 배포 구조](https://wonyong-jang.github.io/airflow/2026/07/06/Airflow3-Rebuild-Deployment-Structure.html)를 개선하기 위해 Airflow 3 에서 부터 제공하는 Dag Bundle 도입을 검토하고 있다.
+이를 위해서 Dag Bundle에 대한 아키텍처를 자세히 살펴볼 예정이다.
   
 ## 1. Dag Bundle
 
@@ -55,10 +56,20 @@ dag_bundle_config_list = [
 Dag Bundle 구조 덕분에 Airflow 는 Dag 실행 시 해당 시점의 Dag 코드 상태를 버전(v1, v2, ..) 으로 고정 할 수 있게 되었다.
 버전 관리형 Bundle을 쓰면 Task Instance를 Clear 하고 재실행할 때 UI 에서 "최신 Bundle 버전으로 실행할지, 원래 Run이 사용했던 버전으로 실행할지"를 선택할 수도 있다. 
 
-### 1-2) 왜 기본 GitDagBundle 만으로는 부족한가
+### 1-2) GitDagBundle
+
+
+
+### 1-3) 
+
+
+### 1-4) 왜 기본 GitDagBundle 만으로는 부족한가
 
 prod 처럼 브랜치가 master 하나뿐이라면 위 설정으로 끝이다.    
-문제는 dev 환경이다. 지금처럼 feature 브랜치가 계속 생기고 없어지는 구조에는 기본 GitDagBundle을 그대로 쓰려면, 브랜치 하나마다 Bundle을 하나씩 등록해야 한다. 
+
+현재 업무에서 dev 환경은 여러 개발자가 동시에 테스트 가능한 구조로 구성하기 위해서 feature 브랜치 별로 
+격리된 환경을 구성하였다. 
+지금처럼 feature 브랜치가 계속 생기고 없어지는 구조에는 기본 GitDagBundle을 그대로 쓰려면, 브랜치 하나마다 Bundle을 하나씩 등록해야 한다. 
 
 > Bundle은 단일 저장소의 단일 ref, 전체 Dag만 가져온다.
 
@@ -69,14 +80,14 @@ dag_bundle_config_list = [
   {"name": "dev-NP-12068", "classpath": "...GitDagBundle", "kwargs": {"tracking_ref": "NP-12068", ...}}
 ]
 ```
-dag_bundle_config_list 는 정적 설정이다. PR이 머지될 때마다 이 리스트를 갱신하려면 config 변경 + Dag Processor(경우에 따라 Scheduler/API Server) 재시작이 필요하다.
-Helm 으로 배포한다면 사실상 매 PR 마다 Helm upgrade가 돌게 된다.
+dag_bundle_config_list 는 정적 설정이다.   
+PR이 머지될 때마다 이 리스트를 갱신하려면 config 변경 + Dag Processor(경우에 따라 Scheduler/API Server) 재시작이 필요하다.   
+
+> Helm 으로 배포한다면 사실상 매 PR 마다 Helm upgrade가 돌게 된다.
 
 이 정적 설정의 불편함은 [커뮤니티](https://github.com/apache/airflow/discussions/59799)에서도 동일하게 지적되고 있고, 동적으로 반영하는 기능에 대해서 제안하고 있지만, 현재로서 업데이트 된 내용은 없다.    
 
-`즉, dev의 경우는 BaseDagBundle을 상속한 커스텀 Bundle을 도입해서, 브랜치 하나마다 Bundle을 등록하는 대신 Bundle 하나가 활성 브랜치 전체를 동적으로 관리하게 만든다.`
-
-실제로 [Airflow Discussion(#54669)](https://github.com/apache/airflow/discussions/54669) 에 FeatureBranchGitDagBundle 이라는 이름으로 정확하게 이 방식을 구현해 공유한 사례가 있다.
+현재는 [Airflow Discussion(#54669)](https://github.com/apache/airflow/discussions/54669) 에 FeatureBranchGitDagBundle 이라는 이름으로 직접 구현하여 해결한 사례를 확인했다.
 
 - - - 
 

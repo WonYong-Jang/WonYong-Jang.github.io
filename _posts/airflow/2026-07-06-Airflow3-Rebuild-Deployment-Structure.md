@@ -264,172 +264,43 @@ extract = SQLExecuteQueryOperator(
 
 ## 4. Dag Bundle
 
-`Airflow 3 부터는 Dag와 실행에 필요한 Python 모듈, 설정 파일 등의 관련 리소스를 하나의 단위로 관리하는 Dag Bundle 개념이 도입되었다.`
+Dag Bundle의 자세한 내용은 [링크](https://wonyong-jang.github.io/airflow/2026/07/10/Airflow3-Dag-Bundle.html) 를 참고하자.
 
-> /opt/airflow/dags/ 폴더에 관리하는 것은 LocalDagBundle 방식이다.   
+## 5. Alternative Solution
 
-### 4-1) 기본 제공 Bundle 종류
+위의 솔루션은 하나의 airflow(dev) 에서 여러 브랜치를 격리 하여 테스트 환경을 제공하려는 방안이고, 각 브랜치 마다 개별 airflow 환경을 제공하는 방식도 대안으로 볼 수 있다. 
 
-Dag Bundle 의 종류는 아래와 같다.
+실제로 여러 글에서 이런 사례를 확인해볼 수 있다.
+- [여러 조직에서 Airflow 제공하기 2](https://engineering.linecorp.com/ko/blog/multi-tenancy-airflow-2)
+- [Ephemeral Environments for Apache Airflow](https://medium.com/go-city/ephemeral-environments-for-apache-airflow-1c39df75ea14)
 
-- LocalDagBundle: 기존처럼 dags/ 폴더에서 로딩하며 버전관리를 하지 않는다.
-	- path를 명시하지 않으면 dags_folder(/opt/airflow/dags/) 설정 값을 그대로 사용
-- GitDagBundle: Git 저장소에서 Dag 코드를 불러오며 버전 관리를 진행한다.
+위 방식을 Ephemeral Airflow Environment 방식이라고 부르며, 일반적으로 Github Actions에서 PR 이벤트를 트리거로 Helm release 를 네임스페이스 단위로 올리고 내리는 방식을 많이 사용한다.   
 
-> 그 외에도 S3DagBundle, GCSDagBundle을 제공하며, BaseDagBundle을 상속한 커스텀 Bundle 도 지원한다. (버전 관리를 지원하는 기본 번들은 GitDagBundle 뿐이며, S3/GCS는 항상 최신 코드로 실행된다.)   
+> PR이 닫히면 네임스페이스를 통째로 정리하여 Airflow를 종료한다. 
 
-아래와 같이 dag_bundle_config_list 옵션으로, Dag 파일을 어디서 어떻게 가져올지를 정의하는 번들 목록이다.   
+### 5-1) 선택 기준
 
-`아래 refresh_interval 은 Bundle 이 원격에서 코드를 얼마나 자주 당겨올지에 대한 옵션이며, default 값은 dag processor의 refresh_interval(5분) 의 값을 사용하게 된다.`
-`이 옵션을 변경한다면, dag processor의 refresh_interval 을 override 하게 된다.`   
+##### Dag Bundle(FeatureBranchGitDagBundle)
+- 검증하려는 변경이 대부분 Dag 코드/로직 수준이고, Airflow 설정이나 provider 버전 변경이 드문 경우
+- 동시 활성 브랜치 수가 많은 경우
+- 빠른 반복 개발 루프가 중요한 경우(브랜치 push 이후 빠르게 dev cluster 에 반영)
+- Connection/Variable/Pool 구성이 이미 안정적이고 자주 바뀌지 않는 경우 
 
-```python
-# airflow.cfg — prod 환경 예시
-[dag_processor]
-dag_bundle_config_list = [
-  {
-    "name": "prod",
-    "classpath": "airflow.providers.git.bundles.git.GitDagBundle",
-    "kwargs": {
-      "tracking_ref": "master",
-      "git_conn_id": "my_git_conn",
-      "refresh_interval": 30
-    }
-  }
-]
-```
+##### Ephemeral Airflow Environment
+- Airflow 버전 업그레이드, provider 패키지 변경, Scheduler, Executor 변경을 자체 브랜치 단위로 검증해야 하는 경우 
+- 동시 활성 브랜치 수가 상대적으로 적은 경우
+- 팀에서 K8s 기반 provisioning/teardown 자동화 구축, 운영이 가능한 경우
 
-동작 흐름은 아래와 같다
-1. initialize - git_conn_id(GitHook)의 자격증명으로 저장소를 로컬 경로에 clone
-2. refresh - 주기적으로 git fetch 후 tracking_ref를 최신으로 checkout, GitSync 사이드카, 또는 self-hosted 러너가 하던일을 번들이 대신 함
-3. get_current_version - 현재 checkout 된 commit SHA를 버전으로 반환
-4. 버전 pinning - Dag Run 이 생성될 때 그 시점의 번들 버전(commit)이 Run에 고정되고, 워커는 그 커밋을 체크아웃해 태스트를 실행한다. 즉, 배포 중에 코드가 바뀌어도 진행 중인 Run은 시작 시점 커밋으로 일관되게 실행되고, UI에서 그 버전으로 재실행이 가능
+### 5-2) 한계
 
-Dag Bundle 구조 덕분에 Airflow 는 Dag 실행 시 해당 시점의 Dag 코드 상태를 버전(v1, v2, ..) 으로 고정 할 수 있게 되었다.
-버전 관리형 Bundle을 쓰면 Task Instance를 Clear 하고 재실행할 때 UI 에서 "최신 Bundle 버전으로 실행할지, 원래 Run이 사용했던 버전으로 실행할지"를 선택할 수도 있다. 
+##### Dag Bundle(FeatureBranchGitDagBundle)
+- Connection/Variable/Pool 은 하나의 메타데이터 DB를 공유하기 때문에, 브랜치별로 다르게 테스트할 수 없다.
+- Scheduler 자체의 부하는 브랜치 모두 공유 될 수 있다.
+- Provider 패키지 버전이나 airflow.cfg 등의 변경처럼 인프라 격리는 불가능 하다.
 
-### 4-2) 왜 기본 GitDagBundle 만으로는 부족한가
-
-prod 처럼 브랜치가 master 하나뿐이라면 위 설정으로 끝이다.    
-문제는 dev 환경이다. 지금처럼 feature 브랜치가 계속 생기고 없어지는 구조에는 기본 GitDagBundle을 그대로 쓰려면, 브랜치 하나마다 Bundle을 하나씩 등록해야 한다. 
-
-> Bundle은 단일 저장소의 단일 ref, 전체 Dag만 가져온다.
-
-```yaml
-[dag_processor]
-dag_bundle_config_list = [
-  {"name": "dev-NP-11945", "classpath": "...GitDagBundle", "kwargs": {"tracking_ref": "NP-11945", ...}},
-  {"name": "dev-NP-12068", "classpath": "...GitDagBundle", "kwargs": {"tracking_ref": "NP-12068", ...}}
-]
-```
-dag_bundle_config_list 는 정적 설정이다. PR이 머지될 때마다 이 리스트를 갱신하려면 config 변경 + Dag Processor(경우에 따라 Scheduler/API Server) 재시작이 필요하다.
-Helm 으로 배포한다면 사실상 매 PR 마다 Helm upgrade가 돌게 된다.
-
-이 정적 설정의 불편함은 [커뮤니티](https://github.com/apache/airflow/discussions/59799)에서도 동일하게 지적되고 있고, 동적으로 반영하는 기능에 대해서 제안하고 있지만, 현재로서 업데이트 된 내용은 없다.    
-
-`즉, dev의 경우는 BaseDagBundle을 상속한 커스텀 Bundle을 도입해서, 브랜치 하나마다 Bundle을 등록하는 대신 Bundle 하나가 활성 브랜치 전체를 동적으로 관리하게 만든다.`
-
-실제로 [Airflow Discussion(#54669)](https://github.com/apache/airflow/discussions/54669) 에 FeatureBranchGitDagBundle 이라는 이름으로 정확하게 이 방식을 구현해 공유한 사례가 있다.
-
-- - - 
-
-## 5. FeatureBranchGitDagBundle
-
-`FeatureBranchGitDagBundle은 위 한계를 없애기 위해 BaseDagBundle을 상속한 단 하나의 커스텀 번들로 이 번들 하나가 모든 feature 브랜치를 동적으로 관리하게 된다.`    
-
-기본 GitDagBundle ref(브랜치) 1개 = 번들 1개 였다면, FeatureBranchGitDagBundle은 번들 1개가 base 브랜치 대비 변경된 모든 feature 브랜치를 확인하여 동적으로 노출하는 방식이다.    
-
-```yaml
-{
-  "name": "feature",
-  "classpath": "feature_branch_bundle.git_bundle.FeatureBranchGitDagBundle",
-  "kwargs": {
-    "repo_url": "...",
-    "base_branch": "main",       # 비교 기준 브랜치
-    "branch_prefix": "feature-", # 이 접두사로 시작하는 브랜치 전부
-    "subdir": "dags",
-    "changed_only": true,        # main 대비 "변경된" DAG만 노출
-    "refresh_interval": 120      # 120초(2분)마다 갱신
-  }
-}
-```
-
-### 5-1) 동작 흐름 
-
-`Bundle의 로직은 기동 시 1회 실행되는 initialize() 와 refresh_interval 마다 반복되는 refresh() 로 나뉜다.`   
-
-
-> Bundle의 전체 흐름은 상대적으로 무거운 작업인 clone은 initialize에서 한번 발생하며, 그 이후 refresh()는 git fetch 와 bundle_folders rebuild 를 반복한다.   
-> 머지/삭제된 브랜치는 다음 refresh에서 diff 대상에서 제외되어 Dag 목록에서 사라진다.
-
-##### initialize()
-
-`오버라이드할 경우 반드시 메서드 맨 끝에 super().initialize()를 호출해야 한다.(그래야 is_initialized 플래그가 셋팅되어 1회만 실행된다)`
-
-- repo_url 검증 및 lock 획득
-- base branch를 git clone 하며,기존 저장소가 존재한다면 기존 저장소를 연다.
-- 디렉터리 준비 - repo_path 와 bundle_path(/opt/airflow/bundle_folders) 를 생성
-
-##### refresh()
-
-`refresh() 에서 네트워크 작업은 git fetch --all 하나뿐이고, 그 이후 나머지는 전부 로컬 파일시스템에서 번들 폴더(/opt/airflow/bundle_folders)를 다시 만드는 작업이다.`
-
-> Bundle 파일을 최신으로 당겨오는 것이다.
-
-- Bundle 폴더 초기화
-- 원격 갱신(fetch 기반)
-- feature- 브랜치 조회
-- main 과 비교(diff)
-- 변경된 Dag 폴더 찾기
-- Bundle 폴더로 복사
-- Dag_id 수정(AST 재작성)
-- Airflow가 자동 로드 - Dag Processor가 bundle_folders 를 파싱해서 Dag 를 반영한다.
-
-### 5-2) 동작 검증
-- feature branch 에서 신규 Dag 생성시 
-- 파드 로컬 에서 bundle 파일 관리
-	- Airflow 3 의 Dag Bundle 자체가 공유 볼륨 탈출을 위해 나온 기능이다. 
-	- Airflow 2 에서는 공유 PVC(git-sync 또는 러너로 채우는) 방식은 여러 파드가 같은 Dags를 마운트해야 해서 RWX 스토리지를 요구하고, 갱신, 파싱 경합이 발생할 수 있다.
-	- Bundle은 각 컴포넌트가 자기 소스를 독립적으로 materialize하는 방식으로 이를 대체한다.
-- common_utils 등 공통 모듈 import
-- dags, scripts 파일 분리된 형태인 경우 versioning이 제공될 수 있는지
-
-
-### 5-3) 원자적 교체
-
-기존 방식은 새 커밋을 store/ 에 미리 clone 해두고 준비가 끝난 뒤 심볼릭 링크만 원자적으로 swap 하여 Dag 가 잠깐 사라지는 구간을 없앴다.  
-
-현재 커스텀 번들은 아래와 같이 구성되어 있다.
-
-```python
-if self.bundle_path.exists():
-    shutil.rmtree(self.bundle_path)
-self.bundle_path.mkdir(parents=True, exist_ok=True)
-```
-
-### 5-4) Dag Processor 에서 Bundle 동작 과정 
-
-Airflow 3 의 Dag Processor는 하나의 매니저 루프(DagFileProcessorManager)가 아래를 주기적으로 순환한다.
-
-```python
-[매니저 루프]
-1. heartbeat()
-2. if not bundle.is_initialized:
-	   bundle.initialize()
-3. check refresh_interval
-	   # Yes -> bundle.refresh()
-	   # No -> Print Log("Not time to refresh")
-4. Scan bundle.path 
-5. 파일마다 워커 fork -> 파싱 # 별도 프로세스에서 파싱 -> seralized_dag 저장
-```
-
-여기서 아래 두가지가 중요하다.
-
-`initialize() 는 1회만 실행된다. BaseDagBundle은 is_initialized 플래그를 두고, 매니저는 if not bundle.is_initialized: 일 때만 initialize()를 부른다.`   
-
-`refresh() 는 heartbeat과 같은 단일 루프에서 돈다. refresh()가 오래 블로킹하면 다음 회전의 heatbeat()가 그만큼 밀린다. DagProcessorJob의 생존 판정 임계값은 [dag_processor] health_check_threshold(기본 30초)이고, 마지막 heartbeat이 이보다 오래되면 liveness probe(airflow jobs check)가 No alive jobs found로 컨테이너를 죽인다.`   
-
-[Airflow Discussion(#54669)](https://github.com/apache/airflow/discussions/54669) 에 공유 된 코드는 initialize() 내에서 refresh() 직접 호출하도록 되어 있고, super().initialize()를 빠뜨려 지속적으로 호출되면서 문제가 발생했다.
+##### Ephemeral Airflow Environment
+- 부팅 시간이 병목이 될 수 있다. PR을 열때마다 수 분을 기다려야 한다.
+- 비용이 선형으로 증가 될 수 있다. 활성 브랜치가 20개면 이론상 Airflow 풀스택 20세트가 동시에 떠 있을 수 있으므로, pod 단위 리소스 제한, 유휴 인스턴스 자동 종료, 동시 인스턴스 수 상한 같은 비용 통제 장치가 필수적이다.
 
 - - - 
 ## 6. 정리 
