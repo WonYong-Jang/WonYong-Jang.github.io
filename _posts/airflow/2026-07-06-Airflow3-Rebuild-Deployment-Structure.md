@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Airflow] Rebuilding Out Airflow Deployment Structure for Airflow 3"
-subtitle: Dag Bundle / Module Management / Cluster Policy / sys.path.append 배포 방식에서 Dag Bundle 로
+subtitle: Dag Bundle / Module Management / 브랜치별 격리 테스트 환경 개선하기
 comments: true
 categories: Airflow
 date: 2026-07-06

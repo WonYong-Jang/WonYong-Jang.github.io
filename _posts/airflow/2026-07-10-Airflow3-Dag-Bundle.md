@@ -7,14 +7,14 @@ categories: Airflow
 date: 2026-07-10
 background: /img/posts/mac.png
 ---
-현재 업무에서 문제가 되는 [Airflow 배포 구조](https://wonyong-jang.github.io/airflow/2026/07/06/Airflow3-Rebuild-Deployment-Structure.html)를 개선하기 위해 Airflow 3 에서 부터 제공하는 Dag Bundle 도입을 검토하고 있다.
+현재 업무에서 문제가 되는 [Airflow 배포 구조](https://wonyong-jang.github.io/airflow/2026/07/06/Airflow3-Rebuild-Deployment-Structure.html)를 개선하기 위해 Airflow 3 에서 부터 제공하는 Dag Bundle 도입을 검토하고 있다.   
 이를 위해서 Dag Bundle에 대한 아키텍처를 자세히 살펴볼 예정이다.
   
 ## 1. Dag Bundle
 
 `Airflow 3 부터는 Dag와 실행에 필요한 Python 모듈, 설정 파일 등의 관련 리소스를 하나의 단위로 관리하는 Dag Bundle 개념이 도입되었다.`
 
-> /opt/airflow/dags/ 폴더에 관리하는 것은 LocalDagBundle 방식이다.   
+> 기존에 /opt/airflow/dags/ 경로에 관리하는 것은 LocalDagBundle 방식이다.   
 
 ### 1-1) 기본 제공 Bundle 종류
 
@@ -25,6 +25,12 @@ Dag Bundle 의 종류는 아래와 같다.
 - GitDagBundle: Git 저장소에서 Dag 코드를 불러오며 버전 관리를 진행한다.
 
 > 그 외에도 S3DagBundle, GCSDagBundle을 제공하며, BaseDagBundle을 상속한 커스텀 Bundle 도 지원한다. (버전 관리를 지원하는 기본 번들은 GitDagBundle 뿐이며, S3/GCS는 항상 최신 코드로 실행된다.)   
+
+
+### 1-2) GitDagBundle
+
+GitDagBundle은 Git 저장소를 Dag Bundle로 노출시켜주는 구현체로, airflow-providers-git 패키지에 포함되어 있다.    
+`핵심 동작 원리는 매번 clone 하지 않고, bare repo 를 한번 clone 해두고, 버전별 워킹 디렉토리를 만드는 것이다.`     
 
 아래와 같이 dag_bundle_config_list 옵션으로, Dag 파일을 어디서 어떻게 가져올지를 정의하는 번들 목록이다.   
 
@@ -39,28 +45,45 @@ dag_bundle_config_list = [
     "name": "prod",
     "classpath": "airflow.providers.git.bundles.git.GitDagBundle",
     "kwargs": {
-      "tracking_ref": "master",
-      "git_conn_id": "my_git_conn",
-      "refresh_interval": 30
+      "tracking_ref": "master", # 추적할 브랜치/태그
+      "git_conn_id": "my_git_conn", # 인증 연결
+      "refresh_interval": 30 # 갱신 주기
     }
   }
 ]
+
+# subdir: repo 안에서 Dag가 존재하는 폴더
+# sparse_dirs: 필요한 폴더만 체크아웃해 디스크, 시간을 아낌
 ```
 
 동작 흐름은 아래와 같다
-1. initialize - git_conn_id(GitHook)의 자격증명으로 저장소를 로컬 경로에 clone
-2. refresh - 주기적으로 git fetch 후 tracking_ref를 최신으로 checkout, GitSync 사이드카, 또는 self-hosted 러너가 하던일을 번들이 대신 함
-3. get_current_version - 현재 checkout 된 commit SHA를 버전으로 반환
-4. 버전 pinning - Dag Run 이 생성될 때 그 시점의 번들 버전(commit)이 Run에 고정되고, 워커는 그 커밋을 체크아웃해 태스트를 실행한다. 즉, 배포 중에 코드가 바뀌어도 진행 중인 Run은 시작 시점 커밋으로 일관되게 실행되고, UI에서 그 버전으로 재실행이 가능
+1. initialize - 지정된 repo_url 또는 git_conn_id로 저장소를 bare repo로 한번 clone
+2. refresh - refresh_interval 마다 bare repo를 git fetch로 최신 상태 동기화, GitSync 사이드카, 또는 self-hosted 러너가 하던일을 번들이 대신 함
+3. get_current_version - tracking_ref(추적할 브랜치/태크/커밋)가 가르키는 현재 커밋 해시를 확인
+4. 워킹 디렉토리 생성: 해당 커밋 해시를 이름으로 하는 디렉토리에 bare repo로 부터 실제 checkout 수행
+5. Dag Processor/Worker는 이 checkout된 디렉토리에 실제 .py 파일을 읽어 파싱/실행
 
 Dag Bundle 구조 덕분에 Airflow 는 Dag 실행 시 해당 시점의 Dag 코드 상태를 버전(v1, v2, ..) 으로 고정 할 수 있게 되었다.
 버전 관리형 Bundle을 쓰면 Task Instance를 Clear 하고 재실행할 때 UI 에서 "최신 Bundle 버전으로 실행할지, 원래 Run이 사용했던 버전으로 실행할지"를 선택할 수도 있다. 
 
-### 1-2) GitDagBundle
+### 1-3) KPO + GitDagBundle 파일 부재 이슈
 
+GitDagBundle 파일은 Airflow가 관리하며 번들을 초기화 하는 파드(dag-processor: 파싱, worker: 태스트 실행) 에 materialize 된다.   
+`KPO(KubernetesPodOperator)는 별도의 사용자 파드를 띄우게 되는데, 그 파드에는 번들(git repo 내용)이 마운트되지 않는다.`      
+따라서, KPO 파드의 command가 repo 안의 스크립트/파일을 참조하면 파일을 찾지 못하여 실패하게 된다.   
 
+> 이건 AIrflow 버그가 아니라 배포/아키텍처 문제이며, 워커가 아닌 외부 파드에 코드를 어떻게 전달할 것인가의 문제다.   
 
-### 1-3) 
+`첫번째 방안은 공유 PVC(RWX) 를 사용하여 모든 파드가 같은 볼륨을 마운트해 파일에 접근하는 것이다.`   
+
+이 방법은 구조가 단순하고 각 파드마다 clone이 필요 없지만, RWM PVC 를 유지해야 하기 때문에, 여러 파드가 동시 접근에 대한 동시성 이슈 고려가 필요하다.   
+
+`두번째 방안은 KPO 파드의 init-container에서 clone하는 방법이며, 파드마다 run 에 pin한 git sha 만 clone 하게 된다.`   
+
+이 방법은 스토리지 경합에 대한 고려가 필요 없다는 장점이 있고, 각 파드마다 clone 해야 된다는 단점이 있지만 필요한 git sha 만 clone 하는 등으로 비용을 최소화 할 수 있다. 
+
+> clone --depth 1 와 sparse-checkout 옵션으로 파드마다 clone 비용을 최소화 할 수 있다.
+
 
 
 ### 1-4) 왜 기본 GitDagBundle 만으로는 부족한가
