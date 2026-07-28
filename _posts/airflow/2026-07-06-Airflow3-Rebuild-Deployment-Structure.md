@@ -271,8 +271,9 @@ Dag Bundle의 자세한 내용은 [링크](https://wonyong-jang.github.io/airflo
 위의 솔루션은 하나의 airflow(dev) 에서 여러 브랜치를 격리 하여 테스트 환경을 제공하려는 방안이고, 각 브랜치 마다 개별 airflow 환경을 제공하는 방식도 대안으로 볼 수 있다. 
 
 실제로 여러 글에서 이런 사례를 확인해볼 수 있다.
-- [여러 조직에서 Airflow 제공하기 2](https://engineering.linecorp.com/ko/blog/multi-tenancy-airflow-2)
-- [Ephemeral Environments for Apache Airflow](https://medium.com/go-city/ephemeral-environments-for-apache-airflow-1c39df75ea14)
+
+[여러 조직에서 Airflow 제공하기 2](https://engineering.linecorp.com/ko/blog/multi-tenancy-airflow-2)   
+[Ephemeral Environments for Apache Airflow](https://medium.com/go-city/ephemeral-environments-for-apache-airflow-1c39df75ea14)   
 
 위 방식을 Ephemeral Airflow Environment 방식이라고 부르며, 일반적으로 Github Actions에서 PR 이벤트를 트리거로 Helm release 를 네임스페이스 단위로 올리고 내리는 방식을 많이 사용한다.   
 
