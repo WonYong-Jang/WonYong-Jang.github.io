@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Airflow] Rebuilding Out Airflow Deployment Structure for Airflow 3"
-subtitle: Dag Bundle / Module Management / 브랜치별 격리 테스트 환경 개선하기
+subtitle: Dag Bundle / Module Management / 여러 사용자의 격리 테스트 환경 개선하기
 comments: true
 categories: Airflow
 date: 2026-07-06
@@ -142,9 +142,6 @@ Dag Processor는 dags_folder(/opt/airflow/dags) 아래를 재귀적으로 흝어
 
 > Dag Processor는 .airflowignore 패턴에 걸린 경로를 아예 파싱 대상에서 제외하므로, 브랜치가 쌓여도 실제 파싱 수를 통제할 수 있다.
 
-> .airflowignore 는 bundle 단위로도 동작하므로, Bundle 하나 = Branch 하나로 격리하면 각 Bundle이 자기 브랜치 파일만 보게되어 스코프가 깔끔해질 것이기 때문에 해당 파일은 Dag Bundle 방식 전환시에도 적극 활용해야 한다.
-
-
 ### 1-3) 파이썬의 sys.path
 
 위와 같이 from common_utils.runtime_variable import ... 라고 하면, 파이썬은 "미리 정해진 찾아볼 목록" 에서만 순서대로 찾는다.   
@@ -268,9 +265,12 @@ Dag Bundle의 자세한 내용은 [링크](https://wonyong-jang.github.io/airflo
 
 ## 5. Alternative Solution
 
-위의 솔루션은 하나의 airflow(dev) 에서 여러 브랜치를 격리 하여 테스트 환경을 제공하려는 방안이고, 각 브랜치 마다 개별 airflow 환경을 제공하는 방식도 대안으로 볼 수 있다. 
+위의 솔루션은 `하나의 airflow(dev)` 에서 여러 브랜치를 격리 하여 테스트 환경을 제공하려는 것이다.   
+이와 달리 `각 브랜치 마다 격리된 airflow 환경을 통째로 제공하는 방식`도 대안으로 볼 수 있다.   
 
-실제로 여러 글에서 이런 사례를 확인해볼 수 있다.
+이 경우 브랜치 격리를 Airflow 내부가 아니라 `환경 자체의 분리`로 달성하므로, 브랜치별 코드 충돌을 걱정할 필요가 없다. `따라서 커스텀 FeatureBranchGitDagBundle 없이 prod, dev 모두 기본 GitDagBundle 하나로 단순화 된다.`   
+
+실제로 여러 조직의 사례에서 이 방식을 확인할 수 있다. 
 
 [여러 조직에서 Airflow 제공하기 2](https://engineering.linecorp.com/ko/blog/multi-tenancy-airflow-2)   
 [Ephemeral Environments for Apache Airflow](https://medium.com/go-city/ephemeral-environments-for-apache-airflow-1c39df75ea14)   
@@ -282,26 +282,28 @@ Dag Bundle의 자세한 내용은 [링크](https://wonyong-jang.github.io/airflo
 ### 5-1) 선택 기준
 
 ##### Dag Bundle(FeatureBranchGitDagBundle)
-- 검증하려는 변경이 대부분 Dag 코드/로직 수준이고, Airflow 설정이나 provider 버전 변경이 드문 경우
+- 검증 대상이 대부분 Dag 코드/로직 수준이고, Airflow 설정이나 provider 버전 변경이 드문 경우
 - 동시 활성 브랜치 수가 많은 경우
 - 빠른 반복 개발 루프가 중요한 경우(브랜치 push 이후 빠르게 dev cluster 에 반영)
 - Connection/Variable/Pool 구성이 이미 안정적이고 자주 바뀌지 않는 경우 
 
 ##### Ephemeral Airflow Environment
-- Airflow 버전 업그레이드, provider 패키지 변경, Scheduler, Executor 변경을 자체 브랜치 단위로 검증해야 하는 경우 
+- Airflow 버전 업그레이드, provider 패키지 변경, Scheduler/Executor 변경을 자체 브랜치 단위로 검증해야 하는 경우 
 - 동시 활성 브랜치 수가 상대적으로 적은 경우
 - 팀에서 K8s 기반 provisioning/teardown 자동화 구축, 운영이 가능한 경우
 
 ### 5-2) 한계
 
 ##### Dag Bundle(FeatureBranchGitDagBundle)
-- Connection/Variable/Pool 은 하나의 메타데이터 DB를 공유하기 때문에, 브랜치별로 다르게 테스트할 수 없다.
-- Scheduler 자체의 부하는 브랜치 모두 공유 될 수 있다.
-- Provider 패키지 버전이나 airflow.cfg 등의 변경처럼 인프라 격리는 불가능 하다.
+- `dev 를 FeatureBranchGitDagBundle, prod를 GitDagBundle로 나누면 두 환경의 배포 메커니즘이 달라, dev 에서 통과한 것이 prod에서 동일하게 동작한다는 보장이 깨짐`   
+- `현재 기준 코어에 포함된 검증된 기능이 아니라, 커뮤니티에서 논의 중인 자체 구현 아이디어이므로(Discussion #54669) 팀 내 적용 후 검증이 필요`
+- `완벽한 격리 수준으로 테스트가 되지 않고`, 같은 팀 내 신뢰를 전제로 운영
+- Connection/Variable/Pool 은 `하나의 메타데이터 DB를 공유`하기 때문에, 브랜치별로 격리된 환경에서 테스트가 어렵고 Scheduler 자체의 부하 또한 브랜치 모두 공유
+- Provider 패키지 버전이나 airflow.cfg 등의 변경처럼 `인프라 격리는 불가능`
 
 ##### Ephemeral Airflow Environment
-- 부팅 시간이 병목이 될 수 있다. PR을 열때마다 수 분을 기다려야 한다.
-- 비용이 선형으로 증가 될 수 있다. 활성 브랜치가 20개면 이론상 Airflow 풀스택 20세트가 동시에 떠 있을 수 있으므로, pod 단위 리소스 제한, 유휴 인스턴스 자동 종료, 동시 인스턴스 수 상한 같은 비용 통제 장치가 필수적이다.
+- `부팅 시간이 병목`이 될 수 있다. PR을 열때마다 수 분을 기다려야 할 수 있음
+- `비용이 선형으로 증가` 될 수 있다. 활성 브랜치가 20개면 이론상 Airflow 풀스택 20세트가 동시에 떠 있을 수 있으므로, pod 단위 리소스 제한, 유휴 인스턴스 자동 종료, 동시 인스턴스 수 상한 같은 비용 통제 장치가 필수적
 
 - - - 
 ## 6. 정리 
@@ -330,7 +332,7 @@ Airflow 3 의 Dag Versioning 자체는 Bundle 종류와 무관하게 동작하�
 
 > LocalDagBundle은 버전관리를 지원하지 않기 때문에, UI에 버전 이력은 쌓여도 그 버전의 코드로 재실행이 보장되지 않는다.   
 
-### 6-2) Dag Bundle 적용시 이점
+### 6-2) 개선 후 이점
 
 ##### sys.path.append 보일러플레이트 제거 가능
 
@@ -354,8 +356,7 @@ Bundle 단위로 네임스페이스가 분리되므로, common_utils 와 같은 
 
 최종적으로 Airflow 3 로의 전환은 단순한 버전 업그레이드가 아니라, 그 동안 우리 배포 파이프라인 파일 시스템 레이어에서 직접 떠안고 있던 격리, 버전, 무중단 배포 책임을 Airflow 코어의 Dag Bundle 추상화로 넘기는 아키텍처 전환이다.   
 
-- prod 는 기본 GitDagBundle 하나로 단순화하고, 
-- dev 는 FeatureBranchGitDagBundle 하나로 모든 feature 브랜치를 동적으로 관리한다.
+- prod 는 Airflow가 기본 제공하는 GitDagBundle 하나로 단순화 하고, dev 는 BaseDagBundle을 상속해 직접 구현한 FeatureBranchGitDagBundle로  모든 feature 브랜치를 동적으로 관리한다.     
 
 - - -
 Reference 
