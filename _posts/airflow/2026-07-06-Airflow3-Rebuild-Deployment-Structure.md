@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Airflow] Rebuilding Out Airflow Deployment Structure for Airflow 3"
+title: "[Airflow] Rebuilding Our Airflow Deployment Structure for Airflow 3"
 subtitle: Dag Bundle / Module Management / 여러 사용자의 격리 테스트 환경 개선하기
 comments: true
 categories: Airflow
@@ -12,7 +12,7 @@ background: /img/posts/mac.png
 Airflow 3.x 에서는 Dag를 관리하는 방식에 큰 변화가 생겼다.   
 기존 Airflow 2.x 에서는 dags 디렉터리에 있는 Python 파일을 Scheduler가 지속적으로 스캔하여 Dag를 생성했다.   
 
-> AIrflow 3.x 부터는 Scheduler가 아닌 Dag Processor가 파일을 지속적으로 스캔한다. (3.x 에서 Dag Processor는 스케줄러에서 분리된 독립 컴포넌트다.)   
+> Airflow 3.x 부터는 Scheduler가 아닌 Dag Processor가 파일을 지속적으로 스캔한다. (3.x 에서 Dag Processor는 스케줄러에서 분리된 독립 컴포넌트다)   
 
 이 방식은 단순하지만, 실행 중인 Dag Run 이 코드 변경의 영향을 받을 수 있다는 문제가 있었다.   
 Airflow 3에서는 이러한 문제를 해결하기 위해 Dag Versioning과 Dag Bundle 이라는 두 가지 개념이 도입되었다.
@@ -27,7 +27,7 @@ Airflow 3에서는 이러한 문제를 해결하기 위해 Dag Versioning과 Dag
 
 GitHub Actions의 self-hosted 러너가 Kubernetes 클러스터 안에서 직접 동작하며, Dag PVC(/opt/airflow/dags)를 마운트한 상태로 코드를 git clone하여 배치하는 구조다.
 
-`개발자가 Airflow Dag를 개발하여 git push를 하게 되면 master 브랜치인 경우는 Airflow prod 환경으로 배포되며, 그 외에 개발 브랜치면 Airflow dev 환경에 배포가 되는 구조이다.`       
+`개발자가 Airflow Dag를 개발하여 git push를 하게 되면 master 브랜치인 경우는 Airflow prod 환경으로 배포되며, 그 외에 feature 브랜치면 Airflow dev 환경에 배포가 되는 구조이다.`   
 
 Airflow dev 의 경우는 각 feature branch 마다 격리된 환경에서 테스트를 진행할 수 있도록 하기 위한 구조를 제공했었다.
 
@@ -38,7 +38,7 @@ Airflow dev 의 경우는 각 feature branch 마다 격리된 환경에서 테�
 여기서 핵심은 두 계층으로 나뉜다는 점이다.   
 
 1. store/ 계층(숨김, 실제 코드 위치): 러너가 git clone한 실제 소스코드가 커밋 단위로 쌓이는 곳이며, store 경로는 .airflowignore 를 통해 Dag Processor의 파싱 대상에서 제외된다.
-2. 심볼릭 링크 계층(파싱 대상) : store/feature-11945/{COMMIT-ID}를 가르키는 심볼릭 링크가 /opt/airflow/dags/my-company/feature-11945 경로에 생성되며, Dag Processor는 이 심볼릭 링크 경로만 스캔하고 파싱한다.
+2. 심볼릭 링크 계층(파싱 대상) : store/feature-11945/{COMMIT-ID}를 가리키는 심볼릭 링크가 /opt/airflow/dags/my-company/feature-11945 경로에 생성되며, Dag Processor는 이 심볼릭 링크 경로만 스캔하고 파싱한다.
 
 `즉, 실제 코드가 저장되는 위치와 Dag Processor가 파싱하는 위치를 분리함으로써, 배포 시점에는 store 하위에 새 커밋을 안전하게 clone 해두고, 준비가 끝난 뒤 심볼릭 링크만 원자적으로 갱신(swap)하는 방식으로 무중단 배포에 가깝게 운영할 수 있게 된다.`    
 
@@ -74,7 +74,7 @@ Airflow dev 의 경우는 각 feature branch 마다 격리된 환경에서 테�
 └── master -> store/master/625c9a
 ```
 
-위 그림과 달리 Dag Processor나 개발자가 /opt/airflow/dags/my-company/feature-11945 경로에서 심볼릭 링크를 타고 들어가면, 아래처럼 마치 그 브랜치 전용 디렉토리가 통째로 존재하는 것처럼 보인다. 
+앞서 본  실제 저장 구조(store)에서 Dag Processor나 개발자가 /opt/airflow/dags/my-company/feature-11945 경로의 심볼릭 링크를 타고 들어가면, 아래처럼 마치 그 브랜치 전용 디렉토리가 통째로 존재하는 것처럼 보인다.   
 
 ```shell
 # Airflow dev의 경우 (심볼릭 링크를 resolve해서 본 뷰 = 브랜치별 격리)
@@ -102,7 +102,7 @@ Airflow dev 의 경우는 각 feature branch 마다 격리된 환경에서 테�
 위 구조 덕분에 브랜치 간 코드가 완전히 격리되며, 여러 개발자가 하나의 dev cluster 에서 동시에 테스트가 가능한 환경을 제공했었다.   
 `하지만 그 대가로, Dag 파일이 자기 브랜치 안의 common_utils를 import 하려면 브랜치 루트 경로를 직접 sys.path에 추가해줘야 한다.`   
 
-`즉, 위 배포 방식의 문제점은 git branch 마다 격리를 해주기 위하여 Dag 마다 명시적으로 sys.path.apend 를 이용하여 상위 경로를 전달해줘야 한다는 점이다.`     
+`즉, 위 배포 방식의 문제점은 git branch 마다 격리를 해주기 위하여 Dag 마다 명시적으로 sys.path.append 를 이용하여 상위 경로를 전달해줘야 한다는 점이다.`     
 
 > Dag 파일은 {Branch}/dags/ 아래에 있고, 공통 코드는 {Branch}/common_utils/ 에 있으므로, Dag 파일 기준 두 단계 상위를 path에 추가해야 한다.
 
@@ -137,7 +137,7 @@ sys.path.append(str(Path(__file__).parents[3]))
 `그리고 이 구조에는 스토리지 측면과 Dag 파싱 시간에 대한 문제도 존재한다.`   
 dev 환경은 브랜치마다 레포 전체를 git clone 해서 공유 PVC에 올리는 방식이므로, 레포 전체가 브랜치 수만큼 그대로 중복 적재된다. 
 
-Dag Processor는 dags_folder(/opt/airflow/dags) 아래를 재귀적으로 흝어 모든 파이썬 파일을 찾아 파싱을 한다.   
+Dag Processor는 dags_folder(/opt/airflow/dags) 아래를 재귀적으로 훑어 모든 파이썬 파일을 찾아 파싱을 한다.   
 따라서 기존 구조에서 이를 해결하기 위해서 각 브랜치 마다 실제 테스트한 Dag 에 대해서만 파싱하도록 나머지 Dag 에 대해서는 파싱을 제외하는 .airflowignore를 활용하는 방식을 사용했다.
 
 > Dag Processor는 .airflowignore 패턴에 걸린 경로를 아예 파싱 대상에서 제외하므로, 브랜치가 쌓여도 실제 파싱 수를 통제할 수 있다.
@@ -153,7 +153,7 @@ Dag Processor는 dags_folder(/opt/airflow/dags) 아래를 재귀적으로 흝어
 
 > 여기서 dags는 sys.path에 올라가는 루트 dags_folder 인 /opt/airflow/dags 이다.
 
-[Airflow Moodules Management](https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/modules_management.html) 문서에서도 PYTHONPATH 루트 아래 고유한 최상위 패키지(my_company) 하나를 두고, 그 안에 공유 코드와 DAG 코드를 함께 넣으라고 말하고 있다.
+[Airflow Modules Management](https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/modules_management.html) 문서에서도 PYTHONPATH 루트 아래 고유한 최상위 패키지(my_company) 하나를 두고, 그 안에 공유 코드와 DAG 코드를 함께 넣으라고 말하고 있다.
 
 이 문서는 다음도 함께 권고하고 있다.
 
@@ -229,12 +229,12 @@ Dag Versioning은 Dag 정의의 변경 이력을 Airflow가 자동으로 추적�
 
 `예를 들면, 태스크 추가, 제거, 태스크 ID 변경, 태스크 의존성 변경, Dag/Task 파라미터 변경 등 serialized Dag에 영향을 주는 변경을 말한다.`   
 
-python_callable 같은 함수 본문 내부의 로직은 Dag Versioning에 해당이 안된다.
+python_callable 같은 함수 본문 내부의 로직은 Dag Versioning에 추적 대상이 아니다.
 
 > Airflow가 직렬화 하는 건 "이 태스크는 어떤 모듈의 어떤 함수를 호출한다"는 참조 정보이지, 그 함수의 소스코드 자체가 아니다.   
 
 아래와 같이 query 문자열은 함수 본문 안의 로직이라 serialized Dag에 영향을 주지 않는다.
-
+즉, 이 query 문자열을 수정해도 Dag Version은 바뀌지 않는다.
 ```python
 @task 
 def extract_orders(): 
@@ -242,7 +242,7 @@ def extract_orders():
 	return run_query(query)
 ```
 
-반면, 아래처럼 operator 파라미터로 넘기면 구조적 변경으로 취급된다.  
+반면, 아래처럼 operator 파라미터(sql)로 넘기면 그 값 자체가 serialized Dag에 포함되므로 구조적 변경으로 취급된다. 즉, 같은 SQL이라도 함수 본문 안에 있으면 수정해도 버전이 안 바뀌지만, operator의 sql 파라미터로 있으면 그 문자열을 수정하는 순간 새 버전이 생성된다.   
 
 ```python
 extract = SQLExecuteQueryOperator( 
@@ -256,14 +256,29 @@ extract = SQLExecuteQueryOperator(
 
 특히 LocalDagBundle(버전 관리 미지원)을 쓰는 환경이라면, 함수 본문만 바뀐 배포는 Dag 버전이 그대로임에도 Task마다 실제로 다른 코드가 실행되는 Airflow 2.x와 동일한 문제가 재현될 수 있다.   
 진짜 격리를 원한다면 운영 환경에서는 GitDagBundle(또는 버전관리 지원 커스텀 Bundle)을 구성해야 한다.   
-
 - - -  
 
-## 4. Dag Bundle
+## 4. Goals
+
+이 개선 작업을 통해서 얻고자 하는 목표는 아래와 같다.   
+
+- `sys.path 보일러플레이트 제거`: Dag 파일마다 격리를 위해 수동으로 추가하던 sys.path.append 코드를 제거한다. 즉, 브랜치 루트 경로 계산을 Dag 코드가 직접 떠안지 않고, Bundle 단위 네임스페이스 격리로 대체한다.   
+
+- `Dag Run 단위 버전 고정(versioning)` : GitDagBundle 기반으로 각 Dag Run을 시작 시점의 commit SHA에 pin 한다. 배포가 진행되는 도중에도 이미 실행 중인 Run은 시작 시점 코드로 일관되게 끝까지 실행되도록 보장한다.   
+
+- `격리 유지 책임을 Airflow core 레벨로 이관`: store/symlink 원자적 교체, 무중단 배포 로직을 self-hosted 러너 스크립트에서 직접 구현하지 않고, Bundle 추상화가 Airflow 코어 레벨에서 담당하도록 한다. 즉, 배포 인프라 로직을 코드/스크립트 밖으로 밀어낸다.    
+
+- `기존과 동일한 다중 개발자가 격리 테스트 구조 유지`: 하나의 dev cluster에서 여러 개발자가 각자 feature 브랜치를 동시에 테스트하던 워크플로우를 그대로 유지한다. 브랜치별 격리는 유지하되, 그 수단만 store/symlink 에서 Bundle로 전환한다.
+
+- `인프라 계층까지 격리 가능한 환경을 제공`: Dag 코드 수준의 격리를 넘어, Airflow version upgrade, provider 패키지 변경, airflow.cfg, Executor 변경처럼 인프라 계층을 변경하는 검증도 브랜치 단위로 격리가 가능해야 한다. 
+
+## 5. Dag Bundle
 
 Dag Bundle의 자세한 내용은 [링크](https://wonyong-jang.github.io/airflow/2026/07/10/Airflow3-Dag-Bundle.html) 를 참고하자.
 
-## 5. Alternative Solution
+
+
+## 6. Alternative Solution
 
 위의 솔루션은 `하나의 airflow(dev)` 에서 여러 브랜치를 격리 하여 테스트 환경을 제공하려는 것이다.   
 이와 달리 `각 브랜치 마다 격리된 airflow 환경을 통째로 제공하는 방식`도 대안으로 볼 수 있다.   
@@ -279,7 +294,7 @@ Dag Bundle의 자세한 내용은 [링크](https://wonyong-jang.github.io/airflo
 
 > PR이 닫히면 네임스페이스를 통째로 정리하여 Airflow를 종료한다. 
 
-### 5-1) 선택 기준
+### 6-1) 선택 기준
 
 ##### Dag Bundle(FeatureBranchGitDagBundle)
 - 검증 대상이 대부분 Dag 코드/로직 수준이고, Airflow 설정이나 provider 버전 변경이 드문 경우
@@ -292,7 +307,7 @@ Dag Bundle의 자세한 내용은 [링크](https://wonyong-jang.github.io/airflo
 - 동시 활성 브랜치 수가 상대적으로 적은 경우
 - 팀에서 K8s 기반 provisioning/teardown 자동화 구축, 운영이 가능한 경우
 
-### 5-2) 한계
+### 6-2) 한계
 
 ##### Dag Bundle(FeatureBranchGitDagBundle)
 - `dev 를 FeatureBranchGitDagBundle, prod를 GitDagBundle로 나누면 두 환경의 배포 메커니즘이 달라, dev 에서 통과한 것이 prod에서 동일하게 동작한다는 보장이 깨짐`   
@@ -306,8 +321,8 @@ Dag Bundle의 자세한 내용은 [링크](https://wonyong-jang.github.io/airflo
 - `비용이 선형으로 증가` 될 수 있다. 활성 브랜치가 20개면 이론상 Airflow 풀스택 20세트가 동시에 떠 있을 수 있으므로, pod 단위 리소스 제한, 유휴 인스턴스 자동 종료, 동시 인스턴스 수 상한 같은 비용 통제 장치가 필수적
 
 - - - 
-## 6. 정리 
-### 6-1) 현재 구조의 문제점 
+## 7. 정리 
+### 7-1) 현재 구조의 문제점 
 
 ##### 코드 안에 배포 인프라 로직 존재 
 
@@ -332,7 +347,7 @@ Airflow 3 의 Dag Versioning 자체는 Bundle 종류와 무관하게 동작하�
 
 > LocalDagBundle은 버전관리를 지원하지 않기 때문에, UI에 버전 이력은 쌓여도 그 버전의 코드로 재실행이 보장되지 않는다.   
 
-### 6-2) 개선 후 이점
+### 7-2) 개선 후 이점
 
 ##### sys.path.append 보일러플레이트 제거 가능
 
@@ -355,8 +370,6 @@ GitDagBundle은 내부적으로 저장소를 한 번 bare clone해두고 버전�
 Bundle 단위로 네임스페이스가 분리되므로, common_utils 와 같은 공통 모듈의 이름 충돌 위험이 구조적으로 제거 될 수 있다.
 
 최종적으로 Airflow 3 로의 전환은 단순한 버전 업그레이드가 아니라, 그 동안 우리 배포 파이프라인 파일 시스템 레이어에서 직접 떠안고 있던 격리, 버전, 무중단 배포 책임을 Airflow 코어의 Dag Bundle 추상화로 넘기는 아키텍처 전환이다.   
-
-- prod 는 Airflow가 기본 제공하는 GitDagBundle 하나로 단순화 하고, dev 는 BaseDagBundle을 상속해 직접 구현한 FeatureBranchGitDagBundle로  모든 feature 브랜치를 동적으로 관리한다.     
 
 - - -
 Reference 
