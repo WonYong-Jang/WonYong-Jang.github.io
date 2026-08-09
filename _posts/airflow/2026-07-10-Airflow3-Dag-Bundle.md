@@ -213,6 +213,50 @@ Airflow 3 의 Dag Processor는 하나의 매니저 루프(DagFileProcessorManage
 [Airflow Discussion(#54669)](https://github.com/apache/airflow/discussions/54669) 에 공유 된 코드는 initialize() 내에서 refresh() 직접 호출하도록 되어 있고, super().initialize()를 빠뜨려 지속적으로 호출되면서 문제가 발생했다.
 
 
+- - - 
+
+## 3. Airflow Dag Bundle 기여
+
+### 3-1) Out of sort memory
+
+##### 문제상황  
+
+GitDagBundle을 사용하는 환경에서, 태스크 수가 많고, TaskGroup으로 구성된 규모가 큰 Dag에서 웹 UI의 Task들이 나타나지 않는 현상이 발생했다.   
+백엔드는 MySQL이고, 로그에는 다음 에러가 찍혔다. 
+
+```
+ERROR 1038: Out of sort memory, consider increasing server sort buffer size
+```
+
+특징을 정리하면 다음 세 가지 조건이 모두 겹쳤을 때만 재현됐다.
+- MySQL 백엔드 사용
+- GitDagBundle을 사용해 Dag 버전이 누적되는 환경
+- 직렬화된 Dag의 blob 의 크기가 큰 경우
+
+##### 원인 분석
+
+Out of sort memory 는 MySQL 고유의 에러이다. MySQL의 filesort는 연결당 고정 크기 정렬 버퍼(sort_buffer_size, 기본 256KB)를 사용하며, 정렬 키뿐 아니라 Select한 컬럼 전체를 버퍼에 함께 적재한다.
+`따라서 쿼리가 대용량 blob 컬럼을 Select하면 그 blob이 정렬 버퍼로 들어가고, 단일 행이 버퍼 크기를 넘으면 에러가 발생한다.`   
+
+> PostgreSQL, SQLite는 이러한 에러가 발생하지 않는다. 
+
+##### 문제의 쿼리
+
+최신 직렬화 Dag 를 조회하는 SerializedDagModel의 쿼리가 원인이였다.
+
+```java
+select(SerializedDagModel) # blob을 포함한 전체 로드
+	.where(SerializedDagModel.dag_id == dag_id) 
+	.order_by(...) # ORDER By -> MySQL filesort 유발
+	.limit(1)
+```
+
+`select(SerializedDagModel)은 대용량 blob 컬럼까지 전부 가져오고, ORDER BY가 filesort를 유발하면서 그 blob이 정렬 버퍼에 적재되며, 256KB를 넘는 순간 Out of sort memory가 발생한다.`   
+
+##### 왜 GitDagBundle에서 발생하는지
+
+GitDagBundle은 번들이 리프레시될 때마다 Dag가 변경되면 새로운 DagVersion과 그에 대응하는 serialized_dag 행을 생성한다.
+
 - - -
 Reference 
 
