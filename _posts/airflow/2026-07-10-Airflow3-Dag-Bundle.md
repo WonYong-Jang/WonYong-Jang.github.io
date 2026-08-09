@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "[Airflow] Understanding Airflow 3 DAG Bundles: Architecture, Internals, and Feature Branch Management"
-subtitle: LocalDagBundle, GitDagBundle / BaseDagBundle을 상속한 커스텀 Bundle / 여러 개발자가 동시에 테스트 할 수 있는 Airflow 환경 구성
+subtitle: GitDagBundle / Bundle Bug Fix(airflow 기여) / BaseDagBundle을 상속한 커스텀 Bundle
 comments: true
 categories: Airflow
 date: 2026-07-10
@@ -59,7 +59,7 @@ dag_bundle_config_list = [
 동작 흐름은 아래와 같다
 1. initialize - 지정된 repo_url 또는 git_conn_id로 저장소를 bare repo로 한번 clone
 2. refresh - refresh_interval 마다 bare repo를 git fetch로 최신 상태 동기화, GitSync 사이드카, 또는 self-hosted 러너가 하던일을 번들이 대신 함
-3. get_current_version - tracking_ref(추적할 브랜치/태크/커밋)가 가르키는 현재 커밋 해시를 확인
+3. get_current_version - tracking_ref(추적할 브랜치/태그/커밋)가 가리키는 현재 커밋 해시를 확인
 4. 워킹 디렉토리 생성: 해당 커밋 해시를 이름으로 하는 디렉토리에 bare repo로 부터 실제 checkout 수행
 5. Dag Processor/Worker는 이 checkout된 디렉토리에 실제 .py 파일을 읽어 파싱/실행
 
@@ -68,15 +68,15 @@ Dag Bundle 구조 덕분에 Airflow 는 Dag 실행 시 해당 시점의 Dag 코�
 
 ### 1-3) KPO + GitDagBundle 파일 부재 이슈
 
-GitDagBundle 파일은 Airflow가 관리하며 번들을 초기화 하는 파드(dag-processor: 파싱, worker: 태스트 실행) 에 materialize 된다.   
+GitDagBundle 파일은 Airflow가 관리하며 번들을 초기화 하는 파드(dag-processor: 파싱, worker: 태스크 실행) 에 materialize 된다.   
 `KPO(KubernetesPodOperator)는 별도의 사용자 파드를 띄우게 되는데, 그 파드에는 번들(git repo 내용)이 마운트되지 않는다.`      
 따라서, KPO 파드의 command가 repo 안의 스크립트/파일을 참조하면 파일을 찾지 못하여 실패하게 된다.   
 
-> 이건 AIrflow 버그가 아니라 배포/아키텍처 문제이며, 워커가 아닌 외부 파드에 코드를 어떻게 전달할 것인가의 문제다.   
+> 이건 Airflow 버그가 아니라 배포/아키텍처 문제이며, 워커가 아닌 외부 파드에 코드를 어떻게 전달할 것인가의 문제다.   
 
 `첫번째 방안은 공유 PVC(RWX) 를 사용하여 모든 파드가 같은 볼륨을 마운트해 파일에 접근하는 것이다.`   
 
-이 방법은 구조가 단순하고 각 파드마다 clone이 필요 없지만, RWM PVC 를 유지해야 하기 때문에, 여러 파드가 동시 접근에 대한 동시성 이슈 고려가 필요하다.   
+이 방법은 구조가 단순하고 각 파드마다 clone이 필요 없지만, RWX PVC 를 유지해야 하기 때문에, 여러 파드가 동시 접근에 대한 동시성 이슈 고려가 필요하다.   
 
 `두번째 방안은 KPO 파드의 init-container에서 clone하는 방법이며, 파드마다 run 에 pin한 git sha 만 clone 하게 된다.`   
 
@@ -135,127 +135,175 @@ PR이 머지될 때마다 이 리스트를 갱신하려면 config 변경 + Dag P
 }
 ```
 
-### 2-1) 동작 흐름 
 
-`Bundle의 로직은 기동 시 1회 실행되는 initialize() 와 refresh_interval 마다 반복되는 refresh() 로 나뉜다.`   
-
-
-> Bundle의 전체 흐름은 상대적으로 무거운 작업인 clone은 initialize에서 한번 발생하며, 그 이후 refresh()는 git fetch 와 bundle_folders rebuild 를 반복한다.   
-> 머지/삭제된 브랜치는 다음 refresh에서 diff 대상에서 제외되어 Dag 목록에서 사라진다.
-
-##### initialize()
-
-`오버라이드할 경우 반드시 메서드 맨 끝에 super().initialize()를 호출해야 한다.(그래야 is_initialized 플래그가 셋팅되어 1회만 실행된다)`
-
-- repo_url 검증 및 lock 획득
-- base branch를 git clone 하며,기존 저장소가 존재한다면 기존 저장소를 연다.
-- 디렉터리 준비 - repo_path 와 bundle_path(/opt/airflow/bundle_folders) 를 생성
-
-##### refresh()
-
-`refresh() 에서 네트워크 작업은 git fetch --all 하나뿐이고, 그 이후 나머지는 전부 로컬 파일시스템에서 번들 폴더(/opt/airflow/bundle_folders)를 다시 만드는 작업이다.`
-
-> Bundle 파일을 최신으로 당겨오는 것이다.
-
-- Bundle 폴더 초기화
-- 원격 갱신(fetch 기반)
-- feature- 브랜치 조회
-- main 과 비교(diff)
-- 변경된 Dag 폴더 찾기
-- Bundle 폴더로 복사
-- Dag_id 수정(AST 재작성)
-- Airflow가 자동 로드 - Dag Processor가 bundle_folders 를 파싱해서 Dag 를 반영한다.
-
-### 2-2) 동작 검증
-- feature branch 에서 신규 Dag 생성시 
-- 파드 로컬 에서 bundle 파일 관리
-	- Airflow 3 의 Dag Bundle 자체가 공유 볼륨 탈출을 위해 나온 기능이다. 
-	- Airflow 2 에서는 공유 PVC(git-sync 또는 러너로 채우는) 방식은 여러 파드가 같은 Dags를 마운트해야 해서 RWX 스토리지를 요구하고, 갱신, 파싱 경합이 발생할 수 있다.
-	- Bundle은 각 컴포넌트가 자기 소스를 독립적으로 materialize하는 방식으로 이를 대체한다.
-- common_utils 등 공통 모듈 import
-- dags, scripts 파일 분리된 형태인 경우 versioning이 제공될 수 있는지
-
-
-### 2-3) 원자적 교체
-
-기존 방식은 새 커밋을 store/ 에 미리 clone 해두고 준비가 끝난 뒤 심볼릭 링크만 원자적으로 swap 하여 Dag 가 잠깐 사라지는 구간을 없앴다.  
-
-현재 커스텀 번들은 아래와 같이 구성되어 있다.
-
-```python
-if self.bundle_path.exists():
-    shutil.rmtree(self.bundle_path)
-self.bundle_path.mkdir(parents=True, exist_ok=True)
-```
-
-### 2-4) Dag Processor 에서 Bundle 동작 과정 
-
-Airflow 3 의 Dag Processor는 하나의 매니저 루프(DagFileProcessorManager)가 아래를 주기적으로 순환한다.
-
-```python
-[매니저 루프]
-1. heartbeat()
-2. if not bundle.is_initialized:
-	   bundle.initialize()
-3. check refresh_interval
-	   # Yes -> bundle.refresh()
-	   # No -> Print Log("Not time to refresh")
-4. Scan bundle.path 
-5. 파일마다 워커 fork -> 파싱 # 별도 프로세스에서 파싱 -> seralized_dag 저장
-```
-
-여기서 아래 두가지가 중요하다.
-
-`initialize() 는 1회만 실행된다. BaseDagBundle은 is_initialized 플래그를 두고, 매니저는 if not bundle.is_initialized: 일 때만 initialize()를 부른다.`   
-
-`refresh() 는 heartbeat과 같은 단일 루프에서 돈다. refresh()가 오래 블로킹하면 다음 회전의 heatbeat()가 그만큼 밀린다. DagProcessorJob의 생존 판정 임계값은 [dag_processor] health_check_threshold(기본 30초)이고, 마지막 heartbeat이 이보다 오래되면 liveness probe(airflow jobs check)가 No alive jobs found로 컨테이너를 죽인다.`   
-
-[Airflow Discussion(#54669)](https://github.com/apache/airflow/discussions/54669) 에 공유 된 코드는 initialize() 내에서 refresh() 직접 호출하도록 되어 있고, super().initialize()를 빠뜨려 지속적으로 호출되면서 문제가 발생했다.
 
 
 - - - 
 
 ## 3. Airflow Dag Bundle 기여
 
+PR: [https://github.com/apache/airflow/pull/71342](https://github.com/apache/airflow/pull/71342) 
+
 ### 3-1) Out of sort memory
 
 ##### 문제상황  
 
-GitDagBundle을 사용하는 환경에서, 태스크 수가 많고, TaskGroup으로 구성된 규모가 큰 Dag에서 웹 UI의 Task들이 나타나지 않는 현상이 발생했다.   
-백엔드는 MySQL이고, 로그에는 다음 에러가 찍혔다. 
+GitDagBundle을 사용하는 환경에서, 태스크 수가 많고, TaskGroup으로 구성된 규모가 큰 Dag의 Task들이 Web UI에 나타나지 않는 현상이 발생했다.   
+백엔드는 MySQL이고, api server 로그에는 다음 에러가 찍혔다. 
 
 ```
 ERROR 1038: Out of sort memory, consider increasing server sort buffer size
 ```
 
-특징을 정리하면 다음 세 가지 조건이 모두 겹쳤을 때만 재현됐다.
+특징을 정리하면 다음 조건이 모두 겹쳤을 때만 재현됐다.
 - MySQL 백엔드 사용
-- GitDagBundle을 사용해 Dag 버전이 누적되는 환경
 - 직렬화된 Dag의 blob 의 크기가 큰 경우
 
 ##### 원인 분석
 
-Out of sort memory 는 MySQL 고유의 에러이다. MySQL의 filesort는 연결당 고정 크기 정렬 버퍼(sort_buffer_size, 기본 256KB)를 사용하며, 정렬 키뿐 아니라 Select한 컬럼 전체를 버퍼에 함께 적재한다.
-`따라서 쿼리가 대용량 blob 컬럼을 Select하면 그 blob이 정렬 버퍼로 들어가고, 단일 행이 버퍼 크기를 넘으면 에러가 발생한다.`   
+Out of sort memory 는 MySQL 고유의 에러이다.    
+`MySQL의 filesort는 연결당 고정 크기 정렬 버퍼(sort_buffer_size, 기본 256KB)를 사용하며, 정렬 키뿐 아니라 SELECT 한 컬럼 전체를 버퍼에 함께 적재한다.`   
 
-> PostgreSQL, SQLite는 이러한 에러가 발생하지 않는다. 
+`따라서 쿼리가 대용량 blob 컬럼(data / data_compressed)을 SELECT 하면 그 blob이 정렬 버퍼로 들어가고, 단일 행이 버퍼 크기를 넘으면 에러가 발생한다.`   
+
+> blob 은 직렬화된 Dag 전체를 한 덩어리로 뭉쳐 serialized_dag 테이블에 저장하며, 이 한 덩어리를 가리키는 컬럼 타입이다.    
+> 여기서 data 컬럼(JSON)은  압축을 안했을 때 컬럼이며, data_compressed 컬럼은 압축했을 때의 컬럼이다.   
+
+`filesort는 ORDER BY / GROUP BY 등 정렬이 필요한 연산에서, 그 순서를 인덱스로 만족시키지 못할 때 발생한다. 이름과 달리 항상 디스크를 쓰는 것은 아니고, 먼저 정렬 버퍼(sort_buffer_size)안에서 정렬을 시도한 뒤 넘칠 때 디스크로 넘어간다. 이 문제는 그 버퍼가 단일 blob 레코드 조차 담지 못해 실패하는 경우다.`   
+
+`정리하면, 이 문제는 정렬 버퍼에 blob을 통째로 넣고, 넘치면 실패하기 때문에 MySQL에서만 이 에러가 발생하며, PostgreSQL 에서는 같은 쿼리라도 에러가 발생하지 않는다.`   
+
+> PostgreSQL은 정렬 시 blob 이 아니라 참조(포인터) 수준으로 다뤄지기 때문에 이런 문제가 발생하지 않는다.   
 
 ##### 문제의 쿼리
 
-최신 직렬화 Dag 를 조회하는 SerializedDagModel의 쿼리가 원인이였다.
+최신 직렬화 Dag 를 조회하는 SerializedDagModel의 쿼리가 원인이었다.
 
-```java
-select(SerializedDagModel) # blob을 포함한 전체 로드
+```python
+select(SerializedDagModel) # blob을 포함한 전체 로드 -> filesort 유발
 	.where(SerializedDagModel.dag_id == dag_id) 
-	.order_by(...) # ORDER By -> MySQL filesort 유발
+	.order_by(SerializedDagModel.id.desc()) # ORDER By -> MySQL filesort 유발
 	.limit(1)
 ```
 
-`select(SerializedDagModel)은 대용량 blob 컬럼까지 전부 가져오고, ORDER BY가 filesort를 유발하면서 그 blob이 정렬 버퍼에 적재되며, 256KB를 넘는 순간 Out of sort memory가 발생한다.`   
+`select(SerializedDagModel)은 대용량 blob 컬럼(data / data_compressed)까지 전부 가져오고, ORDER BY가 filesort를 유발하면서 그 blob이 정렬 버퍼에 적재되며, 256KB를 넘는 순간 Out of sort memory가 발생한다.`   
 
 ##### 왜 GitDagBundle에서 발생하는지
 
-GitDagBundle은 번들이 리프레시될 때마다 Dag가 변경되면 새로운 DagVersion과 그에 대응하는 serialized_dag 행을 생성한다.
+`대형 Dag가 실행되면서 커밋마다 버전이 계속 쌓이는 조합을 자연스럽게 만들기 때문에 먼저 문제가 드러난 것이지, 근본 원인은 번들 종류가 아니라 MySQL filesort 에 대형 blob이 실리는 쿼리 구조이다.`    
+
+##### 해결 방법
+
+`핵심은 정렬 단계에서 blob을 버퍼에 넣지 않는 것이다. 정렬에 필요한 건 blob이 아니라 정렬 키로만 수행하고, 그 뒤에 최종 1건만 PK로 조회한다.`    
+
+```python
+@classmethod
+def latest_item_select_object(cls, dag_id):
+	from airflow.settings import engine
+	
+	if engine.dialect.name == "mysql":
+		latest_item_id = (
+			select(cls.id) # SELECT엔 Id만 -> sort buffer 에 blob 없음
+			.join(DagVersion, cls.dag_version_id == DagVersion.id)
+			.where(cls.dag_id == dag_id)
+			.order_by(DagVersion.version_number.desc())
+			.limit(1)
+		)
+		return select(cls).where(cls.id == latest_item_id) # 확정된 1건만 PK로 조회 -> filesort 없음
+		
+	return( # 비-MySQL은 기존 쿼리 유지
+		select(cls)
+		.join(DagVersion, cls.dag_version_id == DagVersion.id)
+		.where(cls.dag_id == dag_id)
+		.order_by(DagVersion.version_number.desc())
+		.limit(1)
+	)
+```
+
+`처음 SELECT 는 blob을 빼고 정렬 키만 다루므로 정렬 버퍼에 blob이 들어가지 않는다.`      
+`그 이후 SELECT 는 확정된 단일 id를 PK로 조회하므로 정렬(filesort) 자체가 없다.`
+
+이 접근은 새로운게 아니라 동일 파일(SerializedDagModel.latest_item_select_object)에서 
+[PR #55589](https://github.com/apache/airflow/pull/55589) 로 확립된 패턴이다.   
+
+> 위 PR은 최신 serialized_dag를 읽는 공용 헬퍼(스케줄러, CLI, 백필 등) 을 수정하였지만, Grid view는 그 헬퍼를 쓰지 않고 별도의 자체 쿼리를 갖고 있어 동일한 문제가 남아 있었다.   
+
+
+### 3-2) Non-Version Bundle에서 무의미한 Run with latest bundle version 체크박스
+
+ISSUE: [https://github.com/apache/airflow/issues/70371](https://github.com/apache/airflow/issues/70371)   
+PR: [https://github.com/apache/airflow/pull/70427](https://github.com/apache/airflow/pull/70427)
+
+##### 문제상황
+
+Airflow UI에서 과거 Dag Run 또는 Task Instance를 Clear 하면, 최신 Bundle 버전으로 실행할지, 원래 Run이 사용했던 버전으로 실행할지를 고르는 체크박스가 있는 다이얼로그가 뜬다.   
+
+`그런데 이 체크박스가 번들의 버전 관리 지원 여부와 무관하게 항상 노출됐다.`   
+
+문제는 LocalDagBundle 같은 Non-Version Bundle 에서도 이 체크박스가 보인다는 점이다.  
+사용자가 옛 코드로 실행과 최신 코드로 실행을 고를 수 있다고 기대하지만, Non-Version Bundle에서는 고정된(pinned) 버전이 없어 체크박스를 체크하든 안하든 결과는 동일하다.
+
+##### 원인 분석 
+
+`버전 고정은 dag_run.bundle_version 값으로 이뤄지는데, LocalDagBundle은 버전 관리를 하지 않으므로 이 값이 항상 None이다.`    
+
+> 현재 버전 관리를 지원하는 기본 번들은 GitDagBundle 뿐이며, LocalDagBundle, S3, GCS는 실행시 항상 최신 코드를 사용한다.   
+
+bundle_version이 None이면 실행 시점에 해석되는 serialized Dag는 체크박스 상태와 관계없이 언제나 최신이다.   
+즉 Non-Version Bundle에서 이 체크박스는 아무 동작도 바꾸지 못하는 옵션이며, 존재 자체가 사용자에게 오해를 준다.   
+
+`LocalDagBundle에서 체크박스가 켜졌던 이유는, 기존 노출 조건이 Dag 버전 번호만 비교했기 때문이다.`
+
+```python
+# Before: Dag 버전 번호만 비교
+dagVersionsDiffer || shouldShowForBundleVersion,
+```
+
+여기서 헷갈리기 쉬운게 Dag Version과 Bundle Version은 서로 다른 개념이라는 점이다.   
+
+- Dag Version: `직렬화된 Dag 내용이 바뀔 때마다 증가하며, 번들 종류와 무관하게 누적된다.` 즉, LocalDagBundle이라도 실행된 뒤 Dag 내용이 바뀌면 새 DagVersion이 쌓여 latestDagVersionNumber와 과거 Run의 selectedDagVersionNumber가 서로 달라질 수 있다.
+- Bundle Version: 어느 코드 스냅샷에 고정됐는가를 나타내며, `GitDagBundle만 git sha로 채우고 LocalDagBundle은 항상 None이다.`
+
+`기존 로직은 번들 버전이 고정되어 있는가가 아니라 Dag Version 번호가 다른가만 봤기 때문에 문제가 되었다.`    
+##### 해결 방법
+
+
+```python
+# After: 번들의 버전 관리 여부까지 반영
+(dagVersionsDiffer && hasBundleVersion(latestBundleVersion)) || shouldShowForBundleVersion
+```
+
+체크박스는 이제 아래 두 경우 중 하나라도 해당할 때만 노출된다.
+- Dag 자체가 바뀐 경우 - 원래 Run이 쓰던 Dag 버전과 최신 Dag 버전이 다르면서 버전 관리를 하는 번들일 때
+- 번들(git 커밋)이 바뀐 경우 - 원래 Run이 고정해 둔 커밋과 최신 커밋이 다를 때
+	- Dag 내용이 똑같아도 커밋이 다르면 task가 불러오는 다른 코드가 바뀌었을 수도 있으므로 이 경우도 포함한다.
+
+`결과적으로 GitDagBundle처럼 버전이 고정되는 번들에서는 체크박스가 그대로 보이고, LocalDagBundle 과 같이 Non-Version Bundle 에서는 숨겨지게 된다.`   
+
+### 3-3) GitDagBundle 경로 부재 시 깨진 에러 메시지 수정
+
+PR: [https://github.com/apache/airflow/pull/70622](https://github.com/apache/airflow/pull/70622)
+
+##### 문제 상황
+
+GitDagBundle이 bare repo 경로를 찾지 못했을 때 나오는 에러 메시지가 깨져서, 실제 경로 대신 튜플이 그대로 출력되었다.   
+사용자는 의도한 에러메시지가 아닌 튜플 형태로 값을 전달 받게 된다.
+##### 원인 분석
+
+포맷 문자열과 값을 별도 인자로 넘겼는데, AirflowException은 이러한 처리를 하지 않는다.
+
+```python
+# Before: %s가 치환되지 않고 (문자열, 값) 튜플이 그대로 표시됨 
+raise AirflowException("Repo path %s not found", self.repo_path)
+```
+
+##### 해결 방법
+
+`f-string으로 경로를 메시지에 직접 삽입해 사람이 읽을 수 있는 형태로 고쳤다.`
+
+```python
+raise FileNotFoundError(f"Bare repo path {self.bare_repo_path} does not exist")
+```
 
 - - -
 Reference 
