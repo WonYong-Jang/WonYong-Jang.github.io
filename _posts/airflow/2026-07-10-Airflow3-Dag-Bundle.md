@@ -170,14 +170,13 @@ Out of sort memory 는 MySQL 고유의 에러이다.
 > data 컬럼(JSON 타입)은 압축을 하지 않았을 때 본문이 들어가는 컬럼이고, data_compressed 컬럼(LargeBinary 타입)은 압축 (compress_serialized_dags=True)했을 때 본문이 들어가는 컬럼이다. 
 > 이 둘은 상호배타적이라 한 행에는 둘 중 하나만 값이 있고 나머지는 Null이다.   
 
-`filesort는 ORDER BY / GROUP BY 등 정렬이 필요한 연산에서, 그 순서를 인덱스로 만족시키지 못할 때 발생한다.`   
-
+`filesort는 ORDER BY 순서를 인덱스로 만족시키지 못할 때 발생한다.`      
 `이름과 달리 항상 디스크를 쓰는 것은 아니고, 먼저 정렬 버퍼(sort_buffer_size)안에서 정렬을 시도한 뒤 넘칠 때 디스크로 넘어간다. 이 문제는 그 버퍼가 단일 행(본문 컬럼 포함) 하나 조차 담지 못해 실패하는 경우다.`      
 `정리하면, 정렬 버퍼에 대용량 본문 컬럼을 통째로 싣고 넘치면 실패하기 때문에 MySQL에서만 이 에러가 발생하며, PostgreSQL 에서는 같은 쿼리라도 에러가 발생하지 않는다.`   
 
 > PostgreSQL은 정렬 시  대용량 값을  버퍼에 직접 싣지 않고 참조(포인트) 수준으로 다루기 때문에 이런 문제가 발생하지 않는다.  
 
-##### 문제의 쿼리
+##### 문제의 쿼리 
 
 최신 직렬화 Dag 를 조회하는 SerializedDagModel의 조회 쿼리가 원인이었다.
 
@@ -192,27 +191,33 @@ select(SerializedDagModel) # data / data_compressed 포함 전체 컬럼 로드
 
 ##### 재현 여부를 가르는 것: filesort 가 발생하는지   
 
-중요한 것은 본문이 크다 만으로는 에러가 나지 않는다는 점이다.   
-`MySQL이 이 쿼리를 filesort로 처리할 때만 본문이 버퍼에 실린다. 그리고 filesort를 쓸지 말지는 옵티마이저의 실행계획, 특히 정렬키의 secondary index 가 있는지에 달려있다.`   
+중요한 것은 "본문이 크다"만으로는 에러가 나지 않는다는 점이다.   
+`MySQL이 이 쿼리를 filesort로 처리할 때만 본문이 버퍼에 실린다.`  
+`그리고 filesort를 쓸지 말지는 MySQL이 이 쿼리를 실행할 때 어떤 인덱스를 고르느냐에 따라 달려 있다.`        
+인덱스는 두 가지 역할을 할 수 있다.
+- WHERE 필터를 빠르게 처리 - 조건에 맞는 행으로 바로 점프
+- ORDER BY 정렬을 공짜로 제공 - 인덱스 순서가 곧 ORDER BY 순서면 재정렬이 필요 없음
 
-예를 들면 serialized_dag의 dag_id의 secondary index가 있는 경우와 없는 경우를 비교해보자.
+이 쿼리는 필터 컬럼(dag_id)와 정렬 컬럼(id)이 다르기 때문에, 어떤 인덱스가 있느냐에 따라 얻는 것과 잃는 것이 갈린다.   
 
 - dag_id 의 secondary index가 없는 경우
-	- 옵티마이저는 PK(id) 인덱스를 역방향으로 스캔해 ORDER BY id DESC 를 그대로 만족시킨다.
-	- 이미 id 순서로 읽으므로 정렬이 필요 없기 때문에 filesort가 발생하지 않는다.
+	- MySQL은 PK(id) 인덱스를 역방향으로 스캔한다. 읽는 순서가 곧 id 내림차순이므로 ORDER BY id DESC가 그대로 만족된다.
+	- `즉, 정렬이 불필요하고 filesort가 발생하지 않는다.`
 	- EXPLAIN ... : key=PRIMARY, Extra=Backward index scan
 - dag_id 의 secondary index가 존재하는 경우 / 예: (dag_id, created_at)
-	- 옵티마이저는 그 인덱스로 dag_id를 먼저 거른 뒤, 그 결과를 id로 다시 정렬해야 한다.
-	- 인덱스가 id 순서를 만들어주지 못하므로 filesort가 발생한다.
-	- EXPALIN ... :key=idx ... dag_id ... , Extra=Using filesort
+	- MySQL은 dag_id 의 필터가 더 효율적이다라고 판단해 이 인덱스를 고른다.
+	- dag_id 매칭 행으로 바로 점프할 수 있어 필터는 빠르지만 이 인덱스는 dag_id -> created_at 순으로만 정렬돼 있고 id 순서 정보가 없다.
+	- `따라서, ORDER BY id를 하기 위해서 filesort 를 발생시켜 정렬을 하게 된다.`   
+. - EXPALIN ... :key=idx ... dag_id ... , Extra=Using filesort
 
-##### 왜 GitDagBundle에서 발생하는지
+##### GitDagBundle에서만 발생하는 걸까?  
 
-`대형 Dag가 실행되면서 커밋마다 버전이 계속 쌓이는 조합을 자연스럽게 만들기 때문에 먼저 문제가 드러난 것이지, 근본 원인은 번들 종류가 아니라 MySQL filesort 에 대형 blob이 실리는 쿼리 구조이다.`    
+`근본 원인은 번들 종류가 아니라, 정렬 키로 쓰지 않는 대용량 본문 컬럼을 함께 SELECT 해서 filesort에 태우는 쿼리 구조다.`   
+GitDagBundle은 대형 Dag가 실행되며 버전이 쌓이는 환경을 자연스럽게 만들어 이 쿼리 경로에 먼저 노출시켰을 뿐, 버전 누적 자체가 에러의 원인은 아니다.   
 
 ##### 해결 방법
 
-`핵심은 정렬 단계에서 blob을 버퍼에 넣지 않는 것이다. 정렬에 필요한 건 blob이 아니라 정렬 키로만 수행하고, 그 뒤에 최종 1건만 PK로 조회한다.`    
+`핵심은 정렬 단계에서 대용량 본문 컬럼을 버퍼에 넣지 않는 것이다. 정렬에 가벼운 키(id)로만 수행해 최신 1건의 id를 확정하고, 그 뒤에 그 id로 PK 단건 조회를 한다.`       
 
 ```python
 @classmethod
@@ -221,7 +226,7 @@ def latest_item_select_object(cls, dag_id):
 	
 	if engine.dialect.name == "mysql":
 		latest_item_id = (
-			select(cls.id) # SELECT엔 Id만 -> sort buffer 에 blob 없음
+			select(cls.id) # SELECT엔 Id만 -> sort buffer 에 본문 없음
 			.join(DagVersion, cls.dag_version_id == DagVersion.id)
 			.where(cls.dag_id == dag_id)
 			.order_by(DagVersion.version_number.desc())
@@ -238,8 +243,9 @@ def latest_item_select_object(cls, dag_id):
 	)
 ```
 
-`처음 SELECT 는 blob을 빼고 정렬 키만 다루므로 정렬 버퍼에 blob이 들어가지 않는다.`      
-`그 이후 SELECT 는 확정된 단일 id를 PK로 조회하므로 정렬(filesort) 자체가 없다.`
+`처음 SELECT 는 본문 컬럼을 빼고 정렬 키만 다루므로 정렬 버퍼에 대용량 값이 들어가지 않는다.`      
+`이후 SELECT 는 확정된 단일 id를 PK로 조회하므로 정렬(filesort) 자체가 없다.`
+`이 방식은 인덱스 구성이나 옵티마이저의 실행계획 선택과 무관하게 항상 안전하다.`   
 
 이 접근은 새로운게 아니라 동일 파일(SerializedDagModel.latest_item_select_object)에서 
 [PR #55589](https://github.com/apache/airflow/pull/55589) 로 확립된 패턴이다.   
