@@ -89,7 +89,7 @@ Executor는 Scheduler가 생성한 Task Instance를 어디서, 어떻게 실행�
 ##### 1-2-3) KubernetesExecutor
 - 상시 대기하는 Worker가 없다. Task 마다 전용 Pod를 동적으로 생성해 실행하고, 끝나면 Pod를 제거한다.  
 - Task 별로 리소스(CPU, Memory)와 이미지를 독립적으로 지정할 수 있어 격리성과 자원 효율이 높다.
-- 트래픽이 없을 때는 Pod가 뜨지 않아 후 유휴 자원 낭비가 적다.   
+- 트래픽이 없을 때는 Pod가 뜨지 않아 유휴 자원 낭비가 적다.   
 
 ##### 1-2-4) CeleryKubernetesExecutor   
 

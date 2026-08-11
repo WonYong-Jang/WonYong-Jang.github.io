@@ -148,7 +148,7 @@ PR: [https://github.com/apache/airflow/pull/71342](https://github.com/apache/air
 
 ##### 문제상황  
 
-GitDagBundle을 사용하는 환경에서, 태스크 수가 많고, TaskGroup으로 구성된 규모가 큰 Dag의 Task들이 Web UI에 나타나지 않는 현상이 발생했다.   
+태스크 수가 많고, TaskGroup으로 구성된 규모가 큰 Dag의 Task들이 Web UI(Grid)에 나타나지 않는 현상이 발생했다.   
 백엔드는 MySQL이고, api server 로그에는 다음 에러가 찍혔다. 
 
 ```
@@ -157,36 +157,54 @@ ERROR 1038: Out of sort memory, consider increasing server sort buffer size
 
 특징을 정리하면 다음 조건이 모두 겹쳤을 때만 재현됐다.
 - MySQL 백엔드 사용
-- 직렬화된 Dag의 blob 의 크기가 큰 경우
+- 직렬화된 Dag (serialized_dag 테이블의 data / data_compressed 컬럼 값)의 크기가 큰 경우
 
 ##### 원인 분석
 
 Out of sort memory 는 MySQL 고유의 에러이다.    
 `MySQL의 filesort는 연결당 고정 크기 정렬 버퍼(sort_buffer_size, 기본 256KB)를 사용하며, 정렬 키뿐 아니라 SELECT 한 컬럼 전체를 버퍼에 함께 적재한다.`   
 
-`따라서 쿼리가 대용량 blob 컬럼(data / data_compressed)을 SELECT 하면 그 blob이 정렬 버퍼로 들어가고, 단일 행이 버퍼 크기를 넘으면 에러가 발생한다.`   
+`따라서 쿼리가 대용량 컬럼(data / data_compressed)을 SELECT 하면 그 값이 정렬 버퍼로 들어가고, 단일 행이 버퍼 크기를 넘으면 에러가 발생한다.`   
 
-> blob 은 직렬화된 Dag 전체를 한 덩어리로 뭉쳐 serialized_dag 테이블에 저장하며, 이 한 덩어리를 가리키는 컬럼 타입이다.    
-> 여기서 data 컬럼(JSON)은  압축을 안했을 때 컬럼이며, data_compressed 컬럼은 압축했을 때의 컬럼이다.   
+> serialized_dag 테이블은 직렬화된 Dag 전체를 한 컬럼에 통째로 저장한다.
+> data 컬럼(JSON 타입)은 압축을 하지 않았을 때 본문이 들어가는 컬럼이고, data_compressed 컬럼(LargeBinary 타입)은 압축 (compress_serialized_dags=True)했을 때 본문이 들어가는 컬럼이다. 
+> 이 둘은 상호배타적이라 한 행에는 둘 중 하나만 값이 있고 나머지는 Null이다.   
 
-`filesort는 ORDER BY / GROUP BY 등 정렬이 필요한 연산에서, 그 순서를 인덱스로 만족시키지 못할 때 발생한다. 이름과 달리 항상 디스크를 쓰는 것은 아니고, 먼저 정렬 버퍼(sort_buffer_size)안에서 정렬을 시도한 뒤 넘칠 때 디스크로 넘어간다. 이 문제는 그 버퍼가 단일 blob 레코드 조차 담지 못해 실패하는 경우다.`   
+`filesort는 ORDER BY / GROUP BY 등 정렬이 필요한 연산에서, 그 순서를 인덱스로 만족시키지 못할 때 발생한다.`   
 
-`정리하면, 이 문제는 정렬 버퍼에 blob을 통째로 넣고, 넘치면 실패하기 때문에 MySQL에서만 이 에러가 발생하며, PostgreSQL 에서는 같은 쿼리라도 에러가 발생하지 않는다.`   
+`이름과 달리 항상 디스크를 쓰는 것은 아니고, 먼저 정렬 버퍼(sort_buffer_size)안에서 정렬을 시도한 뒤 넘칠 때 디스크로 넘어간다. 이 문제는 그 버퍼가 단일 행(본문 컬럼 포함) 하나 조차 담지 못해 실패하는 경우다.`      
+`정리하면, 정렬 버퍼에 대용량 본문 컬럼을 통째로 싣고 넘치면 실패하기 때문에 MySQL에서만 이 에러가 발생하며, PostgreSQL 에서는 같은 쿼리라도 에러가 발생하지 않는다.`   
 
-> PostgreSQL은 정렬 시 blob 이 아니라 참조(포인터) 수준으로 다뤄지기 때문에 이런 문제가 발생하지 않는다.   
+> PostgreSQL은 정렬 시  대용량 값을  버퍼에 직접 싣지 않고 참조(포인트) 수준으로 다루기 때문에 이런 문제가 발생하지 않는다.  
 
 ##### 문제의 쿼리
 
-최신 직렬화 Dag 를 조회하는 SerializedDagModel의 쿼리가 원인이었다.
+최신 직렬화 Dag 를 조회하는 SerializedDagModel의 조회 쿼리가 원인이었다.
 
 ```python
-select(SerializedDagModel) # blob을 포함한 전체 로드 -> filesort 유발
+select(SerializedDagModel) # data / data_compressed 포함 전체 컬럼 로드
 	.where(SerializedDagModel.dag_id == dag_id) 
-	.order_by(SerializedDagModel.id.desc()) # ORDER By -> MySQL filesort 유발
+	.order_by(SerializedDagModel.id.desc()) # ORDER By -> MySQL filesort 유발 가능
 	.limit(1)
 ```
 
-`select(SerializedDagModel)은 대용량 blob 컬럼(data / data_compressed)까지 전부 가져오고, ORDER BY가 filesort를 유발하면서 그 blob이 정렬 버퍼에 적재되며, 256KB를 넘는 순간 Out of sort memory가 발생한다.`   
+`select(SerializedDagModel)은 대용량 컬럼(data / data_compressed)까지 전부 가져오고, 이 쿼리가 filesort로 처리되면 그 본문이 정렬 버퍼에 적재되며, 256KB를 넘는 순간 Out of sort memory가 발생한다.`   
+
+##### 재현 여부를 가르는 것: filesort 가 발생하는지   
+
+중요한 것은 본문이 크다 만으로는 에러가 나지 않는다는 점이다.   
+`MySQL이 이 쿼리를 filesort로 처리할 때만 본문이 버퍼에 실린다. 그리고 filesort를 쓸지 말지는 옵티마이저의 실행계획, 특히 정렬키의 secondary index 가 있는지에 달려있다.`   
+
+예를 들면 serialized_dag의 dag_id의 secondary index가 있는 경우와 없는 경우를 비교해보자.
+
+- dag_id 의 secondary index가 없는 경우
+	- 옵티마이저는 PK(id) 인덱스를 역방향으로 스캔해 ORDER BY id DESC 를 그대로 만족시킨다.
+	- 이미 id 순서로 읽으므로 정렬이 필요 없기 때문에 filesort가 발생하지 않는다.
+	- EXPLAIN ... : key=PRIMARY, Extra=Backward index scan
+- dag_id 의 secondary index가 존재하는 경우 / 예: (dag_id, created_at)
+	- 옵티마이저는 그 인덱스로 dag_id를 먼저 거른 뒤, 그 결과를 id로 다시 정렬해야 한다.
+	- 인덱스가 id 순서를 만들어주지 못하므로 filesort가 발생한다.
+	- EXPALIN ... :key=idx ... dag_id ... , Extra=Using filesort
 
 ##### 왜 GitDagBundle에서 발생하는지
 
@@ -265,8 +283,8 @@ dagVersionsDiffer || shouldShowForBundleVersion,
 - Bundle Version: 어느 코드 스냅샷에 고정됐는가를 나타내며, `GitDagBundle만 git sha로 채우고 LocalDagBundle은 항상 None이다.`
 
 `기존 로직은 번들 버전이 고정되어 있는가가 아니라 Dag Version 번호가 다른가만 봤기 때문에 문제가 되었다.`    
-##### 해결 방법
 
+##### 해결 방법
 
 ```python
 # After: 번들의 버전 관리 여부까지 반영
@@ -288,6 +306,7 @@ PR: [https://github.com/apache/airflow/pull/70622](https://github.com/apache/air
 
 GitDagBundle이 bare repo 경로를 찾지 못했을 때 나오는 에러 메시지가 깨져서, 실제 경로 대신 튜플이 그대로 출력되었다.   
 사용자는 의도한 에러메시지가 아닌 튜플 형태로 값을 전달 받게 된다.
+
 ##### 원인 분석
 
 포맷 문자열과 값을 별도 인자로 넘겼는데, AirflowException은 이러한 처리를 하지 않는다.
