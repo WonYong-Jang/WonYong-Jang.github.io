@@ -34,7 +34,7 @@ GitDagBundle은 Git 저장소를 Dag Bundle로 노출시켜주는 구현체로, 
 
 아래와 같이 dag_bundle_config_list 옵션으로, Dag 파일을 어디서 어떻게 가져올지를 정의하는 번들 목록이다.   
 
-`아래 refresh_interval 은 Bundle 이 원격에서 코드를 얼마나 자주 당겨올지에 대한 옵션이며, default 값은 dag processor의 refresh_interval(5분) 의 값을 사용하게 된다.`
+`refresh_interval 은 Bundle 이 원격에서 코드를 얼마나 자주 당겨올지에 대한 옵션이며, default 값은 dag processor의 refresh_interval(5분) 의 값을 사용하게 된다.`
 `이 옵션을 변경한다면, dag processor의 refresh_interval 을 override 하게 된다.`   
 
 ```python
@@ -51,20 +51,26 @@ dag_bundle_config_list = [
     }
   }
 ]
-
 # subdir: repo 안에서 Dag가 존재하는 폴더
 # sparse_dirs: 필요한 폴더만 체크아웃해 디스크, 시간을 아낌
 ```
 
-동작 흐름은 아래와 같다
-1. initialize - 지정된 repo_url 또는 git_conn_id로 저장소를 bare repo로 한번 clone
-2. refresh - refresh_interval 마다 bare repo를 git fetch로 최신 상태 동기화, GitSync 사이드카, 또는 self-hosted 러너가 하던일을 번들이 대신 함
-3. get_current_version - tracking_ref(추적할 브랜치/태그/커밋)가 가리키는 현재 커밋 해시를 확인
-4. 워킹 디렉토리 생성: 해당 커밋 해시를 이름으로 하는 디렉토리에 bare repo로 부터 실제 checkout 수행
-5. Dag Processor/Worker는 이 checkout된 디렉토리에 실제 .py 파일을 읽어 파싱/실행
+[최초 1회] initialize
+- bare repo로 저장소를 한 번 clone(이후 재사용, 매번 clone 안 함)
+- bare repo로부터 워킹 디렉토리를 생성해 tracking_ref를 checkout
+
+[주기적 반복] refresh (refresh_interval 마다)
+- bare repo를 git fetch로 동기화
+
+[매 파싱 시] 버전 확인 -> 파싱/실행
+- get_current_version 으로 현재 HEAD 커밋 해시를 읽어 이번에 파싱하는 코드의 버전으로 기록
+- Dag Processor는 이 워킹 디렉토리의 .py 파일을 파싱한다.
+
+[버전 고정 실행시(별도 경로)]
+- 특정 버전으로 실행/재실행하면 Worker가 그 커밋 해시로 versions/<커밋해시>/ 를 checkout해 해당 버전 코드로 태스크를 실행한다.
 
 Dag Bundle 구조 덕분에 Airflow 는 Dag 실행 시 해당 시점의 Dag 코드 상태를 버전(v1, v2, ..) 으로 고정 할 수 있게 되었다.
-버전 관리형 Bundle을 쓰면 Task Instance를 Clear 하고 재실행할 때 UI 에서 "최신 Bundle 버전으로 실행할지, 원래 Run이 사용했던 버전으로 실행할지"를 선택할 수도 있다. 
+버전 관리형 Bundle을 쓰면 Task Instance를 Clear 하고 재실행할 때 UI 에서 "최신 Bundle 버전으로 실행할지, 원래 Run이 사용 했던 버전으로 실행 할지"를 선택할 수도 있다. 
 
 ### 1-3) KPO + GitDagBundle 파일 부재 이슈
 
@@ -85,16 +91,14 @@ GitDagBundle 파일은 Airflow가 관리하며 번들을 초기화 하는 파드
 > clone --depth 1 와 sparse-checkout 옵션으로 파드마다 clone 비용을 최소화 할 수 있다.
 
 
-
 ### 1-4) 왜 기본 GitDagBundle 만으로는 부족한가
 
 prod 처럼 브랜치가 master 하나뿐이라면 위 설정으로 끝이다.    
 
-현재 업무에서 dev 환경은 여러 개발자가 동시에 테스트 가능한 구조로 구성하기 위해서 feature 브랜치 별로 
-격리된 환경을 구성하였다. 
+현재 업무에서 dev 환경은 여러 개발자가 동시에 테스트 가능한 구조로 구성하기 위해서 feature 브랜치 별로 격리된 환경을 구성하였다. 
 지금처럼 feature 브랜치가 계속 생기고 없어지는 구조에는 기본 GitDagBundle을 그대로 쓰려면, 브랜치 하나마다 Bundle을 하나씩 등록해야 한다. 
 
-> Bundle은 단일 저장소의 단일 ref, 전체 Dag만 가져온다.
+> 하나의 Bundle = 단일 저장소, 단일 ref 
 
 ```yaml
 [dag_processor]
@@ -103,48 +107,23 @@ dag_bundle_config_list = [
   {"name": "dev-NP-12068", "classpath": "...GitDagBundle", "kwargs": {"tracking_ref": "NP-12068", ...}}
 ]
 ```
-dag_bundle_config_list 는 정적 설정이다.   
+위와 같이 각 항목은 서로 다른 name을 가진 별개의 bundle 인스턴스이다.
+
+하지만, dag_bundle_config_list 는 정적 설정이다.   
 PR이 머지될 때마다 이 리스트를 갱신하려면 config 변경 + Dag Processor(경우에 따라 Scheduler/API Server) 재시작이 필요하다.   
 
-> Helm 으로 배포한다면 사실상 매 PR 마다 Helm upgrade가 돌게 된다.
+이 정적 설정의 불편함은 [커뮤니티](https://github.com/apache/airflow/discussions/59799)에서도 동일하게 지적되고 있고, 동적으로 반영하는 기능에 대해서 현재 [PR](https://github.com/apache/airflow/pull/71111) 리뷰가 진행중이기 때문에 이를 반영하여 확인해볼 예정이다.
+또한, [Airflow Discussion(#54669)](https://github.com/apache/airflow/discussions/54669) 에 FeatureBranchGitDagBundle 이라는 이름으로 직접 구현하여 해결한 사례를 해결했지만 Airflow 에서 공식적으로 지원하지 않는 방법이기 때문에 해당 방안은 제외했다.
 
-이 정적 설정의 불편함은 [커뮤니티](https://github.com/apache/airflow/discussions/59799)에서도 동일하게 지적되고 있고, 동적으로 반영하는 기능에 대해서 제안하고 있지만, 현재로서 업데이트 된 내용은 없다.    
-
-현재는 [Airflow Discussion(#54669)](https://github.com/apache/airflow/discussions/54669) 에 FeatureBranchGitDagBundle 이라는 이름으로 직접 구현하여 해결한 사례를 확인했다.
-
-- - - 
-
-## 2. FeatureBranchGitDagBundle
-
-`FeatureBranchGitDagBundle은 위 한계를 없애기 위해 BaseDagBundle을 상속한 단 하나의 커스텀 번들로 이 번들 하나가 모든 feature 브랜치를 동적으로 관리하게 된다.`    
-
-기본 GitDagBundle ref(브랜치) 1개 = 번들 1개 였다면, FeatureBranchGitDagBundle은 번들 1개가 base 브랜치 대비 변경된 모든 feature 브랜치를 확인하여 동적으로 노출하는 방식이다.    
-
-```yaml
-{
-  "name": "feature",
-  "classpath": "feature_branch_bundle.git_bundle.FeatureBranchGitDagBundle",
-  "kwargs": {
-    "repo_url": "...",
-    "base_branch": "main",       # 비교 기준 브랜치
-    "branch_prefix": "feature-", # 이 접두사로 시작하는 브랜치 전부
-    "subdir": "dags",
-    "changed_only": true,        # main 대비 "변경된" DAG만 노출
-    "refresh_interval": 120      # 120초(2분)마다 갱신
-  }
-}
-```
-
-
-
+추가적으로 GitDagBundle을 검토 및 테스트하면서 확인한 버그 및 개선점을 Airflow에 기여한 내용은 아래와 같다.
 
 - - - 
 
-## 3. Airflow Dag Bundle 기여
+## 2. Airflow Dag Bundle 기여
 
 PR: [https://github.com/apache/airflow/pull/71342](https://github.com/apache/airflow/pull/71342) 
 
-### 3-1) Out of sort memory
+### 2-1) Out of sort memory
 
 ##### 문제상황  
 
@@ -253,7 +232,7 @@ def latest_item_select_object(cls, dag_id):
 > 위 PR은 최신 serialized_dag를 읽는 공용 헬퍼(스케줄러, CLI, 백필 등) 을 수정하였지만, Grid view는 그 헬퍼를 쓰지 않고 별도의 자체 쿼리를 갖고 있어 동일한 문제가 남아 있었다.   
 
 
-### 3-2) Non-Version Bundle에서 무의미한 Run with latest bundle version 체크박스
+### 2-2) Non-Version Bundle에서 무의미한 Run with latest bundle version 체크박스
 
 ISSUE: [https://github.com/apache/airflow/issues/70371](https://github.com/apache/airflow/issues/70371)   
 PR: [https://github.com/apache/airflow/pull/70427](https://github.com/apache/airflow/pull/70427)
@@ -304,7 +283,7 @@ dagVersionsDiffer || shouldShowForBundleVersion,
 
 `결과적으로 GitDagBundle처럼 버전이 고정되는 번들에서는 체크박스가 그대로 보이고, LocalDagBundle 과 같이 Non-Version Bundle 에서는 숨겨지게 된다.`   
 
-### 3-3) GitDagBundle 경로 부재 시 깨진 에러 메시지 수정
+### 2-3) GitDagBundle 경로 부재 시 깨진 에러 메시지 수정
 
 PR: [https://github.com/apache/airflow/pull/70622](https://github.com/apache/airflow/pull/70622)
 
@@ -325,6 +304,7 @@ raise AirflowException("Repo path %s not found", self.repo_path)
 ##### 해결 방법
 
 `f-string으로 경로를 메시지에 직접 삽입해 사람이 읽을 수 있는 형태로 고쳤다.`
+> 추가적으로 경로 부재의 의미에 맞는 FileNotFoundError로 교체하였다.   
 
 ```python
 raise FileNotFoundError(f"Bare repo path {self.bare_repo_path} does not exist")
