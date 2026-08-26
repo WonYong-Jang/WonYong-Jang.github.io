@@ -265,7 +265,7 @@ YARN은 경로 문자열 하나로 끝나는데, k8s는 driver가 파일을 읽�
 현재 업무에서 k8s의 경우 s3를 upload(spark.kubernetes.file.upload.path)하기 위한 스토리지로 사용하고 있기 때문에, s3 uri를 전달해주고 executor가 직접 읽으면 될 것 같아서 spark.files를 출력해봤다.
 
 ```python
-print("spark.files:" + spark.sparkConext.getConf().get("spark.files", "<none>"))
+print("spark.files:" + spark.sparkContext.getConf().get("spark.files", "<none>"))
 
 spark.files: file:/tmp/spark-fff175ac-.../csv_test_data.csv,file:/tmp/spark-fff175ac-.../tsv_test_data.tsv
 ```
@@ -275,9 +275,11 @@ s3a가 아니라 driver 로컬 /tmp 경로가 나왔다. 여기서 이유가 드
 `spark-submit --files를 통해 spark.kubernetes.file.upload.path(s3a)로 업로드를 하게 되면 Spark는 spark-upload-${UUID.randomUUID()} 랜덤 디렉터리를 만들어 업로드하게 된다.`   
 `그 후 드라이버 Pod 시작되면 driver가 먼저 spark-submit을 돌리며 s3a 파일을 로컬 /tmp/spark-<uuid>/ 로 내려 받고, spark.files 를 로컬 경로로 재작성 하게 된다.`   
 
-`여기서 구분해야할 부분은 --files sparksql_*.py(=driver 프로그램) 는 driver pod에서만 실행되며, driver 가 파일을 받아 파이썬으로 실행한다.`
-`executor는 이 파일을 읽을 일이 없으며, driver 가 직렬화하여 보내주는 함수를 받아 실행할 뿐이다.`   
-> 참고로 --py-files 는 py, zip(e.g. util zip) 포맷을 executor 에도 배포하지만 Spark가 자동으로 처리한다.   
+`여기서 구분해야할 부분은 메인 어플리케이션 파일(sparksql_*.py) 은 --files가 아니라 primary resource로 제출되며, driver pod 에서만 실행된다.`   
+`executor는 이 파일을 읽을 일이 없으며, driver 가 직렬화하여 보내주는 함수를 받아 실행할 뿐이다.`    
+
+> 참고로 --py-files 는 py, zip(e.g. util zip) 포맷을 Spark 가 executor의 sys.path(PYTHONPATH)에 자동 등록해줘서 import만 하면 된다.
+> 반면, --files 데이터는 파일을 노드에 놓아둘 뿐이다.   
 
 따라서, 현재 --files 를 이용하여 csv 등을 업로드하고 런타임에 각 executor 가 업로드 경로를 알 수 없기 때문에 아래와 같이 우회하는 방법이 있을 수 있다.
 
