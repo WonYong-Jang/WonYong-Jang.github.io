@@ -1,11 +1,11 @@
 ---
 layout: post
-title: "[Spark] On Kubernetes 로 전환 과정에서 TroubleShooting"   
-subtitle: "Airflow의 KubernetesPodOperator 를 이용한 Spark Submit / spark.kubernetes.submission.waitAppCompletion 사용시 Worker Pod 미 종료 이슈"       
-comments: true   
-categories : Spark   
-date: 2024-03-05   
-background: '/img/posts/mac.png'   
+title: "[Spark] On Kubernetes 로 전환 과정에서 TroubleShooting"
+subtitle: Airflow의 KubernetesPodOperator 를 이용한 Spark Submit / spark.kubernetes.submission.waitAppCompletion 사용시 Worker Pod 미 종료 이슈 / k8s 에서 --files 옵션 이슈 / ivy package 사용시 이슈
+comments: true
+categories: Spark
+date: 2024-03-05
+background: /img/posts/mac.png
 ---
 
 
@@ -231,7 +231,62 @@ executor로의 전달도 다르다. distributed cache가 없으니, driver가 re
 다만 가장 견고한 방법은 런타임 resolve에 의존하지 않는것이다.   
 `의존성을 이미지에 미리 빌드하여 넣어두거나, s3 등 외부 저장소에 두고 받아 쓰는 방식으로 가면 resolve, 다운로드 단계를 스킵하여 조금더 빠르게 어플리케이션을 실행할 수 있게 된다.`       
 
-> --conf spark.jars=s3a://my-bucket/jars/foo.jar,s3a://my-bucket/jars/bar.jar \
+> --conf spark.jars=s3a://my-bucket/jars/foo.jar,s3a://my-bucket/jars/bar.jar 
+
+
+## 4. spark-submit --files 로 업로드한 csv 동작 방식 차이
+
+문제 상황은 아래와 같다.   
+동일한 PySpark 코드에서 spark-submit --files로 업로드한 CSV를 임시 뷰로 읽는데, 실행 엔진에 따라 분기처리 해야 했다.
+
+```python
+def _read_source(file_name):
+	staging_dir = getenv("SPARK_YARN_STAGING_DIR")
+	# YARN: 공유 HDFS 경로를 그대로 읽기
+	# YARN 의 경우 staging 디렉터리가 설정되며, HDFS의 공유 경로(.sparkStaging/<appId>) 이기 때문에 모든 executor가 직접 접근 가능 
+	if staging_dir:
+		return staging_dir + "/" + file_name
+		
+	# k8s: driver 로컬에서 읽어서 parallelize
+	with open(SparkFiles.get(file_name), encoding="utf-8") as f:
+		return spark.sparkContext.parallelize(f.read().splitlines())
+
+def _read_csv_view(file_name, sep, view):
+	spark.read.csv(path=_read_source(file_name), header=True, sep=sep).createTempView(view)
+```
+
+YARN은 경로 문자열 하나로 끝나는데, k8s는 driver가 파일을 읽어 RDD로 뿌린다. 왜 이렇게 분기 처리 했을까?
+
+`spark.read.csv 는 분산 연산이다. 익스큐터들이 path를 각자 열어야 한다. 그러러면 모든 익스큐터가 동일하게 접근 가능한 경로여야 한다.`     
+
+`spark-submit 할 때 --files 로 업로드하게 되면 YARN의 경우 HDFS staging 디렉터리 .sparkStaging/<appId> 에 위치하게 되며, k8s의 경우 spark.kubernetes.file.upload.path(s3, hdfs 등) 로 지정한 경로에 업로드가 된다.`
+`여기서 HDFS staging 디렉터리의 경우 공유 경로를 노출하여 접근 가능하지만, k8s의 경우 이러한 공유 경로가 런타임에 노출되지 않는다.`   
+
+현재 업무에서 k8s의 경우 s3를 upload(spark.kubernetes.file.upload.path)하기 위한 스토리지로 사용하고 있기 때문에, s3 uri를 전달해주고 executor가 직접 읽으면 될 것 같아서 spark.files를 출력해봤다.
+
+```python
+print("spark.files:" + spark.sparkConext.getConf().get("spark.files", "<none>"))
+
+spark.files: file:/tmp/spark-fff175ac-.../csv_test_data.csv,file:/tmp/spark-fff175ac-.../tsv_test_data.tsv
+```
+
+s3a가 아니라 driver 로컬 /tmp 경로가 나왔다. 여기서 이유가 드러난다. 
+
+`spark-submit --files를 통해 spark.kubernetes.file.upload.path(s3a)로 업로드를 하게 되면 Spark는 spark-upload-${UUID.randomUUID()} 랜덤 디렉터리를 만들어 업로드하게 된다.`   
+`그 후 드라이버 Pod 시작되면 driver가 먼저 spark-submit을 돌리며 s3a 파일을 로컬 /tmp/spark-<uuid>/ 로 내려 받고, spark.files 를 로컬 경로로 재작성 하게 된다.`   
+
+`여기서 구분해야할 부분은 --files sparksql_*.py(=driver 프로그램) 는 driver pod에서만 실행되며, driver 가 파일을 받아 파이썬으로 실행한다.`
+`executor는 이 파일을 읽을 일이 없으며, driver 가 직렬화하여 보내주는 함수를 받아 실행할 뿐이다.`   
+> 참고로 --py-files 는 py, zip(e.g. util zip) 포맷을 executor 에도 배포하지만 Spark가 자동으로 처리한다.   
+
+따라서, 현재 --files 를 이용하여 csv 등을 업로드하고 런타임에 각 executor 가 업로드 경로를 알 수 없기 때문에 아래와 같이 우회하는 방법이 있을 수 있다.
+
+`SparkFiles.get(file_name) 을 통해 driver 로컬 경로를 먼저 얻은 후 대신 읽고 parallelize로 데이터를 배포하는 방식이 있다.`
+
+> YARN은 클러스터에 HDFS라는 공유 분산 파일 시스템이 항상 같이 있다는 전제 위에서 동작하고, k8s는 compute 와 storage가 분리되어 있기 때문에 동작방식의 차이가 발생한다.   
+
+하지만, 업로드한 csv 파일 크기가 매우 크다면, driver의 메모리 부족 이슈가 발생할 수 있다.
+따라서, 근본적인 해결 방법은 사전에 csv 파일을 s3에 업로드하고, 업로드한 경로를 명시적으로 전달하여 모든 executor가 분산처리 할 수 있도록 하는 것이 권장된다.
 
 - - - 
 
