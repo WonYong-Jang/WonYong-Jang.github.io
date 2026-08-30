@@ -236,7 +236,8 @@ executor로의 전달도 다르다. distributed cache가 없으니, driver가 re
 
 ## 4. spark-submit --files 로 업로드한 csv 동작 방식 차이
 
-문제 상황은 아래와 같다.   
+### 4-1) Issue
+
 동일한 PySpark 코드에서 spark-submit --files로 업로드한 CSV를 임시 뷰로 읽는데, 실행 엔진에 따라 분기처리 해야 했다.
 
 ```python
@@ -257,7 +258,7 @@ def _read_csv_view(file_name, sep, view):
 
 YARN은 경로 문자열 하나로 끝나는데, k8s는 driver가 파일을 읽어 RDD로 뿌린다. 왜 이렇게 분기 처리 했을까?
 
-`spark.read.csv 는 분산 연산이다. 익스큐터들이 path를 각자 열어야 한다. 그러러면 모든 익스큐터가 동일하게 접근 가능한 경로여야 한다.`     
+`spark.read.csv 는 분산 연산이다. executor들이 path를 각자 열어야 한다. 그러러면 모든 익스큐터가 동일하게 접근 가능한 경로여야 한다.`     
 
 `spark-submit 할 때 --files 로 업로드하게 되면 YARN의 경우 HDFS staging 디렉터리 .sparkStaging/<appId> 에 위치하게 되며, k8s의 경우 spark.kubernetes.file.upload.path(s3, hdfs 등) 로 지정한 경로에 업로드가 된다.`
 `여기서 HDFS staging 디렉터리의 경우 공유 경로를 노출하여 접근 가능하지만, k8s의 경우 이러한 공유 경로가 런타임에 노출되지 않는다.`   
@@ -273,7 +274,24 @@ spark.files: file:/tmp/spark-fff175ac-.../csv_test_data.csv,file:/tmp/spark-fff1
 s3a가 아니라 driver 로컬 /tmp 경로가 나왔다. 여기서 이유가 드러난다. 
 
 `spark-submit --files를 통해 spark.kubernetes.file.upload.path(s3a)로 업로드를 하게 되면 Spark는 spark-upload-${UUID.randomUUID()} 랜덤 디렉터리를 만들어 업로드하게 된다.`   
-`그 후 드라이버 Pod 시작되면 driver가 먼저 spark-submit을 돌리며 s3a 파일을 로컬 /tmp/spark-<uuid>/ 로 내려 받고, spark.files 를 로컬 경로로 재작성 하게 된다.`   
+`그 후 드라이버 Pod 시작되면 driver가 먼저 spark-submit을 돌리며 s3a 파일을 로컬 /tmp/spark-<uuid>/ 로 내려 받고, spark.files 를 로컬 경로로 덮어쓰기 때문에, 어플리케이션은 그 uri를 런타임에 알아낼 방법이 없다.
+즉, Spark가 이 필요한 정보를 이미 계산해서 갖고 있으면서 사용자에게 노출하지 않고 스스로 지우는 구조이다.  
+
+--files 옵션을 사용하면 driver 뿐만 아니라, 모든 executor가 각각 전체 복사본을 로컬에 받는다.
+
+```
+driver     /tmp/spark-.../test.csv
+executor1  /opt/spark/work-dir/text.csv
+executor2  /opt/spark/work-dir/text.csv
+```
+
+하지만, spark.read.csv(path) 를 호출하면 아래와 같은 에러가 발생한다.
+1. 드라이버가 path로 파일 리스팅 후 자기한텐 있으니 성공, 파티션 계획 수립
+2. 그 path 문자열이 태스크에 직렬화되어 executor로 전달
+3. executor가 그 문자열을 열려고 시도하지만 자기 경로가 아니므로 FileNotFoundException 발생 
+
+> 핵심은 경로가 문자열로 넘어간다는 것이다. 드라이버가 "이 경로를 열어라" 라고 executor에게 지시하지만 executor에는 해당 경로가 존재하지 않는다.
+> 즉, 파일 자체는 갖고 있어도 주소가 다르니 소용없다.
 
 `여기서 구분해야할 부분은 메인 어플리케이션 파일(sparksql_*.py) 은 --files가 아니라 primary resource로 제출되며, driver pod 에서만 실행된다.`   
 `executor는 이 파일을 읽을 일이 없으며, driver 가 직렬화하여 보내주는 함수를 받아 실행할 뿐이다.`    
