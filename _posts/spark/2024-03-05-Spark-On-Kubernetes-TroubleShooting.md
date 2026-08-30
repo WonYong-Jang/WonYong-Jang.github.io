@@ -204,11 +204,29 @@ spark-submit을 실행하는 계정의 홈 디렉터리 ~/.ivy2 에 jar가 내�
 `K8s 에는 YARN distributed cache 영역이 없기 때문에 그 역할을 driver pod가 대신한다.`   
 따라서, cluster 모드의 핵심 차이가 여기 있다.    
 
-`Ivy resolve는 제출 클라이언트(KPO Pod) 와 driver pod 모두 발생한다.`   
+`Ivy resolve는 제출 클라이언트(KPO Pod) 와 driver pod 에서 각각 한 번씩, 총 두 번 발생한다.`     
 KPO Pod 에서는 spark-submit cluster 모드를 --packages와 함께 실행하면, 가장 먼저 prepareSubmitEnvironment 단계를 거치게 된다.   
-이 단계에서 spark.jars.packages가 있으면 ivy resolve을 수행한다. 
-`하지만 k8s 환경에서는 이렇게 resolve된 결과가 driver pod 안에서는 쓸모가 없다는 것이다.`   
-`실제 사용되는 패키지는 driver pod 내에서 다시 resolve하게 된다.`    
+이 단계에서 spark.jars.packages가 있으면 ivy resolve을 수행한다.   
+`그런데 k8s cluster 몯에서는 이렇게 resolve 된 jar 들이 spark.jars(args.jars) 에 병합되지 않고 제출 클라이언트의 childClasspath 에만 추가된다.`      
+즉, KPO Pod(제출 클라이언트)의 resolve 결과는 driver pod로 전달되지 않는다.   
+이 결과물은 제출 클라이언트가 자기 자신이 쓰기 위한 용도이다.  
+예를 들어 --package로 hadoop-aws 를 받았다면, 로컬 파일을 spark.kubernetes.file.upload.path(s3a) 로 업로드할 때 그 jar 가 필요하기 때문이다.   
+
+`따라서 driver pod는 자신이 실행할 패키지를 처음부터 다시 resolve 해야 한다.`     
+
+```scala
+// SparkSubmit.scala (v3.4.4, L334~352)
+if (resolvedMavenCoordinates.nonEmpty) {
+  if (isKubernetesCluster) {
+	// We need this in K8s cluster mode so that we can upload local deps
+	// via the k8s application, like in cluster mode driver
+	childClasspath ++= resolvedMavenCoordinates      // ← 제출 클라이언트 classpath 에만 추가
+  } else {
+	...
+	args.jars = mergeFileLists(args.jars, ...)       // ← YARN 등은 spark.jars 로 전달
+  }
+}
+```
 
 > cluster 모드로 spark-submit 수행시 driver pod 스펙만 만들어서 K8s에 요청하고 종료하고, 띄워진 driver pod가 내부적으로 spark-submit을 client 모드로 다시 실행한다.   그렇기 때문에 제출 클라이언트(KPO Pod) 와 driver pod 가 각각 ivy resolve을 수행하는 이유이다. 
 
@@ -225,7 +243,10 @@ executor로의 전달도 다르다. distributed cache가 없으니, driver가 re
 
 따라서, K8s 에서는 driver pod 관점에서 두 가지를 확인 및 보완해야 한다.   
 
-- ivy 캐시 쓰기 권한: spark.jars.ivy=/tmp/.ivy2 처럼 쓰기 가능한 경로를 지정하거나, 지정한 경로에 대해서 이미지내에 디렉터리 생싱 및 권한을 부여한다.   
+- ivy 캐시 쓰기 권한: spark.jars.ivy=/tmp/.ivy2 처럼 쓰기 가능한 경로를 지정하거나, 지정한 경로에 대해서 이미지내에 디렉터리 생싱 및 권한을 부여한다. 다만, /tmp 는 pod가 뜰 때마다 비어 있으므로 캐시 재사용 효과는 없다. 매 실행마다 Maven 다운로드가 다시 일어난다는 점을 감안해야 한다.   
+
+- 캐시를 재사용하려면 driver pod 에 마운트해야 한다. YARN 시절에는 제출 클라이언트(KPO Pod)에만 PVC 를 마운트하면 됐지만, k8s 에서는 실제 resolve 주체가 driver pod 이므로 spark.kubernetes.driver.volumes.persistentVolumeClaim.* 로 driver pod 에 마운트 하고 spark.jars.ivy 를 그 경로로 지정해야 의미가 있다.   
+
 - Maven egress: driver pod가 Maven central(또는 사내 Nexus/Artifactory) 로 나갈 수 있는지 확인해야 한다.  
 
 다만 가장 견고한 방법은 런타임 resolve에 의존하지 않는것이다.   
@@ -256,14 +277,17 @@ def _read_csv_view(file_name, sep, view):
 	spark.read.csv(path=_read_source(file_name), header=True, sep=sep).createTempView(view)
 ```
 
-YARN은 경로 문자열 하나로 끝나는데, k8s는 driver가 파일을 읽어 RDD로 뿌린다. 왜 이렇게 분기 처리 했을까?
+YARN은 경로 문자열만 전달하면 되는데, k8s는 driver가 파일을 읽어 parallelize로 뿌린다. 왜 이렇게 분기 처리 했을까?   
 
 `spark.read.csv 는 분산 연산이다. executor들이 path를 각자 열어야 한다. 그러러면 모든 익스큐터가 동일하게 접근 가능한 경로여야 한다.`     
 
 `spark-submit 할 때 --files 로 업로드하게 되면 YARN의 경우 HDFS staging 디렉터리 .sparkStaging/<appId> 에 위치하게 되며, k8s의 경우 spark.kubernetes.file.upload.path(s3, hdfs 등) 로 지정한 경로에 업로드가 된다.`
-`여기서 HDFS staging 디렉터리의 경우 공유 경로를 노출하여 접근 가능하지만, k8s의 경우 이러한 공유 경로가 런타임에 노출되지 않는다.`   
+`YARN 은 이 staging 경로를 SPARK_YARN_STAGING_DIR 환경변수로 노출해주지만, k8s 에는 이에 대응하는 환경변수가 없다.`   
 
-현재 업무에서 k8s의 경우 s3를 upload(spark.kubernetes.file.upload.path)하기 위한 스토리지로 사용하고 있기 때문에, s3 uri를 전달해주고 executor가 직접 읽으면 될 것 같아서 spark.files를 출력해봤다.
+
+### 4-2) Root Cause
+
+현재 업무에서 k8s의 경우 s3를 upload(spark.kubernetes.file.upload.path)하기 위한 스토리지로 사용하고 있기 때문에, s3a uri를 전달해주고 executor가 직접 읽으면 될 것 같아서 spark.files를 출력해봤다.
 
 ```python
 print("spark.files:" + spark.sparkContext.getConf().get("spark.files", "<none>"))
@@ -273,19 +297,24 @@ spark.files: file:/tmp/spark-fff175ac-.../csv_test_data.csv,file:/tmp/spark-fff1
 
 s3a가 아니라 driver 로컬 /tmp 경로가 나왔다. 여기서 이유가 드러난다. 
 
-`spark-submit --files를 통해 spark.kubernetes.file.upload.path(s3a)로 업로드를 하게 되면 Spark는 spark-upload-${UUID.randomUUID()} 랜덤 디렉터리를 만들어 업로드하게 된다.`   
-`그 후 드라이버 Pod 시작되면 driver가 먼저 spark-submit을 돌리며 s3a 파일을 로컬 /tmp/spark-<uuid>/ 로 내려 받고, spark.files 를 로컬 경로로 덮어쓰기 때문에, 어플리케이션은 그 uri를 런타임에 알아낼 방법이 없다.
-즉, Spark가 이 필요한 정보를 이미 계산해서 갖고 있으면서 사용자에게 노출하지 않고 스스로 지우는 구조이다.  
+`spark-submit --files를 통해 spark.kubernetes.file.upload.path(s3a)로 업로드 하면  Spark 는 spark-upload-${UUID.randomUUID()} 랜덤 디렉터리를 만들어 업로드하게 된다.`    
 
---files 옵션을 사용하면 driver 뿐만 아니라, 모든 executor가 각각 전체 복사본을 로컬에 받는다.
+`그 후 driver pod 가 기동되면, driver 안에서 다시 실행되는 spark-submit(client 모드)이 s3a 경로의 파일을 로컬 /tmp/spark-<uuid>/ 로 내려 받고, spark.files 를 로컬 경로로 덮어쓰기 때문에, 어플리케이션은 그 s3 uri를 런타임에 알아낼 방법이 없다.`
+즉, Spark 는 s3a 업로드 경로를 알고 있으면서도 그 정보를 어플리케이션에 노출하지 않고 스스로 덮어쓴다.   
+`--files s3a://bucket/path/test.csv 처럼 처음부터 원격 uri를 직접 넘겨도 결과는 동일하게 driver 로컬 경로로 바뀐다.`   
+
+`--files 옵션을 사용하면 driver 뿐만 아니라, 모든 executor가 각각 전체 복사본을 로컬에 받는다.`
+
+> 정확히는, driver 파일서버(rpcEnv.fileServer)에 등록되고, 각 executor가 시작 시 SparkFiles.getRootDirectory() 로 내려 받는다. executor 에서 SparkFiles.get("test.csv") 를 호출하면 파일이 실제로 존재한다.   
 
 ```
-driver     /tmp/spark-.../test.csv
-executor1  /opt/spark/work-dir/text.csv
+driver     /tmp/spark-<uuid>/test.csv.          <- spark.files 가 가르키는 경로 
+driver     <localDir>/userFile-<uuid>/test.csv  <- driver 에서 SparkFiles.get()
+executor1  /opt/spark/work-dir/text.csv         <- executor 에서 SparkFiles.get()
 executor2  /opt/spark/work-dir/text.csv
 ```
 
-하지만, spark.read.csv(path) 를 호출하면 아래와 같은 에러가 발생한다.
+하지만, spark.read.csv(path) 를 호출하면 아래 순서로 에러가 발생한다.   
 1. 드라이버가 path로 파일 리스팅 후 자기한텐 있으니 성공, 파티션 계획 수립
 2. 그 path 문자열이 태스크에 직렬화되어 executor로 전달
 3. executor가 그 문자열을 열려고 시도하지만 자기 경로가 아니므로 FileNotFoundException 발생 
@@ -294,19 +323,24 @@ executor2  /opt/spark/work-dir/text.csv
 > 즉, 파일 자체는 갖고 있어도 주소가 다르니 소용없다.
 
 `여기서 구분해야할 부분은 메인 어플리케이션 파일(sparksql_*.py) 은 --files가 아니라 primary resource로 제출되며, driver pod 에서만 실행된다.`   
-`executor는 이 파일을 읽을 일이 없으며, driver 가 직렬화하여 보내주는 함수를 받아 실행할 뿐이다.`    
+`executor는 이 파일을 읽을 일이 없으며, driver 가 직렬화하여 보내주는 함수를 받아 실행할 뿐이다.`  
 
 > 참고로 --py-files 는 py, zip(e.g. util zip) 포맷을 Spark 가 executor의 sys.path(PYTHONPATH)에 자동 등록해줘서 import만 하면 된다.
 > 반면, --files 데이터는 파일을 노드에 놓아둘 뿐이다.   
 
-따라서, 현재 --files 를 이용하여 csv 등을 업로드하고 런타임에 각 executor 가 업로드 경로를 알 수 없기 때문에 아래와 같이 우회하는 방법이 있을 수 있다.
+### 4-3) Solution 
 
-`SparkFiles.get(file_name) 을 통해 driver 로컬 경로를 먼저 얻은 후 대신 읽고 parallelize로 데이터를 배포하는 방식이 있다.`
+첫번째 솔루션으로, --files 를 이용하여 csv 등을 업로드하고 런타임에 각 executor 가 업로드 경로를 알 수 없기 때문에 아래와 같이 우회하는 방법이 있을 수 있다.
+
+`SparkFiles.get(file_name) 을 통해 driver 로컬 경로를 먼저 얻은 후 대신 읽고 parallelize를 이용하여 각 executor들이 분산처리하도록 하는 방법이 있다.`   
 
 > YARN은 클러스터에 HDFS라는 공유 분산 파일 시스템이 항상 같이 있다는 전제 위에서 동작하고, k8s는 compute 와 storage가 분리되어 있기 때문에 동작방식의 차이가 발생한다.   
 
 하지만, 업로드한 csv 파일 크기가 매우 크다면, driver의 메모리 부족 이슈가 발생할 수 있다.
-따라서, 근본적인 해결 방법은 --files 옵션을 사용하지 않고, csv 파일을 로드 하기 전 단계에서 명시적인 s3 uri로 업로드하여 경로를 전달하거나 임시 하이브 테이블을 생성하여 데이터 저장 후 이를 처리하는 방안이다.
+`따라서, 근본적인 해결 방법은 --files 를 데이터 전달 수단으로 쓰지 않는 것이다.`   
+csv 는 사전에 s3에 업로드하고 s3a uri 를 어플리케이션 인자로 직접 전달하거나, 임시 테이블에 적재한 뒤 조회하도록 변경하면 모든 executor가 분산 처리할 수 있다.   
+
+두번째 솔루션으로 
 
 
 - - - 
