@@ -259,7 +259,7 @@ executor로의 전달도 다르다. distributed cache가 없으니, driver가 re
 
 ### 4-1) Issue
 
-동일한 PySpark 코드에서 spark-submit --files로 업로드한 CSV를 임시 뷰로 읽는데, 실행 엔진에 따라 분기처리 해야 했다.
+동일한 PySpark 코드에서 `spark-submit --files` 로 업로드한 CSV를 임시 뷰로 읽는데, 실행 엔진에 따라 분기처리 해야 했다.
 
 ```python
 def _read_source(file_name):
@@ -277,13 +277,12 @@ def _read_csv_view(file_name, sep, view):
 	spark.read.csv(path=_read_source(file_name), header=True, sep=sep).createTempView(view)
 ```
 
-YARN은 경로 문자열만 전달하면 되는데, k8s는 driver가 파일을 읽어 parallelize로 뿌린다. 왜 이렇게 분기 처리 했을까?   
+YARN은 경로 문자열만 전달하면 분산처리가 되는데, k8s는 driver가 직접 파일을 읽어 parallelize 로 뿌린다. 왜 이렇게 분기 처리 했을까?   
 
 `spark.read.csv 는 분산 연산이다. executor들이 path를 각자 열어야 한다. 그러러면 모든 익스큐터가 동일하게 접근 가능한 경로여야 한다.`     
 
 `spark-submit 할 때 --files 로 업로드하게 되면 YARN의 경우 HDFS staging 디렉터리 .sparkStaging/<appId> 에 위치하게 되며, k8s의 경우 spark.kubernetes.file.upload.path(s3, hdfs 등) 로 지정한 경로에 업로드가 된다.`
 `YARN 은 이 staging 경로를 SPARK_YARN_STAGING_DIR 환경변수로 노출해주지만, k8s 에는 이에 대응하는 환경변수가 없다.`   
-
 
 ### 4-2) Root Cause
 
@@ -315,7 +314,7 @@ executor2  /opt/spark/work-dir/text.csv
 ```
 
 하지만, spark.read.csv(path) 를 호출하면 아래 순서로 에러가 발생한다.   
-1. 드라이버가 path로 파일 리스팅 후 자기한텐 있으니 성공, 파티션 계획 수립
+1. Driver 가 path로 listStatus() 호출하여 실제 파일 목록 조회 후 자기한텐 있으니 성공, 파티션 계획 수립
 2. 그 path 문자열이 태스크에 직렬화되어 executor로 전달
 3. executor가 그 문자열을 열려고 시도하지만 자기 경로가 아니므로 FileNotFoundException 발생 
 
@@ -330,20 +329,28 @@ executor2  /opt/spark/work-dir/text.csv
 
 ### 4-3) Solution 
 
-첫번째 솔루션으로, --files 를 이용하여 csv 등을 업로드하고 런타임에 각 executor 가 업로드 경로를 알 수 없기 때문에 아래와 같이 우회하는 방법이 있을 수 있다.
+`첫번째 솔루션`으로, --files 를 이용하여 csv 등을 업로드하고 런타임에 각 executor 가 업로드 경로를 알 수 없기 때문에 아래와 같이 우회하는 방법이 있을 수 있다.   
 
-`SparkFiles.get(file_name) 을 통해 driver 로컬 경로를 먼저 얻은 후 대신 읽고 parallelize를 이용하여 각 executor들이 분산처리하도록 하는 방법이 있다.`   
+`SparkFiles.get(file_name) 을 통해 driver 로컬 경로를 먼저 얻은 후 대신 읽고 parallelize를 이용하여 각 executor들이 분산 처리하도록 하는 방법이 있다.`   
 
-> YARN은 클러스터에 HDFS라는 공유 분산 파일 시스템이 항상 같이 있다는 전제 위에서 동작하고, k8s는 compute 와 storage가 분리되어 있기 때문에 동작방식의 차이가 발생한다.   
+> YARN은 클러스터에 HDFS라는 공유 분산 파일 시스템이 항상 같이 있다는 전제 위에서 동작하고, k8s는 compute 와 storage가 분리되어 있기 때문에 동작 방식의 차이가 발생한다.   
 
 하지만, 업로드한 csv 파일 크기가 매우 크다면, driver의 메모리 부족 이슈가 발생할 수 있다.
-`따라서, 근본적인 해결 방법은 --files 를 데이터 전달 수단으로 쓰지 않는 것이다.`   
+
+`따라서 두번째 솔루션으로 근본적인 해결 방법인 --files 를 데이터 전달 수단으로 쓰지 않는 것이다.`   
 csv 는 사전에 s3에 업로드하고 s3a uri 를 어플리케이션 인자로 직접 전달하거나, 임시 테이블에 적재한 뒤 조회하도록 변경하면 모든 executor가 분산 처리할 수 있다.   
 
-두번째 솔루션으로 
+마지막으로, Spark 에 직접 기여하여 동작을 바꾸는 방법이 있어서, 직접 [Issue](https://github.com/apache/spark/issues/58310) 및 [PR](https://github.com/apache/spark/pull/58423) 을 작성했다.   
+첫번째 솔루션은 결국 driver가 파일을 대신 읽어주는 구조라 driver 메모리에 종속적이고, `--file` 로 넘긴 데이터가 driver 파일 서버를 통해서만 executor로 흘러가는 구조 자체는 그대로 남는다.   
+`문제는 k8s cluster 모드에서 SparkSubmit이 spark.files를 무조건 driver 로컬로 내려받고 원본 원격 uri를 버린다는 점이기 때문에, 그 지점을 옵션으로 열어주면 우회 없이 해결된다.`  
+사실 동일한 문제가 jar 에서 먼저 제기되어 해결된 상태였다.
 
-https://github.com/apache/spark/issues/58310
-https://github.com/apache/spark/pull/58423
+> driver가 모든 jar를 자기 로컬로 받은 뒤 파일 서버로 서빙하기 때문에, executor 수가 많아지면 동시 다운로드가 driver의 네트워크를 포화시키고 executor가 타임아웃으로 죽는 문제가 발생한다.   
+
+이 이슈는 spark.kubernetes.jars.avoidDownloadSchemes 설정으로 4.0.0 에 반영되었다.   
+`지정한 scheme 에 해당하는 jar는 driver로 내려받지 않고 원격 URI를 그대로 유지하여, executor가 원본 저장소에서 직접 받아가도록 하는 옵션이다.`   
+
+이와 동일하게 files도 적용될 수 있도록 PR을 생성하여 리뷰 진행중이다.
 
 
 - - - 
