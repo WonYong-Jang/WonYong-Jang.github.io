@@ -342,6 +342,9 @@ csv 는 사전에 s3에 업로드하고 s3a uri 를 어플리케이션 인자로
 
 두번째 솔루션으로 
 
+https://github.com/apache/spark/issues/58310
+https://github.com/apache/spark/pull/58423
+
 
 - - - 
 
