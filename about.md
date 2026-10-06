@@ -7,7 +7,7 @@ background: '/img/bg-index.jpg'
 
 ## 👨‍💻 Sr. Data Engineer      
 
-7년차 Data Engineer 로서 Daily Events Count 2,000만건의 Spark Streaming, Batch Size 
+8년차 Data Engineer 로서 Daily Events Count 2,000만건의 Spark Streaming, Batch Size 
 1,000만건의 Spark Batch 와 Elastic Search를 이용한 서비스 등 여러 백엔드 개발 및 데이터 파이프라인을 
 구축한 경험이 있습니다.     
 
@@ -173,8 +173,7 @@ background: '/img/bg-index.jpg'
 #### 패스트 캠퍼스 강의     
 
 - [<u>https://fastcampus.co.kr/dev_online_befinal</u>](https://fastcampus.co.kr/dev_online_befinal)   
-- [<u>외부 API와 공공데이터를 이용한 약국 추천 서비스</u>](https://github.com/WonYong-Jang/Pharmacy-Recommendation)를 
-주제로 강의 진행     
+- [<u>외부 API와 공공데이터를 이용한 약국 추천 서비스</u>](https://github.com/WonYong-Jang/Pharmacy-Recommendation)를 주제로 강의 진행     
 
 <br>   
 
@@ -193,8 +192,7 @@ background: '/img/bg-index.jpg'
 - [Spark Streaming 처리 지연 장애 리뷰](https://wonyong-jang.github.io/spark/2023/07/09/Spark-Streaming-Processing-Delay.html)       
 
 
-#### Elastic Search    
-
+#### Airflow
 - [<u>ElasticSearch에서 cardinality 사용시 주의사항과 해결방안</u>](https://wonyong-jang.github.io/elk/2025/01/22/ELK-Elastic-Search-Scripted-Metric.html)      
 
 <br>   

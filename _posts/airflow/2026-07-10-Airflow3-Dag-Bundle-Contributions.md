@@ -1,14 +1,16 @@
 ---
 layout: post
-title: "[Airflow] Understanding Airflow 3 DAG Bundles: Architecture, Internals, and Feature Branch Management"
-subtitle: GitDagBundle / Bundle Bug Fix(airflow 기여) / BaseDagBundle을 상속한 커스텀 Bundle
+title: "[Airflow] Airflow 3 DAG Bundle 동작 원리와 버그 수정 및 개선 기여"
+subtitle: |-
+  GitDagBundle 도입 시 고려사항과 MySQL 조회 오류, 번들 버전 선택 UI 및 에러 메시지
+    개선
 comments: true
 categories: Airflow
 date: 2026-07-10
 background: /img/posts/mac.png
 ---
 현재 업무에서 문제가 되는 [Airflow 배포 구조](https://wonyong-jang.github.io/airflow/2026/07/06/Airflow3-Rebuild-Deployment-Structure.html)를 개선하기 위해 Airflow 3 에서 부터 제공하는 Dag Bundle 도입을 검토하고 있다.   
-이를 위해서 Dag Bundle에 대한 아키텍처를 자세히 살펴볼 예정이다.
+이를 위해서 Dag Bundle에 대한 아키텍처를 자세히 살펴볼 예정이며, 이 과정에서 현재 버전 기준으로 Airflow 오픈소스에서 발생하고 있는 버그와 개선점을 발견하여 같이 기여한 내용을 공유할 예정이다.
   
 ## 1. Dag Bundle
 
@@ -313,11 +315,11 @@ raise FileNotFoundError(f"Bare repo path {self.bare_repo_path} does not exist")
 - - -
 Reference 
 
-<https://github.com/apache/airflow/discussions/54669>
-<https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/dag-bundles.html>
-<https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/cluster-policies.html>
-<https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/modules_management.html>   
-. 
+<https://github.com/apache/airflow/discussions/54669>   
+<https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/dag-bundles.html>   
+<https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/cluster-policies.html>   
+<https://airflow.apache.org/docs/apache-airflow/3.2.2/administration-and-deployment/modules_management.html>>   
+
 {% highlight ruby linenos %}
 {% endhighlight %}
 
