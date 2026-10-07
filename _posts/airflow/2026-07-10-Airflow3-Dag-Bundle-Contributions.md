@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "[Airflow] Airflow 3 DAG Bundle 동작 원리와 버그 수정 및 개선 기여"
+title: "[Airflow] Airflow 3 DAG Bundle 동작 원리와 버그 수정 및 오픈소스 기여"
 subtitle: |-
   GitDagBundle 도입 시 고려사항과 MySQL 조회 오류, 번들 버전 선택 UI 및 에러 메시지
     개선
@@ -11,6 +11,9 @@ background: /img/posts/mac.png
 ---
 현재 업무에서 문제가 되는 [Airflow 배포 구조](https://wonyong-jang.github.io/airflow/2026/07/06/Airflow3-Rebuild-Deployment-Structure.html)를 개선하기 위해 Airflow 3 에서 부터 제공하는 Dag Bundle 도입을 검토하고 있다.   
 이를 위해서 Dag Bundle에 대한 아키텍처를 자세히 살펴볼 예정이며, 이 과정에서 현재 버전 기준으로 Airflow 오픈소스에서 발생하고 있는 버그와 개선점을 발견하여 같이 기여한 내용을 공유할 예정이다.
+
+- - - 
+
   
 ## 1. Dag Bundle
 
@@ -71,8 +74,8 @@ dag_bundle_config_list = [
 [버전 고정 실행시(별도 경로)]
 - 특정 버전으로 실행/재실행하면 Worker가 그 커밋 해시로 versions/<커밋해시>/ 를 checkout해 해당 버전 코드로 태스크를 실행한다.
 
-Dag Bundle 구조 덕분에 Airflow 는 Dag 실행 시 해당 시점의 Dag 코드 상태를 버전(v1, v2, ..) 으로 고정 할 수 있게 되었다.
-버전 관리형 Bundle을 쓰면 Task Instance를 Clear 하고 재실행할 때 UI 에서 "최신 Bundle 버전으로 실행할지, 원래 Run이 사용 했던 버전으로 실행 할지"를 선택할 수도 있다. 
+Dag Bundle 구조 덕분에 Airflow 는 Dag 실행 시 해당 시점의 Dag 코드 상태를 버전(v1, v2, ..) 으로 고정 할 수 있게 되었다.   
+따라서, 버전 관리형 Bundle을 쓰면 Task Instance를 Clear 하고 재실행할 때 UI 에서 "최신 Bundle 버전으로 실행할지, 원래 Run이 사용 했던 버전으로 실행 할지"를 선택할 수도 있다. 
 
 ### 1-3) KPO + GitDagBundle 파일 부재 이슈
 
@@ -102,7 +105,7 @@ prod 처럼 브랜치가 master 하나뿐이라면 위 설정으로 끝이다.
 
 > 하나의 Bundle = 단일 저장소, 단일 ref 
 
-```yaml
+```python
 [dag_processor]
 dag_bundle_config_list = [
   {"name": "dev-NP-11945", "classpath": "...GitDagBundle", "kwargs": {"tracking_ref": "NP-11945", ...}},
@@ -114,7 +117,8 @@ dag_bundle_config_list = [
 하지만, dag_bundle_config_list 는 정적 설정이다.   
 PR이 머지될 때마다 이 리스트를 갱신하려면 config 변경 + Dag Processor(경우에 따라 Scheduler/API Server) 재시작이 필요하다.   
 
-이 정적 설정의 불편함은 [커뮤니티](https://github.com/apache/airflow/discussions/59799)에서도 동일하게 지적되고 있고, 동적으로 반영하는 기능에 대해서 현재 [PR](https://github.com/apache/airflow/pull/71111) 리뷰가 진행중이기 때문에 이를 반영하여 확인해볼 예정이다.
+이 정적 설정의 불편함은 [커뮤니티](https://github.com/apache/airflow/discussions/59799)에서도 동일하게 지적되고 있고, 동적으로 반영하는 기능에 대해서 현재 [PR](https://github.com/apache/airflow/pull/71111) 리뷰가 진행중이기 때문에 이를 반영하여 확인해볼 예정이다.    
+
 또한, [Airflow Discussion(#54669)](https://github.com/apache/airflow/discussions/54669) 에 FeatureBranchGitDagBundle 이라는 이름으로 직접 구현하여 해결한 사례를 해결했지만 Airflow 에서 공식적으로 지원하지 않는 방법이기 때문에 해당 방안은 제외했다.
 
 추가적으로 GitDagBundle을 검토 및 테스트하면서 확인한 버그 및 개선점을 Airflow에 기여한 내용은 아래와 같다.
@@ -148,7 +152,7 @@ Out of sort memory 는 MySQL 고유의 에러이다.
 `따라서 쿼리가 대용량 컬럼(data / data_compressed)을 SELECT 하면 그 값이 정렬 버퍼로 들어가고, 단일 행이 버퍼 크기를 넘으면 에러가 발생한다.`   
 
 > serialized_dag 테이블은 직렬화된 Dag 전체를 한 컬럼에 통째로 저장한다.
-> data 컬럼(JSON 타입)은 압축을 하지 않았을 때 본문이 들어가는 컬럼이고, data_compressed 컬럼(LargeBinary 타입)은 압축 (compress_serialized_dags=True)했을 때 본문이 들어가는 컬럼이다. 
+> data 컬럼(JSON 타입)은 압축을 하지 않았을 때 본문이 들어가는 컬럼이고, data_compressed 컬럼(LargeBinary 타입)은 압축 (compress_serialized_dags=True)했을 때 본문이 들어가는 컬럼이다.    
 > 이 둘은 상호배타적이라 한 행에는 둘 중 하나만 값이 있고 나머지는 Null이다.   
 
 `filesort는 ORDER BY 순서를 인덱스로 만족시키지 못할 때 발생한다.`      

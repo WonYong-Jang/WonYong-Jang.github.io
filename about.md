@@ -193,7 +193,7 @@ background: '/img/bg-index.jpg'
 
 
 #### Airflow
-- [<u>ElasticSearch에서 cardinality 사용시 주의사항과 해결방안</u>](https://wonyong-jang.github.io/elk/2025/01/22/ELK-Elastic-Search-Scripted-Metric.html)      
+- [<u>Airflow 3 DAG Bundle 버그 수정 및  오픈소스 기여</u>](https://wonyong-jang.github.io/airflow/2026/07/10/Airflow3-Dag-Bundle-Contributions.html)      
 
 <br>   
 - - -   
