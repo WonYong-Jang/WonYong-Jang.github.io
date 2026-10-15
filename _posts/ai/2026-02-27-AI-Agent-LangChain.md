@@ -1,20 +1,12 @@
 ---
 layout: post
-title: "[AI] Agent (LangGraph, LangChain)"
-subtitle: "OpenAPI API / StageGraph(State, Node, Edge)" 
+title: "[AI] Agent (LangChain)"
+subtitle: Vector Database
 comments: true
-categories : AI
+categories: AI
 date: 2026-02-27
-background: '/img/posts/mac.png'
+background: /img/posts/mac.png
 ---
-
-LangGraph는 자연어 처리와 AI 응용 프로그램 개발을 위한 강력한 프레임워크로, 복잡한 언어 모델과의 
-상호작용을 효율적이고 구조화된 방식으로 구현할 수 있도록 돕는다.   
-다양한 데이터 소스와 언어 모델을 통합하여 지능형 응답 생성, 정보 검색, 텍스트 분석 등의 고도화된 
-시스템을 구축할 수 있다.   
-
-- - - 
-
 
 ## 1. Retrieval Augmented Generation(RAG) 란?
 
@@ -51,6 +43,29 @@ AR/VR에 사용되는 것과 같은 단어이며, `Retrieval된 데이터를 LLM
 
 여기서 LangChain 은 데이터를 잘 전달해주는데에 있어서 이점이 많기 때문에 
 이번글에서는 LangChain에 대해서 자세히 살펴보자. 
+
+
+- - - 
+
+## 2. Vector Database 
+
+RAG 를 구성할 때 핵심이 되는 Vector Database 에 대해서 살펴보자.   
+RAG를 이용하여 답변을 생성할 때 필요한 데이터를 가져오는데, 이 필요한 데이터는 사용자가 원하는 정보일 것이고 사용자의 질문과 관련있는 데이터일 것이다.     
+
+그럼 사용자의 질문과 관련이 있다는 것을 어떻게 판단할까?    
+여기서 `관련성 파악을 위해서 vector를 활용`한다.    
+
+`단어 또는 문장의 유사도를 파악해서 관련성을 측정하며, Embedding 모델을 활용하여 vector를 생성하게 된다.`   
+
+> 문장에서 비슷한 단어가 자주 붙어 있는 것을 학습하게 된다.
+> 예를 들면 "왕은 왕자의 아버지다" 와 "여왕은 왕자의 어머니다" 두 문장에서 "왕자의" 라는 단어 앞에 등장하는 "왕"과 "여왕"은 유사할 가능성이 높다.
+
+[Embedding Projector](https://projector.tensorflow.org/) 에서 특정 단어를 검색해보면 유사한 단어들을 함께 확인해볼 수 있다.   
+
+`즉, Vector Database 란 Embedding 모델을 활용해 생성된 vector를 저장하는 것이다.`   
+`여기서, 단순히 vector만 저장하면 안되고, metadata(문서의 이름, 페이지 번호 등)도 같이 저장하게 된다.`   
+
+> LLM이 답변을 잘못 생성했을 경우를 대비해서 어떤 문서에서 가져왔는지 출처를 보여주는게 중요하다.   
 
 
 - - - 
