@@ -284,12 +284,12 @@ Airflow 에서 제공하는 Dag Bundle 전환을 검토했지만, 현재 기준�
 위의 솔루션은 `하나의 airflow(dev)` 에서 여러 브랜치를 격리 하여 테스트 환경을 제공하려는 것이다.   
 이와 달리 `각 브랜치 마다 격리된 airflow 환경을 통째로 제공하는 방식`도 대안으로 볼 수 있다.   
 
-이 경우 브랜치 격리를 Airflow 내부가 아니라 `환경 자체의 분리`로 달성하므로, 브랜치별 코드 충돌을 걱정할 필요가 없다. `따라서 커스텀 FeatureBranchGitDagBundle 없이 prod, dev 모두 기본 GitDagBundle 하나로 단순화 된다.`   
-
+이 경우 브랜치 격리를 Airflow 내부가 아니라 `환경 자체의 분리`로 달성하므로, 브랜치별 코드 충돌을 걱정할 필요가 없다.   
 실제로 여러 조직의 사례에서 이 방식을 확인할 수 있다. 
 
 [여러 조직에서 Airflow 제공하기 2](https://engineering.linecorp.com/ko/blog/multi-tenancy-airflow-2)   
 [Ephemeral Environments for Apache Airflow](https://medium.com/go-city/ephemeral-environments-for-apache-airflow-1c39df75ea14)   
+[개인화된 Airflow 테스트 환경 구축 및 운영 경험](https://tech.kakao.com/posts/829)
 
 위 방식을 Ephemeral Airflow Environment 방식이라고 부르며, 일반적으로 Github Actions에서 PR 이벤트를 트리거로 Helm release 를 네임스페이스 단위로 올리고 내리는 방식을 많이 사용한다.   
 
@@ -320,57 +320,6 @@ Airflow 에서 제공하는 Dag Bundle 전환을 검토했지만, 현재 기준�
 ##### Ephemeral Airflow Environment
 - `부팅 시간이 병목`이 될 수 있다. PR을 열때마다 수 분을 기다려야 할 수 있음
 - `비용이 선형으로 증가` 될 수 있다. 활성 브랜치가 20개면 이론상 Airflow 풀스택 20세트가 동시에 떠 있을 수 있으므로, pod 단위 리소스 제한, 유휴 인스턴스 자동 종료, 동시 인스턴스 수 상한 같은 비용 통제 장치가 필수적
-
-- - - 
-## 7. 정리 
-### 7-1) 현재 구조의 문제점 
-
-##### 코드 안에 배포 인프라 로직 존재 
-
-격리를 Airflow가 아니라 우리가 파일 시스템 레이어(store/symlink)에서 직접 구현하다 보니, sys.path.append 와 같은 보일러플레이트가 들어가야 하고, 디렉토리 depth가 바뀌면 이 계산 로직도 전부 다시 변경이 필요하다.
-
-##### 스토리지가 브랜치 수만큼 그대로 중복
-
-dev 환경은 브랜치마다 레포 전체를 clone하는 방식이라, feature 브랜치가 늘어날수록 PVC 사용량이 선형으로 증가한다.
-
-##### 파싱 범위 통제를 .airflowignore 수동 관리에 의존
-
-브랜치가 쌓일 수록 Dag Processor가 스캔해야 할 대상도 늘어나고, 브랜치 정리(오래된 store 삭제 등)도 별도 배치 작업으로 챙겨야 한다.   
-
-##### Airflow 배포 파이프라인 유지보수
-
-git clone -> store 에 배치 -> 준비 완료 후 synlink 원자적 교체 라는 무중단 배포 로직 전체가 self-hosted 러너 스크립트 안에 커스텀으로 구현되어 있어야 한다.   
-Airflow 코어가 보장해주는 부분이 아니라서, 이 스크립트의 버그는 곧 배포 시스템의 버그가 된다. 
-
-##### Dag Versioning 의 효과가 반감
-
-Airflow 3 의 Dag Versioning 자체는 Bundle 종류와 무관하게 동작하지만, 지금 구조는 사실상 LocalDagBundle과 동일하게 취급된다.
-
-> LocalDagBundle은 버전관리를 지원하지 않기 때문에, UI에 버전 이력은 쌓여도 그 버전의 코드로 재실행이 보장되지 않는다.   
-
-### 7-2) 개선 후 이점
-
-##### sys.path.append 보일러플레이트 제거 가능
-
-Bundle 하나가 곧 하나의 격리된 네임스페이스이므로, 브랜치 루트 경로를 Dag 파일이 직접 계산할 필요가 없다. modules_management 문서가 권장하는 PYTHONPATH 루트 아래 고유 top-level 패키지 패턴을 Bundle 단위로 자연스럽게 따르게 된다.
-
-##### GitDagBundle 기반을 사용하게 되면, 버전 관리가 보장
-
-commit SHA 기반으로 Dag Run에 버전이 pin 되므로, 배포 중에도 진행 중인 Run 은 시작 시점 커밋으로 일관되게 실행 가능하다.
-
-##### 파싱/스토리지 관리가 Bundle 생명주기에 통합
-
-불필요해진 feature 브랜치의 Bundle을 내리면, 그 즉시 파싱 대상에서도 빠지고 별도 PVC 정리 스크립트 없이도 관리 단위가 명확해진다. base 브랜치 대비 변경분만 복사하므로 스토리지 중복도 사라진다.
-
-##### 무중단 배포 로직을 우리가 유지보수하지 않아도 됨 
-
-GitDagBundle은 내부적으로 저장소를 한 번 bare clone해두고 버전별로 그 로컬 캐시에서 clone하는 방식으로 동작한다. 기존에 store/symlink로 직접 구현했던 새 코드 준비 후 원자적 교체의 목적을, Bundle 추상화가 Airflow 코어 레벨에서 담당하게 된다.
-
-##### 네임스페이스 격리
-
-Bundle 단위로 네임스페이스가 분리되므로, common_utils 와 같은 공통 모듈의 이름 충돌 위험이 구조적으로 제거 될 수 있다.
-
-최종적으로 Airflow 3 로의 전환은 단순한 버전 업그레이드가 아니라, 그 동안 우리 배포 파이프라인 파일 시스템 레이어에서 직접 떠안고 있던 격리, 버전, 무중단 배포 책임을 Airflow 코어의 Dag Bundle 추상화로 넘기는 아키텍처 전환이다.   
 
 
 - - -
