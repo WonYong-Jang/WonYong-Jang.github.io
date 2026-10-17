@@ -15,7 +15,7 @@ Airflow 3.x 에서는 Dag를 관리하는 방식에 큰 변화가 생겼다.
 > Airflow 3.x 부터는 Scheduler가 아닌 Dag Processor가 파일을 지속적으로 스캔한다. (3.x 에서 Dag Processor는 스케줄러에서 분리된 독립 컴포넌트다)   
 
 이 방식은 단순하지만, 실행 중인 Dag Run 이 코드 변경의 영향을 받을 수 있다는 문제가 있었다.   
-Airflow 3에서는 이러한 문제를 해결하기 위해 Dag Versioning과 Dag Bundle 이라는 두 가지 개념이 도입되었다.
+Airflow 3 에서는 이러한 문제를 해결하기 위해 Dag Versioning과 Dag Bundle 이라는 두 가지 개념이 도입되었다.
 
 이 개념들에 대해 살펴보며, 기존 배포 방식을 어떻게 개선할 수 있을지 살펴보자.
 - - -  
@@ -138,8 +138,10 @@ sys.path.append(str(Path(__file__).parents[3]))
 dev 환경은 브랜치마다 레포 전체를 git clone 해서 공유 PVC에 올리는 방식이므로, 레포 전체가 브랜치 수만큼 그대로 중복 적재된다. 
 
 Dag Processor는 dags_folder(/opt/airflow/dags) 아래를 재귀적으로 훑어 모든 파이썬 파일을 찾아 파싱을 한다.   
-따라서 기존 구조에서 이를 해결하기 위해서 각 브랜치 마다 실제 테스트한 Dag 에 대해서만 파싱하도록 나머지 Dag 에 대해서는 파싱을 제외하는 .airflowignore를 활용하는 방식을 사용했다.
+따라서 기존 구조에서 이를 해결하기 위해서 각 브랜치 마다 실제 테스트한 Dag 에 대해서만 파싱하도록 하고 나머지 Dag 에 대해서는 파싱을 제외하는 방식을 사용했다.
 
+> 예를 들면 feature-11945 브랜치에서 A 라는 Dag만 테스트 하길 원한다면, A 라는 Dag에만 매칭되는 feature-11945 브랜치 이름을 명시해두면, 해당 브랜치에서는 다른 Dag를 모두 ignore 하고 브랜치이름과 매칭되는 Dag 만 노출될 수 있도록 하였다.
+> 그럼 dev airflow에서 A-feature-11945 라는 Dag만 새롭게 추가되어 Dag가 노출된다.   
 > Dag Processor는 .airflowignore 패턴에 걸린 경로를 아예 파싱 대상에서 제외하므로, 브랜치가 쌓여도 실제 파싱 수를 통제할 수 있다.
 
 ### 1-3) 파이썬의 sys.path
@@ -274,9 +276,8 @@ extract = SQLExecuteQueryOperator(
 
 ## 5. Dag Bundle
 
-Dag Bundle의 자세한 내용은 [링크](https://wonyong-jang.github.io/airflow/2026/07/10/Airflow3-Dag-Bundle.html) 를 참고하자.
-
-
+Airflow 에서 제공하는 Dag Bundle 전환을 검토했지만, 현재 기준으로 동적으로 Dag Bundle 적용 등에 대한 문제가 해결되지 않았기 때문에 해당 솔루션은 제외했다.    
+자세한 내용은 [링크](https://wonyong-jang.github.io/airflow/2026/07/10/Airflow3-Dag-Bundle-Contributions.html) 를 참고하자.   
 
 ## 6. Alternative Solution
 
