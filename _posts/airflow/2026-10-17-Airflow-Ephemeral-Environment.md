@@ -7,57 +7,72 @@ categories: Airflow
 date: 2026-10-17
 background: /img/posts/mac.png
 ---
-[이전글](https://wonyong-jang.github.io/airflow/2026/07/06/Airflow3-Rebuild-Deployment-Structure.html) 에서 기존 Airflow 배포 방식에 대한 문제점을 해결하기 위하여 여러 솔루션을 검토했었고, Ephemeral Airflow Environment 를 설계 및 PoC를 진행해보려고 한다.   
+[이전글](https://wonyong-jang.github.io/airflow/2026/07/06/Airflow3-Rebuild-Deployment-Structure.html) 에서는 기존 Airflow 배포 방식의 문제점과 이를 개선하기 위한 방법들을 살펴봤다.   
+이번에는 브랜치마다 독립된 테스트 화경을 제공하는 Ephemeral Airflow Environment를 설계하고 PoC를 진행해보려고 한다.   
 
-전체적인 flow는 아래와 같다.   
+전체적인 흐름은 다음과 같다. 
 
-- 개발자는 feature 브랜치에서 airflow 코드를 작성 후 git push를 한다.   
-
-- ArgoCD를 통해서 주기적으로 github 코드를 sync 를 한다.   
-
-- ApplicationSet controller가 SCM Provider generator를 사용하여 Github의 대상 저장소와 브랜치 목록을 주기적으로 조회한다.   
-
-- 조건에 맞는 브랜치가 발견되면 해당 브랜치용 Application 리소스를 생성한다.   
-
-- 해당 Application 이 생성되면 Airflow helm chart를 통해 K8s 의 하나의 네임스페이스에 airflow 을 배포하게 된다.   
-
-- 이때 Airflow 에 대해서 브랜치별로 고유한 리소스 이름을 사용하여 다른 Airflow 과는 격리된다.   
-
-- 각 Airflow 환경은 해당 feature 브랜치의 Dag와 공유 코드를 git-sync 또는 GitDagBundle로 가져온다.   
-
-- 테스트가 완료되고 해당 브랜치가 삭제되면 argo CD를 통해서 해당 application이 제거되면서 airflow 대해서 종료 및 리소스를 정리한다.   
-
+- 개발자가 feature 브랜치에서 Airflow 코드를 작성하고 원격 저장소에 push 한다.
+- ApplicationSet controller가 Github에서 대상 저장소와 브랜치 목록을 주기적으로 조회한다.   
+- 조건에 맞는 브랜치마다 Application을 생성하거나 갱신한다.   
+- Argo CD가 각 Application 의 배포 명세를 기준으로 Helm chart에서 생성한 Kubernetes 리소스를 동기화한다.   
+- 각 Airflow 환경은 자신의 feature 브랜치에 있는 Dag와 공유 코드를 가져온다.   
+- 원격 브랜치가 삭제되면 해당 Application을 삭제하고, 관리하던 Airflow 리소스도 정리한다.   
 이제 각각 검토해야할 항목들을 살펴보자.   
 
 - - - 
-## 1. K8s 하나의 Namespace 내에서 격리   
+## 1.  하나의 Kubernetes namespace 안에서 환경 구분하기
 
-현재 airflow 사용 규모가 하나의 팀 단위로만 사용하므로 하나의 네임스페이스 내에서 각각의 airflow 를 구성하는 것으로 하며, 이때 격리 수준에 대해 확인한다.   
+`현재 Airflow는 하나의 팀에서 사용하므로, 이번 PoC에서는 하나의 namespace 안에 브랜치별 Airflow 환경을 배포한다.`
 
-`이때, helm chart를 통해 Airflow 를 배포할 때, helm releaseName 에 해당 브랜치의 이름을 사용하여 Airflow 별로 구분한다.`   
+이때 Helm의 releaseName에 브랜치를 식별할 수 있는 값을 사용한다.  
 
-- Deployment, Service 등에 대해 환경별 고유 이름과 올바른 selector
-- 메타데이터 DB에 대해 환경별 독립 database 와 접속 설정 등
-- Dag, 로그 저장소에 대해 환경별 볼륨 또는 경로 구분
-- Secret, ServiceAccount 전용으로 만들 것과 공유할 것 구분
-- Celery 사용시 broker에 대해 환경 간 Task가 섞이지 않도록 구성
+```
+브랜치: feature-11945
+releaseName: af-feature-11945
+```
+
+`chart가 release 이름을 리소스 이름과 label에 반영하면, 같은 namespace 안에서도 환경별 Deployment와 Service 등을 구분할 수 있다.`   
+
+다만, release 이름만 다르게 지정한다고 모든 자원이 자동으로 분리되는 것은 아니기 때문에 다음 항목을 함께 확인해야 한다.   
+
+- Deployment, Service 가 환경별 고유 이름과 올바른 selector를 사용하는지
+- 메타데이터 DB에 대해 환경별 독립 database 와 접속 설정을 사용하는지
+- Dag, 로그 저장소에 대해 환경별 볼륨 또는 경로로 구분되는지
+- Secret, ServiceAccount 중 환경 전용 자원과 공유 자원이 구분되어 있는지 
+- CeleryExecutor를 사용한다면 broker와 queue 설정 때문에 환경 간 Task가 섞이지 않는지
 
 
 - - - 
 
 ## 2. Argo CD 
 
-`이번 PoC에서는 feature 브랜치가 생성되면 테스트 환경을 제공하고, 브랜치가 삭제되면 해당 환경을 정리하는 방식을 목표로 한다.`    
-따라서 브랜치 목록을 주회할 수 있는 SCM Provider generator를 사용한다.   
-PR에 테스트 환경의 수명을 연결하려면 Pull Request generator를, 별도의 환경 설정 파일로 생성 여부를 관리하려면 Git generator를 선택할 수 있다.   
+브랜치별 Airflow 환경을 자동으로 생성하기 전에, Argo CD에서 배포를 관리하는 Application과 
+여러 Application을 자동으로 관리하는 ApplicationSet의 역할부터 살펴보자.
+
+### 2-1) Application 과 ApplicationSet
+
+Application은 하나의 어플리케이션을 어떤 소스로, 어디에, 어떤 설정으로 배포할지 정의하는 리소스다. Git 저장소와 사용할 버전, Helm chart 경로, 배포할 클러스터의 namespace 등을 지정한다.  
+Argo CD는 이 명세를 기준으로 실제 Kubernetes 리소스를 동기화 한다.   
+
+이번 PoC에서는 브랜치 하나에 Application 하나를 대응시킨다. 예를 들어 feature-11945의 Application은 해당 브랜치의 Scheduler, Dag Processor 등 Airflow 환경에 필요한 리소스를 함께 관리한다.   
+
+브랜치가 늘어나면 Application도 추가해야 하고, 브랜치가 삭제되면 해당 Application도 정리해야 한다. `ApplicationSet은 여러 Application의 생성과 관리를 자동화하는 리소스다.`      
+
+ApplicationSet의 핵심 구성은 generator와 template이다. generator는 Application을 만들 대상과 입력값을 구하고, template은 각 Application에 적용할 공통 배포 명세를 정의한다.   
+이번에는 generator로 feature 브랜치 목록을 조회하고, 브랜치별 값을 template에 채워 Application을 생성한다.  
+
+이때 ApplicationSet controller는 Application을 생성, 갱신, 삭제하고, Argo CD application-controller는 각 Application을 기준으로 실제 Airflow 리소스를 배포하고 동기화 한다.   
+
+아래 여러 generator에 대해서 살펴보자.  
 
 ### 2-1) SCM Provider generator   
 
-SCM Provider generator는 Github 같은 소스 코드 관리 서비스의 API를 사용하여 저장소를 발견하는 방식이다.
+SCM Provider generator는 Github 같은 소스 코드 관리 서비스의 API를 사용하여 저장소를 발견한다.   
 Github에서는 allBranches: true를 설정하여 각 저장소의 브랜치 목록도 조회할 수 있다.   
 
 조회한 모든 저장소와 브랜치를 배포할 필요는 없다.
-repositoryMatch와 branchMatch 같은 필터를 사용하면 특정 저장소와 feature 브랜치만 Application 생성 대상으로 선택할 수 있다.   
+`repositoryMatch와 branchMatch 같은 필터를 사용하면 특정 저장소와 feature 브랜치만 Application 생성 대상으로 선택할 수 있다.`      
 
 예를 들어 feature-11945 브랜치가 발견되면 airflow-feature-11945 Application을 생성하도록 구성할 수 있다. 이후 브랜치가 삭제되어 조회 결과에서 사라지면 해당 Application을 삭제하는 
 흐름으로 연결할 수 있다.   
