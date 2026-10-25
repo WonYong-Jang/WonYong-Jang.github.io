@@ -85,6 +85,7 @@ Github에서는 allBranches: true를 설정하여 각 저장소의 브랜치 목
 
 Argo CD의 ApplicationSet 리소스 정의의 예시는 아래와 같다.   
 
+{% raw %}
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -177,6 +178,7 @@ spec:
           # 관리 리소스를 수동 변경하여 배포 정의와 달라지면 다시 동기화
           selfHeal: true
 ```
+{% endraw %}
 
 
 . 2-2) Pull Request generator
