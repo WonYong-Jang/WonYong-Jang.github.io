@@ -1,11 +1,11 @@
 ---
 layout: post
 title: "[Spark] Custom Spark History Server 구성하기"
-subtitle: "분석 플러그인 DataFlint 추가 및 eventLog 리텐션 기간 변경 / multi-tenant history server 지원 여부 / spark.history.fs.logDirectory, spark.eventLog.dir" 
+subtitle: "[Spark History Server 자체 구축 및 MCP 기반 AI 분석 파이프라인 구성 / 분석 플러그인 DataFlint 추가 / multi-tenant history server"
 comments: true
-categories : Spark
+categories: Spark
 date: 2026-01-20
-background: '/img/posts/mac.png'
+background: /img/posts/mac.png
 ---
 
 Spark History Server는 Spark 어플리케이션에서 발생한 eventLog 를 기반으로 하여 Spark Web UI에서 실행 이력을 시각적으로 분석할 수 있는 도구이다.   

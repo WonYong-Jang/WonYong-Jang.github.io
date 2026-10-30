@@ -62,6 +62,18 @@ background: '/img/bg-index.jpg'
 
 ## 💼  Work Experience    
 
+#### 라인플러스 Talk Message & OpenChat Data Engineering
+
+> 2025.08 ~ 
+
+[Spark History Server 자체 구축 및 MCP 기반 AI 분석 파이프라인 구성](https://wonyong-jang.github.io/spark/2026/01/20/Custom-Spark-History-Server.html)
+
+- Kubernetes 기반 팀 전용 Spark History Server를 구축하여 전사 공용 서버 의존도 완화 및 이벤트 로그 보존 정책, 분석 플러그인 독립 운영   
+- DataFlint 분석 플러그인을 적용하여 실행 흐름과 disk spill, data skew 등 성능 문제 시각화   
+- Spark History Server MCP 와 AI 클라이언트를 연동하여 실제 실행 정보와 메트릭 기반 분석 파이프라인 구성   
+- Stage 별 수동 Spark UI 탐색을 자연어 기반 분석으로 개선하여, 병목 Stage 우선순위를 파악하고, 실행 메트릭에 근거한 적절한 해결 방안을 제안받을 수 있는 환경 제공  
+	- AS-IS: 약 20분(Spark UI에서 Stage 별 수동 병목 탐색)
+	- TO-BE: 평균 5분 이내(MCP 기반 AI 분석 및 해결 방안 제안)
 #### 쿠팡 Data Intelligence Platform      
 
 > 2021.02.01 ~ 2025.08.01
@@ -112,18 +124,6 @@ background: '/img/bg-index.jpg'
     - Accuracy: (60% -> 92%)
     - Precision: (42% -> 79%)
     - Recall: (30% -> 62%)
-
-
-[Bus Route Recommendation Service]    
-
-- Fulfillment Center 지원자에게 버스가 제공되며, 지원자 거주지 기준으로 자동으로 가까운 버스 추천  
-- 기존에는 상담사가 직접 지원자의 거주지와 가까운 버스 정류장을 찾아서 전달하기 때문에 상담시간 지연 발생   
-- 지원자의 거주지를 위, 경도로 변환 후 버스 정류장의 위, 경도와 비교하여 거리 및 우선순위에 따라 추천   
-- Haversine formula 알고리즘을 이용하여 가까운 거리 계산      
-- Redis를 활용하여 버스 정류장 데이터를 캐싱하여 성능 개선   
-- 상담사의 상담 준비시간(After Call Work)을 60% 개선    
-    - As-Is : 2.5 min   
-    - To-Be : 1 min (셔틀버스노선 확인 시간 감소)    
           
 
 [Build customer service data pipeline with Kafka, Spark streaming and DocumentDB]       
