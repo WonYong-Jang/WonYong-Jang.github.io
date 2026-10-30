@@ -70,10 +70,10 @@ background: '/img/bg-index.jpg'
 
 - Kubernetes 기반 팀 전용 Spark History Server를 구축하여 전사 공용 서버 의존도 완화 및 이벤트 로그 보존 정책, 분석 플러그인 독립 운영   
 - DataFlint 분석 플러그인을 적용하여 실행 흐름과 disk spill, data skew 등 성능 문제 시각화   
-- Spark History Server MCP 와 AI 클라이언트를 연동하여 실제 실행 정보와 메트릭 기반 분석 파이프라인 구성   
-- Stage 별 수동 Spark UI 탐색을 자연어 기반 분석으로 개선하여, 병목 Stage 우선순위를 파악하고, 실행 메트릭에 근거한 적절한 해결 방안을 제안받을 수 있는 환경 제공  
-	- AS-IS: 약 20분(Spark UI에서 Stage 별 수동 병목 탐색)
-	- TO-BE: 평균 5분 이내(MCP 기반 AI 분석 및 해결 방안 제안)   
+- Spark History Server MCP와 AI 클라이언트를 연동하여 실제 실행 정보와 메트릭 기반 분석 파이프라인 구성   
+- Stage별 수동 Spark UI 탐색을 자연어 기반 분석으로 개선하여 병목 Stage 우선순위를 파악하고, 실행 메트릭에 근거한 적절한 해결 방안을 제안받을 수 있는 환경 제공  
+	- AS-IS: approximately 20 min (Spark UI에서 Stage 별 수동 병목 탐색)
+	- TO-BE: 5 min or less on average (MCP 기반 AI 분석 및 해결 방안 제안)   
 
    
 #### 쿠팡 Data Intelligence Platform      
