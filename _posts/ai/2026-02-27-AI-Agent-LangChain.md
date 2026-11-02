@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "[AI] RAG와 LangChain 구성 요소와 도입시 고려사항"
-subtitle: Vector Database / LangChain 을 사용했을 때 장점과 단점
+title: "[AI] RAG와 LangChain 을 이용한 LLM Application 개발"
+subtitle: Vector Database 와 Embedding / LangChain 을 사용했을 때 장점과 단점
 comments: true
 categories: AI
 date: 2026-02-27
@@ -12,10 +12,10 @@ background: /img/posts/mac.png
 
 `RAG는 질문과 관련된 외부 정보를 검색하고, 검색 결과를 LLM(Large Language Model) 입력에 포함하여 답변을 생성하는 방식이다.`   
 
-> 우리 말로하면 검색-증강 생성
+> 우리 말로하면 검색-증강-생성
 ##### Retrieval   
 
-`데이터를 가져오는 것`이며, 구체적으로는 컴퓨터 시스템에 저장된 자료를 취득하는 것 이라는 뜻도 있다.   
+`질문과 관련된 정보를 검색하여 가져오는 것`이며, 구체적으로는 컴퓨터 시스템에 저장된 자료를 취득하는 것 이라는 뜻도 있다.   
 
 > 예를 들면 벡터 스토어에 저장된 데이터를 가져온다.
 
@@ -27,13 +27,13 @@ background: /img/posts/mac.png
 
 ##### Augmented
 
-`검색한 정보를 질문과 함께 LLM에 입력이 추가하여, 답변에 활용할 근거를 보강하는 단계다.`      
+`검색한 정보를 질문과 함께 LLM에 입력에 포함하여, 답변에 활용할 근거를 보강하는 단계다.`      
 
 > 참고 문서를 펼쳐놓고 질문에 답하는 방식으로 이해할 수 있다.   
 
 ##### Generation   
 
-`질문과 겸색 결과를 바탕으로 답변을 생성하는 단계이다.`   
+`질문과 검색 결과를 바탕으로 답변을 생성하는 단계이다.`   
 
 그럼 이제 개발자로서 우리가 해야할 고민은 아래와 같다.   
 `개발자는 관련 정보를 검색하고 모델에 전달하는 과정뿐 아니라, 프롬프트 구성과 응답 검증, 평가까지 전체 흐름을 설계해야 한다.`   
@@ -44,23 +44,44 @@ background: /img/posts/mac.png
 
 - - - 
 
-## 2. Vector Database 
+## 2. Vector Database  와 Embedding
 
 RAG에는 여러 검색 방식을 사용할 수 있다. 여기서는 임베딩과 벡터 유사도를 사용하는 검색 방식을 살펴본다.   
 
 RAG를 이용하여 답변을 생성할 때 필요한 데이터를 가져오는데, 이 필요한 데이터는 사용자가 원하는 정보일 것이고 사용자의 질문과 관련 있는 데이터일 것이다.     
 
-그럼 사용자의 질문과 관련이 있다는 것을 어떻게 판단할까?    
+그럼 사용자의 질문과 LLM에 전달할 데이터가 서로 관련이 있다는 것을 어떻게 판단할까?    
 여기서 `관련성 파악을 위해서 vector를 활용`한다.    
+
+> Vector: 텍스트를 숫자가 일렬로 나열된 데이터 구조로 변경한 상태  
+> Embedding: 텍스트를 Vector로 변경하는 과정 또는 방법
+
 
 `단어 또는 문장의 유사도를 파악해서 관련성을 측정하며, Embedding 모델을 활용하여 vector를 생성하게 된다.`   
 
-> 텍스트 임베딩 모델은 문장이나 문서 조각을 벡터로 변환한다.   
-> 예를 들어 "연차 신청 방법"과 "휴가 등록 절차"처럼 표현이 달라도 의미가 가까운 텍스트를 검색하는데 활용할 수 있다.   
+> 임베딩 모델은 같은 맥락에서 자주 등장하는 단어들이 벡터 공간에서 가깝게 위치하도록 학습한다. 
+> 예를 들어 "연차 신청 방법"과 "휴가 등록 절차"처럼 표현이 달라도 의미가 가까운 텍스트를 검색하는데 활용할 수 있다.
+
+조금 더 자세히 유사도 검색을 하는 방법은 크게 3가지를 사용할 수 있다.  
+
+- Euclidean Distance: 두 Vector 사이의 거리를 재는 것
+	- 값이 작을 수록 두 벡터가 가까우며, 두 벡터가 같으면 거리는 0이다.   
+	- <img src="/img/posts/common/스크린샷%202026-10-31%20오후%207.12.42.png" alt="스크린샷" width="400">
+
+- Cosine Similarity: 원점으로부터 두 Vector에 선을 긋고, 각도의 차이를 계산하는 것
+	- 각도가 작을 수록 유사도 값은 커지며, 통상적으로 값이 0.7 이상이면 유사한 값이라고 여긴다.   
+	- <img src="/img/posts/common/스크린샷%202026-10-31%20오후%207.13.51.png" alt="스크린샷" width="400">
+- Dot Product: Vector의 dot product를 활용   
+	- 값이 클수록 더 유사한 것으로 판단하지만, 벡터의 길이에도 영향을 받는다.   
+	- ![](/img/posts/common/스크린샷%202026-10-31%20오후%207.13.56%201.png)
+
 
 [Embedding Projector](https://projector.tensorflow.org/) 에서 특정 단어를 검색해보면 유사한 단어들을 함께 확인해볼 수 있다.   
 
-`즉, Vector Database 란 Embedding 모델을 활용해 생성된 vector를 저장하는 것이다.`   
+`즉, Vector Database 란 Embedding 모델을 활용해 생성된 vector를 저장하는 것이다.`     
+
+> LangChain에서는 Vector Store라는 용어를 사용하는데 같은 개념이다.   
+
 `여기서, 단순히 vector만 저장하면 안되고, metadata(문서의 이름, 페이지 번호 등)도 같이 저장하게 된다.`   
 
 > LLM이 답변을 잘못 생성했을 경우를 대비해서 어떤 문서에서 가져왔는지 출처를 보여주는게 중요하다.   
@@ -71,18 +92,21 @@ Vector Database의 대표적인 예로 인메모리 데이터 베이스인 Chrom
 ## 3. LangChain
 
 `LangChain은 LLM을 활용한 어플리케이션 개발에 특화된 오픈소스 프레임워크이다.`   
+이 프레임워크는 체인, 에이전트, 메모리와 같은 핵심 컴포넌트를 모듈화해 제공한다.   
 GPT 같은 모델을 단순 호출하는 것이 아니라, 프롬프트, 메모리, 툴, 체인, 에이전트 등을 조합해 복잡한 AI Workflow를 만들 수 있게 해준다.   
 
 LangChain을 그럼 왜 사용해야 할까?
 
-`LLM API와 일반 코드만으로도 RAG나 에이전트를 구현할 수 있다. LangChain은 모델, 도구, 검색 시스템을 연결하는 공통 인터페이스와 실행 구조를 제공하여 개발을 돕는다.`   
+`LLM API와 일반 코드만으로도 RAG나 에이전트를 구현할 수 있다.`    
+`하지만, LangChain은 모델, 도구, 검색 시스템을 연결하는 공통 인터페이스와 실행 구조를 제공하여 개발을 돕는다.`   
 
 > 다만 추가되는 추상화와 의존성의 비용도 함께 고려해야 한다.   
 
-모델과 도구를 공통 인터페이스로 연결하면 반복 코드를 줄일 수 있다.  
-반면 프레임워크의 실행 구조를 학습해야하며, 문제를 추적할 때 내부 동작까지 확인해야 할 수 있다.   
+모델과 도구를 공통 인터페이스로 연결하면 반복 코드를 줄일 수 있고, 모듈 간의 의존성이 명확하게 정의 되어 시스템 유지보수가 용이하며, 새로운 LLM이나 도구가 등장해도 해당 모듈만 업데이트하면 되기 때문에 시스템 확장이 쉽다.    
+그리고 모듈화된 테스트가 가능해 품질 관리도 효과적이다.  
 
-패키지 의존성과 버전 변경에 따른 유지보수 비용이 발생할 수 있기 때문에 단순한 검색과 모델 호출은 공식 SDK와 일반 함수로 시작할 수 있다.   
+반면 프레임워크의 실행 구조를 학습해야하며, 문제를 추적할 때 내부 동작까지 확인해야 할 수 있다.   
+패키지 의존성과 버전 변경에 따른 유지보수 비용이 발생할 수 있기 때문에 단순한 검색과 모델 호출은 공식 SDK와 일반 함수로 시작하는게 좋을 수 있다.   
 
 `다만, 여러 모델, 도구 연동을 공통 방식으로 관리할 필요가 있다면 LangChain 도입을 검토할 수 있다.`    
 
@@ -97,11 +121,25 @@ LangChain을 그럼 왜 사용해야 할까?
 	- 문서가 길면(인풋이 길면) 답변 생성이 오래 걸림
 3. 임베딩 -> 벡터 데이터베이스 저장
 4. 질문이 있을 때, 벡터 데이터베이스에 유사도 검색
-5. 유사도 검색으로 가져온 문서를 LLM에 질문과 같이 전달
+5. 유사도 검색으로 가져온 문서를 LLM 질문과 같이 전달
 ```
 ### 3-1) LangChain 을 이용하여 구현   
 
 아래와 같이 문서를 불러오고 chunk 단위로 쪼개고 embedding을 진행하였다.  
+
+LangChain의 문서 처리 기능은 다양한 형식의 문서를 효율적으로 다룰 수 있게 해준다.   
+
+PDF, Word, CSV 등 여러 형식의 문서를 위한 특화된 로더가 제공되어 데이터 추출이 용이하다.   
+추출된 텍스트는 자동으로 청크 단위로 분할되어 LLM이 처리하기 적합한 크기로 조정된다.   
+
+답변을 생성할 때 문서 전체를 활용하면 속도가 느리고 토큰 수 초과로 답변이 생성되지 않는다.  
+`따라서 원본 문서를 적절한 크기의 청크로 나누어서 저장하고, 사용자 질문과 관련성이 높은 청크들만 검색하여 LLM에 전달한다.`      
+
+> 최근 LLM 모델 성능이 향상됨에 따라 한번에 처리할 수 있는 Context Window가 증가했지만, 한번에 큰 토큰을 넘겨주게 되면, 비용이 많이 발생하게 되고, 답변 생성에 많은 시간이 소요되어 사용자 만족도가 떨어지게 된다.   
+
+문서의 구조와 형식을 보존하면서도 효과적인 처리가 가능한 Parser를 제공하며, 텍스트 분할 시 문맥을 고려한 지능적인 분할 방식을 제공해 정보의 일관성을 유지한다.    
+분할된 텍스트는 자동으로 임베딩 되어 벡터 저장소에 저장될 수 있으며, 문서의 메타데이터를 함께 관리할 수 있어 문서 추적과 관리가 용이하다.   
+또한, 대용량 문서도 효율저으로 처리할 수 있는 스트리밍 방식을 지원하고, 문서 간의 관계를 파악하고 연결하는 기능도 제공한다.   
 
 ```python
 from langchain_community.document_loaders import Docx2txtLoader
@@ -112,25 +150,31 @@ from langchain_chroma import Chroma
 
 # list로 구분자를 줄 수 있어서 RecursiveCharacterTextSplitter 를 사용하는게 일반적으로 성능이 좋다.
 text_splitter = RecursiveCharacterTextSplitter(
-
-chunk_size=1500, # 하나의 청크가 가질 수 있는 최대 문자 수 
-chunk_overlap=200,
-# chunk 할때 일부 겹치게 쪼갬, 유사도 검색을 할 때 우리가 원하는 문서를 가져올 수 있는 확률을 높힐수 있다.   
-# 겹치게 함으로서 경계에서 문맥 손실을 줄인다.
+	chunk_size=1500, # 하나의 청크가 가질 수 있는 최대 문자 수 
+	chunk_overlap=200,
+	# chunk 할때 일부 겹치게 쪼갬, 유사도 검색을 할 때 우리가 원하는 문서를 가져올 수 있는 확률을 높일 수 있다.   
+	# 겹치게 함으로서 경계에서 문맥 손실을 줄인다.
 )
 loader = Docx2txtLoader('./tax.docx')
 
-document_list =loader.load_and_split(text_splitter=text_splitter)
+document_list = loader.load_and_split(text_splitter=text_splitter)
 
 load_dotenv()
 embedding = OpenAIEmbeddings(model='text-embedding-3-large')
 
 # persist_diretory: chroma 는 인메모리 데이터베이스이기 때문에 이를 활용하여 로컬 디스크에 저장 가능   
 # collection_name: 문서와 임베딩을 관리하는 컬렉션 이름  
-database = Chroma.from_documents(documents=document_list, embedding=embedding, collection_name='chroma-tax', persist_directory='./chroma')
+database = Chroma.from_documents(
+	documents=document_list, 
+	embedding=embedding, 
+	collection_name='chroma-tax', 
+	persist_directory='./chroma'
+)
+
 # 위처럼 새롭게 만드는게 아닌 이미 만들어 놓은 것을 재활용
 #database = Chroma(collection_name='chroma-tax', persist_directory='./chroma', embedding_function=embedding)
-query = '연봉 4천만원인 직장인의 소득세는 얼마인가요?'
+
+query = '연봉 5천만원인 직장인의 소득세는 얼마인가요?'
 ```
 
 `그 후 검색과 질의를 한번에 아래와 같이 해결했다.`   
@@ -138,26 +182,39 @@ query = '연봉 4천만원인 직장인의 소득세는 얼마인가요?'
 ```python
 from langchain_openai import ChatOpenAI
 from langsmith import Client
-from langchain_classic.chains import RetrievalQA
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import (
+	create_stuff_documents_chain,
+)
 
 llm = ChatOpenAI(model='gpt-4o')
 
+# LangChain 허브에서 검증된 RAG용 프롬프트 템플리시을 가져온다.   
 client = Client()
-# LangSmith에 저장된 프롬프트를 가져와 파이썬에서 사용할수 있는 객체로 만드는 함수
 prompt = client.pull_prompt(
-"rlm/rag-prompt", # LangChain의 default 프롬프트를 가져와 그대로 사용
-dangerously_pull_public_prompt=True # 외부 공개 프롬프트를 가져옴
+	"langchain-ai/retrieval-qa-chat", # LangChain의 default 프롬프트를 가져와 그대로 사용
+	dangerously_pull_public_prompt=True # 외부 공개 프롬프트를 가져옴
 )
 
+# 검색된 문서들을 하나의 컨텍스트로 결합하는 체인을 만든다.
+# stuff 방식은 모든 문서를 하나의 프롬프트에 넣는 간단한 방식이다.
+document_chain = create_stuff_documents_chain(llm, prompt)
 
-qa_chain = RetrievalQA.from_chain_type(
-llm,
-retriever=database.as_retriever(),
-chain_type_kwargs={"prompt": prompt},
-return_source_documents=True
+# retriever와 문서 결합 체인을 연결하여 최종 RAG 체인을 구성한다.
+# 이제 질문을 하면 자동으로 관련 문서를 검색하고 LLM에게 전달한다.  
+qa_chain = create_retrieval_chain(
+	database.as_retriever(),
+	document_chain,
 )
 
-ai_message = qa_chain({"query": query})
+ai_message = qa_chain.invoke({"input": query})
+ai_message['answer']
+```
+
+위에서 prompt.pretty_print()를 통해서 실제 prompt 를 확인할수 있다. 
+
+```
+================================ System Message ================================ Answer any use questions based solely on the context below: <context> {context} </context> ============================= Messages Placeholder ============================= {chat_history} ================================ Human Message ================================= {input}
 ```
 
 ### 3-2) LangChain 없이 구현   
@@ -175,7 +232,6 @@ from docx import Document
 from dotenv import load_dotenv
 from openai import OpenAI
 
-
 load_dotenv()
 
 api_key = os.getenv("OPENAI_API_KEY")
@@ -186,7 +242,7 @@ document_path = Path("./tax.docx")
 embedding_model = "text-embedding-3-large"
 llm_model = "gpt-4o"
 
-query = "연봉 4천만원인 직장인의 소득세는 얼마인가요?"
+query = "연봉 5천만원인 직장인의 소득세는 얼마인가요?"
 
 
 # 1. 문서 읽기
@@ -338,14 +394,12 @@ database = Chroma(collection_name='chroma-tax', persist_directory='./chroma', em
 
 # ... 
 
-qa_chain = RetrievalQA.from_chain_type(
-llm,
-retriever=database.as_retriever(),
-# langchain의 as_retriever()를 사용하면 chroma 뿐만 아니라
-# pinecone, azure 등 다양한 벡터 데이터베이스에서도 활용 가능
-# 즉, DB가 변경되어도 코드 변환이 수월
-chain_type_kwargs={"prompt": prompt},
-return_source_documents=True
+qa_chain = create_retrieval_chain(
+	# langchain의 as_retriever()를 사용하면 chroma 뿐만 아니라
+	# pinecone, azure 등 다양한 벡터 데이터베이스에서도 활용 가능
+	# 즉, DB가 변경되어도 코드 변환이 수월
+	database.as_retriever(),
+	document_chain,
 )
 ```
 
@@ -355,25 +409,92 @@ return_source_documents=True
 
 위의 예제의 소득세법에서 특정 이미지에 대해서는 벡터 데이터베이스에 저장되지 않는 문제가 존재한다.  
 
-> 소득세 구간이 이미지로 제공된다.
+> 소득세 구간이 이미지로 제공된다.   
 
-따라서 이를 파싱이 가능하도록 테이블로 변경하는 작업을 해줘야 한다.
-
+따라서 이를 파싱이 가능하도록 테이블로 변경하는 작업을 해줘야 한다.   
 ### 4-2) 키워드 사전 활용 
 
 데이터 전처리를 잘 해서 벡터 데이터 베이스에 저장했는데도 불구하고 생성된 답변이 잘못되거나 우선순위가 낮게 나오는 경우가 존재한다.   
 
 `이는 LLM에게 질문 자체를 잘못했을 가능성이 있다.`   
 
-위 예시에서 "연봉 4천만원인 직장인의 소득세는?" 으로 질문을 했지만, 소득세법에 존재하는 부분은 "거주자의 종합소득에 대한 소득세" 에 대한 부분으로 설명해주고 있다.
+위 예시에서 "연봉 5천만원인 직장인의 소득세는?" 으로 질문을 했지만, 소득세법에 존재하는 부분은 "거주자의 종합소득에 대한 소득세" 에 대한 부분으로 설명해주고 있다.
 
-`즉, 직장인과 거주자가 벡터 데이터베이스 상에서 관련도가 높지 않다는 뜻이다.`   
+`즉, "직장인"과 "거주자"가 벡터 데이터베이스 상에서 관련도가 높지 않다는 뜻이다.`     
+
+따라서 LangChain 을 이용하여 하나의 작업 뒤에 체인으로 연결하여 키워드 사전을 추가해 볼 수 있다.   
+
+> 예를 들면 이러한 질문을 받으면 이를 "거주자" 로 변경하도록 체인을 만들 수 있다.   
+
+`검색 질의 재작성 과정을 LCEL(LangChain Expression Language) 로 구성할 수 있다.`   
+`LCEL은 프롬프트, 모델, 출력 파서 등의 구성 요소를 연결하는 표현 방식이다.`   
+
+```python
+prompt = ChatPromptTemplate.from_template("...")
+chain = prompt | model | StrOutputParser()
+```
+
+`위 의미는 "우리가 생성한 체인이 prompt 를 model에 넘겨주고, prompt를 받은 모델의 결과를 string으로 파싱해라" 는 의미가 된다.`   
+
+```python
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+dictionary = ["사람을 나타내는 표현 -> 거주자"]
+
+dictionary_prompt = ChatPromptTemplate.from_template(f"""
+사용자의 질문에서 아래 사전에 해당하는 표현을 찾아 변환하세요.
+변환할 표현이 없으면 원래 질문을 그대로 반환하세요. 
+
+사전: {dictionary}
+질문: {{question}}
+""")
+
+# LCEL: 프롬프트 → LLM → 문자열
+dictionary_chain = dictionary_prompt | llm | StrOutputParser()
+new_question = dictionary_chain.invoke({"question": query})
+new_question
+```
+
+위 코드를 실행해보면 아래와 같이 체인을 통해 질문이 변경된 것을 확인할 수 있다.   
+
+```
+'연봉 5천만원인 거주자의 소득세는 얼마인가요?'
+```
+
+`이처럼 데이터 전처리도 중요하지만, 유사도 검색을 할 때 어떤 문장을 활용할지도 굉장히 중요한 포인트이다.`   
+
+실무에 적용할 때는 사내 문서에서 `빈번하게 사용될 만한 단어를 찾아서 정리를 해주는게 중요하다.`       
+
+- - - 
+
+## 5. LangChain 이용하여 Chatbot 구현 하기
+
+
+### Chat History 
+
+메시지 히스토리, 커스텀 상태 스키마, 장기 메모리를 통해 대화의 맥락을 유지한다. 토큰 한계를 넘지 않으면서 효과적으로 컨텍스트를 관리할 수 있다.
+
+### Few-Shot Prompting   
+
+`Few-shot 학습은 LLM에 몇 가지 예시를 제공하여 특정 작업을 수행하도록 유도하는 기법이다.`   
+
+Few-shot 학습을 활용함으로써, 언어 모델은 주어진 예제들을 참고하여 더 정확하고 일관된 응답을 생성할 수 있다.   
+이는 특히 특정 도메인이나 형식의 질문에 대해 모델의 성능을 향상시키는 데 효과적이다.   
+### 미들웨어
+
+에이전트 실행의 각 단계에 훅(hook)을 걸어 기능을 확장할 수 있다.   
+
+- SummarizationMiddleware: 대화 자동 요약
+- HumanInTheLoopMiddleware: 사람 승인 기능
+- PIIMiddleware: 개인정보 탐지/마스킹
+
 
 
 
 - - - 
 
-Referrence 
+Reference 
 
 <https://wikidocs.net/261585>  
 <https://platform.openai.com/>   
