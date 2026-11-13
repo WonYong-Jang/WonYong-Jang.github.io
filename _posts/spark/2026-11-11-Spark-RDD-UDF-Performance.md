@@ -126,11 +126,11 @@ executor JVM
 
 차이는 전달 범위와 SQL 실행 계획의 유지 여부에 있다.   
 위 예시는 op_type과 raw_param2만 Python으로 전달하고 결과 두 값만 반환한다.  
-`다른 컬럼은 JVM에 남겨둘 수 있다. 행 전체를 왕복시키는 앞의 RDD 구현보다 전달량을 줄일 여지가 있다.`   
 
 `Python UDF는 SQL 실행 계획 안에 표현되지만, Spark가 함수 내부의 Thrift 해석 로직까지 분석하거나 최적화하는 것은 아니다.`   
 
 > 추후 Pandas UDF 를 검토해봐도 좋을 것 같다.   
+
 ### 2-3) Java/Hive UDF 를 이용하는 방식 
 
 Thrift 해석 로직을 Java의 Hive GenericUDF 인터페이스로 구현하고, 해당 클래스가 포함된 JAR을 Spark에서 사용할 수 있도록 배포한 뒤 Spark SQL 함수로 등록할 수 있다.   
@@ -158,22 +158,36 @@ executor JVM
 
 ## 3. 성능에 영향을 주는 요소
 
-### 3-1) RDD 기반 처리
+### 3-1) PySpark RDD 기반 처리
 
-mapPartitions에서 Python으로 Thrift를 처리하면 JVM과 Python worker 사이에 데이터 전달 및 직렬화 비용이 발생한다. 
-다만 이 비용은 mapPartitions만의 비용은 아니다. Python UDF도 Python worker에서 실행되므로 JVM과 Python 사이의 경계를 넘는다.
+`mapPartitions에서 Python으로 Thrift를 처리하면 처리할 행이 JVM에서 Python worker로 전달되고, 결과가 다시 JVM으로 돌아온다.`      
 
-이 통신은 보통 executor와 같은 머신에서 실행되는 Python 프로세스 사이의 통신이다.
+> 처리할 행에서도 필요한 컬럼만 추출하여 전송량을 줄일 수 있다.   
+
+`이때 데이터 직렬화와 역직렬화에 드는 비용이 발생한다.`     
+
+mapPartitions의 함수는 파티션마다 호출되므로, 파티션에서 공유할 객체를 함수 안에서 한 번 초기화할 수 있다. 다만 함수 안에서 행마다 transport와 protocol을 새로 만든다면 그 객체 생성 비용은 그대로 남는다.   
+파티션 단위 처리 자체가 행별 디코딩이나 데이터 전달을 없애 주는 것은 아니다.   
+
+RDD 변환한 뒤에는 해당 Python 로직을 Spark SQL의 일반 표현식 처럼 분석하기 어렵다. 따라서 RDD 경계 앞뒤의 DataFrame 연산을 Catalyst가 함께 최적화하는데 제약이 생길 수 있다.   
 
 ### 3-2) Python UDF 기반 처리
 
-Spark 3.4에서는 spark.sql.execution.pythonUDF.arrow.enabled=true로 일반 Python UDF의 JVM-Python 간 데이터 전달에 Arrow 최적화를 적용할수 있다. 이 설정은 기본적으로 비활성화 되어 있다.     
+`Python UDF도 executor JVM과 Python worker 사이에서 입력을 전달하고 결과를 돌려받으므로, Python 실행 경계와 직렬화 비용이 발생한다.`   
 
-> 단, Spark 3.4 기준으로 struct 입력을 지원하지 않는다.   
+Spark 3.4에서는 `spark.sql.execution.pythonUDF.arrow.enabled=true`로 일반 Python UDF의 JVM-Python 간 직렬화에 Arrow 최적화를 적용할 수 있다. 이 설정은 기본적으로 비활성화 되어 있다.      
+Arrow를 사용해도 일반 Python UDF 함수는 Python worker에서 행별로 실행된다.   
+따라서 Arrow는 데이터 전달 비용을 줄일 수 있지만, 함수 호출을 벡터화하거나 Python 실행 경계를 제거하지는 않는다.   
 
-Arrow는 데이터 직렬화와 전달 비용을 줄일 수 있지만, 일반 Python UDF의 함수 호출은 여전히 Python worker에서 행별로 실행된다. 
+> Spark 3.4의 Arrow 최적화에는 타입 제약도 있다.   
+> struct 입력은 지원되지 않으며, struct, array, map 반환 타입도 Arrow 최적화 대상이 아니다.
 
+### 3-3) Java/Hive UDF 기반 처리 
 
+`Java/Hive UDF는 executor JVM 안에서 Thrift 디코딩을 수행하므로, 이 처리 구간에서 Python worker로 데이터를 전달하고 결과를 되돌리는 비용이 없다.` 이 점은 Python 실행 결계의 비용을 줄일 가능성이 있다.   
+
+다만 Java/Hive UDF도 행마다 함수를 실행하고 Thrift 데이터를 디코딩해야 한다.   
+또한 `UDF 내부 로직은 Spark SQL의 내장 함수처럼 Catalyst가 분석하고 최적화하기 어렵다는 점도 고려해야 한다.`   
 - - - 
 ## 4. 결론
 
