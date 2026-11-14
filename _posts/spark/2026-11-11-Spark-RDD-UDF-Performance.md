@@ -1,19 +1,20 @@
 ---
 layout: post
-title: "[Spark] Thrift 처리 방식 비교 : PySpark RDD mapPartitions, Python UDF, Java/Hive UDF"
-subtitle: Thrift 역직렬화의 실행 경로와 성능에 영향을 주는 요소
+title: "[Spark] Thrift 처리 방식 비교 : PySpark RDD mapPartitions, Python UDF, Java로 구현한 Hive GenericUDF"
+subtitle: PySpark에서 Thrift 역직렬화의 실행 경로와 성능에 영향을 주는 요소
 comments: true
 categories: Spark
 date: 2026-11-11
 background: /img/posts/mac.png
 ---
-현재 업무에서 Hive 테이블을 데이터 소스로 사용하는 Spark 배치를 구성하면서 Thrift 데이터를 처리할 일이 생겼다. 이에 Thrift의 기본 개념을 살펴보고, PySpark RDD의 mapPartitions, Python UDF, Java/Hive UDF를 이용한 처리 방식에 따른 실행 구조와 성능 특성을 비교해 보려고 한다.
+현재 업무에서 Hive 테이블을 데이터 소스로 사용하는 Spark 배치를 구성하면서 Thrift 데이터를 처리할 일이 생겼다. 이에 Thrift의 기본 개념을 살펴보고, PySpark RDD의 mapPartitions, Python UDF, Java로 구현한 Hive GenericUDF를 이용한 처리 방식에 따른 실행 구조와 성능 특성을 비교해 보려고 한다.
 
 데이터 소스인 Hive 테이블에는 Base64로 인코딩된 컬럼이 있다. 이 값을 디코딩하면 Thrift로 직렬화된 바이너리 데이터를 얻을 수 있다.
 
-RDD와 Python UDF에서는 같은 Python 디코딩 함수를 사용하고, Java/Hive UDF에서는 동일한 데이터를 해석하는 로직을 Java로 구현한다.   
+RDD와 Python UDF에서는 같은 Python 디코딩 함수를 사용하고, GenericUDF에서는 동일한 역할을 하는 로직을 Java로 구현한다.   
 이를 통해 Python 디코딩을 Spark에 연결하는 방식의 차이와, 디코딩 자체를 JVM에서 실행하는 경우의 차이를 살펴본다.   
 
+- - - 
 ## 1. Thrift 란? 
 
 `Apache Thrift는 서로 다른 프로그래밍 언어로 작성된 시스템이 데이터를 주고받을 수 있도록 돕는 프레임워크이다.`      
@@ -26,10 +27,12 @@ RDD와 Python UDF에서는 같은 Python 디코딩 함수를 사용하고, Java/
 다만 Thrift 데이터는 바이너리만 보고 구조를 알아내기 어렵다. `어떤 필드가 어떤 타입인지 해석하려면 데이터를 만들 때 사용한 .thrift IDL과 프로토콜 정보를 알아야 한다.`      
 IDL은 필드와 타입을 정의하고, 컴파일러는 그 정의에 맞는 언어별 코드를 생성한다.   
 
-이 글에서 다루는 사례는 Hive 테이블에 저장된 Thrift 데이터이다. 컬럼 값이 Base64로 인코딩되어 있다면 먼저 Base64를 디코딩해 바이너리를 얻고, 해당 데이터를 생성한 .thrift 정의와 프로토콜에 맞춰 역직렬화 해야 한다.   
+이 글에서 다루는 사례는 Hive 테이블에 저장된 Thrift 데이터이다. 컬럼 값이 Base64로 인코딩되어 있다면 먼저 Base64를 디코딩해 Thrift 바이너리를 얻고, 해당 데이터를 생성한 .thrift 정의와 프로토콜에 맞춰 역직렬화 해야 한다.   
 
 > Base64는 바이너리를 문자열로 표현하는 인코딩 방식이고, Thrift는 그 바이너리 안의 데이터 구조를 정의하는 별도의 규약이다.   
 
+
+- - - 
 
 ## 2. RDD 기반 처리와 Python UDF, Java/Hive UDF 의 동작 방식
 
@@ -46,6 +49,11 @@ DataFrame을 RDD로 변환한 뒤, mapPartitions에서 Python으로 Thrift 데�
 
 ```python
 def decode_operation_payload(encoded):
+	# Extract registration and scheduled timestamps using the generated thrift schema
+	# 실제 디코딩이 필요한 시점에만 생성 패키지를 로드 하도록 
+	from ScheduledMessage.ttypes import ScheduledMessageOP
+	
+	# Thrift 프로토콜이 바이너리를 읽을 수 있게 전달하는 역할
 	transport = TMemoryBuffer(base64.b64decode(encoded, validate=True))
 	
 	# IDL 에서 생성한 클래스
@@ -74,16 +82,21 @@ result = spark.createDataFrame(
 
 `또한, IDL에서 생성한 Python 코드와 Thrift 패키지를 하나의 ZIP으로 묶어 spark-submit --py-files로 전달한다.`   
 
-```
+```sh
+# ScheduledMessageOP.thrift 파일을 읽어 Python에서 사용할 Thrift 코드를 생성
 $ thrift -r --gen py ScheduledMessageOP.thrift
 ```
 
+
 ```
 dependencies.zip
-|__ thrift /
-|__ ScheduledMessageOP /
-|    ㄴ ttypes.py
-|__ util / 
+├── thrift/                 # Thrift Python 런타임
+├── ScheduledMessageOP/     # IDL에서 생성한 Python 패키지
+│   ├── __init__.py
+│   ├── ttypes.py
+│   └── constants.py        # 생성된 경우
+└── util/                   # 함께 배포할 유틸리티 패키지
+    └── __init__.py
 ```
 
 `ttypes.py 는 IDL 에 정의된 데이터 구조를 Thrift 컴파일러로 생성한 Python 코드이다.`   
@@ -109,7 +122,7 @@ ScheduledMessageOP.thrift_spec = (
 
 ```
 executor JVM
-	-> 선택한 행을 Python worker로 전달
+	-> 선택한 행(또는 특정 컬럼)을 Python worker로 전달
 	-> Python에서 Thrift 해석 
 	-> 행의 결과를 JVM 으로 반환
 	-> DataFrame 으로 후속 처리
@@ -117,12 +130,20 @@ executor JVM
 
 `이 방식은 DataFrame에서 출발하지만, Thrift 처리는 Spark SQL 내장 연산이 아니라 PySpark RDD 연산이다.`   
 
-mapPartitions에 전달한 함수는 파티션 단위로 호출된다. 따라서 파티션 내에서 공유할 객체를 한 번 초기화하는 구조를 만들 수 있다. 다만 위 코드에서 호출하는 디코더가 매번 transport와 protocol을 생성한다면, 해당 객체는 여전히 행마다 생성된다.  
+`mapPartitions에 전달한 함수는 파티션 단위로 호출된다.` 따라서 파티션 내에서 공유할 객체를 한 번 초기화하는 구조를 만들 수 있다.    
+`다만 위 코드에서 호출하는 디코더가 매번 transport와 protocol을 생성한다면, 해당 객체는 여전히 행마다 생성된다.`     
+
+> Thrift 메시지 객체를 파티션 마다 한 번만 만들어서 재사용하게 되면 행에 없는 필드에 이전 행의 값이 남을 수도 있기 때문에 권장하지 않는다.   
 
 `JVM과 Python 사이에는 데이터 전달과 직렬화 비용이 발생한다.`   
 `단, DataFrame 에서 사용하는 Spark SQL은 JVM에서 실행하고, RDD에 전달한 Python 함수(mapPartition)은 Python worker에서 실행된다.`   
 
-또한 RDD로 전환하면 Spark SQL 옵티마이저가 Python 로직을 넘어 원래 DataFrame 까지 이어서 최적화하는 데 한계가 생길 수 있다.
+`또한 RDD.mapPartitions는 함수 안의 모든 처리를 SQL 계획 바깥에서 실행한다.`     
+
+> 그 안에 필터, 컬럼 가공, 디코딩을 넣어도 Spark SQL은 그 내용을 모른다. 
+> 결과를 다시 DataFrame으로 만들어도, 새 SQL 계획은 그 결과부터 시작하게 된다.
+
+즉, Spark SQL 옵티마이저가 Python 로직을 넘어 원래 DataFrame 까지 이어서 최적화하는 데 한계가 생길 수 있다.   
 
 ### 2-2) Python UDF를 이용하는 방식 
 
@@ -155,18 +176,27 @@ executor JVM
 `Python UDF도 Python worker에서 실행되므로 JVM과 Python 사이의 전달 비용이 있다.`     
 `따라서 RDD 처리를 Python UDF로 바꾸는 것만으로 Python 실행 경계가 사라지지는 않는다.`
 
-차이는 전달 범위와 SQL 실행 계획의 유지 여부에 있다.   
-위 예시는 op_type과 raw_param2만 Python으로 전달하고 결과 두 값만 반환한다.  
+`Python UDF는 SQL 실행 계획 안에 포함되어 주변 DataFrame 연산과 함께 계획되지만, 함수 내부의 Thrift 해석 로직은 Spark가 분석하거나 최적화하지 않는다.`   
+다만, Python UDF는 SQL 계획의 한 단계이며, Spark는 함수 내용은 모르지만 UDF에 어떤 컬럼이 입력 되는지는 알고 있다.   
+그래서 주변 SQL 연산을 같은 계획 안에서 조정할 기회가 생긴다.  
 
-`Python UDF는 SQL 실행 계획 안에 표현되지만, Spark가 함수 내부의 Thrift 해석 로직까지 분석하거나 최적화하는 것은 아니다.`   
+> 예를들어 UDF가 필요 없는 행을 먼저 걸러내거나, 사용하지 않는 컬럼을 제외하는 식의 최적화는 가능해진다. 
+> UDF를 가로질러 모든 최적화가 가능한 것은 아니다.  
 
-> 추후 Pandas UDF 를 검토해봐도 좋을 것 같다.   
+반면, 위 RDD.mapPartitions 는 SQL 실행 계획 바깥에서 실행 되므로 컬럼 사용 등을 SQL 엔진이 볼 수 없다는 차이가 있다.   
 
-### 2-3) Java/Hive UDF 를 이용하는 방식 
+`하지만 둘 다 디코딩 로직 자체는 최적화되지 않는다.`    
+차이를 정리해보면, Python UDF가 SQL 계획 안에 있어 주변 SQL 연산과 함께 계획 될 수 있고, RDD 변환 뒤의 연산은 SQL 엔진에서 보이지 않는다는 점이다.   
 
-Thrift 해석 로직을 Java의 Hive GenericUDF 인터페이스로 구현하고, 해당 클래스가 포함된 JAR을 Spark에서 사용할 수 있도록 배포한 뒤(e.g. hdfs, s3) Spark SQL 함수로 등록할 수 있다.   
+> 두 방식 모두 필요한 컬럼을 명시적으로 선택한다면 그 차이가 성능 차이로 크게 이어지지 않을 수 있다.  
 
-> 이 방식은 Hive UDF 통합을 전제로 하므로, 클러스터의 Spark, Hive 의존성과 UDF 구현의 호환성도 확인해야 한다. 
+
+### 2-3) Hive GenericUDF 를 이용하는 방식 
+
+Thrift 디코딩 로직을 Java의 Hive GenericUDF 인터페이스로 구현하고, 해당 클래스가 포함된 JAR을 Spark에서 사용할 수 있도록 배포(e.g. hdfs, s3) 한다.   
+그 뒤, Spark SQL 함수로 등록하여 사용하는 방식이다.   
+
+> 이 방식은 Hive GenericUDF 통합을 전제로 하므로, 클러스터의 Spark, Hive 의존성과 UDF 구현의 호환성도 확인해야 한다. 
 
 thrift 컴파일러를 통해 실행하면 필드 구조가 정의되어 있는 java 클래스가 생성되며, GenericUDF 구현체는 직접 작성해줘야 한다.
 
@@ -189,7 +219,7 @@ CREATE TEMPORARY FUNCTION decode_operation_payload AS com.company.ScheduledMessa
 
 ```
 executor JVM
-	-> Java/Hive UDF 호출
+	-> GenericUDF 호출
 	-> JVM에서 Thrift 해석
 	-> 해석 결과 반환
 	-> SQL로 후속 처리
@@ -200,49 +230,36 @@ executor JVM
 `앞의 RDD 구현과 비교하면 JVM 과 Python 사이 데이터 전달과 Python 결과를 DataFrame으로 재구성하는 비용을 피할 수 있다.`      
 `대신 Java 코드를 빌드하고, executor에서 사용할 JAR와 의존성을 배포해야 한다.`   
 
-`Java/Hive UDF 역시 사용자 정의 함수이므로 Spark가 내장 SQL 함수처럼 분석하고 최적화하지 못한다. 성능상 기대 효과는 Python worker 왕복을 줄이고 JVM 안에서 디코딩을 수행할 수 있기 때문에 Python 실행 경계에서 발생하는 비용을 줄일 가능성이 있다.`   다만 실제 성능은 Thrift 디코딩 비용, 데이터 크기 등에 따라 달라진다.    
+`Hive GenericUDF 역시 사용자 정의 함수이므로 Spark가 내장 SQL 함수처럼 분석하고 최적화하지 못한다. 성능상 기대 효과는 Python worker 왕복을 줄이고 JVM 안에서 디코딩을 수행할 수 있기 때문에 Python 실행 경계에서 발생하는 비용을 줄일 가능성이 있다.`    
+다만 실제 성능은 Thrift 디코딩 비용, 데이터 크기 등에 따라 달라진다.    
 
+---  
 
-## 3. 성능에 영향을 주는 요소
+## 3. 성능 비교 및 추후 검토 계획
 
-### 3-1) PySpark RDD 기반 처리
+RDD.mapPartitions 방식과 Hive GenericUDF 방식을 동일한 데이터로 성능 비교했을 때  비슷한 실행 시간이 확인되었다.
 
-`mapPartitions에서 Python으로 Thrift를 처리하면 처리할 행이 JVM에서 Python worker로 전달되고, 결과가 다시 JVM으로 돌아온다.`      
+테이블 스캔량은 2TB 이상이었지만, Thrift 디코딩 대상은 필터 후 일부 행으로 제한되어 있어서 큰 차이가 없는 것으로 확인되었다.
 
-> 처리할 행에서도 필요한 컬럼만 추출하여 전송량을 줄일 수 있다.   
+디코딩할 데이터가 많아 JVM-Python worker 간 직렬화 부하가 발생하게 된다면 다음을 고려해 볼 수 있다.   
 
-`이때 데이터 직렬화와 역직렬화에 드는 비용이 발생한다.`     
+Python UDF 방식도 비교하기 위해 Spark 3.4 에서 `spark.sql.execution.pythonUDF.arrow.enabled=true` 를 적용할 수 있다.   
+이 설정은 JVM과 Python worker 사이의 데이터 전달을 Arrow 기반으로 최적화하지만, Thrift 디코딩 함수는 계속 행별로 실행된다.
 
-mapPartitions의 함수는 파티션마다 호출되므로, 파티션에서 공유할 객체를 함수 안에서 한 번 초기화할 수 있다. 다만 함수 안에서 행마다 transport와 protocol을 새로 만든다면 그 객체 생성 비용은 그대로 남는다.   
-파티션 단위 처리 자체가 행별 디코딩이나 데이터 전달을 없애 주는 것은 아니다.   
+> 이 설정은 Spark 3.4 기준 기본적으로 비활성화 되어 있다.     
 
-RDD 변환한 뒤에는 해당 Python 로직을 Spark SQL의 일반 표현식 처럼 분석하기 어렵다. 따라서 RDD 경계 앞뒤의 DataFrame 연산을 Catalyst가 함께 최적화하는데 제약이 생길 수 있다.   
+Pandas UDF도 Arrow 배치 전달을 사용하므로 비교 후보가 될 수 있다. 다만 Thrift 데이터는 각 행마다 개별적으로 역직렬화해야 하므로, 이 작업에서 Pandas UDF가 더 빠를지는 JVM-Python 데이터 전달 비용이 전체 시간에서 차지하는 비율을 측정한 뒤 판단해야 한다.   
 
-### 3-2) Python UDF 기반 처리
-
-`Python UDF도 executor JVM과 Python worker 사이에서 입력을 전달하고 결과를 돌려받으므로, Python 실행 경계와 직렬화 비용이 발생한다.`   
-
-Spark 3.4에서는 `spark.sql.execution.pythonUDF.arrow.enabled=true`로 일반 Python UDF의 JVM-Python 간 직렬화에 Arrow 최적화를 적용할 수 있다. 이 설정은 기본적으로 비활성화 되어 있다.      
-Arrow를 사용해도 일반 Python UDF 함수는 Python worker에서 행별로 실행된다.   
-따라서 Arrow는 데이터 전달 비용을 줄일 수 있지만, 함수 호출을 벡터화하거나 Python 실행 경계를 제거하지는 않는다.   
-
-> Spark 3.4의 Arrow 최적화에는 타입 제약도 있다.   
-> struct 입력은 지원되지 않으며, struct, array, map 반환 타입도 Arrow 최적화 대상이 아니다.
-
-### 3-3) Java/Hive UDF 기반 처리 
-
-`Java/Hive UDF는 executor JVM 안에서 Thrift 디코딩을 수행하므로, 이 처리 구간에서 Python worker로 데이터를 전달하고 결과를 되돌리는 비용이 없다.` 이 점은 Python 실행 결계의 비용을 줄일 가능성이 있다.   
-
-다만 Java/Hive UDF도 행마다 함수를 실행하고 Thrift 데이터를 디코딩해야 한다.   
-또한 `UDF 내부 로직은 Spark SQL의 내장 함수처럼 Catalyst가 분석하고 최적화하기 어렵다는 점도 고려해야 한다.`   
 - - - 
 ## 4. 결론
 
-현재 업무에서 주로 Java/Hive UDF 를 사용하고 있었고, Thrift에 대한 구조 정의와 디코딩을 위한 Java 코드가 Jar로 빌드되어 hdfs 에 관리되고 있었다.
-이러한 방식은 스키마에 대한 정의와 디코딩에 대한 코드가 Jar로 관리되고, 빌드한 Jar를 직접 hdfs에 업로드하여 관리되므로 유지보수에 부담이 생겼다. 
-따라서, 성능을 비교했을 때 큰 차이가 없는 점과 현재 사용하고 있는 PySpark 코드 내에서 관리할수 있는 장점이 있는 RDD 기반으로 진행하는 것으로 결정했다. 
+현재 업무의 기존 배치에서는 Hive GenericUDF 를 주로 사용했었다.   
+이 방식은 Java 코드와  Thrift에서 생성한 클래스를 JAR로 빌드하고 배포해야 하므로, 현
+재 PySpark 중심의 코드베이스에서는 관리 부담이 있었다.   
 
-추후 Spark 버전을 Upgrade하면서 Pandas UDF 등도 검토해서 장점이 확인된다면 변경할 예정이다.  
+이번 테스트 데이터와 환경에서는 RDD mapPartitions 방식과 Hive GenericUDF 방식의 전체 실행 시간에 큰 차이가 없었다. 이에 성능 우위가 확인되지 않은 상황에서, 기존 PySpark 코드와 함께 관리할 수 있다는 점을 고려해 RDD 기반 방식을 선택했다.
+
+향후에는 Spark 3.4의 Arrow 최적화 Python UDF와 Pandas UDF 등을 적용했을 때 JVM 과 Python 사이의 비용을 줄일 수 있을지 검토해볼 예정이다.
 
 
 - - -
