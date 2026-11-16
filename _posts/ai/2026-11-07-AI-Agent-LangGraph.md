@@ -132,9 +132,43 @@ LangChain은 선형적 워크플로에 적합하며 빠른 개발이 가능한 �
 
 StateGraph는 LangGraph의 핵심 구성 요소로, 상태 기반의 워크플로우를 구축하는데 사용되는 가장 기본적인 그래프 구조이다.
 
-`주요 특징은 상태를 중심으로 동작하며, 상태는 TypedDict나 Pydantic BaseModel을 사용하여 정의하고 그래프 실행 중 지속적으로 업데이트 된다.`   
+`주요 특징은 상태(state)를 중심으로 동작하며, 상태는 TypedDict나 Pydantic BaseModel을 사용하여 정의하고 그래프 실행 중 지속적으로 업데이트 된다.`   
 
+```python
+ # state: 그래프가 공유하는 데이터
+  class State(TypedDict):
+      question: str
+      answer: str
 
+  # node: state를 받아 작업하고, 바뀐 값을 반환
+  def answer(state: State):
+      return {"answer": f"'{state['question']}'라고 물으셨네요."}
+
+  builder = StateGraph(State)
+  builder.add_node("answer", answer)       # node 등록
+  builder.add_edge(START, "answer")        # 시작 → 답변 node
+  builder.add_edge("answer", END)          # 답변 node → 종료
+
+  graph = builder.compile()
+  result = graph.invoke({"question": "안녕", "answer": ""})
+  print(result["answer"])
+```
+
+`추가적으로, add_conditional_edges() 를 통해서 조건부 엣지로 분기처리도 가능하다.`
+
+### 3-1) Reducer
+
+`state 업데이트 하는 방식은 기본적으로 기존 값을 덮어쓴다.`   
+
+`reducer를 지정하면 기존값과 새 값을 어떤 규칙으로 합칠지 정할 수 있다.`   
+대화 기록처럼 목록을 누적할 때 유용하다.   
+
+```python
+class State(TypedDict):
+    messages: Annotated[list[str], add]
+```
+
+또는 중복제거, 정렬 등 특수한 상태 관리가 필요한 경우도 사용이 가능하다.   
 
 - - - 
 
