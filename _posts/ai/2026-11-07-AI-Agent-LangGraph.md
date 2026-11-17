@@ -156,7 +156,15 @@ StateGraph는 LangGraph의 핵심 구성 요소로, 상태 기반의 워크플�
 
 `추가적으로, add_conditional_edges() 를 통해서 조건부 엣지로 분기처리도 가능하다.`
 
-### 3-1) Reducer
+### 3-1) 피드백 루프
+
+LangGraph는 노드들을 한 번씩 순서대로 실행하는 것 뿐 아니라, 이전 노드로 돌아가는 순환 구조도 만들 수 있다.   
+
+> 예를 들어 초안을 검토한 뒤, 내용이 부족하면 수정 노드로 보내고 다시 검토할 수 있다.  
+
+`add_conditional_edges() 를 사용하면 현재 상태에 따라 다음 노드를 선택할 수 있다.`   
+
+### 3-2) Reducer
 
 `state 업데이트 하는 방식은 기본적으로 기존 값을 덮어쓴다.`   
 
@@ -164,11 +172,42 @@ StateGraph는 LangGraph의 핵심 구성 요소로, 상태 기반의 워크플�
 대화 기록처럼 목록을 누적할 때 유용하다.   
 
 ```python
+from operator import add 
+from typing import Annotated, TypedDict
+
 class State(TypedDict):
     messages: Annotated[list[str], add]
 ```
 
 또는 중복제거, 정렬 등 특수한 상태 관리가 필요한 경우도 사용이 가능하다.   
+
+### 3-3) 메시지 상태 관리 (MessageState)
+
+`대화 기록처럼 메시지를 상태에 저장할 때는 MessageState 를 사용할 수 있다.`
+`MessageState는 message 목록을 미리 정의한 상태 스키마이며, 메시지를 병합할 때 add_message reducer를 사용한다.`   
+
+> operator.add가 목록을 단순히 이어 붙이는 것과 달리, add_message는 메시지 ID가 같으면 기존 메시지를 새 메시지로 갱신할 수 있다.  
+
+```python
+from langgraph.graph import MessageState
+from langchain_core.documents import Document
+
+class GraphState(MessagesState):
+# message 키는 기본제공, 다른 키를 추가하고 싶을때는 추가 가능
+	documents: List[Document]
+```
+
+또는 아래와 같이 진행해볼 수도 있다. 
+
+```python
+from langchain_core.message import AnyMessage
+from langgraph.graph.message import add_messages
+
+class GraphState(TypeDict):
+	message: Annotated[list[AnyMessage], add_message]
+```
+
+
 
 - - - 
 
