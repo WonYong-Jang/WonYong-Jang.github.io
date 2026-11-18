@@ -207,6 +207,10 @@ class GraphState(TypeDict):
 	message: Annotated[list[AnyMessage], add_message]
 ```
 
+- - - 
+
+## 4. ReAct(Reasoning + Acting)
+
 
 
 - - - 
