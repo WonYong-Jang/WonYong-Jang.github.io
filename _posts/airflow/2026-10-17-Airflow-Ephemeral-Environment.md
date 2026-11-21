@@ -8,7 +8,7 @@ date: 2026-10-17
 background: /img/posts/mac.png
 ---
 [이전글](https://wonyong-jang.github.io/airflow/2026/07/06/Airflow3-Rebuild-Deployment-Structure.html) 에서는 기존 Airflow 배포 방식의 문제점과 이를 개선하기 위한 방법들을 살펴봤다.   
-이번에는 브랜치마다 독립된 테스트 화경을 제공하는 Ephemeral Airflow Environment를 설계하고 PoC를 진행해보려고 한다.   
+이번에는 브랜치마다 독립된 테스트 환경을 제공하는 Ephemeral Airflow Environment를 설계하고 PoC를 진행해보려고 한다.   
 
 전체적인 흐름은 다음과 같다. 
 

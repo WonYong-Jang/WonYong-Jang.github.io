@@ -13,7 +13,6 @@ background: /img/posts/mac.png
 이를 위해서 Dag Bundle에 대한 아키텍처를 자세히 살펴볼 예정이며, 이 과정에서 현재 버전 기준으로 Airflow 오픈소스에서 발생하고 있는 버그와 개선점을 발견하여 같이 기여한 내용을 공유할 예정이다.
 
 - - - 
-
   
 ## 1. Dag Bundle
 
@@ -100,8 +99,8 @@ GitDagBundle 파일은 Airflow가 관리하며 번들을 초기화 하는 파드
 
 prod 처럼 브랜치가 master 하나뿐이라면 위 설정으로 끝이다.    
 
-현재 업무에서 dev 환경은 여러 개발자가 동시에 테스트 가능한 구조로 구성하기 위해서 feature 브랜치 별로 격리된 환경을 구성하였다. 
-지금처럼 feature 브랜치가 계속 생기고 없어지는 구조에는 기본 GitDagBundle을 그대로 쓰려면, 브랜치 하나마다 Bundle을 하나씩 등록해야 한다. 
+`현재 업무에서 dev 환경은 여러 개발자가 동시에 테스트 가능한 구조로 구성하기 위해서 feature 브랜치 별로 격리된 환경을 구성하였다.`    
+`지금처럼 feature 브랜치가 계속 생기고 없어지는 구조에는 기본 GitDagBundle을 그대로 쓰려면, 브랜치 하나마다 Bundle을 하나씩 등록해야 한다.`     
 
 > 하나의 Bundle = 단일 저장소, 단일 ref 
 
@@ -120,6 +119,8 @@ PR이 머지될 때마다 이 리스트를 갱신하려면 config 변경 + Dag P
 이 정적 설정의 불편함은 [커뮤니티](https://github.com/apache/airflow/discussions/59799)에서도 동일하게 지적되고 있고, 동적으로 반영하는 기능에 대해서 현재 [PR](https://github.com/apache/airflow/pull/71111) 리뷰가 진행중이기 때문에 이를 반영하여 확인해볼 예정이다.    
 
 또한, [Airflow Discussion(#54669)](https://github.com/apache/airflow/discussions/54669) 에 FeatureBranchGitDagBundle 이라는 이름으로 직접 구현하여 해결한 사례를 해결했지만 Airflow 에서 공식적으로 지원하지 않는 방법이기 때문에 해당 방안은 제외했다.
+
+따라서, 현재 업무에서는 [Ephemeral Airflow](https://wonyong-jang.github.io/airflow/2026/10/17/Airflow-Ephemeral-Environment.html) 구조로 PoC를 진행하되, git sync하는 방식은 GitDagBundle을 적용하는 것으로 검토 중이다.  
 
 추가적으로 GitDagBundle을 검토 및 테스트하면서 확인한 버그 및 개선점을 Airflow에 기여한 내용은 아래와 같다.
 

@@ -211,7 +211,30 @@ class GraphState(TypeDict):
 
 ## 4. ReAct(Reasoning + Acting)
 
+`ReAct는 Reasoning(추론)과 Acting(행동)을 번갈아 수행하며 복잡한 작업을 단계적으로 해결한다.`   
 
+> StateGraph는 상태, 노드, 엣지를 정의해 실행 흐름을 만드는 구현 도구이다.
+> ReAct는 모델이 판단하고 도구를 실행한 다음 결과를 보고 다시 판단하는 에이전트 동작 패턴이다.   
+
+일반적인 실행 흐름은 다음과 같다. 
+
+- Act(행동)
+	- 모델이 주어진 상황을 분석하고 적절한 도구를 선택
+	- 선택한 도구를 호출하고 필요한 입력을 제공
+- Observe(관찰)
+	- 호출된 도구의 실행결과나 출력을 모델에 다시 전달
+	- 에이전트가 자신의 행동 결과를 이해하고 학습
+- Reason(추론)
+	- 이전 단계의 관찰 결과를 분석하여 다음 행동을 결정
+	- 다른 도구를 호출하거나, 또는 직접 응답을 생성
+	- 현재 상황을 평가하고 최선의 다음 단계를 선택 
+
+[agents](https://docs.langchain.com/oss/python/langchain/agents) 에서 자세한 내용을 확인할 수 있다.   
+
+`create_agent() 를 사용하면 모델과 도구를 지정해 도구 호출 에이전트를 간단하게 구현할 수 있다.`   
+`실행 흐름을 더 세밀하게 제어하려면 LangGraph의 StateGraph에서 노드와 엣지, 조건부 엣지를 직접 정의할 수 있다.`   
+
+![](/img/posts/common/Pasted%20image%2020261119091359.png)
 
 - - - 
 
