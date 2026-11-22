@@ -1,13 +1,13 @@
 ---
 layout: post
-title: "[Airflow] Rebuilding Our Airflow Deployment Structure for Airflow 3"
-subtitle: Dag Bundle / Module Management / 여러 사용자의 격리 테스트 환경 개선하기
+title: "[Airflow] Airflow 3의 Dag 배포 및 브랜치별 테스트 구조 재설계 검토"
+subtitle: 기존 구조의 한계와 Dag Bundle / 여러 사용자의 격리 테스트 환경 개선하기
 comments: true
 categories: Airflow
 date: 2026-07-06
 background: /img/posts/mac.png
 ---
-이 글에서는 Airflow 2.x 에서 진행하던 배포 방식을 개선하기 위해, Airflow 3.x 에서 제공하는 기능들에 대해서 살펴보며, 어떻게 개선할 수 있는지 살펴볼 예정이다.   
+이 글에서는 Airflow 2.x 에서 진행하던 배포 방식과 개발환경 구조의 한계를 살펴보고, Airflow 3.x의 Dag Versioning과 Dag Bundle, Ephemeral Airflow 환경 등 대안을 검토할 예정이다.   
 
 Airflow 3.x 에서는 Dag를 관리하는 방식에 큰 변화가 생겼다.   
 기존 Airflow 2.x 에서는 dags 디렉터리에 있는 Python 파일을 Scheduler가 지속적으로 스캔하여 Dag를 생성했다.   
@@ -17,15 +17,16 @@ Airflow 3.x 에서는 Dag를 관리하는 방식에 큰 변화가 생겼다.
 이 방식은 단순하지만, 실행 중인 Dag Run 이 코드 변경의 영향을 받을 수 있다는 문제가 있었다.   
 Airflow 3 에서는 이러한 문제를 해결하기 위해 Dag Versioning과 Dag Bundle 이라는 두 가지 개념이 도입되었다.
 
-이 개념들에 대해 살펴보며, 기존 배포 방식을 어떻게 개선할 수 있을지 살펴보자.
+이 개념들에 대해 살펴보며, 기존 구조의 방식을 어떻게 개선할 수 있을지 살펴보자.
 - - -  
 
-## 1. 기존 업무에서의 배포 구조 방식
-현재 팀에서 Airflow 배포 방식은 Airflow 2.x 에서 부터 branch 별 테스트 가능한 격리 환경이 필요했고, 그에 따라 sys.path.append 방식을 이용한 커스텀 배포 패턴을 사용하고 있었다.
+## 1. 기존 Dag 배포 및 브랜치별 테스트 구조
 
+기존 구조는 다음과 같다.    
 ### 1-1) 배포 파이프라인 개요
 
-GitHub Actions의 self-hosted 러너가 Kubernetes 클러스터 안에서 직접 동작하며, Dag PVC(/opt/airflow/dags)를 마운트한 상태로 코드를 git clone하여 배치하는 구조다.
+GitHub Actions의 self-hosted runner가 Kubernetes 클러스터 내부의 Pod에서 동작한다.   
+runner Pod는 Dag 파일을 공유하는 PVC를 볼륨으로 사용해 /opt/airflow/dags에 마운트한다.  배포할 브랜치 코드는 해당 경로 아래에 clone한다.    
 
 `개발자가 Airflow Dag를 개발하여 git push를 하게 되면 master 브랜치인 경우는 Airflow prod 환경으로 배포되며, 그 외에 feature 브랜치면 Airflow dev 환경에 배포가 되는 구조이다.`   
 
@@ -74,7 +75,7 @@ Airflow dev 의 경우는 각 feature branch 마다 격리된 환경에서 테�
 └── master -> store/master/625c9a
 ```
 
-앞서 본  실제 저장 구조(store)에서 Dag Processor나 개발자가 /opt/airflow/dags/my-company/feature-11945 경로의 심볼릭 링크를 타고 들어가면, 아래처럼 마치 그 브랜치 전용 디렉토리가 통째로 존재하는 것처럼 보인다.   
+앞서 본 실제 저장 구조(store)에서 /opt/airflow/dags/my-company/feature-11945 경로의 심볼릭 링크를 타고 들어가면, 아래처럼 마치 그 브랜치 전용 디렉토리가 통째로 존재하는 것처럼 보인다.   
 
 ```shell
 # Airflow dev의 경우 (심볼릭 링크를 resolve해서 본 뷰 = 브랜치별 격리)
@@ -102,7 +103,7 @@ Airflow dev 의 경우는 각 feature branch 마다 격리된 환경에서 테�
 위 구조 덕분에 브랜치 간 코드가 완전히 격리되며, 여러 개발자가 하나의 dev cluster 에서 동시에 테스트가 가능한 환경을 제공했었다.   
 `하지만 그 대가로, Dag 파일이 자기 브랜치 안의 common_utils를 import 하려면 브랜치 루트 경로를 직접 sys.path에 추가해줘야 한다.`   
 
-`즉, 위 배포 방식의 문제점은 git branch 마다 격리를 해주기 위하여 Dag 마다 명시적으로 sys.path.append 를 이용하여 상위 경로를 전달해줘야 한다는 점이다.`     
+`즉, 이 구조의 문제점은 git branch 마다 격리를 해주기 위하여 Dag 마다 명시적으로 sys.path.append 를 이용하여 상위 경로를 전달해줘야 한다는 점이다.`     
 
 > Dag 파일은 {Branch}/dags/ 아래에 있고, 공통 코드는 {Branch}/common_utils/ 에 있으므로, Dag 파일 기준 두 단계 상위를 path에 추가해야 한다.
 
@@ -140,7 +141,7 @@ dev 환경은 브랜치마다 레포 전체를 git clone 해서 공유 PVC에 �
 Dag Processor는 dags_folder(/opt/airflow/dags) 아래를 재귀적으로 훑어 모든 파이썬 파일을 찾아 파싱을 한다.   
 따라서 기존 구조에서 이를 해결하기 위해서 각 브랜치 마다 실제 테스트한 Dag 에 대해서만 파싱하도록 하고 나머지 Dag 에 대해서는 파싱을 제외하는 방식을 사용했다.
 
-> 예를 들면 feature-11945 브랜치에서 A 라는 Dag만 테스트 하길 원한다면, A 라는 Dag에만 매칭되는 feature-11945 브랜치 이름을 명시해두면, 해당 브랜치에서는 다른 Dag를 모두 ignore 하고 브랜치이름과 매칭되는 Dag 만 노출될 수 있도록 하였다.
+> 예를 들면 feature-11945 브랜치에서 A 라는 Dag만 테스트 하길 원한다면, A 라는 Dag에만 매칭되는 feature-11945 브랜치 이름을 명시해두면, 해당 브랜치에서는 다른 Dag를 모두 ignore 하고 브랜치 이름과 매칭되는 Dag 만 노출될 수 있도록 하였다.
 > 그럼 dev airflow에서 A-feature-11945 라는 Dag만 새롭게 추가되어 Dag가 노출된다.   
 > Dag Processor는 .airflowignore 패턴에 걸린 경로를 아예 파싱 대상에서 제외하므로, 브랜치가 쌓여도 실제 파싱 수를 통제할 수 있다.
 
@@ -218,7 +219,7 @@ Task A 실행 완료(v1)-> 새로운 코드가 반영됨 -> Task B (v2) 실행
 이러한 방식은 다음과 같은 문제를 발생시킨다.
 
 - 실행 결과의 재현이 어렵다.
-- 장애 발생 시 어떤 코드로 실행되었는지 확인하기 어렵다.
+- 장애 발생 시 어떤 코드로 실행 되었는지 확인하기 어렵다.
 - Backfill이나 재실행 시 동일한 결과를 보장하기 어렵다.   
 
 - - -  
@@ -254,11 +255,16 @@ extract = SQLExecuteQueryOperator(
 )
 ```
 
-`중요한 것은 Dag Versioning은 UI에서 이력을 보고 어떤 버전이 실행됐는지 추적하는 관측성(observability) 기능이지, 그 자체로 실행 중 코드 변경으로부터 격리를 보장하지는 않는다.`   
+`Airflow 3의 Dag Version은 파싱된 Dag 정의를 버전으로 저장하고, 각 Dag Run이 어떤 정의를 기준으로 생성됐는지 추적하는 기능이다.`   
+UI와 API에서 과거 Dag 구조를 확인하는 데도 사용할 수 있다. 다만 Dag Version만으로 Task가 실행할 Python 코드 전체가 고정되는 것은 아니다.   
+실행 코드의 버전을 고정하려면 Dag Bundle이 버전관리를 지원해야 한다.   
 
-특히 LocalDagBundle(버전 관리 미지원)을 쓰는 환경이라면, 함수 본문만 바뀐 배포는 Dag 버전이 그대로임에도 Task마다 실제로 다른 코드가 실행되는 Airflow 2.x와 동일한 문제가 재현될 수 있다.   
-진짜 격리를 원한다면 운영 환경에서는 GitDagBundle(또는 버전관리 지원 커스텀 Bundle)을 구성해야 한다.   
-- - -  
+LocalDagBundle은 버전 관리를 지원하지 않으므로, Dag Version의 변경 여부와 관계 없이 Task 실행시점의 최신 코드를 사용한다.   
+따라서 배포 도중 같은 Dag Run의 Task들이 실행되면, 각 Task가 실행되는 시점에 따라 이전 코드와 새 코드가 섞일 수 있다.
+
+따라서, GitDagBundle이 이를 해결할 수 있으며, [링크](https://wonyong-jang.github.io/airflow/2026/07/10/Airflow3-Dag-Bundle-Contributions.html)에서 자세히 살펴보자.   
+
+- - - 
 
 ## 4. Goals
 
@@ -274,12 +280,9 @@ extract = SQLExecuteQueryOperator(
 
 - `인프라 계층까지 격리 가능한 환경을 제공`: Dag 코드 수준의 격리를 넘어, Airflow version upgrade, provider 패키지 변경, airflow.cfg, Executor 변경처럼 인프라 계층을 변경하는 검증도 브랜치 단위로 격리가 가능해야 한다. 
 
-## 5. Dag Bundle
+- - - 
 
-Airflow 에서 제공하는 Dag Bundle 전환을 검토했지만, 현재 기준으로 동적으로 Dag Bundle 적용 등에 대한 문제가 해결되지 않았기 때문에 해당 솔루션은 제외했다.    
-자세한 내용은 [링크](https://wonyong-jang.github.io/airflow/2026/07/10/Airflow3-Dag-Bundle-Contributions.html) 를 참고하자.   
-
-## 6. Alternative Solution
+## 5. Alternative Solution
 
 위의 솔루션은 `하나의 airflow(dev)` 에서 여러 브랜치를 격리 하여 테스트 환경을 제공하려는 것이다.   
 이와 달리 `각 브랜치 마다 격리된 airflow 환경을 통째로 제공하는 방식`도 대안으로 볼 수 있다.   
@@ -287,15 +290,11 @@ Airflow 에서 제공하는 Dag Bundle 전환을 검토했지만, 현재 기준�
 이 경우 브랜치 격리를 Airflow 내부가 아니라 `환경 자체의 분리`로 달성하므로, 브랜치별 코드 충돌을 걱정할 필요가 없다.   
 실제로 여러 조직의 사례에서 이 방식을 확인할 수 있다. 
 
-[여러 조직에서 Airflow 제공하기 2](https://engineering.linecorp.com/ko/blog/multi-tenancy-airflow-2)   
-[Ephemeral Environments for Apache Airflow](https://medium.com/go-city/ephemeral-environments-for-apache-airflow-1c39df75ea14)   
-[개인화된 Airflow 테스트 환경 구축 및 운영 경험](https://tech.kakao.com/posts/829)
+-  [여러 조직에서 Airflow 제공하기 2](https://engineering.linecorp.com/ko/blog/multi-tenancy-airflow-2)   
+- [Ephemeral Environments for Apache Airflow](https://medium.com/go-cit y/ephemeral-environments-for-apache-airflow-1c39df75ea14)   
+- [개인화된 Airflow 테스트 환경 구축 및 운영 경험](https://tech.kakao.com/posts/829)  
 
-위 방식을 Ephemeral Airflow Environment 방식이라고 부르며, 일반적으로 Github Actions에서 PR 이벤트를 트리거로 Helm release 를 네임스페이스 단위로 올리고 내리는 방식을 많이 사용한다.   
-
-> PR이 닫히면 네임스페이스를 통째로 정리하여 Airflow를 종료한다. 
-
-### 6-1) 선택 기준
+### 5-1) 선택 기준
 
 ##### Dag Bundle(FeatureBranchGitDagBundle)
 - 검증 대상이 대부분 Dag 코드/로직 수준이고, Airflow 설정이나 provider 버전 변경이 드문 경우
@@ -308,10 +307,9 @@ Airflow 에서 제공하는 Dag Bundle 전환을 검토했지만, 현재 기준�
 - 동시 활성 브랜치 수가 상대적으로 적은 경우
 - 팀에서 K8s 기반 provisioning/teardown 자동화 구축, 운영이 가능한 경우
 
-### 6-2) 한계
+### 5-2) 한계
 
 ##### Dag Bundle(FeatureBranchGitDagBundle)
-- `dev 를 FeatureBranchGitDagBundle, prod를 GitDagBundle로 나누면 두 환경의 배포 메커니즘이 달라, dev 에서 통과한 것이 prod에서 동일하게 동작한다는 보장이 깨짐`   
 - `현재 기준 코어에 포함된 검증된 기능이 아니라, 커뮤니티에서 논의 중인 자체 구현 아이디어이므로(Discussion #54669) 팀 내 적용 후 검증이 필요`
 - `완벽한 격리 수준으로 테스트가 되지 않고`, 같은 팀 내 신뢰를 전제로 운영
 - Connection/Variable/Pool 은 `하나의 메타데이터 DB를 공유`하기 때문에, 브랜치별로 격리된 환경에서 테스트가 어렵고 Scheduler 자체의 부하 또한 브랜치 모두 공유
